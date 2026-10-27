@@ -15,9 +15,18 @@ const wiki = JSON.parse(await readFile(join(import.meta.dirname, 'raw', 'routes-
 const eurostat = await read('routes-eurostat.json');
 const totals = new Map((eurostat.routes as { from: string; to: string; weeklyFlights: number }[]).map((r) => [`${r.from}>${r.to}`, r.weeklyFlights]));
 
-// Hubs (Wikidata + Wikipedia infobox) and bases (infobox, or any airport with ≥ 8 of the airline's routes).
+// Hubs (Wikidata + Wikipedia infobox) and bases (infobox, or an airport with ≥ 8 of the airline's routes to at least
+// 3 countries — so a foreign airline flying many routes *into* an airport from home is not based there).
+const countryOf = new Map(((await read('airports.json')) as { id: string; country: string }[]).map((a) => [a.id, a.country]));
 const routeCount = new Map<string, number>();
-for (const r of wiki) for (const ap of [r.a, r.b]) routeCount.set(`${r.airline}|${ap}`, (routeCount.get(`${r.airline}|${ap}`) ?? 0) + 1);
+const destCountries = new Map<string, Set<string>>();
+for (const r of wiki) {
+  for (const [ap, other] of [[r.a, r.b], [r.b, r.a]] as const) {
+    const key = `${r.airline}|${ap}`;
+    routeCount.set(key, (routeCount.get(key) ?? 0) + 1);
+    (destCountries.get(key) ?? destCountries.set(key, new Set()).get(key)!).add(countryOf.get(other) ?? '?');
+  }
+}
 const hubsOf = new Map<string, Set<string>>();
 const basesOf = new Map<string, Set<string>>();
 for (const a of airlines) {
@@ -26,7 +35,7 @@ for (const a of airlines) {
   basesOf.set(a.id, new Set(d?.bases ?? []));
 }
 for (const [key, n] of routeCount) {
-  if (n < 8) continue;
+  if (n < 8 || (destCountries.get(key)?.size ?? 0) < 3) continue;
   const [airline, ap] = key.split('|') as [string, string];
   if (!hubsOf.get(airline)?.has(ap)) (basesOf.get(airline) ?? basesOf.set(airline, new Set()).get(airline)!).add(ap);
 }

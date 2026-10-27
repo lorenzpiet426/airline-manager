@@ -147,7 +147,11 @@ export function OpsScreen() {
         </Panel>
 
         <Panel title={t('ops.messagesTitle')} code="ACARS" className="panel--wide">
-          <MessageLog messages={game.messages.filter((m) => m.airlineId === airline.id || m.airlineId === null)} world={world} />
+          <MessageLog messages={game.messages.filter((m) => m.airlineId === airline.id)} world={world} />
+        </Panel>
+
+        <Panel title={t('ops.newsTitle')} code="NEWS" className="panel--wide">
+          <MessageLog messages={game.messages.filter((m) => m.airlineId === null)} world={world} limit={12} />
         </Panel>
 
         <Panel title={t('ops.nextTitle')} code="1.4">

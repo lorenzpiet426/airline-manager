@@ -1756,3 +1756,5 @@ a.button {
   height: 12px;
   border-radius: 3px;
 }
+
+.chip--warning { color: var(--red); }

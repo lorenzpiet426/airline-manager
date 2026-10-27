@@ -57,7 +57,8 @@
     "messagesTitle": "Ops messages",
     "noMessages": "No messages yet.",
     "nextTitle": "Coming next",
-    "nextHint": "Save slots, export/import and a dashboard with key figures (load factor, unit revenue and cost) arrive in Phase 1.5. Competing AI airlines follow in Phase 2."
+    "nextHint": "Real airlines now react to you: low-cost airlines match your fares at once, network airlines defend their hubs, and everyone opens and closes routes worldwide. Next: your own timetables with departure times (2.2), then save slots and a dashboard (1.5).",
+    "newsTitle": "World news"
   },
   "settings": {
     "title": "Settings",
@@ -142,7 +143,19 @@
     "routeOpened": "New route {{flight}}: {{from}}–{{to}}, {{frequency}}× per week.",
     "routeClosed": "Route {{flight}} to {{to}} closed.",
     "weekProfit": "Week closed: revenue {{revenue}}, profit {{profit}}.",
-    "weekLoss": "Week closed: revenue {{revenue}}, loss {{profit}}."
+    "weekLoss": "Week closed: revenue {{revenue}}, loss {{profit}}.",
+    "aiFare": "{{airline}} cuts its fares on {{from}}–{{to}} by {{value}} %.",
+    "aiFrequency_one": "{{airline}} adds {{count}} weekly flight on {{from}}–{{to}} to defend the route.",
+    "aiFrequency_other": "{{airline}} adds {{count}} weekly flights on {{from}}–{{to}} to defend the route.",
+    "aiEnter_one": "{{airline}} enters your route {{from}}–{{to}} with {{count}} flight per week.",
+    "aiEnter_other": "{{airline}} enters your route {{from}}–{{to}} with {{count}} flights per week.",
+    "aiExitClosed": "{{airline}} gives up the route {{from}}–{{to}}.",
+    "aiExitReduced_one": "{{airline}} cuts {{from}}–{{to}} to {{count}} flight per week.",
+    "aiExitReduced_other": "{{airline}} cuts {{from}}–{{to}} to {{count}} flights per week.",
+    "aiNewRoute_one": "{{airline}} opens {{from}}–{{to}} ({{count}}× per week).",
+    "aiNewRoute_other": "{{airline}} opens {{from}}–{{to}} ({{count}}× per week).",
+    "aiBankrupt_one": "{{airline}} has gone bankrupt and stops flying ({{count}} route).",
+    "aiBankrupt_other": "{{airline}} has gone bankrupt and stops flying ({{count}} routes)."
   },
   "newGame": {
     "title": "Found your airline",
@@ -293,7 +306,9 @@
     "save": "Save changes",
     "season": "Season (this month)",
     "seasonValue": "{{value}} % vs average month",
-    "plusConnections": "Plus one-stop connections via other hubs."
+    "plusConnections": "Plus one-stop connections via other hubs.",
+    "fareLevel": "fares {{value}} %",
+    "reacted": "reacted"
   },
   "finance": {
     "title": "Finance",
@@ -373,7 +388,12 @@
       "lowcost": "Low-cost airline",
       "regional": "Regional airline",
       "charter": "Leisure/charter airline"
-    }
+    },
+    "bankrupt": "Bankrupt since {{date}} — no longer flying.",
+    "newRoute": "new",
+    "closedRoutes_one": "{{count}} route given up in this game.",
+    "closedRoutes_other": "{{count}} routes given up in this game.",
+    "statusBankrupt": "bankrupt"
   },
   "sources": {
     "title": "Data sources",

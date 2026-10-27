@@ -198,7 +198,8 @@ describe('saves from Phase 1.3', () => {
     state.queue = state.queue!.filter((e) => e.kind !== 'dayStart');
     state.version = 1;
     const upgraded = migrate(JSON.parse(JSON.stringify(state)))!;
-    expect(upgraded.version).toBe(4);
+    expect(upgraded.version).toBe(5);
+    expect(upgraded.ai).toEqual({ routes: {}, added: {}, airlines: {} });
     expect(upgraded.routes).toEqual({});
     expect(upgraded.queue.some((e) => e.kind === 'dayStart')).toBe(true);
   });

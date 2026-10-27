@@ -4,7 +4,7 @@ import { schedule } from './core';
 import { refreshMarket } from './market';
 import { newFinance } from './operations';
 import { sumPeriods } from './finance';
-import { SAVE_VERSION, type GameOptions, type GameState, type PnlWeek } from './state';
+import { emptyAi, SAVE_VERSION, type GameOptions, type GameState, type PnlWeek } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay, startOfMonth, startOfNextMonth } from './time';
 
 export interface NewGameOptions extends GameOptions {
@@ -28,6 +28,7 @@ export function createGame(options: NewGameOptions): GameState {
     market: { offers: [] },
     routes: {},
     finance: {},
+    ai: emptyAi(),
     queue: [],
     messages: [],
     ledger: [],
@@ -74,6 +75,11 @@ export function migrate(raw: unknown): GameState | null {
       fin.month = sumPeriods(current, byMonth.get(current) ?? []);
     }
     state.version = 4;
+  }
+  if (state.version === 4) {
+    // Version 5 (2.1b): the AI airlines start from the real-world data with no changes yet.
+    state.ai = emptyAi();
+    state.version = 5;
   }
   if (state.version !== SAVE_VERSION) return null;
   return state;

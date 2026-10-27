@@ -7,6 +7,7 @@ import { fuelUsdPerKg, jetFuelSpot } from '../data/fuel';
 import type { Airport } from '../data/types';
 import { distanceKm, greatCirclePoints } from './geo';
 import type { BusinessModel, SourceTag } from './realAirlines';
+import type { AiState } from './state';
 import { longestHardRunwayM, type EngineWorld } from './world';
 
 // ─── Flight times ──────────────────────────────────────────────────────────────
@@ -184,32 +185,72 @@ export interface Competitor {
   source: SourceTag;
   fareFactor: number;
   seasonal: boolean;
+  /** The AI changed this route in this game (frequency, fare, or it is new). */
+  changed: boolean;
 }
 
+/** A non-stop offer on a route from the passengers' point of view (for the market share calculation). */
+export interface Supplier {
+  /** Flights per week in this direction. */
+  weekly: number;
+  /** Fare relative to the market fare. */
+  fareFactor: number;
+  /** 0…1: slow aircraft (turboprops on long routes) attract fewer travellers. */
+  speed?: number;
+}
+
+/** Key of an AI route in the save: "airline|A|B" with A < B. */
+export const aiRouteKey = (airline: string, x: string, y: string) => (x < y ? `${airline}|${x}|${y}` : `${airline}|${y}|${x}`);
+
 /**
- * The real airlines on a route (in this direction). Routes without official numbers get frequencies from the demand
- * model: the flights the market needs at ~80 % load, shared between the airlines listed for the route.
+ * The real airlines on a route (in this direction), including the AI's changes in this game (2.1b): new and closed
+ * routes, changed frequencies and fares, bankrupt airlines. Routes without official numbers get frequencies from the
+ * demand model: the flights the market needs at ~80 % load, shared between the airlines listed for the route.
  * Returns null when the game runs without real airline data.
  */
-export function competitorsOn(world: EngineWorld, from: Airport, to: Airport, m = market(world, from, to)): Competitor[] | null {
+export function competitorsOn(
+  world: EngineWorld,
+  from: Airport,
+  to: Airport,
+  m = market(world, from, to),
+  ai?: AiState,
+): Competitor[] | null {
   const real = world.realAirlines;
   if (!real) return null;
-  const list = real.on(from.id, to.id);
+  const base = real.on(from.id, to.id);
+  const [a] = from.id < to.id ? [from.id, to.id] : [to.id, from.id];
+  const forward = from.id === a;
+  const added = (ai?.added[from.id < to.id ? `${from.id}|${to.id}` : `${to.id}|${from.id}`] ?? [])
+    .filter((id) => !base.some((b) => b.airline.id === id))
+    .flatMap((id) => {
+      const airline = real.byId.get(id);
+      return airline ? [{ airline, weekly: null as number | null, seasonal: false, charter: false }] : [];
+    });
+  const list = [...base, ...added];
   if (!list.length) return [];
   const typicalSeats = m.distanceKm < 1500 ? 150 : m.distanceKm < 4000 ? 190 : 280;
   const needed = m.weeklyPax / (typicalSeats * 0.8);
   const modelled = (seasonal: boolean, charter: boolean) =>
     Math.max(1, Math.round(((needed / list.length) * (seasonal ? 0.5 : 1) * (charter ? 0.5 : 1)) * 2) / 2);
-  return list.map((c) => ({
-    airlineId: c.airline.id,
-    name: c.airline.name,
-    model: c.airline.model,
-    weekly: c.weekly ?? modelled(c.seasonal, c.charter),
-    // Official only if the airline is alone on the route; a split of the route total between airlines is an estimate.
-    source: c.weekly !== null && list.length === 1 ? 'official' : 'modelled',
-    fareFactor: MODEL_FARE[c.airline.model],
-    seasonal: c.seasonal,
-  }));
+  const result: Competitor[] = [];
+  for (const c of list) {
+    if (ai?.airlines[c.airline.id]?.status === 'bankrupt') continue;
+    const change = ai?.routes[aiRouteKey(c.airline.id, from.id, to.id)];
+    if (change?.closed) continue;
+    const weekly = change ? (forward ? change.weeklyAB : change.weeklyBA) : (c.weekly ?? modelled(c.seasonal, c.charter));
+    result.push({
+      airlineId: c.airline.id,
+      name: c.airline.name,
+      model: c.airline.model,
+      weekly,
+      // Official only if unchanged and the airline is alone on the route; a split of the route total is an estimate.
+      source: !change && c.weekly !== null && list.length === 1 ? 'official' : 'modelled',
+      fareFactor: change?.fare ?? MODEL_FARE[c.airline.model],
+      seasonal: c.seasonal,
+      changed: !!change,
+    });
+  }
+  return result;
 }
 
 /** Fuel price at which fares were calibrated; fares follow fuel partly (fuel surcharges). */
@@ -316,8 +357,18 @@ export interface RouteWeek {
 /** "Smooth minimum": passengers carried approach the seats offered without a hard edge (some flights fill, some don't). */
 const carried = (demand: number, seats: number) => (seats <= 0 ? 0 : (demand * seats) / (demand ** 4 + seats ** 4) ** 0.25);
 
+/** Who else is on the route, seen from the airline being calculated. */
+export interface RouteContext {
+  /** The AI's changes in this game. */
+  ai?: AiState;
+  /** Leave this real airline out of the competitors (when calculating that airline's own route). */
+  exclude?: string;
+  /** More non-stop offers on the route, e.g. the player's flights when an AI airline does its sums. */
+  extra?: Supplier[];
+}
+
 /** Forecast of one week on a route (both directions), in USD. */
-export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: RoutePlan, date: Date): RouteWeek {
+export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: RoutePlan, date: Date, ctx: RouteContext = {}): RouteWeek {
   const m = market(world, from, to);
   const fare = marketFareUsd(world, from, to, date) * plan.fareFactor;
   const biz = m.businessShare;
@@ -325,21 +376,23 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   // Cheaper than the market: more people fly at all, and more choose you over the others.
   // Holidaymakers react much more strongly to price than business travellers.
   const stimulation = biz * ff ** -0.6 + (1 - biz) * ff ** -1.6;
-  // Other airlines don't watch idly: they match about half of any price cut, so undercutting wins
-  // fewer passengers from them than the price difference suggests (they don't follow price rises).
-  const relative = ff < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - ff) : ff;
+  // Competition: the real airlines on this route with their current frequencies and fares (they react to price cuts
+  // themselves, month by month, see ai.ts) or, without real airline data, "invisible incumbents" that are assumed to
+  // match about half of any price cut right away.
+  const competitors = competitorsOn(world, from, to, m, ctx.ai)?.filter((c) => c.airlineId !== ctx.exclude) ?? null;
+  const relative = !competitors && ff < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - ff) : ff;
   const attraction = biz * relative ** -1.2 + (1 - biz) * relative ** -2.6;
   // Slow aircraft lose travellers on long routes (an ATR needs 3 h to London, a jet 2 h).
   const jetBlock = BLOCK_OVERHEAD_H + (m.distanceKm * ROUTING_FACTOR) / 830;
   const speed = Math.min(1, jetBlock / blockHours(plan.type, m.distanceKm)) ** 2;
   const mine = plan.frequency ** FREQUENCY_EXP * attraction * speed;
-  // Competition: the real airlines on this route (each attracting travellers by frequency and price level) or,
-  // without real airline data, "invisible incumbents"; plus one-stop connections via other hubs.
-  const competitors = competitorsOn(world, from, to, m);
-  const fareAttraction = (x: number) => biz * x ** -1.2 + (1 - biz) * x ** -2.6;
-  const nonstop = competitors
-    ? competitors.reduce((s, c) => s + c.weekly ** FREQUENCY_EXP * fareAttraction(c.fareFactor), 0)
-    : m.incumbentFlights ** FREQUENCY_EXP;
+  // Everyone else attracts travellers by frequency and price level; plus one-stop connections via other hubs.
+  const fareAttraction = (x: number) => biz * Math.max(0.3, x) ** -1.2 + (1 - biz) * Math.max(0.3, x) ** -2.6;
+  const nonstop =
+    (competitors
+      ? competitors.reduce((s, c) => s + c.weekly ** FREQUENCY_EXP * fareAttraction(c.fareFactor), 0)
+      : m.incumbentFlights ** FREQUENCY_EXP) +
+    (ctx.extra ?? []).reduce((s, x) => s + x.weekly ** FREQUENCY_EXP * fareAttraction(x.fareFactor) * (x.speed ?? 1), 0);
   const others = nonstop + m.connectingFlights ** FREQUENCY_EXP;
   const share = mine / (mine + others) || 0;
   const season = seasonFactor(from, to, biz, date);

@@ -598,7 +598,25 @@ education", forbid making the data available to others (§3 iii) and require a w
   (e.g. fetch a JSON asset in both places). Real airlines don't move on the map yet (planes for 27k aircraft are too
   many per tick; later: show the selected airline's flights). AI doesn't react yet (2.1b). Save files unchanged in
   2.1a (real airlines are static data), IndexedDB move comes with 2.1b when AI state changes.
-- **Next: 2.1b** (AI behaviour by airline type) — then 2.2 detailed scheduling, then 1.5.
+- **2.1b (same day) — AI airlines react, whole world simplified** (owner: whole world + world news):
+  `src/engine/ai.ts`: every airline reviews its network once a month (staggered over a 28-day cycle); behaviour by type
+  (`BEHAVIOUR`: low-cost matches fully and undercuts 3 %, exits after 2 bad reviews, enters 30 %/month; legacy follows
+  50 % of a cut, defends hub/base routes +25 % flights, exits after 4; regional/charter react little; **home rival** =
+  legacy airline at the player's hub: follows 80 %, defends +40 %, enters 30 %). Only routes where something differs
+  from reality are reviewed (player there, AI change, new competitor, AI-opened) — untouched real routes stay as in the
+  data, so the world stays stable and fast (a full year for all 824 airlines ≈ 0.5 s). Exits only when a route loses
+  money and is clearly worse than its real starting point; AI-opened routes close if they lose. Growth: new routes from
+  hubs/bases to busy airports others serve (≈1,200/year worldwide). Health = loss vs. real starting point of the
+  airline's real routes; bankruptcy for small airlines with health < −10 % (8 %/review) or very rarely for weak small
+  non-legacy ones. Monthly player watch: airlines with a base at either end may enter the player's full, profitable
+  routes. AI changes stored compactly in `state.ai` (save version 5; ≈0.3 MB after a year). `competitorsOn` merges AI
+  changes; `routeWeek` takes a context (ai, exclude, extra suppliers) so player and AI share one market model; with
+  real airlines the automatic "incumbents match half" rule is gone (AI reacts itself with up to a month's delay).
+  Derived bases now need ≥ 8 routes to ≥ 3 countries (fixed Pegasus "based" at DUS). UI: AI messages to the player,
+  **World news** panel on Ops (≤ 2/day), planner shows competitor fare level and "reacted", airline pages show the
+  network as it is in the game (new routes, closed count, bankruptcy). Tests: 65 (price war, home rival defence, entry,
+  one-year stability/speed/size, determinism).
+- **Next:** 2.2 detailed scheduling, then 1.5 (save slots → IndexedDB, export, dashboard).
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.

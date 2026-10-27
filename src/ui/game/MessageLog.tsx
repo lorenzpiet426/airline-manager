@@ -38,6 +38,19 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
           profit: formatMoney(language, { amount: Math.abs(Number(p.profit)), currency }),
         });
       }
+      // AI airlines (2.1b)
+      case 'aiFare':
+        return t('msg.aiFare', { ...p, value: Math.abs(Number(p.value)) });
+      case 'aiFrequency':
+        return t('msg.aiFrequency', { ...p, count: Number(p.value) });
+      case 'aiEnter':
+        return t('msg.aiEnter', { ...p, count: Number(p.value) });
+      case 'aiExit':
+        return Number(p.value) === 0 ? t('msg.aiExitClosed', p) : t('msg.aiExitReduced', { ...p, count: Number(p.value) });
+      case 'aiNewRoute':
+        return t('msg.aiNewRoute', { ...p, count: Number(p.value) });
+      case 'aiBankrupt':
+        return t('msg.aiBankrupt', { ...p, count: Number(p.routes) });
     }
   };
 

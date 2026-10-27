@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export type TimeMode = 'realtime' | 'weekly';
 export type Realism = 'realistic' | 'hardcore';
@@ -129,6 +129,43 @@ export interface AirlineFinance {
   months: PnlWeek[];
 }
 
+/**
+ * What the AI airlines have changed compared with the real-world data (Phase 2.1b). Only changes are stored:
+ * the unchanged networks stay in the read-only data files, so saves stay small.
+ */
+export interface AiRouteState {
+  weeklyAB: number;
+  weeklyBA: number;
+  /** Fare relative to the market fare. */
+  fare: number;
+  /** The airline stopped flying this route. */
+  closed?: boolean;
+  /** A route the airline opened during the game (not in the real-world data). */
+  added?: boolean;
+  /** Monthly reviews in a row with losses (the airline gives up after a few, depending on its type). */
+  badReviews: number;
+  /** The airline already added flights to defend this route against the player. */
+  defended?: boolean;
+  since: SimTime;
+}
+
+export interface AiAirlineState {
+  status: 'active' | 'bankrupt';
+  /** Rolling profit margin of the airline's network (−1 … +1). */
+  health: number;
+  since?: SimTime;
+}
+
+export interface AiState {
+  /** Key: "airline|A|B" with A < B (airport ids). */
+  routes: Record<string, AiRouteState>;
+  /** Routes opened during the game, by airport pair "A|B": airline ids. */
+  added: Record<string, string[]>;
+  airlines: Record<string, AiAirlineState>;
+}
+
+export const emptyAi = (): AiState => ({ routes: {}, added: {}, airlines: {} });
+
 /** Things that will happen at a fixed time. Processed in time order by advance(). */
 export type ScheduledEvent =
   | { at: SimTime; seq: number; kind: 'monthStart' }
@@ -140,7 +177,10 @@ export interface GameMessage {
   id: number;
   at: SimTime;
   airlineId: string | null;
-  kind: 'founded' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport';
+  kind:
+    | 'founded' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
+    | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt';
   level: 'normal' | 'info' | 'caution' | 'warning';
   params: Record<string, string | number>;
 }
@@ -172,6 +212,8 @@ export interface GameState {
   market: { offers: LeaseOffer[] };
   routes: Record<string, Route>;
   finance: Record<string, AirlineFinance>;
+  /** Changes made by the real airlines' AI (2.1b). */
+  ai: AiState;
   queue: ScheduledEvent[];
   messages: GameMessage[];
   ledger: LedgerEntry[];

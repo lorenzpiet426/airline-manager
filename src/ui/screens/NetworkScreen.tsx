@@ -208,9 +208,9 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     const plan = { type, seats: aircraft.seats, frequency, fareFactor, ageYears: yearOf(game.time) - aircraft.builtYear, rampUp: 1 };
     return {
       market: market(engineWorld, hub, dest),
-      competitors: competitorsOn(engineWorld, hub, dest),
+      competitors: competitorsOn(engineWorld, hub, dest, undefined, game.ai),
       marketFare: marketFareUsd(engineWorld, hub, dest, date),
-      week: routeWeek(engineWorld, hub, dest, plan, date),
+      week: routeWeek(engineWorld, hub, dest, plan, date, { ai: game.ai }),
       aircraftWeekUsd:
         crewCostPerDayUsd(engineWorld, type, aircraft.seats, hub.country) * 7 +
         convert(aircraft.lease.monthlyRent, 'USD', game.fx).amount * (12 / 52),
@@ -348,6 +348,10 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                         </a>
                         <span className="mono">{t('network.perWeek', { count: c.weekly })}</span>
                         <span className="muted small">{t(`airlines.model.${c.model}`)}</span>
+                        <span className={`small mono ${c.fareFactor < 0.95 ? 'text--caution' : 'muted'}`}>
+                          {t('network.fareLevel', { value: signed(c.fareFactor) })}
+                        </span>
+                        {c.changed && <span className="chip chip--planned">{t('network.reacted')}</span>}
                         <SourceTag tag={c.source} />
                       </li>
                     );

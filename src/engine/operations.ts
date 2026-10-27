@@ -1,6 +1,7 @@
 // Daily operations and accounting: every day at 00:00 UTC each route earns its ticket revenue and
 // pays its costs, crews are paid and lease costs accrue. Monday closes last week's profit-and-loss report.
 import { getAircraftType } from '../data/aircraft';
+import { aiDailyStep } from './ai';
 import { postMessage } from './core';
 import { crewCostPerDayUsd, overheadPerDayUsd, routeWeek, totalCosts, type RoutePlan } from './economics';
 import { mergePnl, newPeriod, type PnlPeriod } from './finance';
@@ -36,6 +37,8 @@ const usdTo = (fx: FxRates, currency: string) => (fx[currency] ?? 1) / (fx.USD ?
 /** Called at 00:00 UTC every day: books the day that just ended, and closes the week on Mondays. */
 export function dailyStep(state: GameState, world: EngineWorld): void {
   bookDay(state, world);
+  // The real airlines review their networks (a share of them each day) and react to the player.
+  aiDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) closeWeek(state);
   if (startOfMonth(state.time) === state.time) closeMonth(state);
 }
@@ -53,7 +56,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const from = world.airportById.get(route.originId);
     const to = world.airportById.get(route.destinationId);
     if (!aircraft || aircraft.status !== 'active' || !airline || !from || !to) continue;
-    const week = routeWeek(world, from, to, planFor(state, route), date);
+    const week = routeWeek(world, from, to, planFor(state, route), date, { ai: state.ai });
     const k = usdTo(state.fx, airline.currency) / 7; // one day, in book currency
     const day = dayOf(airline.id);
     const lines = day.lines;

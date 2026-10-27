@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
 import { SourceTag } from '../components/SourceTag';
 import { TailFin } from '../components/TailFin';
-import { useRealAirlines } from '../game/useEngineWorld';
+import { useEngineWorld, useRealAirlines } from '../game/useEngineWorld';
+import { useGame } from '../../game/store';
+import { currentRoutes } from '../../engine/ai';
+import { toDate } from '../../engine/time';
+import { formatGameDate } from '../../i18n/format';
 import { hrefFor, useRouteParam } from '../navigation';
 import { aircraftTypeById } from '../../data/aircraft';
 import { useWorld } from '../../data/world';
@@ -36,6 +40,7 @@ export function AirlinesScreen() {
 
 function AirlineList({ real }: { real: RealAirlines }) {
   const { t } = useTranslation();
+  const game = useGame();
   const { language } = useSettings();
   const world = useWorld();
   const [query, setQuery] = useState('');
@@ -64,6 +69,7 @@ function AirlineList({ real }: { real: RealAirlines }) {
               <TailFin primary={a.colors.primary} secondary={a.colors.secondary} size={32} />
               <span className="airline-row__name">
                 {a.name}
+                {game?.ai.airlines[a.id]?.status === 'bankrupt' && <span className="chip chip--warning"> {t('airlines.statusBankrupt')}</span>}
                 <span className="muted small">
                   {' '}
                   · {[a.iata, a.icao].filter(Boolean).join(' / ')} · {a.country ? countryName(language, a.country, a.country) : ''}
@@ -89,7 +95,15 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
   const world = useWorld();
   const [showRegs, setShowRegs] = useState(false);
   const code = (icao: string) => world?.airportById.get(icao)?.iata ?? icao;
-  const routes = real.routesOf(a.id);
+  const game = useGame();
+  const engineWorld = useEngineWorld();
+  const status = game?.ai.airlines[a.id];
+  // In a running game: the network as it is now (AI changes included); otherwise the real-world data.
+  const live = game && engineWorld ? currentRoutes(engineWorld, game, a) : null;
+  const closedCount = game ? Object.entries(game.ai.routes).filter(([k, r]) => r.closed && k.startsWith(`${a.id}|`)).length : 0;
+  const routes = live
+    ? live.map((r) => ({ airline: a.id, a: r.a, b: r.b, seasonal: r.seasonal, charter: false, weeklyAB: r.weeklyAB, weeklyBA: r.weeklyBA, added: r.added, changed: !!game?.ai.routes[r.key] }))
+    : real.routesOf(a.id).map((r) => ({ ...r, added: false, changed: false }));
   const registeredBy = new Map<string, number>();
   for (const [, type] of a.registered) registeredBy.set(type, (registeredBy.get(type) ?? 0) + 1);
   const fleetTypes = [...new Set([...a.fleet.map((f) => f.type), ...registeredBy.keys()])];
@@ -99,8 +113,10 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
       const home = [...a.hubs, ...a.bases].includes(r.a) ? r.a : r.b;
       const other = home === r.a ? r.b : r.a;
       // Official only when the airline is alone on the route (otherwise the official total was split: an estimate).
-      const alone = real.on(r.a, r.b).length === 1;
-      return { home, other, weekly: home === r.a ? r.weeklyAB : r.weeklyBA, seasonal: r.seasonal, alone };
+      // Official only for an unchanged real route with an official number where the airline is alone (no split).
+      const onPair = real.on(r.a, r.b);
+      const alone = onPair.length === 1 && onPair[0]!.weekly !== null && !r.changed;
+      return { home, other, weekly: home === r.a ? r.weeklyAB : r.weeklyBA, seasonal: r.seasonal, alone, added: r.added };
     })
     .sort((x, y) => (y.weekly ?? -1) - (x.weekly ?? -1));
 
@@ -109,6 +125,9 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
       <a href={hrefFor('airlines')} className="muted small">
         ← {t('airlines.back')}
       </a>
+      {status?.status === 'bankrupt' && (
+        <p className="notice notice--error">{t('airlines.bankrupt', { date: formatGameDate(language, toDate(status.since ?? 0), false) })}</p>
+      )}
       <div className="grid">
         <Panel title={a.name} code={[a.iata, a.icao].filter(Boolean).join(' / ')}>
           <div className="airline-card">
@@ -199,6 +218,7 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
 
       <Panel title={t('airlines.network')} code={t('airlines.routesShort', { count: routes.length })}>
         <p className="muted small">{t('airlines.networkNote', { season: real.season })}</p>
+        {closedCount > 0 && <p className="small text--caution">{t('airlines.closedRoutes', { count: closedCount })}</p>}
         <table className="table">
           <thead>
             <tr>
@@ -213,10 +233,11 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
                 <td className="mono">
                   {code(r.home)}–{code(r.other)} <span className="muted small">{world?.airportById.get(r.other)?.city}</span>
                   {r.seasonal && <span className="muted small"> · {t('airlines.seasonal')}</span>}
+                  {r.added && <span className="chip chip--planned"> {t('airlines.newRoute')}</span>}
                 </td>
                 <td className="num mono">{r.weekly !== null ? formatNumber(language, r.weekly, 1) : '—'}</td>
                 <td>
-                  <SourceTag tag={r.weekly !== null && r.alone ? 'official' : 'modelled'} />
+                  <SourceTag tag={r.weekly !== null && r.alone && !r.added ? 'official' : 'modelled'} />
                 </td>
               </tr>
             ))}

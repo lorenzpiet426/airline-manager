@@ -53,7 +53,12 @@ export interface RealAirlines {
   on(from: string, to: string): { airline: RealAirline; weekly: number | null; seasonal: boolean; charter: boolean }[];
   /** Passengers per week measured on this route in this direction (Eurostat, summer season), or null. */
   observedWeeklyPax(from: string, to: string): number | null;
+  /** All real-world routes touching an airport (any airline). */
+  routesAt(airport: string): readonly RealRoute[];
 }
+
+/** Aircraft in service according to the fleet table. */
+export const fleetSize = (a: RealAirline) => a.fleet.reduce((s, f) => s + f.inService, 0);
 
 interface AirlinesJson { airlines: { id: string; name: string; iata: string | null; icao: string | null; country: string | null; alliance: string | null; parent: string | null; brand?: boolean; wikipedia: string | null }[] }
 interface NetworksJson { season: string; airlines: { id: string; hubs: string[]; bases: string[]; routes: Omit<RealRoute, 'airline'>[] }[] }
@@ -73,6 +78,7 @@ export function buildRealAirlines(
   const byId = new Map<string, RealAirline>();
   const routesBy = new Map<string, RealRoute[]>();
   const byPair = new Map<string, RealRoute[]>();
+  const byAirport = new Map<string, RealRoute[]>();
   const info = new Map(airlines.airlines.map((a) => [a.id, a]));
   for (const net of networks.airlines) {
     const a = info.get(net.id);
@@ -101,6 +107,11 @@ export function buildRealAirlines(
     for (const r of routes) {
       const key = `${r.a}|${r.b}`;
       byPair.set(key, [...(byPair.get(key) ?? []), r]);
+      for (const ap of [r.a, r.b]) {
+        const list = byAirport.get(ap);
+        if (list) list.push(r);
+        else byAirport.set(ap, [r]);
+      }
     }
   }
   return {
@@ -108,6 +119,7 @@ export function buildRealAirlines(
     byId,
     routesOf: (id) => routesBy.get(id) ?? [],
     observedWeeklyPax: (from, to) => observed.get(`${from}>${to}`) ?? null,
+    routesAt: (airport) => byAirport.get(airport) ?? [],
     on(from, to) {
       const [a, b] = from < to ? [from, to] : [to, from];
       return (byPair.get(`${a}|${b}`) ?? []).flatMap((r) => {

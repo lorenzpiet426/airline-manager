@@ -57,7 +57,8 @@
     "messagesTitle": "Ops-Meldungen",
     "noMessages": "Noch keine Meldungen.",
     "nextTitle": "Als Nächstes",
-    "nextHint": "Speicherplätze, Export/Import und ein Dashboard mit Kennzahlen (Auslastung, Erlös und Kosten pro Sitzkilometer) kommen in Phase 1.5. Konkurrierende KI-Airlines folgen in Phase 2."
+    "nextHint": "Echte Airlines reagieren jetzt auf dich: Low-Cost-Airlines ziehen bei deinen Preisen sofort mit, Netzwerk-Airlines verteidigen ihre Drehkreuze, und weltweit werden Strecken eröffnet und eingestellt. Als Nächstes: eigene Flugpläne mit Abflugzeiten (2.2), dann Speicherplätze und ein Dashboard (1.5).",
+    "newsTitle": "Weltnachrichten"
   },
   "settings": {
     "title": "Einstellungen",
@@ -142,7 +143,19 @@
     "routeOpened": "Neue Strecke {{flight}}: {{from}}–{{to}}, {{frequency}}× pro Woche.",
     "routeClosed": "Strecke {{flight}} nach {{to}} eingestellt.",
     "weekProfit": "Woche abgeschlossen: Erlöse {{revenue}}, Gewinn {{profit}}.",
-    "weekLoss": "Woche abgeschlossen: Erlöse {{revenue}}, Verlust {{profit}}."
+    "weekLoss": "Woche abgeschlossen: Erlöse {{revenue}}, Verlust {{profit}}.",
+    "aiFare": "{{airline}} senkt die Preise auf {{from}}–{{to}} um {{value}} %.",
+    "aiFrequency_one": "{{airline}} fliegt {{from}}–{{to}} {{count}}× pro Woche öfter, um die Strecke zu verteidigen.",
+    "aiFrequency_other": "{{airline}} fliegt {{from}}–{{to}} {{count}}× pro Woche öfter, um die Strecke zu verteidigen.",
+    "aiEnter_one": "{{airline}} steigt mit {{count}} Flug pro Woche in deine Strecke {{from}}–{{to}} ein.",
+    "aiEnter_other": "{{airline}} steigt mit {{count}} Flügen pro Woche in deine Strecke {{from}}–{{to}} ein.",
+    "aiExitClosed": "{{airline}} stellt die Strecke {{from}}–{{to}} ein.",
+    "aiExitReduced_one": "{{airline}} reduziert {{from}}–{{to}} auf {{count}} Flug pro Woche.",
+    "aiExitReduced_other": "{{airline}} reduziert {{from}}–{{to}} auf {{count}} Flüge pro Woche.",
+    "aiNewRoute_one": "{{airline}} eröffnet {{from}}–{{to}} ({{count}}× pro Woche).",
+    "aiNewRoute_other": "{{airline}} eröffnet {{from}}–{{to}} ({{count}}× pro Woche).",
+    "aiBankrupt_one": "{{airline}} ist pleite und stellt den Flugbetrieb ein ({{count}} Strecke).",
+    "aiBankrupt_other": "{{airline}} ist pleite und stellt den Flugbetrieb ein ({{count}} Strecken)."
   },
   "newGame": {
     "title": "Gründe deine Airline",
@@ -293,7 +306,9 @@
     "save": "Änderungen speichern",
     "season": "Saison (dieser Monat)",
     "seasonValue": "{{value}} % zum Durchschnittsmonat",
-    "plusConnections": "Dazu Umsteigeverbindungen über andere Drehkreuze."
+    "plusConnections": "Dazu Umsteigeverbindungen über andere Drehkreuze.",
+    "fareLevel": "Preise {{value}} %",
+    "reacted": "reagiert"
   },
   "finance": {
     "title": "Finanzen",
@@ -373,7 +388,12 @@
       "lowcost": "Low-Cost-Airline",
       "regional": "Regional-Airline",
       "charter": "Ferien-/Charter-Airline"
-    }
+    },
+    "bankrupt": "Pleite seit {{date}} – fliegt nicht mehr.",
+    "newRoute": "neu",
+    "closedRoutes_one": "{{count}} Strecke in diesem Spiel eingestellt.",
+    "closedRoutes_other": "{{count}} Strecken in diesem Spiel eingestellt.",
+    "statusBankrupt": "pleite"
   },
   "sources": {
     "title": "Datenquellen",
