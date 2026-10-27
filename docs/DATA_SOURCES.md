@@ -65,7 +65,7 @@ Nothing below has been imported yet — this is the checklist the owner approves
 | **Airbus orders & deliveries** | per customer & type, monthly Excel (Sept 2026) | ✅ direct link | airbus.com terms forbid extracting/re-using content | ❌ not for import — hand-check only |
 | **Boeing orders & deliveries** | — | pages returned 404 | not read | ❌ treat like Airbus until checked |
 | **OpenFlights airlines.dat** | names/codes (snapshot, stale; routes stopped 2014) | ✅ | ODbL (share-alike), partly GFDL | 🟡 fallback for codes only |
-| **OpenSky** | current flights | — | non-profit research/education only, no redistribution | ⛔ only with written permission (email drafted) |
+| **OpenSky** | current flights | — | non-profit research/education only, no redistribution | ⛔ not used (owner decision) |
 
 ## Economics model (Phase 1.4) — how it works and how it was calibrated
 All in `src/engine/economics.ts`, amounts in USD, converted to the airline's book currency when booked.

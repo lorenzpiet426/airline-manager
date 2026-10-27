@@ -1,2 +1,136 @@
-destination_iata,season,weekly_flights,aircraft_types,first_date,last_date,source,checked_on,notes
-LHR,S26,28,A320/A321,2026-03-29,2026-10-24,VIE airport website + os.com timetable,2026-11-01,example row - replace
+destination_iata,destination_icao,destination,season,weekly_flights,others_on_route,source,checked_on,notes
+AMM,OJAI,"Queen Alia International Airport",year-round,4,"Royal Jordanian; Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 7/week"
+AMS,EHAM,"Amsterdam Airport Schiphol",year-round,34,"KLM","modelled (Eurostat S24 total split between airlines)",,"all airlines: 56.9/week"
+ATH,LGAV,"Athens Eleftherios Venizelos International Airport",year-round,13,"Aegean Airlines; Air Mediterranean; Ryanair; Sky Express (Greece)","modelled (Eurostat S24 total split between airlines)",,"all airlines: 39.7/week"
+BKK,VTBS,"Suvarnabhumi Airport",year-round,8,"EVA Air","modelled (Eurostat S24 total split between airlines)",,"all airlines: 10.9/week"
+BCN,LEBL,"Josep Tarradellas Barcelona-El Prat Airport",year-round,22,"Ryanair; Vueling","modelled (Eurostat S24 total split between airlines)",,"all airlines: 44/week"
+BEG,LYBE,"Belgrade Nikola Tesla Airport",year-round,21,"Air Serbia","modelled (Eurostat S24 total split between airlines)",,"all airlines: 35.7/week"
+BER,EDDB,"Berlin Brandenburg Airport",year-round,68,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 68.4/week"
+BLQ,LIPE,"Bologna Guglielmo Marconi Airport",year-round,15,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 19.7/week"
+BOS,KBOS,"Boston Logan International Airport",year-round,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+BRE,EDDW,"Bremen Airport",year-round,3,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 2.9/week"
+BRU,EBBR,"Brussels Airport",year-round,25,"Brussels Airlines","modelled (Eurostat S24 total split between airlines)",,"all airlines: 41.9/week"
+OTP,LROP,"Bucharest Henri Coandă International Airport",year-round,28,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 36.8/week"
+BUD,LHBP,"Budapest Liszt Ferenc International Airport",year-round,21,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 20.8/week"
+CAI,HECA,"Cairo International Airport",year-round,9,"EgyptAir","modelled (Eurostat S24 total split between airlines)",,"all airlines: 15.4/week"
+ORD,KORD,"Chicago O'Hare International Airport",year-round,6,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.4/week"
+RMO,LUKK,"Chişinău International Airport",year-round,9,"SkyUp Airlines","modelled (Eurostat S24 total split between airlines)",,"all airlines: 11.9/week"
+CGN,EDDK,"Cologne Bonn Airport",year-round,18,"Eurowings; Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 30.1/week"
+CPH,EKCH,"Copenhagen Kastrup Airport",year-round,17,"Ethiopian Airlines; Ryanair; Scandinavian Airlines","modelled (Eurostat S24 total split between airlines)",,"all airlines: 39.2/week"
+DUS,EDDL,"Düsseldorf Airport",year-round,26,"Eurowings","modelled (Eurostat S24 total split between airlines)",,"all airlines: 43.6/week"
+EBL,ORER,"Erbil International Airport",year-round,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+FRA,EDDF,"Frankfurt Main Airport",year-round,35,"Condor (airline); Lufthansa","modelled (Eurostat S24 total split between airlines)",,"all airlines: 81.2/week"
+GVA,LSGG,"Geneva International Airport",year-round,15,"Swiss International Air Lines","modelled (Eurostat S24 total split between airlines)",,"all airlines: 20.6/week"
+LPA,GCLP,"Gran Canaria Airport",year-round,3,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 4/week"
+GRZ,LOWG,"Graz Airport",year-round,19,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 18.9/week"
+HAM,EDDH,"Hamburg Helmut Schmidt Airport",year-round,33,"Eurowings","modelled (Eurostat S24 total split between airlines)",,"all airlines: 43.7/week"
+HAJ,EDDV,"Hannover Airport",year-round,20,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 20.3/week"
+IAS,LRIA,"Iaşi International Airport",year-round,10,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 9.6/week"
+INN,LOWI,"Innsbruck Airport",year-round,13,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 13/week"
+KLU,LOWK,"Klagenfurt Airport",year-round,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+KSC,LZKZ,"Košice International Airport",year-round,14,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 13.8/week"
+KRK,EPKK,"Kraków John Paul II International Airport",year-round,16,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 21.3/week"
+LCA,LCLK,"Larnaca International Airport",year-round,15,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 20.3/week"
+LEJ,EDDP,"Leipzig/Halle Airport",year-round,11,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 11.2/week"
+LHR,EGLL,"London Heathrow Airport",year-round,35,"British Airways","modelled (Eurostat S24 total split between airlines)",,"all airlines: 59.1/week"
+LYS,LFLL,"Lyon Saint-Exupéry Airport",year-round,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+AGP,LEMG,"Málaga-Costa del Sol Airport",year-round,15,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 20.6/week"
+LIN,LIML,"Milano Linate Airport",year-round,,"easyJet","wikipedia (no Eurostat 2024 total: new route?)",,
+YUL,CYUL,"Montreal / Pierre Elliott Trudeau International Airport",year-round,6,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.2/week"
+MUC,EDDM,"Munich Airport",year-round,25,"Lufthansa","modelled (Eurostat S24 total split between airlines)",,"all airlines: 41.2/week"
+NAP,LIRN,"Naples International Airport",year-round,16,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 21.8/week"
+JFK,KJFK,"John F. Kennedy International Airport",year-round,6,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.3/week"
+EWR,KEWR,"Newark Liberty International Airport",year-round,7,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 7/week"
+NCE,LFMN,"Nice-Côte d'Azur Airport",year-round,24,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 23.9/week"
+OSL,ENGM,"Oslo-Gardermoen International Airport",year-round,7,"Norwegian Air Shuttle","modelled (Eurostat S24 total split between airlines)",,"all airlines: 11.2/week"
+PMI,LEPA,"Palma de Mallorca Airport",year-round,33,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 44.5/week"
+CDG,LFPG,"Charles de Gaulle International Airport",year-round,34,"Air France","modelled (Eurostat S24 total split between airlines)",,"all airlines: 56.1/week"
+TGD,LYPG,"Podgorica Airport / Podgorica Golubovci Airbase",year-round,17,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 16.6/week"
+PRG,LKPR,"Václav Havel Airport Prague",year-round,22,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 22.4/week"
+PRN,BKPR,"Priština Adem Jashari International Airport",year-round,16,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 15.8/week"
+FCO,LIRF,"Rome–Fiumicino Leonardo da Vinci International Airport",year-round,30,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 39.9/week"
+SJJ,LQSA,"Sarajevo International Airport",year-round,14,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 13.9/week"
+PVG,ZSPD,"Shanghai Pudong International Airport",year-round,5,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 4.8/week"
+SBZ,LRSB,"Sibiu International Airport",year-round,7,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.8/week"
+SKP,LWSK,"Skopje International Airport",year-round,14,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 13.7/week"
+SOF,LBSF,"Sofia Airport",year-round,36,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 36.1/week"
+ARN,ESSA,"Stockholm-Arlanda Airport",year-round,24,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 32.4/week"
+STR,EDDS,"Stuttgart Airport",year-round,22,"Eurowings","modelled (Eurostat S24 total split between airlines)",,"all airlines: 29/week"
+TBS,UGTB,"Tbilisi International Airport",year-round,,"Georgian Airways","wikipedia (no Eurostat 2024 total: new route?)",,
+IKA,OIIE,"Imam Khomeini International Airport",year-round,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+TLV,LLBG,"Ben Gurion International Airport",year-round,7,"Arkia; Bluebird Airways; El Al; Fly Lili; TUS Airways","modelled (Eurostat S24 total split between airlines)",,"all airlines: 22.4/week"
+TFS,GCTS,"Tenerife Sur Airport",year-round,6,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 8.4/week"
+SKG,LGTS,"Thessaloniki Macedonia International Airport",year-round,12,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 15.7/week"
+TIA,LATI,"Tirana International Airport Mother Teresa",year-round,24,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 32.5/week"
+VAR,LBWN,"Varna Airport",year-round,9,"Electra Airways","modelled (Eurostat S24 total split between airlines)",,"all airlines: 11.6/week"
+VCE,LIPZ,"Venice Marco Polo Airport",year-round,35,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 40.4/week"
+VNO,EYVI,"Vilnius International Airport",year-round,7,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 9.4/week"
+WAW,EPWA,"Warsaw Chopin Airport",year-round,26,"LOT Polish Airlines","modelled (Eurostat S24 total split between airlines)",,"all airlines: 43.3/week"
+IAD,KIAD,"Washington Dulles International Airport",year-round,7,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.8/week"
+ZAG,LDZA,"Zagreb Franjo Tuđman International Airport",year-round,11,"Croatia Airlines","modelled (Eurostat S24 total split between airlines)",,"all airlines: 18.1/week"
+ZRH,LSZH,"Zürich Airport",year-round,60,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 59.6/week"
+ALC,LEAL,"Alicante-Elche Miguel Hernández Airport",seasonal,2,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 4.1/week"
+AYT,LTAI,"Antalya International Airport",seasonal,10,"Corendon Airlines; Pegasus Airlines; SunExpress","modelled (Eurostat S24 total split between airlines)",,"all airlines: 37.3/week"
+BRI,LIBD,"Bari Karol Wojtyła International Airport",seasonal,7,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 11.1/week"
+BIA,LFKB,"Bastia-Poretta International airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+BGO,ENBR,"Bergen Airport, Flesland",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+BIO,LEBB,"Bilbao Airport",seasonal,2,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 2/week"
+BOJ,LBBG,"Burgas Airport",seasonal,3,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 4.6/week"
+CAG,LIEE,"Cagliari Elmas Airport",seasonal,4,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 5.9/week"
+CTA,LICC,"Catania-Fontanarossa Airport",seasonal,8,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 13.5/week"
+CHQ,LGSA,"Chania International Airport",seasonal,5,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.6/week"
+CFU,LGKR,"Corfu Ioannis Kapodistrias International Airport",seasonal,5,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.8/week"
+DXB,OMDB,"Dubai International Airport",seasonal,6,"Emirates (airline)","modelled (Eurostat S24 total split between airlines)",,"all airlines: 13.8/week"
+DBV,LDDU,"Dubrovnik Ruđer Bošković Airport",seasonal,9,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 14.9/week"
+EDI,EGPH,"Edinburgh Airport",seasonal,2,"Jet2.com; Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 4.8/week"
+FLR,LIRQ,"Florence Airport, Peretola",seasonal,14,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 14.2/week"
+FNC,LPMA,"Cristiano Ronaldo International Airport",seasonal,4,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 3.9/week"
+GOT,ESGG,"Göteborg Landvetter Airport",seasonal,4,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 5.7/week"
+EVE,ENEV,"Harstad/Narvik Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+HER,LGIR,"Heraklion International Nikos Kazantzakis Airport",seasonal,11,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 15.2/week"
+IBZ,LEIB,"Ibiza Airport",seasonal,8,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 11.2/week"
+IVL,EFIV,"Ivalo Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+KLX,LGKL,"Kalamata Airport",seasonal,2,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 2.6/week"
+AOK,LGKP,"Karpathos Airport",seasonal,2,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 1.5/week"
+KVA,LGKV,"Kavala Alexander the Great International Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+EFL,LGKF,"Kefalonia International Airport "Anna Pollatou"",seasonal,2,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 2.6/week"
+KTT,EFKT,"Kittilä International Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+KGS,LGKO,"Kos International Airport "Ippokratis"",seasonal,5,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.6/week"
+SUF,LICA,"Lamezia Terme Sant'Eufemia International Airport",seasonal,4,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 4.8/week"
+LXS,LGLM,"Limnos Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+LAX,KLAX,"Los Angeles International Airport",seasonal,5,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 4.5/week"
+MLE,VRMM,"Velana International Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+RAK,GMMX,"Marrakesh Menara Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+MRS,LFML,"Marseille Provence Airport",seasonal,4,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.9/week"
+MRU,FIMP,"Sir Seewoosagur Ramgoolam International Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+MAH,LEMH,"Menorca Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+JMK,LGMK,"Mykonos Island National Airport",seasonal,5,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6.5/week"
+MJT,LGMT,"Mytilene International Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+OHD,LWOH,"Ohrid St. Paul the Apostle Airport",seasonal,3,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 3/week"
+OLB,LIEO,"Olbia Costa Smeralda Airport",seasonal,4,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 5.2/week"
+PMO,LICJ,"Falcone–Borsellino Airport",seasonal,8,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 10.3/week"
+GPA,LGRX,"Patras Araxos Agamemnon Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+PDL,LPPD,"João Paulo II Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+OPO,LPPR,"Francisco de Sá Carneiro Airport",seasonal,6,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 9.3/week"
+PVK,LGPZ,"Aktion National Airport",seasonal,2,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 2.8/week"
+KEF,BIKF,"Keflavik International Airport",seasonal,7,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 7/week"
+RHO,LGRP,"Rhodes International Airport "Diagoras"",seasonal,10,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 13.6/week"
+RVN,EFRO,"Rovaniemi Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+SMI,LGSM,"Samos Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+JTR,LGSR,"Santorini International Airport",seasonal,4,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 5.3/week"
+SVQ,LEZL,"Seville Airport",seasonal,6,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 5.9/week"
+JSI,LGSK,"Skiathos Island National Airport",seasonal,3,"","modelled (Eurostat S24 total split between airlines)",,"all airlines: 3.2/week"
+SPU,LDSP,"Split Saint Jerome Airport",seasonal,15,"Croatia Airlines","modelled (Eurostat S24 total split between airlines)",,"all airlines: 20.5/week"
+GWT,EDXW,"Westerland Sylt Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+TIV,LYTV,"Tivat Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+NRT,RJAA,"Narita International Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+TOS,ENTC,"Tromsø Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+VLC,LEVC,"Valencia Airport",seasonal,6,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 10.2/week"
+VOL,LGBL,"Nea Anchialos National Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+ZAD,LDZD,"Zadar Airport",seasonal,9,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 12.1/week"
+ZTH,LGZA,"Zakynthos International Airport "Dionysios Solomos"",seasonal,5,"Ryanair","modelled (Eurostat S24 total split between airlines)",,"all airlines: 6/week"
+CLY,LFKC,"Calvi Sainte Catherine Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,
+HRG,HEGN,"Hurghada International Airport",seasonal,5,"Air Cairo; Corendon Airlines; Nile Air","modelled (Eurostat S24 total split between airlines)",,"all airlines: 12.6/week"
+RMF,HEMA,"Marsa Alam International Airport",seasonal,,"Air Cairo","wikipedia (no Eurostat 2024 total: new route?)",,
+MIR,DTMB,"Monastir Habib Bourguiba International Airport",seasonal,,"Nouvelair","wikipedia (no Eurostat 2024 total: new route?)",,
+SKU,LGSY,"Skiros Airport",seasonal,,"","wikipedia (no Eurostat 2024 total: new route?)",,

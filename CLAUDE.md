@@ -318,7 +318,7 @@ Server-authoritative shared world running the same engine (free tier to be resea
 **General rules**
 - Only sources whose licence allows use in this public, free, non-commercial game. Check every licence first; credit
   every source in an in-game **"Data sources" screen** and in `docs/DATA_SOURCES.md`.
-- **No OpenSky data fetched or stored, not even locally, without OpenSky's written permission.**
+- **No OpenSky data at all** (owner decision 2026-10-27: no permission request; its terms don't allow our use).
 - **Never copy** Planespotters, Flightradar24, FlightConnections, Airfleets, Cirium, OAG, ch-aviation (owner spot-checks by hand only).
 - Real airline names and colours, **no real logos**.
 - Every route, frequency and fleet number carries a **source tag**: `official`, `wikipedia` (Wikipedia/Wikidata),
@@ -342,25 +342,16 @@ reports (bigger airlines, entered as facts); (d) Wikipedia/Wikidata fleet tables
 Match by **operator**, not registration country (leasing, Malta/Ireland). Disagreements: most trusted source wins,
 difference explained in the validation report. Cabin layouts per airline where known, else typical for the airline type.
 
-**3. Austrian by hand:** owner hand-checks Austrian's network (VIE airport website + Austrian timetable) and fleet
-(types, numbers, registrations) in templates under `data-hand/austrian/`; tagged `hand-checked`.
+**3. Austrian:** Claude drafts Austrian's network (routes + weekly flights) and fleet (types, registrations) from
+Eurostat, Wikipedia, Wikidata and the registers into `data-hand/austrian/`, shows it to the owner as a readable list;
+the owner reports errors. **Only entries the owner has confirmed are tagged `hand-checked`.**
 **4. Validation report** for Austrian, Lufthansa, Ryanair, Wizz Air: reconstruction vs. Wikipedia, every difference listed.
 **5. Aircraft types:** all common missing types incl. turboprops (ATR 42, Dash 8 family), regional jets, freighters.
-**6. OpenSky:** owner emails OpenSky for permission (aggregated route/frequency tables only, no raw flights or aircraft
-identifiers, full credit). If yes → real frequencies and departure times added later as an update.
 Then 2.1a (real airlines visible) / 2.1b (AI behaviour by airline type). **Show the owner which sources work before
 building screens.**
 
-**Findings (2026-10-27):**
-- OpenSky terms (opensky-network.org/about/terms-of-use, read 2026-10-27): licence "solely for the purpose of non-profit
-  research and non-profit education"; §3(iii) no distribution / making available of the data sets; REST API use in
-  "any live product" needs a written licence; publications (incl. web pages) must cite Schäfer et al. 2014 and send
-  OpenSky a link; §4(ii) delete data when access/use ends. → **OpenSky-derived data must not be committed or deployed
-  without written permission from OpenSky.** Owner to decide the route (see progress log).
-- OpenSky REST credits (registered "standard user": 4,000/day for /flights): a 2-h /flights/all query costs 60 credits
-  for data 3–10 days old, 120 for 11–15 days, … 960 for > 25 days. One full week = 84 queries → peak summer
-  (> 25 days old) ≈ 80,000 credits per week ≈ 20 days of quota: not practical. Data ages daily, so costs rise.
-- Credentials file: `tools/.env.opensky` (git-ignored, never uploaded).
+**Why no OpenSky (read 2026-10-27):** its terms allow use "solely for the purpose of non-profit research and non-profit
+education", forbid making the data available to others (§3 iii) and require a written licence for any live product.
 
 ## 6. Open questions / decisions waiting for the owner
 - **D1 Cloud sync service:** Firebase Spark (recommended: no pausing, no card) vs Supabase Free (Postgres, but
@@ -402,6 +393,7 @@ building screens.**
 | 2026-10-27 | Balance "realistic & tough" (owner): one-stop competition on every market, incumbents match half of price cuts, stronger price elasticity, seasons, overheads | Owner found 1.4 too easy (monopoly routes at +50 % fare gave 55–60 % margins) |
 | 2026-10-27 | Roadmap change: **Phase 2 (visible AI competitors) moves before 1.5** (save slots, export, dashboard) | Owner wants to see competition; autosave covers saving meanwhile |
 | 2026-10-27 | Roadmap: **2.1 visible AI competitors → 2.2 detailed scheduling** (own departure times, block times, turnarounds, rotation timeline; passengers prefer good times) **→ 1.5** save slots/dashboard | Owner wants timetables, not only frequencies; detailed scheduling moved forward from Phase 7 (hub waves stay in Phase 7) |
+| 2026-10-27 | **No OpenSky data** (owner); real-airline data only from open, reusable sources (§5b) | OpenSky terms forbid publishing derived data without a licence; owner chose not to ask |
 | 2026-10-27 | Finance history: weeks kept 2 years, calendar months kept for the whole game; quarters/years summed from months | Owner wants to see patterns over time; months stay small enough to keep forever |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
@@ -529,8 +521,7 @@ building screens.**
   source of *current* networks for all airlines; public OpenSky flight lists end Dec 2021 (COVID-reduced).
 - **Blocked on licensing:** OpenSky's terms don't allow publishing derived data in a public repo/app without written
   permission (§5b findings). Nothing fetched, nothing uploaded.
-- Owner chose **option C**: build from open sources now (final brief §5b), email OpenSky for permission (draft given
-  to the owner, who sends it). **No OpenSky data, not even locally, without written permission.**
+- Owner chose to build from open sources (final brief §5b). Later decided: **no OpenSky at all** (no permission request).
 - **Source check done** (table in `docs/DATA_SOURCES.md`, "Source check for real airlines"): ✅ Wikidata (CC0),
   Wikipedia (CC BY-SA → derived tables CC BY-SA), Eurostat (route totals, no airline split), Brazil ANAC (VRA flights,
   per-airline route stats incl. fuel, RAB register with operator), Canada CCAR; 🟡 BTS T-100 (form), UK CAA (airline
@@ -547,6 +538,15 @@ building screens.**
   Saab, Dornier, Twin Otter, L-410; CRJ/ERJ/E1/Superjet/C909/Fokker; A318/A319/A319neo, 737-300/700/900ER, 737-7/-10
   (2027), 757, C919; A330-200/-800, A340, A380, 767, 777-200ER/LR/-300, 747-400/-8; freighters with `payloadT`, kept
   off the lease market). npm scripts `data:airlines:download` / `data:airlines:build`. Tests: 49.
+- Owner: no OpenSky email (removed); Austrian tables are drafted by Claude for the owner to check.
+- `tools/wikipedia.ts` (polite MediaWiki fetch with cache, redirect resolution, `{{Airport-dest-list}}` parser — reusable
+  for every airport article), `tools/download-airport-titles.ts` (11,565 airport articles → ICAO, Wikidata).
+  `tools/build-austrian-draft.ts` → `data-hand/austrian/routes.csv`, `fleet.csv`, `DRAFT.md`: 135 destinations from VIE
+  (70 year-round, 65 seasonal; 32 without Eurostat 2024 total), weekly flights = Eurostat S24 total split between the
+  airlines Wikipedia lists (Austrian 3×, destination's home airline 2×, others 1×, seasonal ½) — sums to ~1,400/week,
+  probably 20–40 % too high (Wikipedia misses other airlines on some routes). Fleet: Wikipedia counts + register
+  registrations matched by Austrian's series (OE-LB/LX/LZ/LA/LP/LW): 29 A320ceo, 5+2? A320neo, 6 A321, 3 767, 6 777,
+  4 787-9 (Wikipedia: 3), 13 E195; 31 on order. **Waiting for the owner's corrections.**
 - **Next pipeline steps:** Wikipedia articles (business model, bases, destination lists, fleet tables, seat layouts;
   ambiguous destinations listed for the owner); Brazil ANAC + Canada register; split Eurostat route totals between the
   airlines that serve each route; fleets; validation report (Austrian, Lufthansa, Ryanair, Wizz Air); then 2.1a screens.
