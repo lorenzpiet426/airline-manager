@@ -11,7 +11,7 @@ import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 
-const COST_LINES: (keyof PnlLines)[] = ['fuel', 'crew', 'maintenance', 'airport', 'handling', 'navigation', 'distribution', 'lease'];
+const COST_LINES: (keyof PnlLines)[] = ['fuel', 'crew', 'maintenance', 'airport', 'handling', 'navigation', 'distribution', 'lease', 'overhead'];
 
 export function FinanceScreen() {
   const { t } = useTranslation();

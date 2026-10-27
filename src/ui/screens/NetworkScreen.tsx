@@ -335,6 +335,10 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                 ? t('network.competitionValue', { count: forecast.market.incumbentFlights })
                 : t('network.noCompetition')}
             </dd>
+            <dt>{t('network.season')}</dt>
+            <dd className={`mono ${w.season >= 1.05 ? 'text--normal' : w.season <= 0.95 ? 'text--caution' : ''}`}>
+              {t('network.seasonValue', { value: signed(w.season) })}
+            </dd>
             <dt>{t('network.passengers')}</dt>
             <dd className="mono">
               {formatNumber(language, Math.round(w.pax))} / {formatNumber(language, Math.round(w.seats))} ·{' '}

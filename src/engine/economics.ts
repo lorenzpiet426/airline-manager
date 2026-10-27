@@ -79,6 +79,8 @@ const TOURISM_EXP = 0.3;
 /** Below this distance (km) trains and cars take most travellers (VIE–BUD, 214 km: hardly anyone flies). */
 const GROUND_KM = 400;
 const GROUND_EXP = 4;
+/** Share of a price cut the existing airlines match. */
+const INCUMBENT_PRICE_MATCH = 0.5;
 /** Travellers prefer the airline with more flights more than proportionally (an "S-curve"). */
 const FREQUENCY_EXP = 1.3;
 /** Big airports draw passengers from far away (tourism, transfers): at least this many "market people". */
@@ -94,7 +96,15 @@ export interface Market {
   businessShare: number;
   /** One-way flights per week by the airlines already flying here (not yet shown as AI airlines). */
   incumbentFlights: number;
+  /**
+   * The one-stop alternative (e.g. via Frankfurt or New York), counted as if it were this many
+   * non-stop flights per week: slower, but there are many of them and they are often cheap.
+   */
+  connectingFlights: number;
 }
+
+/** One-stop connections compete more on long routes (a stop costs little extra time) than on short ones. */
+const connectingEquivalent = (km: number) => 2 + 4 * Math.min(1, km / 3000);
 
 const wealth = (world: EngineWorld, a: Airport) =>
   Math.min(2.5, Math.max(0.05, (world.countries[a.country]?.gdpPerCapitaUsd ?? 10_000) / 40_000));
@@ -115,7 +125,35 @@ export function market(world: EngineWorld, a: Airport, b: Airport): Market {
   // Who serves this market today? Typical aircraft size grows with distance; ~80 % of seats filled.
   const typicalSeats = km < 1500 ? 150 : km < 4000 ? 190 : 280;
   const flights = weeklyPax / (typicalSeats * 0.8);
-  return { distanceKm: km, annualPax, weeklyPax, businessShare, incumbentFlights: flights >= 3 ? Math.round(flights) : 0 };
+  return {
+    distanceKm: km,
+    annualPax,
+    weeklyPax,
+    businessShare,
+    incumbentFlights: flights >= 3 ? Math.round(flights) : 0,
+    connectingFlights: connectingEquivalent(km),
+  };
+}
+
+// ─── Seasons ───────────────────────────────────────────────────────────────────
+
+// Monthly demand relative to the yearly average (northern hemisphere), from typical European airport
+// traffic patterns: holidaymakers peak in July/August, business travellers dip in August and at Christmas.
+const LEISURE_SEASON = [0.75, 0.8, 0.9, 1.0, 1.05, 1.15, 1.3, 1.3, 1.1, 1.0, 0.8, 0.85];
+const BUSINESS_SEASON = [0.95, 1.05, 1.1, 1.05, 1.05, 1.0, 0.85, 0.75, 1.05, 1.1, 1.1, 0.9];
+
+/** How busy a month is at this airport for holidaymakers: southern hemisphere reversed, tropics flatter. */
+function leisureSeason(a: Airport, month: number): number {
+  const shifted = a.lat < -10 ? (month + 6) % 12 : month;
+  const tropics = Math.abs(a.lat) < 15 ? 0.5 : 1;
+  return 1 + (LEISURE_SEASON[shifted]! - 1) * tropics;
+}
+
+/** Demand this month relative to the yearly average (1 = average month). */
+export function seasonFactor(a: Airport, b: Airport, businessShare: number, date: Date): number {
+  const month = date.getUTCMonth();
+  const leisure = (leisureSeason(a, month) + leisureSeason(b, month)) / 2;
+  return businessShare * BUSINESS_SEASON[month]! + (1 - businessShare) * leisure;
 }
 
 /** Fuel price at which fares were calibrated; fares follow fuel partly (fuel surcharges). */
@@ -163,6 +201,17 @@ export function crewCostPerDayUsd(world: EngineWorld, type: AircraftType, seats:
   return ((crew.pilots * pilot + crew.cabin * CABIN_CREW_COST_USD) * wageFactor(world, hubCountry)) / 365;
 }
 
+/**
+ * Overheads ("G&A"): head office, IT, marketing, insurance. A base for running an airline at all
+ * plus an amount per aircraft in service (USD per year, Austrian salary level).
+ */
+const OVERHEAD_BASE_USD = 1_500_000;
+const OVERHEAD_PER_AIRCRAFT_USD = 900_000;
+
+export function overheadPerDayUsd(world: EngineWorld, hubCountry: string, activeAircraft: number): number {
+  return ((OVERHEAD_BASE_USD + OVERHEAD_PER_AIRCRAFT_USD * activeAircraft) * wageFactor(world, hubCountry)) / 365;
+}
+
 /** EUROCONTROL-style en-route charge per flight: distance × weight factor × unit rate. */
 function navigationChargeUsd(world: EngineWorld, type: AircraftType, from: Airport, to: Airport, km: number): number {
   // European unit rates (~€70–100) are among the world's highest; elsewhere charges are lower.
@@ -198,6 +247,8 @@ export interface RouteWeek {
   flights: number;
   seats: number;
   demand: number;
+  /** Demand this week relative to an average week (summer peak > 1, winter low < 1). */
+  season: number;
   pax: number;
   loadFactor: number;
   fareUsd: number;
@@ -215,15 +266,21 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   const fare = marketFareUsd(world, from, to, date) * plan.fareFactor;
   const biz = m.businessShare;
   const ff = Math.max(0.3, plan.fareFactor);
-  // Cheaper than the market: more people fly at all, and more choose you over the incumbents.
-  const stimulation = biz * ff ** -0.5 + (1 - biz) * ff ** -1.4;
-  const attraction = biz * ff ** -1 + (1 - biz) * ff ** -2;
+  // Cheaper than the market: more people fly at all, and more choose you over the others.
+  // Holidaymakers react much more strongly to price than business travellers.
+  const stimulation = biz * ff ** -0.6 + (1 - biz) * ff ** -1.6;
+  // Other airlines don't watch idly: they match about half of any price cut, so undercutting wins
+  // fewer passengers from them than the price difference suggests (they don't follow price rises).
+  const relative = ff < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - ff) : ff;
+  const attraction = biz * relative ** -1.2 + (1 - biz) * relative ** -2.6;
   // Slow aircraft lose travellers on long routes (an ATR needs 3 h to London, a jet 2 h).
   const jetBlock = BLOCK_OVERHEAD_H + (m.distanceKm * ROUTING_FACTOR) / 830;
   const speed = Math.min(1, jetBlock / blockHours(plan.type, m.distanceKm)) ** 2;
   const mine = plan.frequency ** FREQUENCY_EXP * attraction * speed;
-  const share = mine / (mine + m.incumbentFlights ** FREQUENCY_EXP) || 0;
-  const demandPerDirection = m.weeklyPax * share * stimulation * plan.rampUp;
+  const others = m.incumbentFlights ** FREQUENCY_EXP + m.connectingFlights ** FREQUENCY_EXP;
+  const share = mine / (mine + others) || 0;
+  const season = seasonFactor(from, to, biz, date);
+  const demandPerDirection = m.weeklyPax * share * stimulation * season * plan.rampUp;
   const seatsPerDirection = plan.frequency * plan.seats;
   const paxPerDirection = carried(demandPerDirection, seatsPerDirection);
 
@@ -241,6 +298,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     flights,
     seats: seatsPerDirection * 2,
     demand: demandPerDirection * 2,
+    season,
     pax,
     loadFactor: seatsPerDirection > 0 ? paxPerDirection / seatsPerDirection : 0,
     fareUsd: fare,

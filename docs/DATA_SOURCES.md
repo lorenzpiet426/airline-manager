@@ -48,16 +48,23 @@ All in `src/engine/economics.ts`, amounts in USD, converted to the airline's boo
   Fitted to Eurostat 2019 totals on 46 Austrian routes: average error ≈ ×1.9. Known gaps: transfer traffic at hubs
   (DXB, FRA, ZRH) and package holidays (Palma, Bangkok) come out too low; small Austrian airports too high.
 - **Competition** ("invisible incumbents" until Phase 2): today's airlines fly as often as the market needs at 80 %
-  load factor (only on markets worth ≥ 3 flights per week). Your share = your frequency^1.3 × price attraction × speed
-  ÷ (same + incumbents' frequency^1.3). Lower fares also grow the market (leisure travellers react more than business).
+  load factor (only on markets worth ≥ 3 flights per week). Every market also has the **one-stop alternative** via other
+  hubs, worth 2 (short-haul) to 6 (long-haul) non-stop flights per week. Your share = your frequency^1.3 × price
+  attraction × speed ÷ (same + incumbents' frequency^1.3 + one-stop^1.3). Incumbents match half of any price cut.
+  Lower fares also grow the market (leisure: elasticity −1.6, business −0.6).
+- **Seasons**: monthly factors (leisure peak Jul/Aug ×1.3, low Jan ×0.75; business dip in Aug/Dec), reversed in the
+  southern hemisphere, halved in the tropics.
 - **Fares**: market fare = (55 + 0.13 × km^0.92) USD × wealth factor × fuel surcharge (35 % pass-through of the fuel
   price above/below $2.20/gal). Checked against typical published average fares (e.g. VIE–LHR ≈ €130–160 one way).
 - **Costs**: fuel (burn/h × block time × price), maintenance (per block hour, +1 %/year of age), airport fees,
   ground handling + catering, navigation charges, 5 % sales/distribution, crew (5 crews per short-haul aircraft,
   9 per wide-body; pilots $135k/175k, cabin crew $45k per year at Austrian level, scaled by country wealth), lease.
-  Checked: an A320neo on VIE–LHR costs ≈ 4–6 US cents per seat-km before crew and lease. Not yet included: overheads.
-- **Sanity check**: a well-chosen startup network makes single-digit margins; entering busy trunk routes at the
-  market fare loses money; underserved holiday routes do best.
+  overheads (head office, IT, marketing, insurance: $1.5 M per year + $0.9 M per aircraft, scaled by country wages).
+  Checked: an A320neo on VIE–LHR costs ≈ 4–6 US cents per seat-km before crew and lease.
+- **Balance check** (scan of all ~31,000 type × destination combinations from VIE, best frequency/fare each, incl.
+  crew, lease and per-aircraft overheads): best plans make ≈ 12–19 % in July, 8–16 % in April (fuel crisis),
+  and almost nothing is profitable in January. Over a year a well-run airline makes a few percent, like real airlines
+  (European carriers typically lose money in the winter quarter).
 
 ## How to refresh the data
 ```bash

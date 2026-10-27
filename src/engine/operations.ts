@@ -2,7 +2,7 @@
 // pays its costs, crews are paid and lease costs accrue. Monday closes last week's profit-and-loss report.
 import { getAircraftType } from '../data/aircraft';
 import { postMessage } from './core';
-import { crewCostPerDayUsd, routeWeek, totalCosts, type RoutePlan } from './economics';
+import { crewCostPerDayUsd, overheadPerDayUsd, routeWeek, totalCosts, type RoutePlan } from './economics';
 import type { FxRates } from './money';
 import { emptyPnl, MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type GameState, type Route, type RouteStats } from './state';
 import { daysInMonth, MINUTES_PER_DAY, startOfWeek, toDate, yearOf, type SimTime } from './time';
@@ -81,6 +81,17 @@ function bookDay(state: GameState, world: EngineWorld): void {
     fin.week.lines.crew += crew;
     fin.week.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) - crew;
+  }
+
+  // Overheads: running the airline itself (head office, IT, marketing, insurance), from the day it is founded.
+  for (const airline of Object.values(state.airlines)) {
+    const hub = world.airportById.get(airline.hubId);
+    if (!hub) continue;
+    const active = Object.values(state.aircraft).filter((a) => a.airlineId === airline.id && a.status === 'active').length;
+    const overhead = overheadPerDayUsd(world, hub.country, active) * usdTo(state.fx, airline.currency);
+    const fin = (state.finance[airline.id] ??= newFinance(state.time));
+    fin.week.lines.overhead += overhead;
+    cashChange[airline.id] = (cashChange[airline.id] ?? 0) - overhead;
   }
 
   for (const [airlineId, change] of Object.entries(cashChange)) {

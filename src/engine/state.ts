@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export type TimeMode = 'realtime' | 'weekly';
 export type Realism = 'realistic' | 'hardcore';
@@ -99,6 +99,8 @@ export interface PnlLines {
   navigation: number;
   distribution: number;
   lease: number;
+  /** Head office, IT, marketing, insurance. */
+  overhead: number;
 }
 
 export interface RouteStats {
@@ -177,8 +179,8 @@ export const MAX_MESSAGES = 200;
 export const MAX_PNL_WEEKS = 104;
 
 export const emptyPnl = (): PnlLines => ({
-  revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0,
+  revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0, overhead: 0,
 });
 
 export const pnlCosts = (l: PnlLines): number =>
-  l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease;
+  l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead;

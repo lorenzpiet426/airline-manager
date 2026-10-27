@@ -252,6 +252,8 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
 - **1.5 Saves & dashboard:** multiple local save slots, export/import, dashboard with KPIs (load factor,
   RASK/CASK, cash). Phase 1 complete. *Test: play a few months, save, reload on another browser via export.*
 
+*Order change (2026-10-27): Phase 2 comes before step 1.5.*
+
 ### Phase 2 — Competition and passengers
 Fictional AI airlines (enter/leave routes, price wars, order aircraft, go bankrupt), passenger choice
 between airlines (price, frequency, quality, reputation), cabin classes and seat pitch, reputation basics, seasonality.
@@ -345,6 +347,8 @@ Server-authoritative shared world running the same engine (free tier to be resea
 | 2026-10-27 | Economics computed per route per day (aggregate), individual flights only derived for the map (weekly pattern, 06:00–21:00 hub time) | Architecture §3.3 "two levels of detail" |
 | 2026-10-27 | Weekly P&L Monday–Sunday UTC; lease cost accrued daily in the P&L while the cash leaves monthly; crews paid per active aircraft | Readable weekly reports without monthly spikes |
 | 2026-10-27 | Real 2026 jet fuel prices (EIA weekly) in the game, incl. the March 2026 spike | Realism; airlines really had to cope with it |
+| 2026-10-27 | Balance "realistic & tough" (owner): one-stop competition on every market, incumbents match half of price cuts, stronger price elasticity, seasons, overheads | Owner found 1.4 too easy (monopoly routes at +50 % fare gave 55–60 % margins) |
+| 2026-10-27 | Roadmap change: **Phase 2 (visible AI competitors) moves before 1.5** (save slots, export, dashboard) | Owner wants to see competition; autosave covers saving meanwhile |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -444,5 +448,12 @@ Server-authoritative shared world running the same engine (free tier to be resea
   (after the fuel spike); aircraft symbol seen landing in Athens; Finance and Network screens on desktop and phone.
 - Lessons: the in-app browser pane often doesn't run animation frames, so MapLibre can't even load its style there —
   validate the style with `validateStyleMin` (test) instead of relying on screenshots; front the tab before screenshots.
-- **Next:** Phase 1.5 — save slots, export/import, dashboard with KPIs (load factor, RASK/CASK, cash). Ideas noted:
-  overheads (head office, marketing, insurance), seasonality (Phase 2), connecting traffic (Phase 7).
+- Owner feedback after playing: "works perfectly, but too simple and easy to make good profit; I want to see the
+  competition". Analysis: all top-100 plans were routes without non-stop competition at +50 % fare (55–60 % margin).
+- **Balance update (same session):** one-stop alternative on every market, incumbents match half of price cuts,
+  stronger leisure price elasticity, seasons (`seasonFactor`), overheads (new P&L line, `overheadPerDayUsd`),
+  save version 3 (migration adds the overhead line). Forecast shows the season; competition text mentions connections.
+  Tests: 44 (new: monopoly +50 % no longer fills the plane, summer > winter, price matching).
+- **Next:** **Phase 2.1 — visible AI competitors** (moved before 1.5 by owner decision): fictional AI airlines with
+  hubs, fleets, routes and fares shown on the map and per route; they enter/leave routes, react to prices, order
+  aircraft, can go bankrupt; they replace the "invisible incumbents". Then Phase 1.5 (save slots, export, dashboard).

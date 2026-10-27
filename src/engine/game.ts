@@ -49,6 +49,13 @@ export function migrate(raw: unknown): GameState | null {
     schedule(state, { at: startOfDay(state.time) + MINUTES_PER_DAY, kind: 'dayStart' });
     state.version = 2;
   }
+  if (state.version === 2) {
+    // Version 3 (balance update): overheads as a new profit-and-loss line.
+    for (const fin of Object.values(state.finance)) {
+      for (const week of [fin.week, ...fin.history]) week.lines.overhead ??= 0;
+    }
+    state.version = 3;
+  }
   if (state.version !== SAVE_VERSION) return null;
   return state;
 }

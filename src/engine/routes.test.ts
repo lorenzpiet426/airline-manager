@@ -17,6 +17,8 @@ const airports = airportsJson as Airport[];
 const world = buildEngineWorld(airports, countriesJson as unknown as Record<string, Country>);
 const ap = (id: string) => world.airportById.get(id)!;
 const JAN = new Date(Date.UTC(2026, 0, 15));
+const APR = new Date(Date.UTC(2026, 3, 15));
+const JUL = new Date(Date.UTC(2026, 6, 15));
 
 // Eurostat avia_par_at, 2019, passengers carried, both directions (all airlines, incl. transfer passengers).
 const EUROSTAT_2019: [string, string, number][] = [
@@ -41,15 +43,16 @@ describe('demand model calibration', () => {
 
   it('gives an A320neo on Vienna–London believable unit costs and load factors', () => {
     const type = getAircraftType('A20N');
-    const week = routeWeek(world, ap('LOWW'), ap('EGLL'), { type, seats: 165, frequency: 14, fareFactor: 1, ageYears: 5, rampUp: 1 }, JAN);
+    const week = routeWeek(world, ap('LOWW'), ap('EGLL'), { type, seats: 165, frequency: 14, fareFactor: 1, ageYears: 5, rampUp: 1 }, APR);
     const ask = week.seats * distanceKm(ap('LOWW'), ap('EGLL'));
     const caskCents = (totalCosts(week.costs) / ask) * 100;
     expect(caskCents).toBeGreaterThan(3); // without crew and lease, which are paid per aircraft
     expect(caskCents).toBeLessThan(8);
-    expect(week.loadFactor).toBeGreaterThan(0.4);
-    expect(week.loadFactor).toBeLessThan(0.95);
+    // A newcomer at the market fare against established airlines fills well under the usual ~80 %.
+    expect(week.loadFactor).toBeGreaterThan(0.3);
+    expect(week.loadFactor).toBeLessThan(0.8);
     expect(week.fareUsd).toBeGreaterThan(100);
-    expect(week.fareUsd).toBeLessThan(250);
+    expect(week.fareUsd).toBeLessThan(300);
   });
 
   it('fills fewer seats at higher fares', () => {
@@ -58,6 +61,27 @@ describe('demand model calibration', () => {
       routeWeek(world, ap('LOWW'), ap('LGAV'), { type, seats: 165, frequency: 7, fareFactor, ageYears: 5, rampUp: 1 }, JAN).pax;
     expect(at(0.7)).toBeGreaterThan(at(1));
     expect(at(1)).toBeGreaterThan(at(1.3));
+  });
+});
+
+describe('balance (no easy money)', () => {
+  const a321 = getAircraftType('A21N');
+  const week = (dest: string, fareFactor: number, date: Date, frequency = 2) =>
+    routeWeek(world, ap('LOWW'), ap(dest), { type: a321, seats: 206, frequency, fareFactor, ageYears: 8, rampUp: 1 }, date);
+
+  it('a route nobody flies non-stop still competes with one-stop connections: +50 % fares empty the plane', () => {
+    expect(market(world, ap('LOWW'), ap('KPVD')).incumbentFlights).toBe(0);
+    expect(week('KPVD', 1.5, JUL).loadFactor).toBeLessThan(0.5);
+    expect(week('KPVD', 1.5, JUL).pax).toBeLessThan(0.5 * week('KPVD', 1, JUL).pax);
+  });
+
+  it('summer is busier than winter on a holiday route', () => {
+    expect(week('LEPA', 1, JUL, 7).demand).toBeGreaterThan(1.4 * week('LEPA', 1, JAN, 7).demand);
+  });
+
+  it('price cuts win fewer passengers from incumbents than the cut suggests (they match half)', () => {
+    const base = week('LGAV', 1, APR, 7).demand;
+    expect(week('LGAV', 0.7, APR, 7).demand).toBeLessThan(2.5 * base);
   });
 });
 
@@ -169,7 +193,7 @@ describe('saves from Phase 1.3', () => {
     state.queue = state.queue!.filter((e) => e.kind !== 'dayStart');
     state.version = 1;
     const upgraded = migrate(JSON.parse(JSON.stringify(state)))!;
-    expect(upgraded.version).toBe(2);
+    expect(upgraded.version).toBe(3);
     expect(upgraded.routes).toEqual({});
     expect(upgraded.queue.some((e) => e.kind === 'dayStart')).toBe(true);
   });
