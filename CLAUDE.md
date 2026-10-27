@@ -252,7 +252,11 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
 - **1.5 Saves & dashboard:** multiple local save slots, export/import, dashboard with KPIs (load factor,
   RASK/CASK, cash). Phase 1 complete. *Test: play a few months, save, reload on another browser via export.*
 
-*Order change (2026-10-27): Phase 2 comes before step 1.5.*
+*Order change (2026-10-27): Phase 2 comes before step 1.5, and detailed scheduling (from Phase 7) becomes step 2.2:*
+- **2.1 Visible AI competitors** (fictional airlines; replace the invisible incumbents).
+- **2.2 Detailed scheduling:** own departure times per flight, block times, turnarounds, aircraft rotation timeline,
+  time-of-day preferences in passenger choice; competitors get timetables too.
+- then back to **1.5** (save slots, export/import, dashboard), then the rest of Phase 2 (cabin classes, reputation).
 
 ### Phase 2 — Competition and passengers
 Fictional AI airlines (enter/leave routes, price wars, order aircraft, go bankrupt), passenger choice
@@ -274,8 +278,8 @@ Real airlines as AI with real fleets/networks per era and recognizable colors; *
 takeover scenario at VIE** (multiple start years); fictional startups appearing in real-airline mode.
 
 ### Phase 7 — Hubs and detailed scheduling
-Connecting traffic and O&D flows through hubs, detailed timetables with exact times, rotations, connection
-waves, slots (LHR, JFK…), curfews, gates, lounges, bases.
+Connecting traffic and O&D flows through hubs, connection waves (timetables themselves come in step 2.2),
+slots (LHR, JFK…), curfews, gates, lounges, bases.
 
 ### Phase 8 — People
 Pilots and cabin crew, type ratings and training, crew shortages, strikes; hireable managers with skills,
@@ -349,6 +353,8 @@ Server-authoritative shared world running the same engine (free tier to be resea
 | 2026-10-27 | Real 2026 jet fuel prices (EIA weekly) in the game, incl. the March 2026 spike | Realism; airlines really had to cope with it |
 | 2026-10-27 | Balance "realistic & tough" (owner): one-stop competition on every market, incumbents match half of price cuts, stronger price elasticity, seasons, overheads | Owner found 1.4 too easy (monopoly routes at +50 % fare gave 55–60 % margins) |
 | 2026-10-27 | Roadmap change: **Phase 2 (visible AI competitors) moves before 1.5** (save slots, export, dashboard) | Owner wants to see competition; autosave covers saving meanwhile |
+| 2026-10-27 | Roadmap: **2.1 visible AI competitors → 2.2 detailed scheduling** (own departure times, block times, turnarounds, rotation timeline; passengers prefer good times) **→ 1.5** save slots/dashboard | Owner wants timetables, not only frequencies; detailed scheduling moved forward from Phase 7 (hub waves stay in Phase 7) |
+| 2026-10-27 | Finance history: weeks kept 2 years, calendar months kept for the whole game; quarters/years summed from months | Owner wants to see patterns over time; months stay small enough to keep forever |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -454,6 +460,16 @@ Server-authoritative shared world running the same engine (free tier to be resea
   stronger leisure price elasticity, seasons (`seasonFactor`), overheads (new P&L line, `overheadPerDayUsd`),
   save version 3 (migration adds the overhead line). Forecast shows the season; competition text mentions connections.
   Tests: 44 (new: monopoly +50 % no longer fills the plane, summer > winter, price matching).
-- **Next:** **Phase 2.1 — visible AI competitors** (moved before 1.5 by owner decision): fictional AI airlines with
-  hubs, fleets, routes and fares shown on the map and per route; they enter/leave routes, react to prices, order
-  aircraft, can go bankrupt; they replace the "invisible incumbents". Then Phase 1.5 (save slots, export, dashboard).
+- Owner feedback on the balance update: overheads line seen ✓; can't see competitors' flights or whether they offer
+  stops (→ 2.1); wants past finances to spot patterns (→ done below); wants to choose departure times and plan block
+  hours, not only frequencies (→ 2.2 detailed scheduling, owner decision).
+- **Finance history:** `src/engine/finance.ts` (periods, `mergePnl`, `sumPeriods`); every day is booked into the running
+  week and the running month; months kept forever (`AirlineFinance.month/months`), save version 4 (migration rebuilds
+  months from stored weeks). Finance screen: Weeks / Months / Quarters / Years, result chart (`ResultChart`, bars around
+  zero, tap to select, hover readout, running period lighter), KPIs for the selected period (revenue, result, margin,
+  passengers, LF, change vs previous period), P&L and route table for any period. Tests: 44.
+- Verified: 7 months played (A220-300 on MAD + DUB): Q1 −€597k (start-up + winter), April +€228k (8.6 %, LF 81 %).
+- **Next:** **Phase 2.1 — visible AI competitors**: fictional AI airlines with names, colours, hubs, fleets, routes and
+  fares, shown on the map and per route (who flies, how often, fare, load; non-stop vs one-stop options); they enter/leave
+  routes, react to prices, lease aircraft, can go bankrupt; they replace the "invisible incumbents".
+  Then **2.2 detailed scheduling**, then **1.5** save slots/export/dashboard.

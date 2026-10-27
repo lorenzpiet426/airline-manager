@@ -3,8 +3,9 @@ import { ECB_RATES, FX_DATE } from '../data/currencies';
 import { schedule } from './core';
 import { refreshMarket } from './market';
 import { newFinance } from './operations';
-import { SAVE_VERSION, type GameOptions, type GameState } from './state';
-import { MINUTES_PER_DAY, simTime, startOfDay, startOfNextMonth } from './time';
+import { sumPeriods } from './finance';
+import { SAVE_VERSION, type GameOptions, type GameState, type PnlWeek } from './state';
+import { MINUTES_PER_DAY, simTime, startOfDay, startOfMonth, startOfNextMonth } from './time';
 
 export interface NewGameOptions extends GameOptions {
   seed: number;
@@ -55,6 +56,24 @@ export function migrate(raw: unknown): GameState | null {
       for (const week of [fin.week, ...fin.history]) week.lines.overhead ??= 0;
     }
     state.version = 3;
+  }
+  if (state.version === 3) {
+    // Version 4 (finance history): monthly accounts, rebuilt from the stored weeks
+    // (a week that spans two months counts for the month it starts in).
+    for (const fin of Object.values(state.finance)) {
+      const byMonth = new Map<number, PnlWeek[]>();
+      for (const week of [...fin.history, fin.week]) {
+        const m = startOfMonth(week.start);
+        byMonth.set(m, [...(byMonth.get(m) ?? []), week]);
+      }
+      const current = startOfMonth(state.time);
+      fin.months = [...byMonth.entries()]
+        .filter(([m]) => m < current)
+        .sort(([a], [b]) => a - b)
+        .map(([m, weeks]) => sumPeriods(m, weeks));
+      fin.month = sumPeriods(current, byMonth.get(current) ?? []);
+    }
+    state.version = 4;
   }
   if (state.version !== SAVE_VERSION) return null;
   return state;

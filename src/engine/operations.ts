@@ -3,9 +3,10 @@
 import { getAircraftType } from '../data/aircraft';
 import { postMessage } from './core';
 import { crewCostPerDayUsd, overheadPerDayUsd, routeWeek, totalCosts, type RoutePlan } from './economics';
+import { mergePnl, newPeriod, type PnlPeriod } from './finance';
 import type { FxRates } from './money';
-import { emptyPnl, MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type GameState, type Route, type RouteStats } from './state';
-import { daysInMonth, MINUTES_PER_DAY, startOfWeek, toDate, yearOf, type SimTime } from './time';
+import { MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type GameState, type Route, type RouteStats } from './state';
+import { daysInMonth, MINUTES_PER_DAY, startOfMonth, startOfWeek, toDate, yearOf, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
 /** New routes start with 60 % of their passengers and reach 100 % after 8 weeks of flying. */
@@ -13,7 +14,7 @@ export const rampUp = (firstFlight: SimTime, now: SimTime): number =>
   Math.min(1, 0.6 + (0.4 * Math.max(0, now - firstFlight)) / (56 * MINUTES_PER_DAY));
 
 export function newFinance(now: SimTime): AirlineFinance {
-  return { week: { start: startOfWeek(now), lines: emptyPnl(), routes: {} }, history: [] };
+  return { week: newPeriod(startOfWeek(now)), history: [], month: newPeriod(startOfMonth(now)), months: [] };
 }
 
 /** The plan the economics model needs for an existing route. */
@@ -36,11 +37,15 @@ const usdTo = (fx: FxRates, currency: string) => (fx[currency] ?? 1) / (fx.USD ?
 export function dailyStep(state: GameState, world: EngineWorld): void {
   bookDay(state, world);
   if (startOfWeek(state.time) === state.time) closeWeek(state);
+  if (startOfMonth(state.time) === state.time) closeMonth(state);
 }
 
 function bookDay(state: GameState, world: EngineWorld): void {
   const date = toDate(state.time - 1); // prices of the day that just ended
   const cashChange: Record<string, number> = {};
+  // The day's figures per airline, added to the running week and month at the end.
+  const days: Record<string, PnlPeriod> = {};
+  const dayOf = (airlineId: string) => (days[airlineId] ??= newPeriod(state.time - MINUTES_PER_DAY));
 
   for (const route of Object.values(state.routes)) {
     const aircraft = state.aircraft[route.aircraftId];
@@ -50,8 +55,8 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!aircraft || aircraft.status !== 'active' || !airline || !from || !to) continue;
     const week = routeWeek(world, from, to, planFor(state, route), date);
     const k = usdTo(state.fx, airline.currency) / 7; // one day, in book currency
-    const fin = (state.finance[airline.id] ??= newFinance(state.time));
-    const lines = fin.week.lines;
+    const day = dayOf(airline.id);
+    const lines = day.lines;
     lines.revenue += week.revenue * k;
     lines.fuel += week.costs.fuel * k;
     lines.maintenance += week.costs.maintenance * k;
@@ -59,7 +64,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     lines.handling += week.costs.handling * k;
     lines.navigation += week.costs.navigation * k;
     lines.distribution += week.costs.distribution * k;
-    const stats: RouteStats = (fin.week.routes[route.id] ??= { flights: 0, seats: 0, pax: 0, revenue: 0, directCosts: 0 });
+    const stats: RouteStats = (day.routes[route.id] ??= { flights: 0, seats: 0, pax: 0, revenue: 0, directCosts: 0 });
     stats.flights += week.flights / 7;
     stats.seats += week.seats / 7;
     stats.pax += week.pax / 7;
@@ -76,10 +81,10 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const hub = airline && world.airportById.get(airline.hubId);
     if (!airline || !hub) continue;
     const k = usdTo(state.fx, airline.currency);
-    const fin = (state.finance[airline.id] ??= newFinance(state.time));
+    const day = dayOf(airline.id);
     const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, hub.country) * k;
-    fin.week.lines.crew += crew;
-    fin.week.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
+    day.lines.crew += crew;
+    day.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) - crew;
   }
 
@@ -89,9 +94,14 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!hub) continue;
     const active = Object.values(state.aircraft).filter((a) => a.airlineId === airline.id && a.status === 'active').length;
     const overhead = overheadPerDayUsd(world, hub.country, active) * usdTo(state.fx, airline.currency);
-    const fin = (state.finance[airline.id] ??= newFinance(state.time));
-    fin.week.lines.overhead += overhead;
+    dayOf(airline.id).lines.overhead += overhead;
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) - overhead;
+  }
+
+  for (const [airlineId, day] of Object.entries(days)) {
+    const fin = (state.finance[airlineId] ??= newFinance(state.time - MINUTES_PER_DAY));
+    mergePnl(fin.week, day);
+    mergePnl(fin.month, day);
   }
 
   for (const [airlineId, change] of Object.entries(cashChange)) {
@@ -99,6 +109,15 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const wasPositive = airline.cash.amount >= 0;
     airline.cash = { amount: airline.cash.amount + Math.round(change), currency: airline.currency };
     if (wasPositive && airline.cash.amount < 0) postMessage(state, { airlineId, kind: 'cashNegative', level: 'warning', params: {} });
+  }
+}
+
+/** 1st of the month 00:00: file last month and start a new one. */
+function closeMonth(state: GameState): void {
+  for (const fin of Object.values(state.finance)) {
+    if (fin.month.start >= state.time) continue;
+    fin.months.push(fin.month);
+    fin.month = newPeriod(state.time);
   }
 }
 
@@ -118,6 +137,6 @@ function closeWeek(state: GameState): void {
         params: { profit: Math.round(profit), revenue: Math.round(fin.week.lines.revenue), currency: airline.currency },
       });
     }
-    fin.week = { start: state.time, lines: emptyPnl(), routes: {} };
+    fin.week = newPeriod(state.time);
   }
 }

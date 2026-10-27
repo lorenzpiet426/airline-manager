@@ -137,7 +137,7 @@ describe('operating routes', () => {
     expect(route.flightNumber).toBe(101);
     expect(route.distanceKm).toBeGreaterThan(1200);
 
-    advance(state, world, simTime(2026, 1, 20));
+    advance(state, world, simTime(2026, 2, 20));
     const fin = state.finance[airlineId]!;
     expect(fin.history.length).toBeGreaterThanOrEqual(2);
     const lastWeek = fin.history[fin.history.length - 1]!;
@@ -148,6 +148,11 @@ describe('operating routes', () => {
     expect(stats.pax / stats.seats).toBeGreaterThan(0.2);
     expect(stats.pax / stats.seats).toBeLessThan(1);
     expect(state.messages.some((m) => m.kind === 'weekReport')).toBe(true);
+    // Months add up to the same totals as weeks (every day is booked into both).
+    expect(fin.months).toHaveLength(1);
+    expect(fin.months[0]!.start).toBe(simTime(2026, 1, 1));
+    const total = (periods: { lines: { revenue: number } }[]) => periods.reduce((s, p) => s + p.lines.revenue, 0);
+    expect(total([...fin.months, fin.month])).toBeCloseTo(total([...fin.history, fin.week]), 0);
     // Passengers grow during the first weeks (ramp-up).
     const first = fin.history.find((w) => w.routes[route.id])!.routes[route.id]!;
     expect(first.pax).toBeLessThan(stats.pax);
@@ -193,7 +198,7 @@ describe('saves from Phase 1.3', () => {
     state.queue = state.queue!.filter((e) => e.kind !== 'dayStart');
     state.version = 1;
     const upgraded = migrate(JSON.parse(JSON.stringify(state)))!;
-    expect(upgraded.version).toBe(3);
+    expect(upgraded.version).toBe(4);
     expect(upgraded.routes).toEqual({});
     expect(upgraded.queue.some((e) => e.kind === 'dayStart')).toBe(true);
   });

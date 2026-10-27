@@ -1558,3 +1558,70 @@ a.button {
 .stepper__value {
   white-space: nowrap;
 }
+
+/* ---------- Result chart & KPIs ---------- */
+.chart__scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.chart__svg {
+  display: block;
+}
+
+.chart__zero {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+
+.chart__tick,
+.chart__label {
+  fill: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.chart__label--selected {
+  fill: var(--cyan);
+}
+
+.chart__bar {
+  cursor: pointer;
+}
+
+.chart__profit { fill: var(--green); }
+.chart__loss { fill: var(--red); }
+.chart__partial { opacity: 0.45; }
+
+.chart__selected {
+  stroke: var(--cyan);
+  stroke-width: 2;
+}
+
+.chart__readout {
+  min-height: 1.4em;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpi__label {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.kpi__value {
+  font-size: 1.15rem;
+  font-weight: 600;
+}

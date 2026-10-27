@@ -19,6 +19,11 @@ export const yearOf = (time: SimTime): number => toDate(time).getUTCFullYear();
 
 export const startOfDay = (time: SimTime): SimTime => Math.floor(time / MINUTES_PER_DAY) * MINUTES_PER_DAY;
 
+export function startOfMonth(time: SimTime): SimTime {
+  const d = toDate(time);
+  return simTime(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
+}
+
 export function startOfNextMonth(time: SimTime): SimTime {
   const d = toDate(time);
   return simTime(d.getUTCFullYear(), d.getUTCMonth() + 2, 1);

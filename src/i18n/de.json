@@ -296,13 +296,8 @@
     "title": "Finanzen",
     "cash": "Kassa",
     "cashNote": "Ticketerlöse und Flugkosten werden täglich gebucht; die Leasingraten gehen am 1. jedes Monats ab.",
-    "history": "Wochenergebnis",
-    "weeks_one": "{{count}} Woche",
-    "weeks_other": "letzte {{count}} Wochen",
-    "noWeeks": "Noch keine abgeschlossene Woche. Wochen laufen von Montag bis Sonntag (UTC).",
+    "history": "Ergebnis pro Zeitraum",
     "period": "Zeitraum",
-    "lastWeek": "Letzte Woche",
-    "thisWeek": "Diese Woche bisher",
     "pnl": "Gewinn- und Verlustrechnung",
     "line": {
       "revenue": "Ticketerlöse",
@@ -323,6 +318,16 @@
     "direct": "direkt",
     "noRoutes": "Keine Flüge in diesem Zeitraum.",
     "route": "Strecke",
-    "directNote": "Streckenergebnis = Ticketerlöse minus Treibstoff, Wartung, Gebühren, Abfertigung und Vertrieb. Crews und Leasing werden pro Flugzeug bezahlt, nicht pro Strecke."
+    "directNote": "Streckenergebnis = Ticketerlöse minus Treibstoff, Wartung, Gebühren, Abfertigung und Vertrieb. Crews und Leasing werden pro Flugzeug bezahlt, nicht pro Strecke.",
+    "granularity": {
+      "week": "Wochen",
+      "month": "Monate",
+      "quarter": "Quartale",
+      "year": "Jahre"
+    },
+    "soFar": "bisher",
+    "chartHint": "Grün = Gewinn, Rot = Verlust, hell = Zeitraum läuft noch. Tippe auf einen Balken, um diesen Zeitraum im Detail zu sehen; seitlich wischen für ältere Zeiträume. Wochen bleiben zwei Jahre gespeichert, Monate das ganze Spiel.",
+    "vsPrevious": "{{change}} im Vergleich zu {{period}}",
+    "closedRoute": "eingestellte Strecke"
   }
 }

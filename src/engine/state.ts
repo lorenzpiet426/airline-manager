@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export type TimeMode = 'realtime' | 'weekly';
 export type Realism = 'realistic' | 'hardcore';
@@ -123,6 +123,10 @@ export interface AirlineFinance {
   week: PnlWeek;
   /** Completed weeks, oldest first (the last two years). */
   history: PnlWeek[];
+  /** The running calendar month (UTC). */
+  month: PnlWeek;
+  /** Completed months, oldest first (kept for the whole game: quarters and years are built from them). */
+  months: PnlWeek[];
 }
 
 /** Things that will happen at a fixed time. Processed in time order by advance(). */
