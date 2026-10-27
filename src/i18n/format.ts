@@ -61,3 +61,32 @@ export function localTimeIn(language: Language, timeZone: string, date = new Dat
 }
 
 export const M_PER_FT = 0.3048;
+
+/** Money with its currency symbol. Big amounts are shortened: €75M / 75 Mio. € */
+export function formatMoney(language: Language, value: { amount: number; currency: string }, compact = true): string {
+  const big = compact && Math.abs(value.amount) >= 100_000;
+  return new Intl.NumberFormat(localeFor(language), {
+    style: 'currency',
+    currency: value.currency,
+    currencyDisplay: 'narrowSymbol',
+    notation: big ? 'compact' : 'standard',
+    maximumFractionDigits: big ? (Math.abs(value.amount) >= 10_000_000 ? 1 : Math.abs(value.amount) >= 1_000_000 ? 2 : 0) : 0,
+    minimumFractionDigits: 0,
+  }).format(value.amount);
+}
+
+/** Game date in UTC, e.g. "Thu 1 Jan 2026" / "Do., 1. Jän. 2026". */
+export function formatGameDate(language: Language, date: Date, weekday = true): string {
+  return new Intl.DateTimeFormat(localeFor(language), {
+    timeZone: 'UTC',
+    ...(weekday ? { weekday: 'short' as const } : {}),
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
+
+/** Aviation time in UTC: "0905Z". */
+export function formatZulu(date: Date): string {
+  return `${String(date.getUTCHours()).padStart(2, '0')}${String(date.getUTCMinutes()).padStart(2, '0')}Z`;
+}

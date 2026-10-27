@@ -52,6 +52,8 @@ export default defineConfig({
       },
     }),
   ],
+  // ES-module workers can load parts of themselves on demand (the engine loads airport data that way).
+  worker: { format: 'es' },
   test: {
     include: ['src/**/*.test.ts'],
   },

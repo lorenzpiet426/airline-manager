@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '../components/Icon';
-import { Clocks } from '../components/StatusBar';
+import { Clocks, GameClock } from '../components/StatusBar';
+import { useGame } from '../../game/store';
 import { MOBILE_TABS, MORE_ROUTES, hrefFor, type Route } from '../navigation';
 
 // Phone layout: compact header on top, content in the middle, tab bar at the bottom
@@ -9,6 +10,7 @@ import { MOBILE_TABS, MORE_ROUTES, hrefFor, type Route } from '../navigation';
 export function MobileShell({ route, children }: { route: Route; children: ReactNode }) {
   const { t } = useTranslation();
   const activeTab: Route = MORE_ROUTES.includes(route) ? 'more' : route;
+  const game = useGame();
 
   return (
     <div className="mobile">
@@ -17,7 +19,7 @@ export function MobileShell({ route, children }: { route: Route; children: React
           <Icon name="fleet" size={16} />
         </span>
         <span className="mobile__title">{t(`nav.${route}`)}</span>
-        <Clocks compact />
+        {game ? <GameClock compact /> : <Clocks compact />}
       </header>
       <main className="mobile__content">{children}</main>
       <nav className="tabbar" aria-label={t('nav.main')}>

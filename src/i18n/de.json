@@ -11,7 +11,8 @@
     "finance": "Finanzen",
     "settings": "Einstellungen",
     "more": "Mehr",
-    "main": "Hauptnavigation"
+    "main": "Hauptnavigation",
+    "new": "Neue Airline"
   },
   "status": {
     "sim": "SIM",
@@ -24,7 +25,7 @@
     "board": "WILLKOMMEN IM OCC",
     "airlineTitle": "Deine Airline",
     "noAirline": "Noch keine Airline.",
-    "noAirlineHint": "Die Gründung deiner eigenen Airline kommt in Phase 1.3.",
+    "noAirlineHint": "Gründe deine eigene Airline: Name, Farben, Heimatflughafen und Startkapital wählen.",
     "newGame": "Neues Spiel",
     "checksTitle": "Systemstatus",
     "checkLanguage": "Sprache",
@@ -35,12 +36,30 @@
     "offlineUnsupported": "Nicht unterstützt",
     "checkInstall": "Als App installiert",
     "installed": "Ja",
-    "notInstalled": "Noch nicht: „Zum Home-Bildschirm“ / „Installieren“ verwenden"
+    "notInstalled": "Noch nicht: „Zum Home-Bildschirm“ / „Installieren“ verwenden",
+    "hub": "Drehkreuz",
+    "cash": "Kassa",
+    "fleet": "Flotte",
+    "fleetCount": "{{active}} im Einsatz, {{delivering}} unterwegs zu dir",
+    "toFleet": "Flotte & Leasingmarkt",
+    "leaseFirst": "Erstes Flugzeug leasen",
+    "clockTitle": "Spieluhr",
+    "mode": {
+      "realtime": "Echtzeit",
+      "weekly": "Rundenbasiert (wöchentlich)"
+    },
+    "modeHint": {
+      "realtime": "Die Zeit läuft durchgehend. Jederzeit pausieren; Tempo von 1 Spielminute bis 1 Spieltag pro Sekunde.",
+      "weekly": "Die Zeit steht still, während du entscheidest. „Woche beenden“ simuliert die nächsten 7 Tage auf einmal."
+    },
+    "messagesTitle": "Ops-Meldungen",
+    "noMessages": "Noch keine Meldungen.",
+    "nextTitle": "Als Nächstes",
+    "nextHint": "Strecken, Flüge und Ticketerlöse kommen in Phase 1.4. Bis dahin warten deine Flugzeuge am Drehkreuz – die Leasingrate ist aber schon jeden Monat fällig."
   },
   "comingSoon": {
     "title": "Kommt in Phase {{phase}}",
     "network": "Strecken eröffnen und dein Netz planen kommt in Phase 1.4.",
-    "fleet": "Das Leasen deines ersten Flugzeugs kommt in Phase 1.3.",
     "finance": "Wöchentliche Gewinn- und Verlustrechnung, Kassa und Kennzahlen kommen in Phase 1.4."
   },
   "settings": {
@@ -52,7 +71,13 @@
     "themeLight": "Hell (Tageslicht)",
     "about": "Über",
     "version": "Version",
-    "dataNote": "Basiert auf offenen Daten. Alle Quellen stehen in der Datei DATA_SOURCES des Projekts."
+    "dataNote": "Basiert auf offenen Daten. Alle Quellen stehen in der Datei DATA_SOURCES des Projekts.",
+    "game": "Aktuelles Spiel",
+    "currentGame": "Du führst {{name}}.",
+    "autosaveNote": "Das Spiel speichert sich automatisch auf diesem Gerät. Speicherplätze und Export kommen in Phase 1.5.",
+    "quit": "Spiel beenden",
+    "quitConfirm": "Das Spiel mit {{name}} wirklich beenden? Es kann nicht wiederhergestellt werden.",
+    "noGame": "Kein Spiel aktiv."
   },
   "more": {
     "title": "Mehr"
@@ -62,7 +87,8 @@
     "de": "Deutsch"
   },
   "common": {
-    "close": "Schließen"
+    "close": "Schließen",
+    "cancel": "Abbrechen"
   },
   "map": {
     "loading": "Weltdaten werden geladen…",
@@ -96,5 +122,110 @@
     "gdpPerCapita": "BIP pro Kopf",
     "tourists": "Touristenankünfte (Land)",
     "marketNote": "Einzugsgebiet = Einwohner der Städte im Umkreis von 100 km. Daraus wird in Phase 1.4 die Passagiernachfrage berechnet."
+  },
+  "sim": {
+    "speed": "Simulationsgeschwindigkeit",
+    "pause": "Pause",
+    "speed1": "1 Spielminute pro Sekunde",
+    "speed2": "10 Spielminuten pro Sekunde",
+    "speed3": "1 Spielstunde pro Sekunde",
+    "speed4": "1 Spieltag pro Sekunde",
+    "endWeek": "Woche beenden ▸"
+  },
+  "msg": {
+    "founded": "{{name}} in {{hub}} gegründet, Startkapital {{capital}}.",
+    "leaseSigned": "Leasingvertrag unterzeichnet: {{type}} {{registration}} von {{lessor}}, Auslieferung am {{date}}.",
+    "delivered": "{{type}} {{registration}} in deinen Farben in {{airport}} ausgeliefert.",
+    "rentPaid": "Monatliche Leasingraten bezahlt: {{amount}}.",
+    "cashNegative": "Die Kassa ist im Minus! Ohne Einnahmen kann die Airline ihre Rechnungen nicht mehr lange bezahlen."
+  },
+  "newGame": {
+    "title": "Gründe deine Airline",
+    "intro": "Ein Startup im Jahr 2026. Wähle Auftritt, Heimatbasis und Kapital – dann least du dein erstes Flugzeug.",
+    "identity": "Name & Lackierung",
+    "name": "Name der Airline",
+    "namePlaceholder": "z. B. Danube Air",
+    "iata": "Airline-Code (2)",
+    "icao": "ICAO-Code (3)",
+    "codesHint": "Der 2-stellige Code steht vor der Flugnummer (wie OS 51), den 3-Buchstaben-ICAO-Code verwendet die Flugsicherung.",
+    "livery": "Farben der Lackierung",
+    "colorMain": "Haupt",
+    "colorSecond": "Akzent",
+    "hub": "Heimatflughafen (Drehkreuz)",
+    "longestRunway": "längste Piste",
+    "hubHint": "Deine Buchhaltung läuft in {{currency}}. Flugzeug-Leasing wird wie in der echten Branche in US-Dollar abgerechnet.",
+    "capital": "Startkapital",
+    "capitalOption": {
+      "tight": "Knapp",
+      "standard": "Standard",
+      "funded": "Gut finanziert"
+    },
+    "capitalHint": {
+      "tight": "Wie ein sehr kleines Startup: ein, zwei Flugzeuge, jeder Fehler tut weh.",
+      "standard": "Etwa so viel, wie echte Low-Cost-Startups eingesammelt haben: eine kleine Startflotte.",
+      "funded": "Ein Startup mit starken Investoren: Spielraum auch für Großraumflugzeuge."
+    },
+    "mode": "Spielmodus",
+    "timeMode": "Zeit",
+    "scenario": "Szenario",
+    "scenarioStartup": "Startup-Airline",
+    "startDate": "Start",
+    "startDateValue": "1. Jänner 2026",
+    "realism": "Realismus",
+    "realismRealistic": "Realistisch",
+    "laterHint": "Hardcore-Realismus, historische Startjahre, die Übernahme von Austrian Airlines und Konkurrenten kommen in späteren Phasen.",
+    "found": "Airline gründen",
+    "replaceWarning": "Du hast bereits ein laufendes Spiel. Eine neue Airline ersetzt es."
+  },
+  "errors": {
+    "nameLength": "Der Name braucht 2 bis 40 Zeichen.",
+    "iataFormat": "Der Airline-Code braucht 2 Buchstaben oder Ziffern (nicht zwei Ziffern).",
+    "icaoFormat": "Der ICAO-Code braucht genau 3 Buchstaben.",
+    "codeTaken": "Dieser Code wird schon von einer anderen Airline verwendet.",
+    "colorFormat": "Bitte gültige Farben wählen.",
+    "hubUnknown": "Bitte einen Heimatflughafen wählen.",
+    "capitalInvalid": "Bitte ein Startkapital wählen.",
+    "airlineUnknown": "Keine Airline gefunden.",
+    "offerGone": "Dieses Angebot ist nicht mehr verfügbar.",
+    "insufficientCash": "Zu wenig Geld für die Kaution"
+  },
+  "fleet": {
+    "title": "Flotte",
+    "noGame": "Gründe zuerst eine Airline, dann kannst du hier Flugzeuge leasen.",
+    "tabFleet": "Meine Flotte ({{count}})",
+    "tabMarket": "Leasingmarkt ({{count}})",
+    "empty": "Du hast noch keine Flugzeuge. Leasinggesellschaften bieten am Leasingmarkt gebrauchte Flugzeuge an.",
+    "toMarket": "Leasingmarkt öffnen",
+    "atAirport": "In {{airport}}",
+    "deliveryOn": "Auslieferung {{date}}",
+    "seats": "Sitze",
+    "built": "Baujahr",
+    "age_one": "{{count}} Jahr alt",
+    "age_other": "{{count}} Jahre alt",
+    "rent": "Leasingrate",
+    "perMonth": "/ Monat",
+    "lessor": "Leasinggeber",
+    "leaseEnds": "Leasing endet",
+    "marketIntro": "Gebrauchte Flugzeuge von Leasinggesellschaften. Du zahlst jetzt eine Kaution; die Monatsrate beginnt mit der Auslieferung. Neue Angebote kommen jeden Monatsanfang, alte laufen aus.",
+    "filter": "Flugzeugkategorie",
+    "category": {
+      "all": "Alle",
+      "turboprop": "Turboprop",
+      "regional": "Regionaljet",
+      "narrowbody": "Schmalrumpf",
+      "widebody": "Großraum"
+    },
+    "leased": "Leasingvertrag unterzeichnet! Deine {{type}} bekommt das Kennzeichen {{registration}}.",
+    "range": "Reichweite",
+    "takeoff": "Startstrecke (MTOW)",
+    "term": "Laufzeit",
+    "years_one": "{{count}} Jahr",
+    "years_other": "{{count}} Jahre",
+    "delivery": "Auslieferung",
+    "runwayWarning": "Voll beladen braucht dieser Typ {{needed}} m Piste; {{hub}} hat {{runway}} m. Kürzere Strecken mit weniger Treibstoff gehen trotzdem.",
+    "confirmText_one": "Jetzt {{deposit}} Kaution zahlen. Die Rate von {{rent}} pro Monat beginnt mit der Auslieferung ({{date}}) und läuft {{count}} Jahr.",
+    "confirmText_other": "Jetzt {{deposit}} Kaution zahlen. Die Rate von {{rent}} pro Monat beginnt mit der Auslieferung ({{date}}) und läuft {{count}} Jahre.",
+    "sign": "Vertrag unterzeichnen",
+    "lease": "Leasen…"
   }
 }

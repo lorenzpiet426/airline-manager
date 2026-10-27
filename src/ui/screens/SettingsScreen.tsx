@@ -2,10 +2,14 @@ import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
 import { Segmented } from '../components/Segmented';
 import { updateSettings, useSettings, type Language, type ThemePreference } from '../../settings/settings';
+import { quitGame } from '../../game/store';
+import { usePlayer } from '../game/usePlayer';
+import { hrefFor } from '../navigation';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
   const settings = useSettings();
+  const { airline } = usePlayer();
 
   return (
     <div className="screen screen--narrow">
@@ -34,6 +38,30 @@ export function SettingsScreen() {
           ]}
           onChange={(theme) => updateSettings({ theme })}
         />
+      </Panel>
+
+      <Panel title={t('settings.game')} code="GAME">
+        {airline ? (
+          <>
+            <p>
+              {t('settings.currentGame', { name: airline.name })}
+            </p>
+            <p className="muted small">{t('settings.autosaveNote')}</p>
+            <button
+              type="button"
+              className="button button--danger"
+              onClick={() => {
+                if (window.confirm(t('settings.quitConfirm', { name: airline.name }))) {
+                  void quitGame().then(() => (window.location.hash = hrefFor('ops')));
+                }
+              }}
+            >
+              {t('settings.quit')}
+            </button>
+          </>
+        ) : (
+          <p className="muted">{t('settings.noGame')}</p>
+        )}
       </Panel>
 
       <Panel title={t('settings.about')} code="INFO">

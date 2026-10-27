@@ -2,9 +2,18 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlapBoard } from '../components/FlapBoard';
 import { Panel } from '../components/Panel';
+import { TailFin } from '../components/TailFin';
+import { SimControls } from '../components/SimControls';
+import { GameClock } from '../components/StatusBar';
+import { MessageLog } from '../game/MessageLog';
+import { usePlayer } from '../game/usePlayer';
+import { useBooting } from '../../game/store';
+import { useWorld } from '../../data/world';
 import { useSettings } from '../../settings/settings';
+import { formatMoney } from '../../i18n/format';
 import { useResolvedTheme } from '../hooks/useApplyTheme';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { hrefFor } from '../navigation';
 
 type Level = 'normal' | 'caution' | 'info';
 
@@ -29,6 +38,9 @@ export function OpsScreen() {
   const offline = useOfflineState();
   const installed = useMediaQuery('(display-mode: standalone)');
   const isWide = useMediaQuery('(min-width: 768px)');
+  const booting = useBooting();
+  const { game, airline } = usePlayer();
+  const world = useWorld();
 
   // Status lines use cockpit (ECAM) colours: green = normal, amber = caution, cyan = info.
   const checks: { label: string; value: string; level: Level }[] = [
@@ -56,31 +68,93 @@ export function OpsScreen() {
     },
   ];
 
+  const statusPanel = (
+    <Panel title={t('ops.checksTitle')} code="STS">
+      <ul className="checklist">
+        {checks.map((check) => (
+          <li key={check.label} className="checklist__item">
+            <span className={`dot dot--${check.level}`} aria-hidden="true" />
+            <span className="checklist__label">{check.label}</span>
+            <span className={`checklist__value text--${check.level}`}>{check.value}</span>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+
+  if (!game || !airline) {
+    return (
+      <div className="screen">
+        <h1 className="screen__title">{t('ops.title')}</h1>
+        <FlapBoard lines={[t('ops.board'), 'VIE  LOWW  STBY']} width={isWide ? 20 : 17} />
+        <div className="grid">
+          <Panel title={t('ops.airlineTitle')} code="—">
+            <p className="lead">{t('ops.noAirline')}</p>
+            <p className="muted">{t('ops.noAirlineHint')}</p>
+            <a href={hrefFor('new')} className={`button button--primary${booting ? ' button--disabled' : ''}`}>
+              {t('ops.newGame')}
+            </a>
+          </Panel>
+          {statusPanel}
+        </div>
+      </div>
+    );
+  }
+
+  const hub = world?.airportById.get(airline.hubId);
+  const hubCode = hub?.iata ?? airline.hubId;
+  const fleet = Object.values(game.aircraft).filter((a) => a.airlineId === airline.id);
+  const active = fleet.filter((a) => a.status === 'active').length;
+  const delivering = fleet.length - active;
+  const negative = airline.cash.amount < 0;
+
   return (
     <div className="screen">
       <h1 className="screen__title">{t('ops.title')}</h1>
-      <FlapBoard lines={[t('ops.board'), 'VIE  LOWW  STBY']} width={isWide ? 20 : 17} />
+      <FlapBoard
+        lines={[airline.name.toUpperCase().slice(0, isWide ? 20 : 17), `${airline.icao}  ${hubCode}  OPS`]}
+        width={isWide ? 20 : 17}
+      />
 
       <div className="grid">
-        <Panel title={t('ops.airlineTitle')} code="—">
-          <p className="lead">{t('ops.noAirline')}</p>
-          <p className="muted">{t('ops.noAirlineHint')}</p>
-          <button type="button" className="button button--primary" disabled>
-            {t('ops.newGame')}
-          </button>
+        <Panel title={t('ops.airlineTitle')} code={`${airline.iata} / ${airline.icao}`}>
+          <div className="airline-card">
+            <TailFin primary={airline.colors.primary} secondary={airline.colors.secondary} code={airline.iata} size={72} />
+            <div className="airline-card__text">
+              <span className="airline-card__name">{airline.name}</span>
+              <span className="muted">
+                {t('ops.hub')}: <span className="mono">{hubCode}</span> {hub ? `· ${hub.city}` : ''}
+              </span>
+            </div>
+          </div>
+          <dl className="facts">
+            <dt>{t('ops.cash')}</dt>
+            <dd className={`mono ${negative ? 'text--warning' : 'text--normal'}`}>{formatMoney(settings.language, airline.cash, false)}</dd>
+            <dt>{t('ops.fleet')}</dt>
+            <dd>
+              {t('ops.fleetCount', { active, delivering })}
+            </dd>
+          </dl>
+          <a href={hrefFor('fleet')} className="button button--primary">
+            {fleet.length ? t('ops.toFleet') : t('ops.leaseFirst')}
+          </a>
         </Panel>
 
-        <Panel title={t('ops.checksTitle')} code="STS">
-          <ul className="checklist">
-            {checks.map((check) => (
-              <li key={check.label} className="checklist__item">
-                <span className={`dot dot--${check.level}`} aria-hidden="true" />
-                <span className="checklist__label">{check.label}</span>
-                <span className={`checklist__value text--${check.level}`}>{check.value}</span>
-              </li>
-            ))}
-          </ul>
+        <Panel title={t('ops.clockTitle')} code={t(`ops.mode.${game.options.timeMode}`)}>
+          <GameClock />
+          <SimControls />
+          <p className="muted small">{t(`ops.modeHint.${game.options.timeMode}`)}</p>
         </Panel>
+
+        <Panel title={t('ops.messagesTitle')} code="ACARS" className="panel--wide">
+          <MessageLog messages={game.messages.filter((m) => m.airlineId === airline.id || m.airlineId === null)} world={world} />
+        </Panel>
+
+        <Panel title={t('ops.nextTitle')} code="1.4">
+          <p className="muted">{t('ops.nextHint')}</p>
+        </Panel>
+
+        {statusPanel}
       </div>
     </div>
   );

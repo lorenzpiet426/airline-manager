@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Icon } from '../components/Icon';
 
 /** Screens that exist in the navigation but get their content in a later phase. */
-export function ComingSoonScreen({ route, phase }: { route: 'network' | 'fleet' | 'finance'; phase: string }) {
+export function ComingSoonScreen({ route, phase }: { route: 'network' | 'finance'; phase: string }) {
   const { t } = useTranslation();
   return (
     <div className="screen">

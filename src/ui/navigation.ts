@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import type { IconName } from './components/Icon';
 
-export type Route = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'settings' | 'more';
+export type Route = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'settings' | 'more' | 'new';
 
 export interface NavItem {
   route: Route;
@@ -19,6 +19,8 @@ const NAV: Record<Route, NavItem> = {
   finance: { route: 'finance', icon: 'finance', labelKey: 'nav.finance' },
   settings: { route: 'settings', icon: 'settings', labelKey: 'nav.settings' },
   more: { route: 'more', icon: 'more', labelKey: 'nav.more' },
+  // The new-game wizard: reached from the Ops screen, not listed in the navigation.
+  new: { route: 'new', icon: 'ops', labelKey: 'nav.new' },
 };
 
 /** Sidebar on computers and tablets. */

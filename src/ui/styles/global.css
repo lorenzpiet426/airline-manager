@@ -955,3 +955,453 @@ button {
   margin-left: auto;
   color: var(--text-faint);
 }
+
+/* ---------- Buttons as links, danger ---------- */
+a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button--disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.button--danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* ---------- Game clock & speed controls ---------- */
+.gameclock {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gameclock__date {
+  color: var(--text);
+}
+
+.gameclock__time {
+  color: var(--green);
+  font-weight: 500;
+}
+
+.mobile__header .gameclock {
+  font-size: 0.85rem;
+}
+
+.simcontrols {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  align-self: flex-start;
+}
+
+.simcontrols__button {
+  min-width: 36px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  letter-spacing: -0.12em;
+  cursor: pointer;
+}
+
+.simcontrols__button--pause {
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.simcontrols__button[aria-checked='true'] {
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+  color: var(--green);
+}
+
+.simcontrols__button--pause[aria-checked='true'] {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+  color: var(--amber);
+}
+
+.statusbar .sim-endweek {
+  min-height: 32px;
+  padding: 4px 12px;
+}
+
+/* ---------- Ops screen ---------- */
+.panel--wide {
+  grid-column: 1 / -1;
+}
+
+.airline-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.airline-card__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.airline-card__name {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.tailfin {
+  flex: none;
+  color: var(--text);
+}
+
+.msglog {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.msglog__item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 6px 0 6px 10px;
+  border-left: 3px solid var(--line-strong);
+}
+
+.msglog__item--normal { border-left-color: var(--green); }
+.msglog__item--info { border-left-color: var(--cyan); }
+.msglog__item--caution { border-left-color: var(--amber); }
+.msglog__item--warning { border-left-color: var(--red); }
+.msglog__item--warning .msglog__text { color: var(--red); }
+
+.msglog__time {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .msglog__item {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+/* ---------- Forms ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.field__label {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.input.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.form-error {
+  font-weight: 500;
+}
+
+/* ---------- New-game wizard ---------- */
+.identity {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.identity__fields {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+@media (max-width: 479px) {
+  .identity {
+    flex-direction: column;
+    align-items: center;
+  }
+  .identity__fields {
+    width: 100%;
+  }
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.swatch {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.swatch[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.colorpick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.colorpick input {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.hubcard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hubcard__code {
+  color: var(--accent);
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.hubcard__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.newgame .airport-search {
+  flex: none;
+}
+
+.newgame .airport-search__input {
+  box-shadow: none;
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 559px) {
+  .choices {
+    grid-template-columns: 1fr;
+  }
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.choice[aria-checked='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.choice__value {
+  color: var(--accent);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.choice__title {
+  font-weight: 600;
+}
+
+.newgame__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ---------- Fleet & lease market cards ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 767px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.card__title {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.card__reg {
+  color: var(--accent);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.card__type {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.card__price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.card__local {
+  font-weight: 400;
+}
+
+.facts--compact {
+  gap: 2px 12px;
+  font-size: 0.88rem;
+}
+
+.chip {
+  flex: none;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.chip--normal { color: var(--green); }
+.chip--planned { color: var(--magenta); }
+
+.notice {
+  padding: 10px 14px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  font-weight: 500;
+}
+
+.notice--ok {
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+}
+
+.notice--error {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

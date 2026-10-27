@@ -184,7 +184,8 @@ The game is a **website that behaves like an app** (a PWA). It has three main pa
 ### 3.4 Folder layout (planned)
 ```
 src/
-  engine/        pure TS simulation: state, commands, time, systems/ (demand, ops, finance, fleet, ai, events)
+  engine/        pure TS simulation: state, commands, time, money, rng, market, advance (systems grow here)
+  game/          the screen's link to the engine worker (store + autosave)
   data/          generated + hand-curated datasets (airports, aircraft, airlines, history)
   ui/            React: screens/, components/, layouts/desktop + layouts/mobile, map/
   i18n/          en.json, de.json
@@ -240,7 +241,7 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
   OCC theme (dark/light), EN/DE switch, PWA install, auto-deploy to the free host. *Test: open it on your phone and install it.*
 - **1.2 World data + map:** ✅ pipeline for all scheduled-service airports + population/wealth/tourism;
   offline world map (MapLibre + Natural Earth) with airport search and detail panel. *Test: browse airports, zoom the map.*
-- **1.3 Engine core + aircraft + new game:** starter aircraft database (~20 current types: ATR 72, Dash 8-400,
+- **1.3 Engine core + aircraft + new game:** ✅ starter aircraft database (~20 current types: ATR 72, Dash 8-400,
   E175/E195-E2, A220, A320neo family, 737 MAX, A330neo, A350, 787, 777…, moved here from 1.2 so it is built
   together with leasing); game state, commands, clock with **pause/speed (real-time)** and
   **turn-based weekly** mode; new-game wizard (name, IATA-style code, colors, hub, starting capital);
@@ -330,6 +331,13 @@ Server-authoritative shared world running the same engine (free tier to be resea
 | 2026-10-27 | Base map = Natural Earth 1:50m GeoJSON (not world-atlas TopoJSON) | world-atlas shapes are spherical and draw artefacts at the 180° line on a flat map |
 | 2026-10-27 | Map data is put into the MapLibre style at creation (no "load" event wait) | Faster first paint; robust when the page is in the background |
 | 2026-10-27 | Tourism figures use 2019 when available | 2020–2022 are COVID-distorted; crises will be modelled as game events |
+| 2026-10-27 | Starting capital chosen in the wizard: €25M (tight) / €75M (standard) / €200M (well funded), converted to the hub currency and rounded to 2 significant digits | Owner choice; sandbox comes with scenarios |
+| 2026-10-27 | Books in the hub country's currency (if the ECB publishes a rate, else USD); leases priced in USD, converted at booking time | Owner choice; like real airlines, prepares currency risk |
+| 2026-10-27 | Leased aircraft arrive after a realistic wait (30–80 days, wide-bodies 45–110); only used aircraft (≥ 1 year old, ≤ 20 years) for now; new aircraft via factory orders in Phase 4 | Owner choice |
+| 2026-10-27 | Lease terms: deposit 2 months' rent (wide-bodies 3) on signing; rent from delivery (part month pro rata), then on the 1st of every month | Usual industry practice, simple to follow |
+| 2026-10-27 | Real-time speeds: pause, 1 min / 10 min / 1 h / 1 day of game time per real second; turn-based mode advances 7 days per "End week" | Covers watching flights up to fast-forwarding months |
+| 2026-10-27 | Money stored as whole currency units (no cents) | Airline accounts at this scale don't need cents; avoids rounding drift |
+| 2026-10-27 | One automatic save in localStorage until Phase 1.5 (save slots in IndexedDB) | Reloading the page must not lose the game while testing |
 
 ## 8. Progress log
 ### 2026-10-27 — Session 1 (Phase 0)
@@ -379,3 +387,29 @@ Server-authoritative shared world running the same engine (free tier to be resea
 - Lessons: MapLibre 6 needs `setWorkerUrl(...)` with Vite; its CSS sets `position: relative` on the map container;
   the in-app browser pane runs pages as "hidden", so screenshots can lag — verify map state via `window.__map` (dev only).
 - **Next:** Phase 1.3 — aircraft database, engine core (state, commands, clock), new-game wizard, leasing.
+- Owner confirmed: map tested on phone, works.
+
+### 2026-10-27 — Session 4 (Phase 1.3 Engine core + aircraft + new game) ✅
+- Owner decisions: capital chosen in wizard (€25M/€75M/€200M), hub-currency books + USD leases, realistic delivery wait (§7).
+- **Aircraft database** `src/data/aircraft.ts`: 25 types (ATR 42/72-600, Dash 8-400, E175, E190, E190-E2, E195-E2,
+  A220-100/300, A320ceo/neo, A321ceo/neo, A321XLR, 737-800, 737-8, 737-9, A330-300/-900, 787-8/9/10, A350-900/1000,
+  777-300ER, 777-9 (enters service 2027)). Currencies + ECB rates (`currencies.ts`), registration patterns (`registrations.ts`).
+- **Engine** `src/engine/` (pure TypeScript, no UI): `time.ts` (minutes since 1950 UTC), `money.ts` (Money with currency,
+  conversion), `rng.ts` (seeded Mulberry32, state in the save), `state.ts` (GameState, version 1), `core.ts` (ids,
+  event queue, messages, bookings), `market.ts` (lease market: 36 offers, refreshed monthly), `commands.ts`
+  (FoundAirline, LeaseAircraft with validation + error codes), `advance.ts` (event-driven time: deliveries, monthly rent,
+  market refresh), `game.ts` (createGame, migrate).
+- **Worker** `src/worker/engine.worker.ts` (Comlink): owns the state, runs the real-time clock (100 ms ticks, catches up by
+  elapsed time), end-week, commands. Each snapshot carries a revision number so late copies are ignored.
+  `src/game/store.ts`: React hooks (`useGame`, `useSpeed`), autosave to localStorage (`am.autosave.v1`), restore on start.
+- **UI:** new-game wizard (`#/new`: name, auto-suggested codes, livery colours with tail-fin preview, hub search,
+  capital cards in hub currency, time mode), Ops screen (airline card, game clock + speed controls, ACARS-style message
+  log), Fleet screen (my fleet; lease market with category filter, runway warning vs hub, confirm step), game clock +
+  speed controls in the desktop status bar, game date in the phone header, "Quit game" in Settings.
+- Tests: 29 (engine: determinism, founding validation, JFK → USD capital, deposit/registration/delivery, monthly rent,
+  one-year run; data: aircraft plausibility, currencies, registration patterns).
+- Verified in browser: founded "Danube Air" at VIE (€75M), leased a 737-800 → OE-LLX, delivered 7 Feb 2026 with
+  pro-rata rent, market refreshed, reload restores the game, German phone layout. No console errors.
+- Known: `airports.json` is bundled twice (map + engine worker, ~250 kB gzip extra) — share it later (e.g. fetch once).
+- **Next:** Phase 1.4 — routes (range/runway checks), demand model, costs (fuel, crew, airport, navigation, maintenance),
+  weekly P&L, planes flying on the map.

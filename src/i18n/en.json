@@ -11,7 +11,8 @@
     "finance": "Finance",
     "settings": "Settings",
     "more": "More",
-    "main": "Main navigation"
+    "main": "Main navigation",
+    "new": "New airline"
   },
   "status": {
     "sim": "SIM",
@@ -24,7 +25,7 @@
     "board": "WELCOME TO OPS",
     "airlineTitle": "Your airline",
     "noAirline": "No airline yet.",
-    "noAirlineHint": "Founding your own airline arrives in Phase 1.3.",
+    "noAirlineHint": "Found your own airline: choose a name, colours, a home airport and your starting capital.",
     "newGame": "New game",
     "checksTitle": "System status",
     "checkLanguage": "Language",
@@ -35,12 +36,30 @@
     "offlineUnsupported": "Not supported",
     "checkInstall": "Installed as app",
     "installed": "Yes",
-    "notInstalled": "Not yet: use “Add to Home Screen” / “Install”"
+    "notInstalled": "Not yet: use “Add to Home Screen” / “Install”",
+    "hub": "Hub",
+    "cash": "Cash",
+    "fleet": "Fleet",
+    "fleetCount": "{{active}} in service, {{delivering}} on the way",
+    "toFleet": "Fleet & lease market",
+    "leaseFirst": "Lease your first aircraft",
+    "clockTitle": "Game clock",
+    "mode": {
+      "realtime": "Real-time",
+      "weekly": "Turn-based (weekly)"
+    },
+    "modeHint": {
+      "realtime": "Time runs continuously. Pause any time; choose a speed from 1 game minute to 1 game day per second.",
+      "weekly": "Time stands still while you decide. “End week” simulates the next 7 days in one go."
+    },
+    "messagesTitle": "Ops messages",
+    "noMessages": "No messages yet.",
+    "nextTitle": "Coming next",
+    "nextHint": "Routes, flights and ticket revenue arrive in Phase 1.4. Until then your aircraft wait at the hub, and the lease rent is already due every month."
   },
   "comingSoon": {
     "title": "Coming in Phase {{phase}}",
     "network": "Opening routes and planning your network arrives in Phase 1.4.",
-    "fleet": "Leasing your first aircraft arrives in Phase 1.3.",
     "finance": "Weekly profit & loss, cash and key figures arrive in Phase 1.4."
   },
   "settings": {
@@ -52,7 +71,13 @@
     "themeLight": "Light (Daylight)",
     "about": "About",
     "version": "Version",
-    "dataNote": "Built with open data. All sources are listed in the project's DATA_SOURCES file."
+    "dataNote": "Built with open data. All sources are listed in the project's DATA_SOURCES file.",
+    "game": "Current game",
+    "currentGame": "You are running {{name}}.",
+    "autosaveNote": "The game saves itself automatically on this device. Save slots and export arrive in Phase 1.5.",
+    "quit": "Quit game",
+    "quitConfirm": "Really end the game with {{name}}? It cannot be restored.",
+    "noGame": "No game running."
   },
   "more": {
     "title": "More"
@@ -62,7 +87,8 @@
     "de": "Deutsch"
   },
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "map": {
     "loading": "Loading world data…",
@@ -96,5 +122,110 @@
     "gdpPerCapita": "GDP per capita",
     "tourists": "Tourist arrivals (country)",
     "marketNote": "Catchment = people living in cities within 100 km. Passenger demand is calculated from these figures in Phase 1.4."
+  },
+  "sim": {
+    "speed": "Simulation speed",
+    "pause": "Pause",
+    "speed1": "1 game minute per second",
+    "speed2": "10 game minutes per second",
+    "speed3": "1 game hour per second",
+    "speed4": "1 game day per second",
+    "endWeek": "End week ▸"
+  },
+  "msg": {
+    "founded": "{{name}} founded at {{hub}} with {{capital}} starting capital.",
+    "leaseSigned": "Lease signed: {{type}} {{registration}} from {{lessor}}, delivery on {{date}}.",
+    "delivered": "{{type}} {{registration}} delivered to {{airport}} in your colours.",
+    "rentPaid": "Monthly lease rent paid: {{amount}}.",
+    "cashNegative": "Cash is below zero! Without money coming in, the airline cannot keep paying its bills."
+  },
+  "newGame": {
+    "title": "Found your airline",
+    "intro": "A startup in 2026. Choose your identity, home base and money – then lease your first aircraft.",
+    "identity": "Name & livery",
+    "name": "Airline name",
+    "namePlaceholder": "e.g. Danube Air",
+    "iata": "Airline code (2)",
+    "icao": "ICAO code (3)",
+    "codesHint": "The 2-character code goes in front of flight numbers (like OS 51), the 3-letter ICAO code is used by air traffic control.",
+    "livery": "Livery colours",
+    "colorMain": "Main",
+    "colorSecond": "Accent",
+    "hub": "Home airport (hub)",
+    "longestRunway": "longest runway",
+    "hubHint": "Your books are kept in {{currency}}. Aircraft leases are priced in US dollars, as in the real industry.",
+    "capital": "Starting capital",
+    "capitalOption": {
+      "tight": "Tight",
+      "standard": "Standard",
+      "funded": "Well funded"
+    },
+    "capitalHint": {
+      "tight": "Like a very small startup: one or two aircraft, every mistake hurts.",
+      "standard": "Roughly what real low-cost startups raised: a small fleet to start.",
+      "funded": "A startup with strong investors behind it: room for wide-bodies."
+    },
+    "mode": "Game mode",
+    "timeMode": "Time",
+    "scenario": "Scenario",
+    "scenarioStartup": "Startup airline",
+    "startDate": "Start",
+    "startDateValue": "1 January 2026",
+    "realism": "Realism",
+    "realismRealistic": "Realistic",
+    "laterHint": "Hardcore realism, historical start years, the Austrian Airlines takeover and competitors arrive in later phases.",
+    "found": "Found airline",
+    "replaceWarning": "You already have a game running. Founding a new airline replaces it."
+  },
+  "errors": {
+    "nameLength": "The name needs 2 to 40 characters.",
+    "iataFormat": "The airline code needs 2 letters or digits (not two digits).",
+    "icaoFormat": "The ICAO code needs exactly 3 letters.",
+    "codeTaken": "Another airline already uses this code.",
+    "colorFormat": "Please choose valid colours.",
+    "hubUnknown": "Please choose a home airport.",
+    "capitalInvalid": "Please choose a starting capital.",
+    "airlineUnknown": "No airline found.",
+    "offerGone": "This offer is no longer available.",
+    "insufficientCash": "Not enough cash for the deposit"
+  },
+  "fleet": {
+    "title": "Fleet",
+    "noGame": "Found an airline first, then you can lease aircraft here.",
+    "tabFleet": "My fleet ({{count}})",
+    "tabMarket": "Lease market ({{count}})",
+    "empty": "You have no aircraft yet. Lessors are offering used aircraft on the lease market.",
+    "toMarket": "Open lease market",
+    "atAirport": "At {{airport}}",
+    "deliveryOn": "Delivery {{date}}",
+    "seats": "Seats",
+    "built": "Built",
+    "age_one": "{{count}} year old",
+    "age_other": "{{count}} years old",
+    "rent": "Lease rent",
+    "perMonth": "/ month",
+    "lessor": "Lessor",
+    "leaseEnds": "Lease ends",
+    "marketIntro": "Used aircraft offered by leasing companies. You pay a security deposit now; monthly rent starts on delivery. New offers appear at the start of each month, old ones expire.",
+    "filter": "Aircraft category",
+    "category": {
+      "all": "All",
+      "turboprop": "Turboprop",
+      "regional": "Regional jet",
+      "narrowbody": "Narrow-body",
+      "widebody": "Wide-body"
+    },
+    "leased": "Lease signed! Your {{type}} will be registered as {{registration}}.",
+    "range": "Range",
+    "takeoff": "Take-off run (MTOW)",
+    "term": "Lease term",
+    "years_one": "{{count}} year",
+    "years_other": "{{count}} years",
+    "delivery": "Delivery",
+    "runwayWarning": "Fully loaded, this type needs {{needed}} m of runway; {{hub}} has {{runway}} m. It can still fly shorter routes with less fuel.",
+    "confirmText_one": "Pay a deposit of {{deposit}} now. Rent of {{rent}} per month starts on delivery ({{date}}) and runs for {{count}} year.",
+    "confirmText_other": "Pay a deposit of {{deposit}} now. Rent of {{rent}} per month starts on delivery ({{date}}) and runs for {{count}} years.",
+    "sign": "Sign lease",
+    "lease": "Lease…"
   }
 }
