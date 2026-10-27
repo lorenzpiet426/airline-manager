@@ -551,7 +551,16 @@ education", forbid making the data available to others (§3 iii) and require a w
   probably 20–40 % too high (Wikipedia misses other airlines on some routes). Fleet: Wikipedia counts + register
   registrations matched by Austrian's series (OE-LB/LX/LZ/LA/LP/LW): 29 A320ceo, 5+2? A320neo, 6 A321, 3 767, 6 777,
   4 787-9 (Wikipedia: 3), 13 E195; 31 on order. Owner accepted it without hand-checking (nothing tagged `hand-checked`).
-- **Next pipeline steps:** Wikipedia articles (business model, bases, destination lists, fleet tables, seat layouts;
+- **Pipeline step 2 (in progress, 2026-10-27):** `tools/download-wikipedia-airports.ts` (destination sections of 3,812
+  airport articles, 50 per request) → `tools/build-wikipedia-routes.ts` → `routes-wikipedia.json`: 27,821 airline
+  routes, 665 airlines, 7,981 confirmed by both ends (CC BY-SA). `tools/download-airlines-extra.ts`: 106 brand/subsidiary
+  airlines found in Wikidata (AJet, United Express, QantasLink…) — **not merged into airlines.json yet**.
+  **Open bug:** `tools/raw/wikipedia/_redirects.json` has some wrong self-mappings from one failed batch (e.g.
+  "Henri Coandă International Airport" should → "Bucharest Henri Coandă…"; batch resolution itself works) → re-resolve
+  entries where value == key, then rebuild routes (Bucharest, Dhaka, Don Mueang missing until then).
+  Still to do in step 2: merge extra airlines (build-airlines), airline articles (business model, bases, fleet tables,
+  seat layouts), split Eurostat totals into airline frequencies, FAA/Canada registers, validation report.
+- **Next pipeline steps (original list):** Wikipedia articles (business model, bases, destination lists, fleet tables, seat layouts;
   ambiguous destinations listed for the owner); Brazil ANAC + Canada register; split Eurostat route totals between the
   airlines that serve each route; fleets; validation report (Austrian, Lufthansa, Ryanair, Wizz Air); then 2.1a screens.
 - (Earlier plan text:) build the pipeline (Wikidata + Wikipedia → airlines/hubs/destinations; official stats

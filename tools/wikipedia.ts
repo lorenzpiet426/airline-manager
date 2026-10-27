@@ -89,9 +89,11 @@ export interface AirlineDestinations {
  */
 export function parseAirportDestinations(wikitext: string, section = 'Passenger'): AirlineDestinations[] {
   const text = cleanWikitext(wikitext);
-  // Only the passenger part (cargo airlines are listed in a separate "Cargo" table).
+  // Only the passenger part: from "=== Passenger ===" (if present) up to the cargo table or the next section.
   const start = text.search(new RegExp(`===\\s*${section}\\s*===`));
-  const scope = start >= 0 ? text.slice(start, text.slice(start + 10).search(/\n===?[^=]/) + start + 10 || undefined) : text;
+  let scope = start >= 0 ? text.slice(start) : text;
+  const end = scope.slice(5).search(/\n===?\s*(Cargo|Statistics|Traffic)/i);
+  if (end >= 0) scope = scope.slice(0, end + 5);
   const result: AirlineDestinations[] = [];
   for (const block of scope.matchAll(/\{\{\s*Airport-dest-list([\s\S]*?)\n\}\}/gi)) {
     const cells = splitTopLevel(block[1]!).slice(1); // [0] is the text before the first "|"
