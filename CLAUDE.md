@@ -314,6 +314,36 @@ Server-authoritative shared world running the same engine (free tier to be resea
 - ~~Phase 1.1: create a free GitHub account~~ — done (lorenzpiet426), 2026-10-27.
 - **Phase 3:** create a free **Firebase** project with a Google account (no credit card; stay on the Spark plan).
 
+## 5b. Phase 2.1 data brief from the owner (2026-10-27) — requirements for real airlines
+1. **Seasons:** never mix data from before/after an IATA season change (winter 2026/27 started 25 Oct 2026). Store the
+   season with the data. Summer: ideally two full weeks of peak summer (Jul/Aug); otherwise the last two full weeks
+   before 25 Oct, and list seasonal routes that are probably missing. Winter: **TODO mid-December 2026: fetch two
+   winter weeks** (ski/winter-sun routes start in December); until then the game uses the summer network for both
+   seasons, clearly marked. Later the game switches networks by season.
+2. **Clean data:** filter out training, ferry, positioning, cargo and one-off charter flights; handle wet-leases
+   (flight number of airline A, aircraft of airline B); never double-count codeshares.
+3. **Fleets:** combine tracking with Wikipedia/Wikidata fleet counts, Airbus/Boeing official orders & deliveries data,
+   official registers where available (FAA, UK G-INFO, Austro Control). Explain which source wins when they disagree.
+   **Do not copy** Planespotters, Flightradar24 or FlightConnections (owner uses them only to spot-check by hand).
+4. **Validation report** for Austrian, Lufthansa, Ryanair, Wizz Air: reconstructed routes, frequencies and fleets vs.
+   their Wikipedia pages, listing every difference.
+5. **Aircraft types:** add *all* common missing types incl. turboprops (ATR 42, Dash 8 family) and freighters.
+6. **Licensing:** check that every source allows derived data in the public repo; credit every source in the game;
+   if not allowed, present options before uploading anything. Real airline names and colours, **no real logos**.
+7. **Coverage:** where tracking is weak, fill with the demand model and mark routes as "modelled".
+Then 2.1a (real airlines visible) / 2.1b (AI behaviour by airline type) as planned.
+
+**Findings (2026-10-27):**
+- OpenSky terms (opensky-network.org/about/terms-of-use, read 2026-10-27): licence "solely for the purpose of non-profit
+  research and non-profit education"; §3(iii) no distribution / making available of the data sets; REST API use in
+  "any live product" needs a written licence; publications (incl. web pages) must cite Schäfer et al. 2014 and send
+  OpenSky a link; §4(ii) delete data when access/use ends. → **OpenSky-derived data must not be committed or deployed
+  without written permission from OpenSky.** Owner to decide the route (see progress log).
+- OpenSky REST credits (registered "standard user": 4,000/day for /flights): a 2-h /flights/all query costs 60 credits
+  for data 3–10 days old, 120 for 11–15 days, … 960 for > 25 days. One full week = 84 queries → peak summer
+  (> 25 days old) ≈ 80,000 credits per week ≈ 20 days of quota: not practical. Data ages daily, so costs rise.
+- Credentials file: `tools/.env.opensky` (git-ignored, never uploaded).
+
 ## 6. Open questions / decisions waiting for the owner
 - **D1 Cloud sync service:** Firebase Spark (recommended: no pausing, no card) vs Supabase Free (Postgres, but
   free projects pause after 7 days of inactivity until restored in the dashboard).
@@ -473,3 +503,11 @@ Server-authoritative shared world running the same engine (free tier to be resea
   fares, shown on the map and per route (who flies, how often, fare, load; non-stop vs one-stop options); they enter/leave
   routes, react to prices, lease aircraft, can go bankrupt; they replace the "invisible incumbents".
   Then **2.2 detailed scheduling**, then **1.5** save slots/export/dashboard.
+
+### 2026-10-27 — Session 6 (Phase 2.1 preparation: real airline data)
+- Owner chose **real airlines** (all of them), real hubs, fleets and networks as close to today as possible; home rival
+  at the hub (Austrian at VIE); AI behaviour realistic by airline type; existing saves get the airlines.
+- Owner's detailed data brief recorded in §5b. Free data check: OpenSky (one recent week of flights) is the only free
+  source of *current* networks for all airlines; public OpenSky flight lists end Dec 2021 (COVID-reduced).
+- **Blocked on licensing:** OpenSky's terms don't allow publishing derived data in a public repo/app without written
+  permission (§5b findings). Nothing fetched, nothing uploaded. Options presented to the owner; waiting for decision.
