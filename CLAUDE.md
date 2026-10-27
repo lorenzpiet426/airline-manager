@@ -314,24 +314,42 @@ Server-authoritative shared world running the same engine (free tier to be resea
 - ~~Phase 1.1: create a free GitHub account~~ — done (lorenzpiet426), 2026-10-27.
 - **Phase 3:** create a free **Firebase** project with a Google account (no credit card; stay on the Spark plan).
 
-## 5b. Phase 2.1 data brief from the owner (2026-10-27) — requirements for real airlines
-1. **Seasons:** never mix data from before/after an IATA season change (winter 2026/27 started 25 Oct 2026). Store the
-   season with the data. Summer: ideally two full weeks of peak summer (Jul/Aug); otherwise the last two full weeks
-   before 25 Oct, and list seasonal routes that are probably missing. Winter: **TODO mid-December 2026: fetch two
-   winter weeks** (ski/winter-sun routes start in December); until then the game uses the summer network for both
-   seasons, clearly marked. Later the game switches networks by season.
-2. **Clean data:** filter out training, ferry, positioning, cargo and one-off charter flights; handle wet-leases
-   (flight number of airline A, aircraft of airline B); never double-count codeshares.
-3. **Fleets:** combine tracking with Wikipedia/Wikidata fleet counts, Airbus/Boeing official orders & deliveries data,
-   official registers where available (FAA, UK G-INFO, Austro Control). Explain which source wins when they disagree.
-   **Do not copy** Planespotters, Flightradar24 or FlightConnections (owner uses them only to spot-check by hand).
-4. **Validation report** for Austrian, Lufthansa, Ryanair, Wizz Air: reconstructed routes, frequencies and fleets vs.
-   their Wikipedia pages, listing every difference.
-5. **Aircraft types:** add *all* common missing types incl. turboprops (ATR 42, Dash 8 family) and freighters.
-6. **Licensing:** check that every source allows derived data in the public repo; credit every source in the game;
-   if not allowed, present options before uploading anything. Real airline names and colours, **no real logos**.
-7. **Coverage:** where tracking is weak, fill with the demand model and mark routes as "modelled".
-Then 2.1a (real airlines visible) / 2.1b (AI behaviour by airline type) as planned.
+## 5b. Phase 2.1 data brief from the owner (2026-10-27, final version) — real airlines
+**General rules**
+- Only sources whose licence allows use in this public, free, non-commercial game. Check every licence first; credit
+  every source in an in-game **"Data sources" screen** and in `docs/DATA_SOURCES.md`.
+- **No OpenSky data fetched or stored, not even locally, without OpenSky's written permission.**
+- **Never copy** Planespotters, Flightradar24, FlightConnections, Airfleets, Cirium, OAG, ch-aviation (owner spot-checks by hand only).
+- Real airline names and colours, **no real logos**.
+- Every route, frequency and fleet number carries a **source tag**: `official`, `wikipedia` (Wikipedia/Wikidata),
+  `hand-checked` or `modelled`, visible in the game.
+
+**1. Airlines, hubs, routes:** base = Wikipedia + Wikidata (names, codes, hubs, business model, destination lists).
+Official traffic statistics where licensed: USA BTS T-100 segment (monthly, per airline & route), UK CAA airline data,
+Eurostat route data, Australia BITRE (international per airline & city pair, domestic routes), Brazil ANAC open data
+incl. VRA, India DGCA. Where only destination lists exist: frequencies from the demand model, tagged `modelled`.
+Resolve ambiguous destinations (which London airport) and list uncertain ones for the owner.
+**Seasons:** IATA winter started 25 Oct 2026; never mix seasons; store the season with all data.
+**TODO mid-December 2026: refresh winter data** (ski/winter-sun routes start in December); until then the summer network
+is used for both seasons, clearly marked; later the game switches networks by season.
+Show a **coverage map** (official / Wikipedia-based / modelled by region).
+
+**2. Fleets**, in order of trust: (a) official aircraft registers with real individual aircraft where downloadable and
+licensed (check FAA, UK CAA G-INFO, Austro Control, Irish IAA, Malta, Transport Canada, Australia CASA, Brazil ANAC RAB);
+(b) Airbus & Boeing official orders & deliveries (order books, delivery dates); (c) airlines' fleet pages / annual
+reports (bigger airlines, entered as facts); (d) Wikipedia/Wikidata fleet tables (counts, orders, seat configurations);
+(e) otherwise generated aircraft (right national registration format, ages from the type's delivery years), `modelled`.
+Match by **operator**, not registration country (leasing, Malta/Ireland). Disagreements: most trusted source wins,
+difference explained in the validation report. Cabin layouts per airline where known, else typical for the airline type.
+
+**3. Austrian by hand:** owner hand-checks Austrian's network (VIE airport website + Austrian timetable) and fleet
+(types, numbers, registrations) in templates under `data-hand/austrian/`; tagged `hand-checked`.
+**4. Validation report** for Austrian, Lufthansa, Ryanair, Wizz Air: reconstruction vs. Wikipedia, every difference listed.
+**5. Aircraft types:** all common missing types incl. turboprops (ATR 42, Dash 8 family), regional jets, freighters.
+**6. OpenSky:** owner emails OpenSky for permission (aggregated route/frequency tables only, no raw flights or aircraft
+identifiers, full credit). If yes → real frequencies and departure times added later as an update.
+Then 2.1a (real airlines visible) / 2.1b (AI behaviour by airline type). **Show the owner which sources work before
+building screens.**
 
 **Findings (2026-10-27):**
 - OpenSky terms (opensky-network.org/about/terms-of-use, read 2026-10-27): licence "solely for the purpose of non-profit
@@ -510,4 +528,16 @@ Then 2.1a (real airlines visible) / 2.1b (AI behaviour by airline type) as plann
 - Owner's detailed data brief recorded in §5b. Free data check: OpenSky (one recent week of flights) is the only free
   source of *current* networks for all airlines; public OpenSky flight lists end Dec 2021 (COVID-reduced).
 - **Blocked on licensing:** OpenSky's terms don't allow publishing derived data in a public repo/app without written
-  permission (§5b findings). Nothing fetched, nothing uploaded. Options presented to the owner; waiting for decision.
+  permission (§5b findings). Nothing fetched, nothing uploaded.
+- Owner chose **option C**: build from open sources now (final brief §5b), email OpenSky for permission (draft given
+  to the owner, who sends it). **No OpenSky data, not even locally, without written permission.**
+- **Source check done** (table in `docs/DATA_SOURCES.md`, "Source check for real airlines"): ✅ Wikidata (CC0),
+  Wikipedia (CC BY-SA → derived tables CC BY-SA), Eurostat (route totals, no airline split), Brazil ANAC (VRA flights,
+  per-airline route stats incl. fuel, RAB register with operator), Canada CCAR; 🟡 BTS T-100 (form), UK CAA (airline
+  totals only), Ireland IAA (Sept 2025, login since), Austria (operator column empty), FAA (owner downloads by hand);
+  ❌ India DGCA, UK G-INFO, Airbus/Boeing O&D (terms forbid reuse → hand-check only); ❓ BITRE, CASA, Malta (sites
+  unreachable from here → owner checks in a browser).
+- Austrian hand-check templates created: `data-hand/austrian/routes.csv`, `fleet.csv`, `README.md` (format explained).
+- **Next:** owner approves the source list, sends the OpenSky email, checks BITRE/CASA/Malta/ANAC licence by hand and
+  downloads the FAA ZIP; then build the pipeline (Wikidata + Wikipedia → airlines/hubs/destinations; official stats
+  for frequencies; registers for fleets; new aircraft types), validation report, then 2.1a screens.

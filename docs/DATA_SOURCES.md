@@ -39,6 +39,32 @@ Notes:
   liveries; we do not copy logo image files.
 - Facts (numbers like range or MTOW) are not copyrightable; we re-enter them in our own data files and cite the source.
 
+## Source check for real airlines (Phase 2.1, 2026-10-27)
+Checked for: licence allows use in a public, free, non-commercial game; bulk download possible by script; usable fields.
+Nothing below has been imported yet — this is the checklist the owner approves before building.
+
+| Source | What it gives | Download | Licence / terms | Verdict |
+|---|---|---|---|---|
+| **Wikidata** | airline names, IATA/ICAO codes (P229/P230), hubs (P113), alliances (P114) | SPARQL endpoint / dumps (descriptive User-Agent required) | **CC0** (attribution requested, not required) | ✅ usable |
+| **Wikipedia** | business model, destination lists, fleet tables with orders and seat layouts | MediaWiki API (descriptive User-Agent, requests in series, cache) | **CC BY-SA 4.0** → our derived tables from Wikipedia must also be CC BY-SA, with attribution | ✅ usable (share-alike) |
+| **Eurostat** `avia_par_*` | per **airport pair** (no airline breakdown — verified: dimensions are only unit, measure, airport pair, time): passengers, seats, commercial flights | API / bulk TSV | reuse allowed with source acknowledged; non-commercial reuse unrestricted | ✅ usable: total flights/seats per route, split between airlines |
+| **Brazil ANAC** — VRA (every scheduled flight per day, incl. 2026), Dados Estatísticos (per airline & route & month: passengers, seats, departures, fuel), RAB register (registration, type, **operator**, seats, year) | sistemas.anac.gov.br/dadosabertos (plain file server, CSV/JSON) | Brazilian open-data policy (Decree 8.777/2016); licence text on dados.gov.br could not be read automatically → **owner to confirm by hand** | ✅ likely usable (best source found) |
+| **US BTS T-100 Segment** | per airline & airport pair & aircraft type: departures, seats, passengers (monthly) | web form (not in the PREZIP folder) — scripting still to test | US federal government work → public domain (policy page blocked automated reading) | 🟡 usable if the form can be scripted |
+| **UK CAA airline data** | per **airline** (UK carriers) totals; routes only per airport, not per airline | Excel per month | attribution required, must not be sold; no open licence | 🟡 limited (calibration only) |
+| **Australia BITRE** (international per airline & city pair; domestic routes) | — | site timed out from here | not read | ❓ owner to check in a browser |
+| **India DGCA** | monthly traffic | — | "All rights reserved", no open licence found | ❌ not usable |
+| **Canada CCAR** register | registration, type, serial, year, registered owner (in Canada usually the airline) | ✅ direct ZIP download | Government of Canada website terms (non-commercial reproduction with attribution); not on open.canada.ca | ✅ usable with attribution |
+| **Ireland IAA** register | registration, type, year, serial, registered owner (e.g. 340 Ryanair aircraft) | ✅ Excel — but **last public file Sept 2025**; since Oct 2025 the live register needs a login | no reuse terms found on the page | 🟡 usable with care (one year old) |
+| **Austria Austro Control** register | registration, type, serial, MTOW; operator column **empty** | ✅ Excel, monthly (Sept 2026) | no reuse terms found | 🟡 usable: identify airliners by OE-L… + owner's hand-check |
+| **USA FAA** register | registration, type, year, owner | blocks automated downloads (HTTP 403) | public domain | 🟡 owner downloads the ZIP by hand in a browser |
+| **UK G-INFO** | — | paid, single-PC licence, copyright reserved | ❌ not usable |
+| **Malta** register | — | site blocks automated access (403) | not read | ❓ owner to check |
+| **Australia CASA** register | — | site timed out | not read | ❓ owner to check |
+| **Airbus orders & deliveries** | per customer & type, monthly Excel (Sept 2026) | ✅ direct link | airbus.com terms forbid extracting/re-using content | ❌ not for import — hand-check only |
+| **Boeing orders & deliveries** | — | pages returned 404 | not read | ❌ treat like Airbus until checked |
+| **OpenFlights airlines.dat** | names/codes (snapshot, stale; routes stopped 2014) | ✅ | ODbL (share-alike), partly GFDL | 🟡 fallback for codes only |
+| **OpenSky** | current flights | — | non-profit research/education only, no redistribution | ⛔ only with written permission (email drafted) |
+
 ## Economics model (Phase 1.4) — how it works and how it was calibrated
 All in `src/engine/economics.ts`, amounts in USD, converted to the airline's book currency when booked.
 - **Demand** (gravity model): passengers/year = K × (market people A × B × tourism)^0.7 × (wealth A × wealth B)^0.2
