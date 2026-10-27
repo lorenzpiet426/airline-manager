@@ -11,6 +11,7 @@ reusing them.
 | `airlines.json` | Wikidata (CC0) | CC0 |
 | `routes-eurostat.json` | Eurostat avia_par_* (reuse with source acknowledged) | Source: Eurostat |
 | `networks.json` | Routes: English Wikipedia airport articles; weekly flights: Eurostat totals split by the game | **CC BY-SA 4.0** — attribution: Wikipedia contributors, Eurostat |
+| `registers.json` | FAA (public domain), Transport Canada CCAR, Austro Control, Irish Aviation Authority registers | Sources: FAA, Transport Canada, Austro Control, IAA (non-commercial reuse with attribution) |
 | `airline-details.json` | English Wikipedia airline articles (infobox, categories, fleet tables) | **CC BY-SA 4.0** — attribution: Wikipedia contributors |
 
 "CC BY-SA 4.0" (share-alike) means anyone may reuse and change these files, but must credit the source and publish

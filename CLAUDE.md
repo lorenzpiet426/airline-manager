@@ -573,8 +573,12 @@ education", forbid making the data available to others (§3 iii) and require a w
   (Austrian, Lufthansa, Ryanair, Wizz: destinations vs. their Wikipedia lists, frequencies vs. Eurostat, fleets vs.
   Austrian/Irish registers). Austro Control register **does** have operators (68 × Austrian Airlines AG = our draft).
   `src/data/generated/README.md` lists licences (networks/details = CC BY-SA 4.0). Tests: 54.
-- **Still to do before 2.1a screens:** fleets from FAA (owner's download in tools/raw) and Canada registers
-  (individual aircraft for US/Canadian airlines); then 2.1a: load real airlines into the engine (replace invisible
+- **Registers (2026-10-27):** `tools/build-registers.ts` → `registers.json`: 7,443 individual aircraft (registration,
+  type, build year) at 87 airlines from FAA, Transport Canada, Austro Control (operator column) and IAA Ireland; owner
+  names matched by company-name key (legal forms and words like "Airlines" removed); regional operators without own
+  network (SkyWest, Republic) included; leased aircraft under trust banks not matched. More register model codes in
+  `aircraft-names.ts` (CL-600-2xxx, ERJ 170/190-x00, BD-500, 737-9xxER…). Tests: 56.
+- **Next: 2.1a**: load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.
 - **Next pipeline steps (original list):** Wikipedia articles (business model, bases, destination lists, fleet tables, seat layouts;

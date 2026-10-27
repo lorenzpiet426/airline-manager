@@ -2,6 +2,15 @@
 // Most specific patterns first; null = a real aircraft that is deliberately not in the game (light aircraft, bizjets).
 /** Wikipedia's ways of naming aircraft → the game's type ids. Most specific first; null = not in the game. */
 export const TYPE_PATTERNS: [RegExp, string | null][] = [
+  // Manufacturer model codes as used in official registers (FAA, Transport Canada, Austro Control…).
+  [/CL-600-2B19/, 'CRJ2'], [/CL-600-2C1[01]/, 'CRJ7'], [/CL-600-2D(15|24)/, 'CRJ9'], [/CL-600-2E25/, 'CRJX'],
+  [/CL-600-2B16|BD-700|BD-100|CL-600-1A11/, null], // Challenger / Global business jets
+  [/ERJ 170-100/, 'E170'], [/ERJ 170-200/, 'E175'], [/ERJ 190-100/, 'E190'], [/ERJ 190-300/, 'E290'], [/ERJ 190-400/, 'E295'],
+  [/BD-500-1A10/, 'BCS1'], [/BD-500-1A11/, 'BCS3'], [/(CESSNA|TEXTRON).*208/, 'C208'], [/SAAB 340|340B/i, 'SF34'],
+  [/Beech A?100|Beech B?200|Beech 300|Beech 350/i, 'BE20'],
+  [/DHC-3|DHC-2|DC-?3|CESSNA 1\d\d|CESSNA 20[67]|PA-\d\d/i, null], // floatplanes, piston singles: not airliners
+  [/A321-2[57]\dNY/, 'A21N-XLR'], [/737-8200/, 'B38M'],
+  [/777-3[0-9A-Z]{2}ER/, 'B77W'], [/777-2[0-9A-Z]{2}LR/, 'B77L'], [/777-3[0-9A-Z]{2}\b/, 'B773'],
   [/A321XLR/, 'A21N-XLR'], [/A321LR|A321neo|A321-2[57]1N/, 'A21N'], [/A320neo|A320-2[57]1N/, 'A20N'], [/A319neo/, 'A19N'],
   [/A321P2F|A321-200P2F|A321.*freighter/i, 'A321-F'], [/A318/, 'A318'], [/A319/, 'A319'], [/A321/, 'A321'], [/A320/, 'A320'],
   [/A220-100|CS100|A220-1/, 'BCS1'], [/A220/, 'BCS3'], [/CS300/, 'BCS3'],
@@ -11,7 +20,7 @@ export const TYPE_PATTERNS: [RegExp, string | null][] = [
   [/737-900/, 'B739'], [/737-800(BCF|SF|F)|737-800.*(freighter|converted)/i, 'B738-F'], [/737-800/, 'B738'], [/737-700/, 'B737'],
   [/737-[3456]00/, 'B733'], [/737 Next Generation/, 'B738'],
   // Boeing customer codes as used in registers: 737-8AS = 737-800 for Ryanair, 767-3Z9 = 767-300 for Austrian…
-  [/737-8[0-9A-Z]{2}\b/, 'B738'], [/737-7[0-9A-Z]{2}\b/, 'B737'], [/737-9[0-9A-Z]{2}\b/, 'B739'], [/737-[2345][0-9A-Z]{2}\b/, 'B733'],
+  [/737-8[0-9A-Z]{2}\b/, 'B738'], [/737-7[0-9A-Z]{2}\b/, 'B737'], [/737-9[0-9A-Z]{2}(ER)?\b/, 'B739'], [/737-[2345][0-9A-Z]{2}\b/, 'B733'],
   [/757-300/, 'B753'], [/757-200(PF|SF|PCF|F)|757.*freighter/i, 'B752-F'], [/757/, 'B752'],
   [/767-300(ER)?F|767-300BCF|767.*freighter/i, 'B763-F'], [/767-400/, 'B764'], [/767/, 'B763'],
   [/777F|777-200F|777.*freighter/i, 'B77L-F'], [/777-9|777X/, 'B779'], [/777-8/, null], [/777-300ER/, 'B77W'], [/777-300/, 'B773'],
