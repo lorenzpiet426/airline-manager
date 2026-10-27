@@ -1,0 +1,73 @@
+/* Design tokens: every colour, font and size used by the game is defined once here.
+   Colour meaning follows the Airbus ECAM philosophy:
+   green = normal · amber = caution · red = warning · cyan = your selections · magenta = planned/forecast */
+
+:root,
+:root[data-theme='dark'] {
+  /* OCC: dark ops-room screens */
+  --bg: #0b1220;
+  --bg-raised: #0f182a;
+  --panel: #131e33;
+  --panel-header: #17243c;
+  --line: #22304a;
+  --line-strong: #2e4062;
+  --text: #e6edf7;
+  --text-dim: #8b9bb6;
+  --text-faint: #5d6e8c;
+
+  --green: #39d98a;
+  --amber: #ffb020;
+  --red: #ff5a5f;
+  --cyan: #33d6ff;
+  --magenta: #e45cff;
+
+  --accent: var(--cyan);
+  --accent-ink: #04121c;
+  --flap-bg: #05080f;
+  --flap-text: #ffd36a;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.35);
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  /* Daylight EFB: readable outdoors in the sun */
+  --bg: #eef1f5;
+  --bg-raised: #e4e9f0;
+  --panel: #ffffff;
+  --panel-header: #f5f7fa;
+  --line: #d3dae5;
+  --line-strong: #b8c3d4;
+  --text: #0d1626;
+  --text-dim: #4f5e75;
+  --text-faint: #8090a8;
+
+  --green: #0a8f4f;
+  --amber: #b26a00;
+  --red: #c62828;
+  --cyan: #0077a8;
+  --magenta: #a020c0;
+
+  --accent: var(--cyan);
+  --accent-ink: #ffffff;
+  --flap-bg: #121826;
+  --flap-text: #ffd36a;
+  --shadow: 0 1px 2px rgb(13 22 38 / 0.06), 0 6px 18px rgb(13 22 38 / 0.06);
+  color-scheme: light;
+}
+
+:root {
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --radius: 6px;
+  --radius-small: 4px;
+  --rail-width: 232px;
+  --rail-width-collapsed: 64px;
+  --statusbar-height: 48px;
+  --tabbar-height: 60px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}

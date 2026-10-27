@@ -1,0 +1,694 @@
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--text-dim);
+}
+
+.lead {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.text--normal { color: var(--green); }
+.text--caution { color: var(--amber); }
+.text--warning { color: var(--red); }
+.text--info { color: var(--cyan); }
+
+/* Small uppercase code label, e.g. "SIM" */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-small);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tag--magenta {
+  border-color: color-mix(in srgb, var(--magenta) 55%, transparent);
+  color: var(--magenta);
+}
+
+/* ---------- Desktop / tablet console ---------- */
+.desktop {
+  display: grid;
+  grid-template-columns: var(--rail-width) 1fr;
+  height: 100%;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 10px;
+  background: var(--bg-raised);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 18px;
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.brand__mark--small {
+  width: 26px;
+  height: 26px;
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brand__name {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.brand__tagline {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.rail__group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rail__group--bottom {
+  margin-top: auto;
+}
+
+.rail__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.rail__link:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.rail__link[aria-current='page'] {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.rail__link[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+.desktop__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.desktop__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Tablet: icon-only rail */
+@media (max-width: 1099px) {
+  .desktop {
+    grid-template-columns: var(--rail-width-collapsed) 1fr;
+  }
+  .brand {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .brand__text,
+  .rail__label {
+    display: none;
+  }
+  .rail__link {
+    justify-content: center;
+  }
+}
+
+/* ---------- Status bar & clocks ---------- */
+.statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: var(--statusbar-height);
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-raised);
+  flex: none;
+}
+
+.statusbar__sim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.statusbar__simtext {
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clocks {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.clock--utc {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--green);
+}
+
+.clock__secs {
+  margin-left: 2px;
+  font-size: 0.75em;
+  opacity: 0.7;
+}
+
+.clock__z {
+  margin-left: 2px;
+}
+
+.clock--local {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.clock__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+/* ---------- Phone layout ---------- */
+.mobile {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mobile__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(10px + var(--safe-top)) calc(16px + var(--safe-right)) 10px calc(16px + var(--safe-left));
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.mobile__title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.mobile__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabbar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding-bottom: var(--safe-bottom);
+  padding-inline: var(--safe-left) var(--safe-right);
+  background: var(--bg-raised);
+  border-top: 1px solid var(--line);
+  flex: none;
+}
+
+.tabbar__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: var(--tabbar-height);
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.tabbar__tab[aria-current='page'] {
+  color: var(--accent);
+}
+
+/* ---------- Screens ---------- */
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  max-width: 1200px;
+}
+
+.screen--narrow {
+  max-width: 640px;
+}
+
+.screen__title {
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+@media (max-width: 767px) {
+  .screen {
+    padding: 16px calc(16px + var(--safe-right)) 24px calc(16px + var(--safe-left));
+  }
+  /* The phone header already shows the screen name */
+  .screen__title {
+    display: none;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 767px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Panel ---------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--panel-header);
+  border-bottom: 1px solid var(--line);
+}
+
+.panel__title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.panel__code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+/* ---------- Buttons & controls ---------- */
+.button {
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.segmented__option {
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: var(--text-dim);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.segmented__option[aria-checked='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+/* ---------- Status checklist (ECAM-style memo) ---------- */
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checklist__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.checklist__item:last-child {
+  border-bottom: none;
+}
+
+.checklist__label {
+  color: var(--text-dim);
+}
+
+.checklist__value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot--normal { background: var(--green); }
+.dot--caution { background: var(--amber); }
+.dot--warning { background: var(--red); }
+.dot--info { background: var(--cyan); }
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--text-dim);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+/* ---------- Split-flap board ---------- */
+.flapboard {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--flap-bg);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+}
+
+.flapboard__row {
+  display: flex;
+  gap: 2px;
+}
+
+.flap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 1.35em;
+  height: 1.8em;
+  border-radius: 2px;
+  background: linear-gradient(#1c2333 0 49%, #0b0f18 49% 51%, #161c2a 51% 100%);
+  color: var(--flap-text);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(0.8rem, 3.6vw, 1.15rem);
+  animation: flap-in 380ms both;
+}
+
+@keyframes flap-in {
+  0% { transform: rotateX(90deg); opacity: 0; }
+  60% { transform: rotateX(-12deg); opacity: 1; }
+  100% { transform: rotateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flap { animation: none; }
+}
+
+/* ---------- Empty / coming-soon states ---------- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.empty__icon {
+  color: var(--text-faint);
+}
+
+.empty p {
+  max-width: 40ch;
+}
+
+/* ---------- Map placeholder ---------- */
+.screen--map {
+  max-width: none;
+  height: 100%;
+  padding: 0;
+}
+
+.mapstub {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 320px;
+  background: radial-gradient(ellipse at 55% 35%, color-mix(in srgb, var(--accent) 7%, var(--bg)) 0%, var(--bg) 70%);
+}
+
+.mapstub svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mapstub__grid {
+  stroke: var(--line);
+  stroke-width: 0.3;
+}
+
+.mapstub__equator {
+  stroke: var(--line-strong);
+  stroke-width: 0.4;
+  stroke-dasharray: 2 2;
+}
+
+.mapstub__hub {
+  fill: var(--accent);
+}
+
+.mapstub__pulse {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 0.5;
+  opacity: 0.6;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: pulse 2.4s ease-out infinite;
+}
+
+@keyframes pulse {
+  from { transform: scale(0.3); opacity: 0.8; }
+  to { transform: scale(1.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mapstub__pulse { animation: none; }
+}
+
+.mapstub__label {
+  fill: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 5px;
+}
+
+.mapstub__note {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 420px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  color: var(--text-dim);
+}
+
+/* ---------- Phone "More" menu ---------- */
+.menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.menu li + li {
+  border-top: 1px solid var(--line);
+}
+
+.menu__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 0 14px;
+  font-weight: 500;
+}
+
+.menu__chevron {
+  margin-left: auto;
+  color: var(--text-faint);
+}

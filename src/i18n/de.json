@@ -1,0 +1,65 @@
+{
+  "app": {
+    "name": "Airline Manager",
+    "tagline": "Operations Control"
+  },
+  "nav": {
+    "ops": "Betrieb",
+    "map": "Karte",
+    "network": "Netz",
+    "fleet": "Flotte",
+    "finance": "Finanzen",
+    "settings": "Einstellungen",
+    "more": "Mehr",
+    "main": "Hauptnavigation"
+  },
+  "status": {
+    "sim": "SIM",
+    "noGame": "Kein Spiel aktiv",
+    "utc": "UTC",
+    "local": "LCL"
+  },
+  "ops": {
+    "title": "Betriebsübersicht",
+    "board": "WILLKOMMEN IM OCC",
+    "airlineTitle": "Deine Airline",
+    "noAirline": "Noch keine Airline.",
+    "noAirlineHint": "Die Gründung deiner eigenen Airline kommt in Phase 1.3.",
+    "newGame": "Neues Spiel",
+    "checksTitle": "Systemstatus",
+    "checkLanguage": "Sprache",
+    "checkTheme": "Darstellung",
+    "checkOffline": "Offline spielen",
+    "offlineReady": "Bereit",
+    "offlinePending": "Wird vorbereitet…",
+    "offlineUnsupported": "Nicht unterstützt",
+    "checkInstall": "Als App installiert",
+    "installed": "Ja",
+    "notInstalled": "Noch nicht: „Zum Home-Bildschirm“ / „Installieren“ verwenden"
+  },
+  "comingSoon": {
+    "title": "Kommt in Phase {{phase}}",
+    "map": "Die Weltkarte mit allen Verkehrsflughäfen kommt in Phase 1.2.",
+    "network": "Strecken eröffnen und dein Netz planen kommt in Phase 1.4.",
+    "fleet": "Das Leasen deines ersten Flugzeugs kommt in Phase 1.3.",
+    "finance": "Wöchentliche Gewinn- und Verlustrechnung, Kassa und Kennzahlen kommen in Phase 1.4."
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Sprache",
+    "theme": "Design",
+    "themeSystem": "System",
+    "themeDark": "Dunkel (OCC)",
+    "themeLight": "Hell (Tageslicht)",
+    "about": "Über",
+    "version": "Version",
+    "dataNote": "Basiert auf offenen Daten. Alle Quellen stehen in der Datei DATA_SOURCES des Projekts."
+  },
+  "more": {
+    "title": "Mehr"
+  },
+  "lang": {
+    "en": "English",
+    "de": "Deutsch"
+  }
+}

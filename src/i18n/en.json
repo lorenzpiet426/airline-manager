@@ -1,0 +1,65 @@
+{
+  "app": {
+    "name": "Airline Manager",
+    "tagline": "Operations Control"
+  },
+  "nav": {
+    "ops": "Ops",
+    "map": "Map",
+    "network": "Network",
+    "fleet": "Fleet",
+    "finance": "Finance",
+    "settings": "Settings",
+    "more": "More",
+    "main": "Main navigation"
+  },
+  "status": {
+    "sim": "SIM",
+    "noGame": "No game running",
+    "utc": "UTC",
+    "local": "LCL"
+  },
+  "ops": {
+    "title": "Operations overview",
+    "board": "WELCOME TO OPS",
+    "airlineTitle": "Your airline",
+    "noAirline": "No airline yet.",
+    "noAirlineHint": "Founding your own airline arrives in Phase 1.3.",
+    "newGame": "New game",
+    "checksTitle": "System status",
+    "checkLanguage": "Language",
+    "checkTheme": "Display theme",
+    "checkOffline": "Offline play",
+    "offlineReady": "Ready",
+    "offlinePending": "Preparing…",
+    "offlineUnsupported": "Not supported",
+    "checkInstall": "Installed as app",
+    "installed": "Yes",
+    "notInstalled": "Not yet: use “Add to Home Screen” / “Install”"
+  },
+  "comingSoon": {
+    "title": "Coming in Phase {{phase}}",
+    "map": "The world map with every commercial airport arrives in Phase 1.2.",
+    "network": "Opening routes and planning your network arrives in Phase 1.4.",
+    "fleet": "Leasing your first aircraft arrives in Phase 1.3.",
+    "finance": "Weekly profit & loss, cash and key figures arrive in Phase 1.4."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeDark": "Dark (OCC)",
+    "themeLight": "Light (Daylight)",
+    "about": "About",
+    "version": "Version",
+    "dataNote": "Built with open data. All sources are listed in the project's DATA_SOURCES file."
+  },
+  "more": {
+    "title": "More"
+  },
+  "lang": {
+    "en": "English",
+    "de": "Deutsch"
+  }
+}

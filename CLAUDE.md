@@ -6,7 +6,7 @@ session. **Keep it updated at the end of every session** (progress log, decision
 - Owner: 19-year-old aspiring airline pilot living near Vienna (VIE). A **beginner programmer**:
   Claude does the technical work and explains what was built in simple terms so they learn the basics.
 - Aviation authenticity matters a lot. When in doubt, choose the realistic option and cite a source.
-- Status: **Phase 0 (planning). The architecture and roadmap below are PROPOSED and await the owner's approval.**
+- Status: see the progress log (§8). Architecture and roadmap were **approved on 2026-10-27**.
 
 ---
 
@@ -115,7 +115,7 @@ session. **Keep it updated at the end of every session** (progress log, decision
 
 ---
 
-## 3. Architecture (PROPOSED — awaiting approval)
+## 3. Architecture (approved 2026-10-27)
 
 ### 3.1 Big picture in simple words
 The game is a **website that behaves like an app** (a PWA). It has three main parts:
@@ -222,11 +222,11 @@ The game should feel like sitting in an airline's operations control center or l
 - Departure-board (FIDS) style lists for flights; map with dark oceans, glowing great-circle routes, small
   aircraft symbols in your livery colour.
 - **Desktop:** sidebar + map + docked detail panels (multi-panel ops console).
-  **Phone:** bottom tab bar (Map · Network · Fleet · Finance · More), full-screen sheets that slide up, thumb-reachable controls.
+  **Phone:** bottom tab bar (Ops · Map · Network · Fleet · More), full-screen sheets that slide up, thumb-reachable controls.
 
 ---
 
-## 4. Roadmap (PROPOSED)
+## 4. Roadmap (approved 2026-10-27)
 
 Each phase is split into steps; **one step ≈ one session**, each ends with a testable, committed version.
 "Realistic" mode is built first; "Hardcore" depth is added to each system as it matures.
@@ -302,7 +302,7 @@ Server-authoritative shared world running the same engine (free tier to be resea
 ---
 
 ## 5. Things the owner will need to do (when the time comes)
-- **Before Phase 1.1:** install **Node.js LTS** (free) from nodejs.org — Claude will give step-by-step instructions.
+- ~~Before Phase 1.1: install Node.js~~ — done by Claude into `~/.local/node` (2026-10-27).
 - **Phase 1.1:** create a free **GitHub** account (for backup of the code + free hosting).
 - **Phase 3:** create a free **Firebase** project with a Google account (no credit card; stay on the Spark plan).
 
@@ -317,6 +317,13 @@ Server-authoritative shared world running the same engine (free tier to be resea
 | Date | Decision | Reason |
 |---|---|---|
 | 2026-10-27 | Project folder under git, `main` branch | Track every change, easy to undo |
+| 2026-10-27 | **Architecture and roadmap approved** as proposed in §3–§4 | Owner approval |
+| 2026-10-27 | D1: **Firebase Spark** (Auth + Firestore) for cloud sync | Free, no card, no inactivity pause |
+| 2026-10-27 | D2: **GitHub Pages**, public repository, deployed by GitHub Actions | Simplest free hosting |
+| 2026-10-27 | D3: **"OCC" visual style** (§3.6) | Fits airline ops / cockpit feel |
+| 2026-10-27 | D4: roadmap order unchanged | Owner approval |
+| 2026-10-27 | Hash-based navigation (`#/map`) instead of path URLs | GitHub Pages has no server-side routing; hash URLs never 404 |
+| 2026-10-27 | Phone tab bar: Ops · Map · Network · Fleet · More (Finance + Settings under More) | Dashboard must be one tap away on phone |
 
 ## 8. Progress log
 ### 2026-10-27 — Session 1 (Phase 0)
@@ -326,3 +333,20 @@ Server-authoritative shared world running the same engine (free tier to be resea
 - Notes: Node.js is not installed on the Mac yet. Firebase Cloud Storage now requires the paid Blaze
   plan → we will only use Firestore + Auth (free on Spark). Supabase free projects pause after 7 days inactivity.
 - **Next:** owner reviews and approves the plan and decisions D1–D4, installs Node.js → Phase 1.1.
+
+### 2026-10-27 — Session 2 (Phase 1.1 Skeleton) ✅ locally, deploy pending
+- Owner approved the plan and D1–D4 (see §7).
+- **Node.js v24.22.1 LTS installed in `~/.local/node`** (user folder, no admin rights; SHA-256 verified).
+  It is *not* on the shell PATH: use `export PATH=~/.local/node/bin:$PATH` before `npm` commands.
+  `.claude/launch.json` starts Vite with the absolute node path. If the owner later installs the
+  official .pkg, `/usr/local/bin/node` works too.
+- Built the app skeleton: Vite 8 + React 19 + TypeScript 7, i18next (EN/DE, with a test that both
+  languages have the same keys and placeholders), device settings store (language, theme),
+  OCC dark + Daylight light theme (`src/ui/styles/tokens.css`), desktop console layout
+  (sidebar rail, icon-only below 1100 px) and phone layout (header + 5-tab bottom bar + "More"),
+  hash navigation, UTC/LCL clocks, split-flap welcome board, ECAM-style status checklist,
+  placeholder screens for Map/Network/Fleet/Finance, Settings screen, PWA (manifest, icons,
+  offline cache via service worker), GitHub Actions workflow for GitHub Pages.
+- Verified in browser: desktop 1280 px, tablet 800 px, phone 375 px, German + light theme. No console errors.
+  Offline status shows "Preparing…" in dev mode (the service worker only runs in the built version).
+- **Next:** owner creates a GitHub account → push repo → enable Pages → test install on phone. Then Phase 1.2 (world data + map).
