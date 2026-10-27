@@ -303,7 +303,7 @@ Server-authoritative shared world running the same engine (free tier to be resea
 
 ## 5. Things the owner will need to do (when the time comes)
 - ~~Before Phase 1.1: install Node.js~~ — done by Claude into `~/.local/node` (2026-10-27).
-- **Phase 1.1:** create a free **GitHub** account (for backup of the code + free hosting).
+- ~~Phase 1.1: create a free GitHub account~~ — done (lorenzpiet426), 2026-10-27.
 - **Phase 3:** create a free **Firebase** project with a Google account (no credit card; stay on the Spark plan).
 
 ## 6. Open questions / decisions waiting for the owner
@@ -349,4 +349,9 @@ Server-authoritative shared world running the same engine (free tier to be resea
   offline cache via service worker), GitHub Actions workflow for GitHub Pages.
 - Verified in browser: desktop 1280 px, tablet 800 px, phone 375 px, German + light theme. No console errors.
   Offline status shows "Preparing…" in dev mode (the service worker only runs in the built version).
-- **Next:** owner creates a GitHub account → push repo → enable Pages → test install on phone. Then Phase 1.2 (world data + map).
+- Owner created GitHub account **lorenzpiet426**. GitHub CLI v2.103.3 installed in `~/.local/gh`
+  (checksum verified; use `export PATH=~/.local/gh/bin:$PATH`), logged in via device code, set up as git credential helper.
+- Public repo: https://github.com/lorenzpiet426/airline-manager — **live game: https://lorenzpiet426.github.io/airline-manager/**
+  Pages source = GitHub Actions. First deploy succeeded; verified live: no console errors, service worker active ("Offline play: Ready").
+  Bumped workflow actions to current majors (checkout v7, setup-node v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5).
+- **Next:** owner installs the game on their phone and tests it. Then Phase 1.2 (world data + map).
