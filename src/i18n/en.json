@@ -12,7 +12,9 @@
     "settings": "Settings",
     "more": "More",
     "main": "Main navigation",
-    "new": "New airline"
+    "new": "New airline",
+    "airlines": "Airlines",
+    "sources": "Data sources"
   },
   "status": {
     "sim": "SIM",
@@ -92,7 +94,9 @@
     "globe": "Globe",
     "airportsCount": "airports with scheduled flights",
     "legendRoutes": "routes",
-    "legendAirborne": "in the air"
+    "legendAirborne": "in the air",
+    "showing_one": "{{name}}: {{count}} route",
+    "showing_other": "{{name}}: {{count}} routes"
   },
   "airport": {
     "size": {
@@ -278,9 +282,7 @@
     "market": "Market size",
     "marketValue": "≈ {{pax}} passengers per year",
     "competition": "Competition",
-    "competitionValue_one": "other airlines fly about {{count}}× per week each way, plus one-stop connections",
-    "competitionValue_other": "other airlines fly about {{count}}× per week each way, plus one-stop connections",
-    "noCompetition": "no non-stop flights yet; travellers fly with one stop (via other hubs) today",
+    "noCompetition": "no airline flies this route non-stop",
     "passengers": "Passengers",
     "revenue": "Ticket revenue",
     "contribution": "Route result",
@@ -290,7 +292,8 @@
     "closeConfirm": "Close this route? Flights stop immediately.",
     "save": "Save changes",
     "season": "Season (this month)",
-    "seasonValue": "{{value}} % vs average month"
+    "seasonValue": "{{value}} % vs average month",
+    "plusConnections": "Plus one-stop connections via other hubs."
   },
   "finance": {
     "title": "Finance",
@@ -329,5 +332,84 @@
     "chartHint": "Green = profit, red = loss, light = period still running. Tap a bar to see that period in detail; swipe sideways for older periods. Weeks are kept for two years, months for the whole game.",
     "vsPrevious": "{{change}} compared with {{period}}",
     "closedRoute": "closed route"
+  },
+  "airlines": {
+    "title": "Airlines",
+    "loading": "Loading the world's airlines…",
+    "intro": "The real airlines of the world ({{count}} with a known network). Biggest first; search by name, code or hub.",
+    "search": "Search airline, code or hub (e.g. OS, Ryanair, VIE)",
+    "none": "No airline found.",
+    "aircraftShort_one": "{{count}} aircraft",
+    "aircraftShort_other": "{{count}} aircraft",
+    "routesShort_one": "{{count}} route",
+    "routesShort_other": "{{count}} routes",
+    "back": "All airlines",
+    "hubs": "Hubs",
+    "bases": "Bases",
+    "alliance": "Alliance",
+    "parent": "Parent company",
+    "colors": "Colours",
+    "colorSource": {
+      "known": "its real colours (no logos)",
+      "generated": "generated colours (real colours not yet entered)"
+    },
+    "showOnMap": "Show network on the map",
+    "fleet": "Fleet",
+    "type": "Type",
+    "inService": "In service",
+    "registered": "Registered",
+    "orders": "Orders",
+    "noFleet": "No fleet information found.",
+    "showRegs": "Show {{count}} registrations",
+    "hideRegs": "Hide registrations",
+    "network": "Network",
+    "networkNote": "Routes from Wikipedia's airport articles. Weekly flights: official Eurostat totals (season {{season}}); where several airlines share a route, the total is split between them (an estimate, marked “modelled”), and routes without official numbers are filled in by the game's demand model.",
+    "weekly": "Flights/week",
+    "seasonal": "seasonal",
+    "moreRoutes_one": "…and {{count}} more route",
+    "moreRoutes_other": "…and {{count}} more routes",
+    "model": {
+      "legacy": "Network airline",
+      "lowcost": "Low-cost airline",
+      "regional": "Regional airline",
+      "charter": "Leisure/charter airline"
+    }
+  },
+  "sources": {
+    "title": "Data sources",
+    "intro": "This game is built on open data. Thank you to everyone who collects and shares it. Real airlines appear with their names and colours, never with their logos.",
+    "tagsTitle": "Where a number comes from",
+    "listTitle": "Sources and licences",
+    "notes": "Wikipedia-based data in this game is published under CC BY-SA 4.0 (share-alike). Full list with download dates and how each dataset is processed: docs/DATA_SOURCES.md in the game's GitHub repository.",
+    "tag": {
+      "official": "official",
+      "wikipedia": "Wikipedia",
+      "hand-checked": "checked",
+      "modelled": "modelled"
+    },
+    "tagHint": {
+      "official": "From official statistics or registers (e.g. Eurostat, FAA).",
+      "wikipedia": "From Wikipedia or Wikidata.",
+      "hand-checked": "Checked by hand against the airline's own information.",
+      "modelled": "Estimated by the game's demand model where no real number is available."
+    },
+    "use": {
+      "ourairports": "All airports with scheduled flights: position, runways, size.",
+      "geonames": "City populations (catchment and market size) and time zones.",
+      "worldbank": "Wealth (GDP per person) and tourism per country.",
+      "naturalearth": "Coastlines and borders of the map.",
+      "openfreemap": "Fonts for the airport codes on the map.",
+      "wikipedia": "Which airline flies where (airport articles), airline business models, hubs, bases, fleets and seat layouts (airline articles).",
+      "wikidata": "Airline names, codes, countries, alliances and parent companies; links between articles and airports.",
+      "eurostat": "Real passenger numbers, seats and flights per route in Europe (summer 2024), used for demand and for the airlines' weekly flights.",
+      "eia": "The real jet fuel price, week by week in 2026.",
+      "ecb": "Exchange rates between currencies.",
+      "faa": "Individual aircraft (registration, type, year) of US airlines.",
+      "tc": "Individual aircraft of Canadian airlines.",
+      "austrocontrol": "Individual aircraft of Austrian airlines, including the operator.",
+      "iaa": "Individual aircraft of Irish airlines (Ryanair, Aer Lingus).",
+      "manufacturers": "Aircraft performance: seats, range, take-off distance, weight.",
+      "plex": "The game's typefaces."
+    }
   }
 }

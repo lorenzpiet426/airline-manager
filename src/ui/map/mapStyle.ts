@@ -51,6 +51,7 @@ export function baseStyle(basemap: Basemap, airports: Airport[]): StyleSpecifica
       borders: { type: 'geojson', data: basemap.borders },
       airports: { type: 'geojson', data: airportsGeoJson(airports) },
       routes: { type: 'geojson', data: EMPTY },
+      'other-routes': { type: 'geojson', data: EMPTY },
       planes: { type: 'geojson', data: EMPTY },
     },
     layers: [
@@ -58,6 +59,14 @@ export function baseStyle(basemap: Basemap, airports: Airport[]): StyleSpecifica
       { id: 'graticule', type: 'line', source: 'graticule', paint: { 'line-color': token('--map-grid'), 'line-width': 0.6 } },
       { id: 'land', type: 'fill', source: 'land', paint: { 'fill-color': token('--map-land') } },
       { id: 'borders', type: 'line', source: 'borders', paint: { 'line-color': token('--map-border'), 'line-width': 0.6 } },
+      {
+        // Another airline's network (Airlines screen → "Show on map"), in its own colour.
+        id: 'other-routes',
+        type: 'line',
+        source: 'other-routes',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 1, 0.6, 6, 1.6], 'line-opacity': 0.55 },
+      },
       {
         id: 'routes',
         type: 'line',

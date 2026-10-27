@@ -5,6 +5,7 @@ import type { Airport, Country } from '../data/types';
 import { advance } from '../engine/advance';
 import { applyCommand, type Command, type CommandResult } from '../engine/commands';
 import { buildEngineWorld, type EngineWorld } from '../engine/world';
+import { loadRealAirlines } from '../data/realAirlinesData';
 import { createGame, migrate, type NewGameOptions } from '../engine/game';
 import type { GameState } from '../engine/state';
 import { MINUTES_PER_DAY } from '../engine/time';
@@ -29,9 +30,13 @@ let worldPromise: Promise<EngineWorld> | null = null;
 let world: EngineWorld | null = null;
 
 function loadWorld(): Promise<EngineWorld> {
-  worldPromise ??= Promise.all([import('../data/generated/airports.json'), import('../data/generated/countries.json')]).then(
-    ([airports, countries]) =>
-      (world = buildEngineWorld(airports.default as Airport[], countries.default as unknown as Record<string, Country>)),
+  worldPromise ??= Promise.all([
+    import('../data/generated/airports.json'),
+    import('../data/generated/countries.json'),
+    loadRealAirlines(),
+  ]).then(
+    ([airports, countries, real]) =>
+      (world = buildEngineWorld(airports.default as Airport[], countries.default as unknown as Record<string, Country>, real)),
   );
   return worldPromise;
 }

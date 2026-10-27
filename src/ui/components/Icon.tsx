@@ -1,5 +1,5 @@
 // Small line icons drawn for this game (24×24 grid, colour follows the text colour).
-export type IconName = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'settings' | 'more' | 'chevron';
+export type IconName = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'sources' | 'settings' | 'more' | 'chevron';
 
 const PATHS: Record<IconName, string[]> = {
   // Radar scope
@@ -20,6 +20,10 @@ const PATHS: Record<IconName, string[]> = {
   ],
   // Aircraft seen from above
   fleet: ['M12 2.5c.9 0 1.5 1 1.5 2.3v5l7.5 4.4v2l-7.5-2.3v4.5l2.3 1.7v1.4L12 20.6l-3.8.9v-1.4l2.3-1.7v-4.5L3 16.2v-2l7.5-4.4v-5c0-1.3.6-2.3 1.5-2.3z'],
+  // Two tail fins: the world's airlines
+  airlines: ['M3 20l5-14h4l-2 14z', 'M12 20l5-14h4l-2 14z'],
+  // Open book: data sources and credits
+  sources: ['M12 6c-2-1.5-5-2-8-1.5V19c3-.5 6 0 8 1.5', 'M12 6c2-1.5 5-2 8-1.5V19c-3-.5-6 0-8 1.5', 'M12 6v14.5'],
   // Rising bar chart
   finance: ['M4 20h16', 'M7 16v-4', 'M12 16V8', 'M17 16V5'],
   // Gear

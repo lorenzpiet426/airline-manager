@@ -8,7 +8,7 @@ import { playerAirlineId } from '../../game/store';
 import type { MapOverlay } from './WorldMap';
 
 /** Longitudes that keep going past ±180°, so a line across the Pacific doesn't jump around the world. */
-function unwrap(points: { lat: number; lon: number }[]): [number, number][] {
+export function unwrap(points: { lat: number; lon: number }[]): [number, number][] {
   const out: [number, number][] = [];
   let shift = 0;
   points.forEach((p, i) => {

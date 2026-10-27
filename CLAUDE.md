@@ -256,7 +256,8 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
   RASK/CASK, cash). Phase 1 complete. *Test: play a few months, save, reload on another browser via export.*
 
 *Order change (2026-10-27): Phase 2 comes before step 1.5, and detailed scheduling (from Phase 7) becomes step 2.2:*
-- **2.1 Visible AI competitors** (fictional airlines; replace the invisible incumbents).
+- **2.1 Visible AI competitors** — owner chose **real airlines** (see §5b): 2.1a ✅ real airlines visible and competing
+  (static); 2.1b AI behaviour by airline type.
 - **2.2 Detailed scheduling:** own departure times per flight, block times, turnarounds, aircraft rotation timeline,
   time-of-day preferences in passenger choice; competitors get timetables too.
 - then back to **1.5** (save slots, export/import, dashboard), then the rest of Phase 2 (cabin classes, reputation).
@@ -578,7 +579,27 @@ education", forbid making the data available to others (§3 iii) and require a w
   names matched by company-name key (legal forms and words like "Airlines" removed); regional operators without own
   network (SkyWest, Republic) included; leased aircraft under trust banks not matched. More register model codes in
   `aircraft-names.ts` (CL-600-2xxx, ERJ 170/190-x00, BD-500, 737-9xxER…). Tests: 56.
-- **Next: 2.1a**: load real airlines into the engine (replace invisible
+- **2.1a (same session) — real airlines in the game:** `src/engine/realAirlines.ts` (RealAirline/RealRoute, pair
+  index, `observedWeeklyPax`), `src/data/realAirlinesData.ts` (lazy loader, shared by worker and UI),
+  `src/data/airlineColors.ts` (~85 hand-entered brand colour pairs, others generated and marked). Engine:
+  `competitorsOn()` = real airlines per direction (weekly from Eurostat split, else demand model; tag `official` only
+  when alone on the route, otherwise `modelled`); fare level by business model (`MODEL_FARE`: low-cost 0.75, legacy
+  1.05, regional 1.0, charter 0.85); routes without real airlines have no non-stop competition (one-stop only).
+  Market demand uses **measured Eurostat passengers** where available (× 0.75 local share, ÷ 1.12 summer→year), which
+  fixed holiday routes (PMI, LCA, AYT) where the gravity model was 4× too low. Balance (best plans from VIE vs real
+  airlines): July ~15–25 %, April ~10–20 %, January ~−5…+10 %. UI: planner lists competitors (tail fin, weekly,
+  type, source tag, link), market size tagged official/modelled; new screens **Airlines** (`#/airlines`, list +
+  `?id=` detail: hubs, bases, alliance, parent, colour source, fleet Wikipedia vs register, registrations, network with
+  tags, "Show network on the map") and **Data sources** (`#/sources`, all credits + tag explanations); map shows another
+  airline's network (`#/map?airline=AUA`, layer `other-routes`); `useRouteParam`, `hrefFor(route, params)`; nav: Airlines
+  in rail/More, Data sources in rail bottom/More. Airline names fall back to the Wikipedia title when Wikidata has no
+  English label. Tests: 60.
+- **Known / to do:** airline data is bundled twice (worker + UI) → offline cache ~18 MB (≈4 MB gzip): load it once
+  (e.g. fetch a JSON asset in both places). Real airlines don't move on the map yet (planes for 27k aircraft are too
+  many per tick; later: show the selected airline's flights). AI doesn't react yet (2.1b). Save files unchanged in
+  2.1a (real airlines are static data), IndexedDB move comes with 2.1b when AI state changes.
+- **Next: 2.1b** (AI behaviour by airline type) — then 2.2 detailed scheduling, then 1.5.
+- (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.
 - **Next pipeline steps (original list):** Wikipedia articles (business model, bases, destination lists, fleet tables, seat layouts;

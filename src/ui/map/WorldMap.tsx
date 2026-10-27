@@ -27,6 +27,8 @@ export interface MapOverlay {
   planes: FeatureCollection<Point>;
   /** Livery main colour for the aircraft symbols. */
   color: string;
+  /** Another airline's network to show (lines with a "color" property), if any. */
+  otherRoutes?: FeatureCollection<LineString>;
 }
 
 
@@ -147,6 +149,7 @@ export function WorldMap({ overlay, airports, basemap, selectedId, onSelect, foc
       whenReady((map) => {
         (map.getSource('routes') as GeoJSONSource | undefined)?.setData(overlay?.routes ?? EMPTY);
         (map.getSource('planes') as GeoJSONSource | undefined)?.setData(overlay?.planes ?? EMPTY);
+        (map.getSource('other-routes') as GeoJSONSource | undefined)?.setData(overlay?.otherRoutes ?? EMPTY);
         if (overlay) map.setPaintProperty('planes', 'icon-color', overlay.color);
       }),
     [overlay],

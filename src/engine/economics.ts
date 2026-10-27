@@ -6,6 +6,7 @@ import { TURNAROUND_MIN, type AircraftCategory, type AircraftType } from '../dat
 import { fuelUsdPerKg, jetFuelSpot } from '../data/fuel';
 import type { Airport } from '../data/types';
 import { distanceKm, greatCirclePoints } from './geo';
+import type { BusinessModel, SourceTag } from './realAirlines';
 import { longestHardRunwayM, type EngineWorld } from './world';
 
 // ─── Flight times ──────────────────────────────────────────────────────────────
@@ -92,6 +93,8 @@ export interface Market {
   annualPax: number;
   /** Passengers per week in each direction. */
   weeklyPax: number;
+  /** True when the passenger numbers were measured (Eurostat) rather than estimated by the gravity model. */
+  observed: boolean;
   /** Share of business travellers (pay more, care less about price). */
   businessShare: number;
   /** One-way flights per week by the airlines already flying here (not yet shown as AI airlines). */
@@ -120,15 +123,21 @@ export function market(world: EngineWorld, a: Airport, b: Airport): Market {
     (wealth(world, a) * wealth(world, b)) ** WEALTH_EXP *
     (km / 1000) ** -DISTANCE_EXP /
     (1 + (GROUND_KM / km) ** GROUND_EXP);
-  const weeklyPax = annualPax / 52 / 2;
+  // Where real passenger numbers were measured (Eurostat, summer), they replace the model's estimate: they include
+  // package holidays and transfer passengers the model misses. Summer weeks are busier than the yearly average.
+  const observed = world.realAirlines?.observedWeeklyPax(a.id, b.id) ?? null;
+  // About a quarter of them change planes at a hub on the way: a point-to-point airline can't win those (until hub
+  // connections arrive in Phase 7), so only the local share counts.
+  const weeklyPax = observed !== null ? (observed * LOCAL_SHARE) / SUMMER_AVERAGE_SEASON : annualPax / 52 / 2;
   const businessShare = Math.min(0.4, Math.max(0.1, 0.1 + 0.15 * Math.min(wealth(world, a), wealth(world, b))));
   // Who serves this market today? Typical aircraft size grows with distance; ~80 % of seats filled.
   const typicalSeats = km < 1500 ? 150 : km < 4000 ? 190 : 280;
   const flights = weeklyPax / (typicalSeats * 0.8);
   return {
     distanceKm: km,
-    annualPax,
+    annualPax: observed !== null ? weeklyPax * 2 * 52 : annualPax,
     weeklyPax,
+    observed: observed !== null,
     businessShare,
     incumbentFlights: flights >= 3 ? Math.round(flights) : 0,
     connectingFlights: connectingEquivalent(km),
@@ -139,6 +148,10 @@ export function market(world: EngineWorld, a: Airport, b: Airport): Market {
 
 // Monthly demand relative to the yearly average (northern hemisphere), from typical European airport
 // traffic patterns: holidaymakers peak in July/August, business travellers dip in August and at Christmas.
+/** Average season factor of the months April–September (the Eurostat S24 window), to turn summer numbers into a yearly average. */
+const SUMMER_AVERAGE_SEASON = 1.12;
+/** Share of measured route passengers who travel only this route (the rest are hub transfers). */
+const LOCAL_SHARE = 0.75;
 const LEISURE_SEASON = [0.75, 0.8, 0.9, 1.0, 1.05, 1.15, 1.3, 1.3, 1.1, 1.0, 0.8, 0.85];
 const BUSINESS_SEASON = [0.95, 1.05, 1.1, 1.05, 1.05, 1.0, 0.85, 0.75, 1.05, 1.1, 1.1, 0.9];
 
@@ -154,6 +167,49 @@ export function seasonFactor(a: Airport, b: Airport, businessShare: number, date
   const month = date.getUTCMonth();
   const leisure = (leisureSeason(a, month) + leisureSeason(b, month)) / 2;
   return businessShare * BUSINESS_SEASON[month]! + (1 - businessShare) * leisure;
+}
+
+// ─── Real competitors (Phase 2.1a) ───────────────────────────────────────────────
+
+/** Typical fare level of each airline type relative to the market fare. */
+export const MODEL_FARE: Record<BusinessModel, number> = { legacy: 1.05, lowcost: 0.75, regional: 1.0, charter: 0.85 };
+
+export interface Competitor {
+  airlineId: string;
+  name: string;
+  model: BusinessModel;
+  /** Flights per week in this direction. */
+  weekly: number;
+  /** Where the weekly number comes from: official totals split between airlines, or the demand model. */
+  source: SourceTag;
+  fareFactor: number;
+  seasonal: boolean;
+}
+
+/**
+ * The real airlines on a route (in this direction). Routes without official numbers get frequencies from the demand
+ * model: the flights the market needs at ~80 % load, shared between the airlines listed for the route.
+ * Returns null when the game runs without real airline data.
+ */
+export function competitorsOn(world: EngineWorld, from: Airport, to: Airport, m = market(world, from, to)): Competitor[] | null {
+  const real = world.realAirlines;
+  if (!real) return null;
+  const list = real.on(from.id, to.id);
+  if (!list.length) return [];
+  const typicalSeats = m.distanceKm < 1500 ? 150 : m.distanceKm < 4000 ? 190 : 280;
+  const needed = m.weeklyPax / (typicalSeats * 0.8);
+  const modelled = (seasonal: boolean, charter: boolean) =>
+    Math.max(1, Math.round(((needed / list.length) * (seasonal ? 0.5 : 1) * (charter ? 0.5 : 1)) * 2) / 2);
+  return list.map((c) => ({
+    airlineId: c.airline.id,
+    name: c.airline.name,
+    model: c.airline.model,
+    weekly: c.weekly ?? modelled(c.seasonal, c.charter),
+    // Official only if the airline is alone on the route; a split of the route total between airlines is an estimate.
+    source: c.weekly !== null && list.length === 1 ? 'official' : 'modelled',
+    fareFactor: MODEL_FARE[c.airline.model],
+    seasonal: c.seasonal,
+  }));
 }
 
 /** Fuel price at which fares were calibrated; fares follow fuel partly (fuel surcharges). */
@@ -277,7 +333,14 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   const jetBlock = BLOCK_OVERHEAD_H + (m.distanceKm * ROUTING_FACTOR) / 830;
   const speed = Math.min(1, jetBlock / blockHours(plan.type, m.distanceKm)) ** 2;
   const mine = plan.frequency ** FREQUENCY_EXP * attraction * speed;
-  const others = m.incumbentFlights ** FREQUENCY_EXP + m.connectingFlights ** FREQUENCY_EXP;
+  // Competition: the real airlines on this route (each attracting travellers by frequency and price level) or,
+  // without real airline data, "invisible incumbents"; plus one-stop connections via other hubs.
+  const competitors = competitorsOn(world, from, to, m);
+  const fareAttraction = (x: number) => biz * x ** -1.2 + (1 - biz) * x ** -2.6;
+  const nonstop = competitors
+    ? competitors.reduce((s, c) => s + c.weekly ** FREQUENCY_EXP * fareAttraction(c.fareFactor), 0)
+    : m.incumbentFlights ** FREQUENCY_EXP;
+  const others = nonstop + m.connectingFlights ** FREQUENCY_EXP;
   const share = mine / (mine + others) || 0;
   const season = seasonFactor(from, to, biz, date);
   const demandPerDirection = m.weeklyPax * share * stimulation * season * plan.rampUp;

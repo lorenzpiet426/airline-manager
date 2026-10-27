@@ -12,7 +12,9 @@
     "settings": "Einstellungen",
     "more": "Mehr",
     "main": "Hauptnavigation",
-    "new": "Neue Airline"
+    "new": "Neue Airline",
+    "airlines": "Airlines",
+    "sources": "Datenquellen"
   },
   "status": {
     "sim": "SIM",
@@ -92,7 +94,9 @@
     "globe": "Globus",
     "airportsCount": "Flughäfen mit Linienverkehr",
     "legendRoutes": "Strecken",
-    "legendAirborne": "in der Luft"
+    "legendAirborne": "in der Luft",
+    "showing_one": "{{name}}: {{count}} Strecke",
+    "showing_other": "{{name}}: {{count}} Strecken"
   },
   "airport": {
     "size": {
@@ -278,9 +282,7 @@
     "market": "Marktgröße",
     "marketValue": "≈ {{pax}} Passagiere pro Jahr",
     "competition": "Konkurrenz",
-    "competitionValue_one": "andere Airlines fliegen etwa {{count}}× pro Woche und Richtung, dazu Umsteigeverbindungen",
-    "competitionValue_other": "andere Airlines fliegen etwa {{count}}× pro Woche und Richtung, dazu Umsteigeverbindungen",
-    "noCompetition": "noch keine Nonstop-Flüge; heute fliegen Reisende mit einem Umstieg (über andere Drehkreuze)",
+    "noCompetition": "keine Airline fliegt diese Strecke nonstop",
     "passengers": "Passagiere",
     "revenue": "Ticketerlöse",
     "contribution": "Streckenergebnis",
@@ -290,7 +292,8 @@
     "closeConfirm": "Diese Strecke einstellen? Die Flüge enden sofort.",
     "save": "Änderungen speichern",
     "season": "Saison (dieser Monat)",
-    "seasonValue": "{{value}} % zum Durchschnittsmonat"
+    "seasonValue": "{{value}} % zum Durchschnittsmonat",
+    "plusConnections": "Dazu Umsteigeverbindungen über andere Drehkreuze."
   },
   "finance": {
     "title": "Finanzen",
@@ -329,5 +332,84 @@
     "chartHint": "Grün = Gewinn, Rot = Verlust, hell = Zeitraum läuft noch. Tippe auf einen Balken, um diesen Zeitraum im Detail zu sehen; seitlich wischen für ältere Zeiträume. Wochen bleiben zwei Jahre gespeichert, Monate das ganze Spiel.",
     "vsPrevious": "{{change}} im Vergleich zu {{period}}",
     "closedRoute": "eingestellte Strecke"
+  },
+  "airlines": {
+    "title": "Airlines",
+    "loading": "Lade die Airlines der Welt…",
+    "intro": "Die echten Airlines der Welt ({{count}} mit bekanntem Streckennetz). Größte zuerst; Suche nach Name, Code oder Drehkreuz.",
+    "search": "Airline, Code oder Drehkreuz suchen (z. B. OS, Ryanair, VIE)",
+    "none": "Keine Airline gefunden.",
+    "aircraftShort_one": "{{count}} Flugzeug",
+    "aircraftShort_other": "{{count}} Flugzeuge",
+    "routesShort_one": "{{count}} Strecke",
+    "routesShort_other": "{{count}} Strecken",
+    "back": "Alle Airlines",
+    "hubs": "Drehkreuze",
+    "bases": "Basen",
+    "alliance": "Allianz",
+    "parent": "Muttergesellschaft",
+    "colors": "Farben",
+    "colorSource": {
+      "known": "ihre echten Farben (keine Logos)",
+      "generated": "erzeugte Farben (echte Farben noch nicht eingetragen)"
+    },
+    "showOnMap": "Streckennetz auf der Karte zeigen",
+    "fleet": "Flotte",
+    "type": "Typ",
+    "inService": "Im Einsatz",
+    "registered": "Registriert",
+    "orders": "Bestellt",
+    "noFleet": "Keine Flotteninformation gefunden.",
+    "showRegs": "{{count}} Kennzeichen zeigen",
+    "hideRegs": "Kennzeichen ausblenden",
+    "network": "Streckennetz",
+    "networkNote": "Strecken aus den Flughafenartikeln der Wikipedia. Flüge pro Woche: offizielle Eurostat-Summen (Saison {{season}}); teilen sich mehrere Airlines eine Strecke, wird die Summe aufgeteilt (eine Schätzung, „modelliert“), Strecken ohne offizielle Zahlen ergänzt das Nachfragemodell des Spiels.",
+    "weekly": "Flüge/Woche",
+    "seasonal": "saisonal",
+    "moreRoutes_one": "…und {{count}} weitere Strecke",
+    "moreRoutes_other": "…und {{count}} weitere Strecken",
+    "model": {
+      "legacy": "Netzwerk-Airline",
+      "lowcost": "Low-Cost-Airline",
+      "regional": "Regional-Airline",
+      "charter": "Ferien-/Charter-Airline"
+    }
+  },
+  "sources": {
+    "title": "Datenquellen",
+    "intro": "Dieses Spiel baut auf offenen Daten auf. Danke an alle, die sie sammeln und teilen. Echte Airlines erscheinen mit Namen und Farben, aber nie mit ihren Logos.",
+    "tagsTitle": "Woher eine Zahl stammt",
+    "listTitle": "Quellen und Lizenzen",
+    "notes": "Daten aus der Wikipedia werden in diesem Spiel unter CC BY-SA 4.0 (Weitergabe unter gleichen Bedingungen) veröffentlicht. Vollständige Liste mit Downloaddatum und Verarbeitung: docs/DATA_SOURCES.md im GitHub-Repository des Spiels.",
+    "tag": {
+      "official": "offiziell",
+      "wikipedia": "Wikipedia",
+      "hand-checked": "geprüft",
+      "modelled": "modelliert"
+    },
+    "tagHint": {
+      "official": "Aus offiziellen Statistiken oder Registern (z. B. Eurostat, FAA).",
+      "wikipedia": "Aus Wikipedia oder Wikidata.",
+      "hand-checked": "Von Hand mit den Angaben der Airline abgeglichen.",
+      "modelled": "Vom Nachfragemodell des Spiels geschätzt, wo keine echte Zahl vorliegt."
+    },
+    "use": {
+      "ourairports": "Alle Flughäfen mit Linienflügen: Lage, Pisten, Größe.",
+      "geonames": "Einwohnerzahlen der Städte (Einzugsgebiet und Marktgröße) und Zeitzonen.",
+      "worldbank": "Wohlstand (BIP pro Kopf) und Tourismus je Land.",
+      "naturalearth": "Küsten und Grenzen der Karte.",
+      "openfreemap": "Schriften für die Flughafencodes auf der Karte.",
+      "wikipedia": "Welche Airline wohin fliegt (Flughafenartikel), Geschäftsmodelle, Drehkreuze, Basen, Flotten und Bestuhlung (Airline-Artikel).",
+      "wikidata": "Namen, Codes, Länder, Allianzen und Mutterkonzerne der Airlines; Verknüpfung von Artikeln und Flughäfen.",
+      "eurostat": "Echte Passagierzahlen, Sitze und Flüge je Strecke in Europa (Sommer 2024) – für die Nachfrage und die wöchentlichen Flüge der Airlines.",
+      "eia": "Der echte Kerosinpreis, Woche für Woche im Jahr 2026.",
+      "ecb": "Wechselkurse zwischen den Währungen.",
+      "faa": "Einzelne Flugzeuge (Kennzeichen, Typ, Baujahr) von US-Airlines.",
+      "tc": "Einzelne Flugzeuge kanadischer Airlines.",
+      "austrocontrol": "Einzelne Flugzeuge österreichischer Airlines, inklusive Betreiber.",
+      "iaa": "Einzelne Flugzeuge irischer Airlines (Ryanair, Aer Lingus).",
+      "manufacturers": "Flugzeugleistung: Sitze, Reichweite, Startstrecke, Gewicht.",
+      "plex": "Die Schriftarten des Spiels."
+    }
   }
 }

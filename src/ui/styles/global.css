@@ -1625,3 +1625,134 @@ a.button {
   font-size: 1.15rem;
   font-weight: 600;
 }
+
+/* ---------- Real airlines ---------- */
+.srctag {
+  display: inline-block;
+  padding: 0 5px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-small);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.srctag--official { color: var(--green); }
+.srctag--wikipedia { color: var(--cyan); }
+.srctag--hand-checked { color: var(--text); }
+.srctag--modelled { color: var(--magenta); }
+
+.competitors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.competitor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.competitor__name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.airline-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.airline-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.airline-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+}
+
+.airline-row:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.airline-row__name {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.airline-row__facts {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+@media (max-width: 599px) {
+  .airline-row {
+    grid-template-columns: auto 1fr auto;
+  }
+  .airline-row__facts:nth-of-type(2),
+  .airline-row__facts:nth-of-type(4) {
+    display: none;
+  }
+}
+
+.regs {
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--text-dim);
+}
+
+.source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source-list__name {
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.mapview__shown {
+  position: absolute;
+  top: 64px;
+  left: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  box-shadow: var(--shadow);
+  font-size: 0.85rem;
+}
+
+.mapview__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}

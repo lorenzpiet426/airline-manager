@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
+import { SourceTag } from '../components/SourceTag';
+import { TailFin } from '../components/TailFin';
 import { AirportSearch } from '../map/AirportSearch';
 import { usePlayer } from '../game/usePlayer';
 import { useEngineWorld } from '../game/useEngineWorld';
@@ -14,6 +16,7 @@ import {
   type CommandError,
 } from '../../engine/commands';
 import {
+  competitorsOn,
   crewCostPerDayUsd,
   market,
   marketFareUsd,
@@ -205,6 +208,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     const plan = { type, seats: aircraft.seats, frequency, fareFactor, ageYears: yearOf(game.time) - aircraft.builtYear, rampUp: 1 };
     return {
       market: market(engineWorld, hub, dest),
+      competitors: competitorsOn(engineWorld, hub, dest),
       marketFare: marketFareUsd(engineWorld, hub, dest, date),
       week: routeWeek(engineWorld, hub, dest, plan, date),
       aircraftWeekUsd:
@@ -327,13 +331,32 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
           <dl className="facts">
             <dt>{t('network.market')}</dt>
             <dd className="mono">
-              {t('network.marketValue', { pax: formatNumber(language, Math.round(forecast.market.annualPax / 1000) * 1000) })}
+              {t('network.marketValue', { pax: formatNumber(language, Math.round(forecast.market.annualPax / 1000) * 1000) })}{' '}
+              <SourceTag tag={forecast.market.observed ? 'official' : 'modelled'} />
             </dd>
             <dt>{t('network.competition')}</dt>
             <dd>
-              {forecast.market.incumbentFlights > 0
-                ? t('network.competitionValue', { count: forecast.market.incumbentFlights })
-                : t('network.noCompetition')}
+              {forecast.competitors && forecast.competitors.length > 0 ? (
+                <ul className="competitors">
+                  {forecast.competitors.map((c) => {
+                    const airline = engineWorld?.realAirlines?.byId.get(c.airlineId);
+                    return (
+                      <li key={c.airlineId} className="competitor">
+                        {airline && <TailFin primary={airline.colors.primary} secondary={airline.colors.secondary} size={22} />}
+                        <a href={hrefFor('airlines', { id: c.airlineId })} className="competitor__name">
+                          {c.name}
+                        </a>
+                        <span className="mono">{t('network.perWeek', { count: c.weekly })}</span>
+                        <span className="muted small">{t(`airlines.model.${c.model}`)}</span>
+                        <SourceTag tag={c.source} />
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                t('network.noCompetition')
+              )}
+              <span className="muted small">{t('network.plusConnections')}</span>
             </dd>
             <dt>{t('network.season')}</dt>
             <dd className={`mono ${w.season >= 1.05 ? 'text--normal' : w.season <= 0.95 ? 'text--caution' : ''}`}>

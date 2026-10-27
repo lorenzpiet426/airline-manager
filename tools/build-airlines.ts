@@ -110,9 +110,13 @@ try {
   // second pass not run yet
 }
 
+/** Display name: Wikidata's English label, or (if it has none) the Wikipedia article title without "(airline)". */
+const displayName = (i: Item) =>
+  /^Q\d+$/.test(i.name) && i.article ? i.article.replace(/\s*\((airline|company|airlines)\)$/i, '') : i.name;
+
 const toRow = (i: Item, id: string, extra: Partial<{ brand: boolean; parentIcao: string | null }> = {}) => ({
   id,
-  name: i.name,
+  name: displayName(i),
   iata: i.iata,
   // A brand whose code is already taken by the main airline gets no code of its own.
   icao: extra.brand ? null : i.icao || null,
