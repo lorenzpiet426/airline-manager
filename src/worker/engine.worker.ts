@@ -8,6 +8,7 @@ import { buildEngineWorld, type EngineWorld } from '../engine/world';
 import { loadRealAirlines } from '../data/realAirlinesData';
 import { createGame, migrate, type NewGameOptions } from '../engine/game';
 import { ensureFlights } from '../engine/schedule';
+import { decodeSave, encodeSave, summarize, type SaveSummary } from '../persistence/saveFile';
 import type { GameState } from '../engine/state';
 import { MINUTES_PER_DAY } from '../engine/time';
 import type { EngineSnapshot, Speed } from './protocol';
@@ -73,6 +74,15 @@ function setSpeed(next: Speed): EngineSnapshot {
   return emit();
 }
 
+async function loadState(raw: unknown): Promise<EngineSnapshot | null> {
+  const world = await loadWorld();
+  const loaded = migrate(raw);
+  if (!loaded) return null;
+  ensureFlights(loaded, world);
+  state = loaded;
+  return setSpeed(0);
+}
+
 const api = {
   subscribe(callback: (snapshot: EngineSnapshot) => void) {
     listener = callback;
@@ -88,15 +98,8 @@ const api = {
     return { result, snapshot: setSpeed(0) };
   },
 
-  /** Loads a saved game. Returns false if the save cannot be used. */
-  async load(raw: unknown): Promise<EngineSnapshot | null> {
-    const world = await loadWorld();
-    const loaded = migrate(raw);
-    if (!loaded) return null;
-    ensureFlights(loaded, world);
-    state = loaded;
-    return setSpeed(0);
-  },
+  /** Loads a saved game (its state as plain data). Returns null if the save cannot be used. */
+  load: loadState,
 
   async command(command: Command): Promise<Outcome> {
     if (!state) return { result: { ok: false, error: 'airlineUnknown' }, snapshot: emit() };
@@ -110,6 +113,24 @@ const api = {
   async endWeek(): Promise<EngineSnapshot> {
     if (state) advance(state, await loadWorld(), state.time + 7 * MINUTES_PER_DAY);
     return emit();
+  },
+
+  /** Packs the running game into a compressed save file (here, so the screen never stalls). */
+  serialize(name: string): { bytes: Uint8Array; summary: SaveSummary } | null {
+    if (!state) return null;
+    const bytes = encodeSave(state, name, Date.now());
+    return Comlink.transfer({ bytes, summary: summarize(state) }, [bytes.buffer as ArrayBuffer]);
+  },
+
+  /** Loads a save file (from the database or an imported file). Returns null if it is not a usable save. */
+  async loadBytes(bytes: Uint8Array): Promise<EngineSnapshot | null> {
+    let raw: unknown;
+    try {
+      raw = decodeSave(bytes).state;
+    } catch {
+      return null;
+    }
+    return loadState(raw);
   },
 
   quit(): EngineSnapshot {

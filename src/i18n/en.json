@@ -14,7 +14,8 @@
     "main": "Main navigation",
     "new": "New airline",
     "airlines": "Airlines",
-    "sources": "Data sources"
+    "sources": "Data sources",
+    "saves": "Saves"
   },
   "status": {
     "sim": "SIM",
@@ -56,8 +57,6 @@
     },
     "messagesTitle": "Ops messages",
     "noMessages": "No messages yet.",
-    "nextTitle": "Coming next",
-    "nextHint": "Real airlines now react to you: low-cost airlines match your fares at once, network airlines defend their hubs, and everyone opens and closes routes worldwide. Next: your own timetables with departure times (2.2), then save slots and a dashboard (1.5).",
     "newsTitle": "World news"
   },
   "settings": {
@@ -72,10 +71,9 @@
     "dataNote": "Built with open data. All sources are listed in the project's DATA_SOURCES file.",
     "game": "Current game",
     "currentGame": "You are running {{name}}.",
-    "autosaveNote": "The game saves itself automatically on this device. Save slots and export arrive in Phase 1.5.",
-    "quit": "Quit game",
-    "quitConfirm": "Really end the game with {{name}}? It cannot be restored.",
-    "noGame": "No game running."
+    "autosaveNote": "The game saves itself automatically on this device, in its own save slot. Copies, other games, export and import: Saves.",
+    "noGame": "No game running.",
+    "toSaves": "Saves & backups"
   },
   "more": {
     "title": "More"
@@ -492,5 +490,76 @@
     "note": "Each row is a day in hub local time: flight out, time at the destination (light), flight back, turnaround (faint). Magenta = the route you are editing, red = collision.",
     "show": "Show week",
     "hide": "Hide week"
+  },
+  "saves": {
+    "title": "Saves",
+    "intro": "Every game has its own save slot on this device and saves itself automatically. Keep copies to go back to, and export files as a backup or to continue on another device.",
+    "currentTitle": "Open game",
+    "autosave": "Saved automatically: when you pause, change something, leave the app, and every 15 seconds while the clock runs.",
+    "copyName": "Name of the copy",
+    "copyPlaceholder": "e.g. before ordering the 787s",
+    "saveCopy": "Save copy",
+    "copied": "Copy saved.",
+    "close": "Close game",
+    "listTitle": "Games on this device",
+    "empty": "No saved games yet.",
+    "open": "open",
+    "continue": "Continue",
+    "restore": "Go back to this",
+    "export": "Export",
+    "delete": "Delete",
+    "savedAt": "saved {{when}}",
+    "restoreConfirm": "Go back to “{{name}}”? The game continues from this copy; progress made since then is lost unless you save a copy of it first.",
+    "deleteGameConfirm_one": "Delete the game “{{name}}” and its copy from this device? Exported files are not affected.",
+    "deleteGameConfirm_other": "Delete the game “{{name}}” and its {{count}} copies from this device? Exported files are not affected.",
+    "deleteCopyConfirm": "Delete the copy “{{name}}”?",
+    "import": "Import file",
+    "imported": "Save imported and opened.",
+    "importFailed": "This file is not a save from this game (or it is damaged).",
+    "loadFailed": "This save could not be opened.",
+    "failed": "Something went wrong while saving or reading.",
+    "exportNote": "Export creates a small compressed “.amsave” file. To continue on another device, send it there (e.g. by e-mail or cloud drive) and use “Import file”. Cloud sync comes in Phase 3.",
+    "storage": "Storage used by the game: {{used}} MB of about {{quota}} MB.",
+    "persisted": "The browser keeps these saves permanently.",
+    "notPersisted": "The browser may delete them if space runs low: export a backup now and then (installing the app helps)."
+  },
+  "dashboard": {
+    "title": "Key figures",
+    "cash": "Cash",
+    "period": "Last full week, from {{week}}; ▲▼ = change against the week before, line = last 12 weeks (point at it for values).",
+    "waiting": "The key figures appear after your first full week of flying (weeks run Monday to Sunday).",
+    "kpi": {
+      "result": "Result",
+      "margin": "Margin",
+      "revenue": "Revenue",
+      "pax": "Passengers",
+      "loadFactor": "Load factor",
+      "rask": "RASK",
+      "cask": "CASK",
+      "caskExFuel": "CASK excl. fuel",
+      "yield": "Yield",
+      "utilisation": "Utilisation"
+    },
+    "hint": {
+      "cash": "Money in the bank. Below zero, the airline is in trouble.",
+      "result": "Revenue minus all costs (incl. crews, leases, overheads) in the last full week.",
+      "margin": "Result as a share of revenue. Good European airlines make 5–15 % over a year.",
+      "revenue": "Ticket revenue of the week.",
+      "pax": "Passengers carried in the week.",
+      "loadFactor": "Share of seat-km sold (RPK ÷ ASK). European airlines: about 80–90 %.",
+      "rask": "Revenue per available seat-km: what each seat flown one km earns.",
+      "cask": "Cost per available seat-km (all costs). Earns money when RASK is higher.",
+      "caskExFuel": "CASK without fuel: the costs the airline controls itself.",
+      "yield": "Revenue per passenger-km: the average price per km flown.",
+      "utilisation": "Block hours per aircraft per day. Short-haul airlines: about 9–12 h."
+    },
+    "centsPer": "{{currency}} cents per {{unit}}",
+    "vsLastWeek": "vs last week",
+    "points": "pts",
+    "bestRoutes": "Best routes last week",
+    "worstRoutes": "Weakest routes last week",
+    "note": "Route results here are before crews, leases and overheads. Utilisation uses today's number of aircraft.",
+    "toFinance": "All accounts →",
+    "routesLastWeek": "Routes last week"
   }
 }

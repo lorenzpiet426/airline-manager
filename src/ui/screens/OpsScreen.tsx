@@ -5,6 +5,7 @@ import { Panel } from '../components/Panel';
 import { TailFin } from '../components/TailFin';
 import { SimControls } from '../components/SimControls';
 import { GameClock } from '../components/StatusBar';
+import { Dashboard } from '../game/Dashboard';
 import { MessageLog } from '../game/MessageLog';
 import { usePlayer } from '../game/usePlayer';
 import { useBooting } from '../../game/store';
@@ -117,6 +118,10 @@ export function OpsScreen() {
       />
 
       <div className="grid">
+        <Panel title={t('dashboard.title')} code="KPI" className="panel--wide">
+          <Dashboard game={game} airline={airline} />
+        </Panel>
+
         <Panel title={t('ops.airlineTitle')} code={`${airline.iata} / ${airline.icao}`}>
           <div className="airline-card">
             <TailFin primary={airline.colors.primary} secondary={airline.colors.secondary} code={airline.iata} size={72} />
@@ -152,10 +157,6 @@ export function OpsScreen() {
 
         <Panel title={t('ops.newsTitle')} code="NEWS" className="panel--wide">
           <MessageLog messages={game.messages.filter((m) => m.airlineId === null)} world={world} limit={12} />
-        </Panel>
-
-        <Panel title={t('ops.nextTitle')} code="1.4">
-          <p className="muted">{t('ops.nextHint')}</p>
         </Panel>
 
         {statusPanel}

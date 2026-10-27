@@ -9,6 +9,7 @@ import { NetworkScreen } from './NetworkScreen';
 import { FinanceScreen } from './FinanceScreen';
 import { AirlinesScreen } from './AirlinesScreen';
 import { SourcesScreen } from './SourcesScreen';
+import { SavesScreen } from './SavesScreen';
 
 // The map code is big (MapLibre), so it is only downloaded when the map is first opened.
 const MapScreen = lazy(() => import('./MapScreen'));
@@ -34,6 +35,8 @@ export function ScreenView({ route, isWide }: { route: Route; isWide: boolean })
       return <FinanceScreen />;
     case 'airlines':
       return <AirlinesScreen />;
+    case 'saves':
+      return <SavesScreen />;
     case 'sources':
       return <SourcesScreen />;
     case 'settings':

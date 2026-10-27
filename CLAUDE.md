@@ -252,7 +252,7 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
 - **1.4 Routes & money:** ✅ open routes (range/runway checks), weekly frequency, fares, demand model
   (gravity + business/leisure), cost model (fuel, crew, airport, navigation, maintenance, lease),
   weekly P&L, **planes flying on the map**. *Test: does a VIE–LHR A320 route make believable money?*
-- **1.5 Saves & dashboard:** multiple local save slots, export/import, dashboard with KPIs (load factor,
+- **1.5 Saves & dashboard:** ✅ multiple local save slots, export/import, dashboard with KPIs (load factor,
   RASK/CASK, cash). Phase 1 complete. *Test: play a few months, save, reload on another browser via export.*
 
 *Order change (2026-10-27): Phase 2 comes before step 1.5, and detailed scheduling (from Phase 7) becomes step 2.2:*
@@ -406,6 +406,11 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-27 | 2.2: **realistic time-of-day demand** (business/leisure decision windows, weekdays, night arrivals, clustering) | Owner choice |
 | 2026-10-27 | 2.2: **competitors get generated, plausible timetables** tagged "modelled" (real times only in non-copyable sources) | Owner choice |
 | 2026-10-27 | Timetable times stored in **hub local time** (published-timetable convention), converted with IANA time zones incl. summer time; 24-hour pickers (no AM/PM) | Aviation convention |
+| 2026-10-27 | 1.5: **every game = its own autosaving slot + named copies** (go back to a copy; it continues in its game's slot) | Owner choice |
+| 2026-10-27 | 1.5: **Ops screen is the dashboard** (KPI tiles first, then airline, clock, messages, news) | Owner choice; one tap away on phone |
+| 2026-10-27 | 1.5: **airline standard KPIs** (result, margin, revenue, pax, LF, RASK, CASK, CASK ex fuel, yield, utilisation, best/worst routes) with ▲▼ vs last week and 12-week sparklines | Owner choice |
+| 2026-10-27 | 1.5: export = **compressed `.amsave` file** (gzip JSON with header); the same bytes are stored in IndexedDB | Owner choice; ~16 KB for a short game |
+| 2026-10-27 | Libraries pinned to versions ≥ 2 weeks old: dexie 4.4.6, fflate 0.8.3, fake-indexeddb 6.2.5 (tests) | Avoid freshly published releases (supply-chain safety) |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -649,7 +654,30 @@ education", forbid making the data available to others (§3 iii) and require a w
   collisions shown in red and blocked, phone 375 px without sideways scrolling, 6 game days simulated, no console errors.
 - Known: Simple auto-plan leaves gaps (e.g. empty Sundays) like before; crew duty limits, curfews and slots come later
   (Phases 7/8); real airlines' planes still not on the map.
-- **Next:** 1.5 — save slots (IndexedDB), export/import, dashboard with KPIs.
+- **Next (then):** 1.5 — save slots (IndexedDB), export/import, dashboard with KPIs.
+- Owner confirmed: 2.2 tried.
+
+### 2026-10-27 — Session 8 (Phase 1.5 Saves & dashboard) ✅ — Phase 1 complete
+- Owner decisions (all recommended): game slots + copies, Ops = dashboard, airline standard KPIs, compressed export (§7).
+- **Persistence** `src/persistence/`: `saveFile.ts` (format `airline-manager-save` v1: header + state, gzip via fflate;
+  also reads plain JSON and the old bare autosave), `saves.ts` (Dexie database `airline-manager`: table `slots` = small
+  list entries, table `data` = compressed bytes; delete a game → its copies too; current slot id in localStorage;
+  `navigator.storage.persist()` requested so the browser keeps saves). The engine worker packs/unpacks saves
+  (`serialize`, `loadBytes`), so the screen never stalls. `src/game/store.ts`: autosave into the open game's slot at most
+  every 15 s / once per game day while running, always on pause, commands and leaving the app; one save at a time;
+  `startNewGame` (new slot, old game kept), `saveCopy`, `loadSlot` (copy → continues in its game's slot),
+  `closeGame`, `deleteSave`, `exportSave`, `importSave` (new slot). The old localStorage autosave moves into a slot on
+  first start. Settings: link to Saves instead of "Quit game".
+- **KPIs** `src/engine/kpis.ts` (`periodKpis`): ASK/RPK/block hours now recorded per route and day (`RouteStats.ask/rpk/
+  blockHours`, optional — older periods rebuilt from route distances, no block hours).
+- **UI:** Saves screen (`#/saves`, rail bottom + More on phone: open game with "Save copy"/"Close game", games with
+  their copies, Continue / Go back / Export / Delete, Import file, storage use), Ops dashboard (`Dashboard.tsx`: hero
+  result + cash, 9 KPI tiles with explanation, ▲▼ change in ECAM colours by whether up is good, sparkline with hover
+  readout, best/weakest routes).
+- Tests: 81 (save file round trip/size/legacy/garbage, IndexedDB slots with fake-indexeddb, KPI maths + old periods).
+- Verified in browser: old autosave migrated into a slot, dashboard values, copy saved, export captured in the page
+  (16 KB) and re-imported as a new game, delete + continue, phone layout without sideways scrolling, no console errors.
+- **Next:** rest of Phase 2 (cabin classes and seat pitch, reputation) — or what the owner prefers next.
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.

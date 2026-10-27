@@ -132,6 +132,11 @@ export interface RouteStats {
   revenue: number;
   /** Costs caused by flying the route (fuel, maintenance, fees, handling, sales); no crew or lease. */
   directCosts: number;
+  /** Available seat-km (seats × distance) and revenue passenger-km (Phase 1.5; missing in older periods). */
+  ask?: number;
+  rpk?: number;
+  /** Block hours flown. */
+  blockHours?: number;
 }
 
 /** One week (Monday to Sunday, UTC) of an airline's accounts. */

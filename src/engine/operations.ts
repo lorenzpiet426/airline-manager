@@ -77,6 +77,9 @@ function bookDay(state: GameState, world: EngineWorld): void {
     stats.flights += week.flights;
     stats.seats += week.seats;
     stats.pax += week.pax;
+    stats.ask = (stats.ask ?? 0) + week.seats * route.distanceKm;
+    stats.rpk = (stats.rpk ?? 0) + week.pax * route.distanceKm;
+    stats.blockHours = (stats.blockHours ?? 0) + week.blockHours;
     stats.revenue += week.revenue * k;
     stats.directCosts += totalCosts(week.costs) * k;
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) + (week.revenue - totalCosts(week.costs)) * k;

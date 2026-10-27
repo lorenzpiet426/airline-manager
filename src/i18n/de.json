@@ -14,7 +14,8 @@
     "main": "Hauptnavigation",
     "new": "Neue Airline",
     "airlines": "Airlines",
-    "sources": "Datenquellen"
+    "sources": "Datenquellen",
+    "saves": "Spielstände"
   },
   "status": {
     "sim": "SIM",
@@ -56,8 +57,6 @@
     },
     "messagesTitle": "Ops-Meldungen",
     "noMessages": "Noch keine Meldungen.",
-    "nextTitle": "Als Nächstes",
-    "nextHint": "Echte Airlines reagieren jetzt auf dich: Low-Cost-Airlines ziehen bei deinen Preisen sofort mit, Netzwerk-Airlines verteidigen ihre Drehkreuze, und weltweit werden Strecken eröffnet und eingestellt. Als Nächstes: eigene Flugpläne mit Abflugzeiten (2.2), dann Speicherplätze und ein Dashboard (1.5).",
     "newsTitle": "Weltnachrichten"
   },
   "settings": {
@@ -72,10 +71,9 @@
     "dataNote": "Basiert auf offenen Daten. Alle Quellen stehen in der Datei DATA_SOURCES des Projekts.",
     "game": "Aktuelles Spiel",
     "currentGame": "Du führst {{name}}.",
-    "autosaveNote": "Das Spiel speichert sich automatisch auf diesem Gerät. Speicherplätze und Export kommen in Phase 1.5.",
-    "quit": "Spiel beenden",
-    "quitConfirm": "Das Spiel mit {{name}} wirklich beenden? Es kann nicht wiederhergestellt werden.",
-    "noGame": "Kein Spiel aktiv."
+    "autosaveNote": "Das Spiel speichert sich automatisch auf diesem Gerät, in seinem eigenen Spielstand. Kopien, andere Spiele, Export und Import: Spielstände.",
+    "noGame": "Kein Spiel aktiv.",
+    "toSaves": "Spielstände & Sicherungen"
   },
   "more": {
     "title": "Mehr"
@@ -492,5 +490,76 @@
     "note": "Jede Zeile ist ein Tag in Ortszeit des Drehkreuzes: Hinflug, Zeit am Ziel (hell), Rückflug, Umdrehzeit (blass). Magenta = Strecke in Bearbeitung, rot = Überschneidung.",
     "show": "Woche zeigen",
     "hide": "Woche ausblenden"
+  },
+  "saves": {
+    "title": "Spielstände",
+    "intro": "Jedes Spiel hat auf diesem Gerät seinen eigenen Spielstand und speichert sich automatisch. Lege Kopien an, zu denen du zurückkehren kannst, und exportiere Dateien als Sicherung oder um auf einem anderen Gerät weiterzuspielen.",
+    "currentTitle": "Offenes Spiel",
+    "autosave": "Automatisch gespeichert: beim Pausieren, bei jeder Änderung, beim Verlassen der App und alle 15 Sekunden, solange die Uhr läuft.",
+    "copyName": "Name der Kopie",
+    "copyPlaceholder": "z. B. vor der 787-Bestellung",
+    "saveCopy": "Kopie speichern",
+    "copied": "Kopie gespeichert.",
+    "close": "Spiel schließen",
+    "listTitle": "Spiele auf diesem Gerät",
+    "empty": "Noch keine gespeicherten Spiele.",
+    "open": "offen",
+    "continue": "Weiterspielen",
+    "restore": "Hierher zurück",
+    "export": "Exportieren",
+    "delete": "Löschen",
+    "savedAt": "gespeichert {{when}}",
+    "restoreConfirm": "Zu „{{name}}“ zurückkehren? Das Spiel geht ab dieser Kopie weiter; der Fortschritt seitdem geht verloren, außer du speicherst vorher eine Kopie davon.",
+    "deleteGameConfirm_one": "Das Spiel „{{name}}“ und seine Kopie von diesem Gerät löschen? Exportierte Dateien bleiben erhalten.",
+    "deleteGameConfirm_other": "Das Spiel „{{name}}“ und seine {{count}} Kopien von diesem Gerät löschen? Exportierte Dateien bleiben erhalten.",
+    "deleteCopyConfirm": "Die Kopie „{{name}}“ löschen?",
+    "import": "Datei importieren",
+    "imported": "Spielstand importiert und geöffnet.",
+    "importFailed": "Diese Datei ist kein Spielstand dieses Spiels (oder sie ist beschädigt).",
+    "loadFailed": "Dieser Spielstand konnte nicht geöffnet werden.",
+    "failed": "Beim Speichern oder Lesen ist etwas schiefgegangen.",
+    "exportNote": "Exportieren erstellt eine kleine, komprimierte „.amsave“-Datei. Um auf einem anderen Gerät weiterzuspielen, schick sie dorthin (z. B. per E-Mail oder Cloud-Speicher) und nutze „Datei importieren“. Cloud-Synchronisation kommt in Phase 3.",
+    "storage": "Speicherplatz des Spiels: {{used}} MB von etwa {{quota}} MB.",
+    "persisted": "Der Browser behält diese Spielstände dauerhaft.",
+    "notPersisted": "Der Browser könnte sie bei Platzmangel löschen: Exportiere ab und zu eine Sicherung (die App zu installieren hilft)."
+  },
+  "dashboard": {
+    "title": "Kennzahlen",
+    "cash": "Kontostand",
+    "period": "Letzte volle Woche, ab {{week}}; ▲▼ = Veränderung zur Vorwoche, Linie = letzte 12 Wochen (darauf zeigen für Werte).",
+    "waiting": "Die Kennzahlen erscheinen nach deiner ersten vollen Flugwoche (Wochen laufen von Montag bis Sonntag).",
+    "kpi": {
+      "result": "Ergebnis",
+      "margin": "Marge",
+      "revenue": "Umsatz",
+      "pax": "Passagiere",
+      "loadFactor": "Auslastung",
+      "rask": "RASK",
+      "cask": "CASK",
+      "caskExFuel": "CASK ohne Treibstoff",
+      "yield": "Yield",
+      "utilisation": "Auslastung Flotte"
+    },
+    "hint": {
+      "cash": "Geld auf dem Konto. Unter null wird es kritisch.",
+      "result": "Umsatz minus aller Kosten (inkl. Crews, Leasing, Gemeinkosten) der letzten vollen Woche.",
+      "margin": "Ergebnis im Verhältnis zum Umsatz. Gute europäische Airlines schaffen übers Jahr 5–15 %.",
+      "revenue": "Ticketumsatz der Woche.",
+      "pax": "Beförderte Passagiere der Woche.",
+      "loadFactor": "Anteil verkaufter Sitzkilometer (RPK ÷ ASK). Europäische Airlines: etwa 80–90 %.",
+      "rask": "Umsatz pro angebotenem Sitzkilometer: was jeder Sitz pro geflogenem km einbringt.",
+      "cask": "Kosten pro angebotenem Sitzkilometer (alle Kosten). Gewinn, wenn RASK höher ist.",
+      "caskExFuel": "CASK ohne Treibstoff: die Kosten, die die Airline selbst steuert.",
+      "yield": "Umsatz pro Passagierkilometer: der Durchschnittspreis pro geflogenem km.",
+      "utilisation": "Blockstunden pro Flugzeug und Tag. Kurzstrecken-Airlines: etwa 9–12 h."
+    },
+    "centsPer": "{{currency}}-Cent pro {{unit}}",
+    "vsLastWeek": "zur Vorwoche",
+    "points": "Pkt.",
+    "bestRoutes": "Beste Strecken letzte Woche",
+    "worstRoutes": "Schwächste Strecken letzte Woche",
+    "note": "Streckenergebnisse hier vor Crews, Leasing und Gemeinkosten. Die Flottenauslastung rechnet mit der heutigen Zahl an Flugzeugen.",
+    "toFinance": "Alle Zahlen →",
+    "routesLastWeek": "Strecken letzte Woche"
   }
 }

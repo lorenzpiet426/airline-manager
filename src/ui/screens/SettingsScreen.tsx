@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
 import { Segmented } from '../components/Segmented';
 import { updateSettings, useSettings, type Language, type ThemePreference } from '../../settings/settings';
-import { quitGame } from '../../game/store';
 import { usePlayer } from '../game/usePlayer';
 import { hrefFor } from '../navigation';
 
@@ -47,17 +46,9 @@ export function SettingsScreen() {
               {t('settings.currentGame', { name: airline.name })}
             </p>
             <p className="muted small">{t('settings.autosaveNote')}</p>
-            <button
-              type="button"
-              className="button button--danger"
-              onClick={() => {
-                if (window.confirm(t('settings.quitConfirm', { name: airline.name }))) {
-                  void quitGame().then(() => (window.location.hash = hrefFor('ops')));
-                }
-              }}
-            >
-              {t('settings.quit')}
-            </button>
+            <a href={hrefFor('saves')} className="button">
+              {t('settings.toSaves')}
+            </a>
           </>
         ) : (
           <p className="muted">{t('settings.noGame')}</p>

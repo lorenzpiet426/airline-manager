@@ -17,6 +17,9 @@ export function mergePnl(target: PnlPeriod, src: PnlPeriod): void {
     t.pax += s.pax;
     t.revenue += s.revenue;
     t.directCosts += s.directCosts;
+    if (s.ask !== undefined) t.ask = (t.ask ?? 0) + s.ask;
+    if (s.rpk !== undefined) t.rpk = (t.rpk ?? 0) + s.rpk;
+    if (s.blockHours !== undefined) t.blockHours = (t.blockHours ?? 0) + s.blockHours;
   }
 }
 

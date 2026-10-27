@@ -163,3 +163,27 @@ describe('Detailed scheduling', () => {
     expect(weeklyLegs(upgraded, world, 'T1')).toHaveLength(14);
   });
 });
+
+describe('key figures', () => {
+  it('computes load factor, RASK and CASK from the weekly accounts', async () => {
+    const { periodKpis } = await import('./kpis');
+    const { state, airlineId } = startup('detailed');
+    applyCommand(state, world, { type: 'OpenRoute', airlineId, payload: { destinationId: 'EGLL', aircraftId: '', frequency: 0, fareFactor: 1, flights: [{ aircraftId: 'T1', dep: 420, days: DAYS_ALL, groundMin: 45 }] } });
+    advance(state, world, simTime(2026, 1, 19));
+    const week = state.finance[airlineId]!.history.at(-1)!;
+    const k = periodKpis(week, state.routes, 7, 2);
+    const stats = Object.values(week.routes)[0]!;
+    expect(k.loadFactor).toBeCloseTo(stats.pax / stats.seats, 5);
+    expect(k.ask).toBeCloseTo(stats.seats * Object.values(state.routes)[0]!.distanceKm, 0);
+    expect(k.rask! * k.ask).toBeCloseTo(k.revenue, 0);
+    expect(k.cask!).toBeGreaterThan(k.caskExFuel!);
+    expect(k.utilisation).toBeGreaterThan(1); // one aircraft of two flies ~5 h a day
+    expect(k.utilisation).toBeLessThan(5);
+    // Accounts from before 1.5 have no seat-km: rebuilt from the route distance.
+    const old = structuredClone(week);
+    for (const s of Object.values(old.routes)) delete s.ask, delete s.rpk, delete s.blockHours;
+    const k2 = periodKpis(old, state.routes, 7, 2);
+    expect(k2.ask).toBeCloseTo(k.ask, 0);
+    expect(k2.utilisation).toBeNull();
+  });
+});
