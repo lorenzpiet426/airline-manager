@@ -238,10 +238,11 @@ Research, architecture, roadmap, git, CLAUDE.md.
 Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode, simple scheduling.
 - **1.1 Skeleton:** Vite + React + TS project, app shell with distinct desktop and phone layouts,
   OCC theme (dark/light), EN/DE switch, PWA install, auto-deploy to the free host. *Test: open it on your phone and install it.*
-- **1.2 World data:** pipeline for all scheduled-service airports + population/wealth; starter aircraft
-  database (~20 current types: ATR 72, Dash 8-400, E175/E195-E2, A220, A320neo family, 737 MAX,
-  A330neo, A350, 787, 777…); world map showing airports. *Test: browse airports, zoom the map.*
-- **1.3 Engine core + new game:** game state, commands, clock with **pause/speed (real-time)** and
+- **1.2 World data + map:** ✅ pipeline for all scheduled-service airports + population/wealth/tourism;
+  offline world map (MapLibre + Natural Earth) with airport search and detail panel. *Test: browse airports, zoom the map.*
+- **1.3 Engine core + aircraft + new game:** starter aircraft database (~20 current types: ATR 72, Dash 8-400,
+  E175/E195-E2, A220, A320neo family, 737 MAX, A330neo, A350, 787, 777…, moved here from 1.2 so it is built
+  together with leasing); game state, commands, clock with **pause/speed (real-time)** and
   **turn-based weekly** mode; new-game wizard (name, IATA-style code, colors, hub, starting capital);
   lease aircraft. *Test: start an airline, lease a plane.*
 - **1.4 Routes & money:** open routes (range/runway checks), weekly frequency, fares, demand model
@@ -324,6 +325,11 @@ Server-authoritative shared world running the same engine (free tier to be resea
 | 2026-10-27 | D4: roadmap order unchanged | Owner approval |
 | 2026-10-27 | Hash-based navigation (`#/map`) instead of path URLs | GitHub Pages has no server-side routing; hash URLs never 404 |
 | 2026-10-27 | Phone tab bar: Ops · Map · Network · Fleet · More (Finance + Settings under More) | Dashboard must be one tap away on phone |
+| 2026-10-27 | Starter aircraft database moved from step 1.2 to 1.3 | Built together with leasing, where it is first used; keeps 1.2 focused |
+| 2026-10-27 | Generated data files (`src/data/generated/`) are committed; raw downloads are not | Builds/CI need no downloads; refresh is a deliberate step |
+| 2026-10-27 | Base map = Natural Earth 1:50m GeoJSON (not world-atlas TopoJSON) | world-atlas shapes are spherical and draw artefacts at the 180° line on a flat map |
+| 2026-10-27 | Map data is put into the MapLibre style at creation (no "load" event wait) | Faster first paint; robust when the page is in the background |
+| 2026-10-27 | Tourism figures use 2019 when available | 2020–2022 are COVID-distorted; crises will be modelled as game events |
 
 ## 8. Progress log
 ### 2026-10-27 — Session 1 (Phase 0)
@@ -355,3 +361,21 @@ Server-authoritative shared world running the same engine (free tier to be resea
   Pages source = GitHub Actions. First deploy succeeded; verified live: no console errors, service worker active ("Offline play: Ready").
   Bumped workflow actions to current majors (checkout v7, setup-node v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5).
 - **Next:** owner installs the game on their phone and tests it. Then Phase 1.2 (world data + map).
+- Owner confirmed: installed on phone, works.
+
+### 2026-10-27 — Session 3 (Phase 1.2 World data + map) ✅
+- Data pipeline: `npm run data:download` / `npm run data:build` (scripts in `tools/`, run directly by Node 24 as TypeScript).
+  Output: `src/data/generated/airports.json` (4,135 airports: 1,154 large, 2,115 medium, 866 small; runways,
+  elevation, IANA time zone, 100 km catchment population), `countries.json` (234 countries: World Bank GDP/capita
+  + tourism, supplement for Taiwan/overseas regions), `basemap.json` (Natural Earth 1:50m coastlines + land borders).
+- Tests: `src/data/world.test.ts` (hubs present, VIE exact values, unique codes, valid time zones, every country has GDP),
+  `src/i18n/format.test.ts` (aviation coordinates, number formats, Vienna UTC offset winter/summer). 15 tests total.
+- Map screen: MapLibre GL 6 (WebGL), Mercator/Globe toggle (saved in settings), theme-aware colours,
+  airport dots sized by category, IATA labels by zoom level, tap targets enlarged for phones, selection ring.
+  Airport search (code/city/name, accent-insensitive). Airport panel: codes, coordinates (N48°06.6' E016°34.2'),
+  elevation ft/m, local time + UTC offset, runways with length bars, catchment, GDP, tourism.
+  Desktop: docked panel on the right; phone: bottom sheet.
+- Map code and world data are loaded only when the Map is opened (lazy loading); all precached for offline use.
+- Lessons: MapLibre 6 needs `setWorkerUrl(...)` with Vite; its CSS sets `position: relative` on the map container;
+  the in-app browser pane runs pages as "hidden", so screenshots can lag — verify map state via `window.__map` (dev only).
+- **Next:** Phase 1.3 — aircraft database, engine core (state, commands, clock), new-game wizard, leasing.

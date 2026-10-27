@@ -4,10 +4,12 @@ import { useSyncExternalStore } from 'react';
 
 export type Language = 'en' | 'de';
 export type ThemePreference = 'system' | 'dark' | 'light';
+export type MapProjection = 'mercator' | 'globe';
 
 export interface Settings {
   language: Language;
   theme: ThemePreference;
+  mapProjection: MapProjection;
 }
 
 const STORAGE_KEY = 'am.settings.v1';
@@ -17,6 +19,7 @@ function defaultSettings(): Settings {
   return {
     language: browserLang.toLowerCase().startsWith('de') ? 'de' : 'en',
     theme: 'system',
+    mapProjection: 'mercator',
   };
 }
 

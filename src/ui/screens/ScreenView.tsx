@@ -1,9 +1,12 @@
+import { Suspense, lazy } from 'react';
 import type { Route } from '../navigation';
 import { OpsScreen } from './OpsScreen';
-import { MapScreen } from './MapScreen';
 import { ComingSoonScreen } from './ComingSoonScreen';
 import { SettingsScreen } from './SettingsScreen';
 import { MoreScreen } from './MoreScreen';
+
+// The map code is big (MapLibre), so it is only downloaded when the map is first opened.
+const MapScreen = lazy(() => import('./MapScreen'));
 
 /** Shows the screen for the current route. Both layouts use this. */
 export function ScreenView({ route, isWide }: { route: Route; isWide: boolean }) {
@@ -11,7 +14,11 @@ export function ScreenView({ route, isWide }: { route: Route; isWide: boolean })
     case 'ops':
       return <OpsScreen />;
     case 'map':
-      return <MapScreen />;
+      return (
+        <Suspense fallback={<div className="screen" />}>
+          <MapScreen />
+        </Suspense>
+      );
     case 'network':
       return <ComingSoonScreen route="network" phase="1.4" />;
     case 'fleet':

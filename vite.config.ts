@@ -34,7 +34,21 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,woff2}'],
+        // The world data chunk is ~1.4 MB; allow precaching it so the map works offline.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            // Map label fonts from OpenFreeMap: keep them once downloaded.
+            urlPattern: /^https:\/\/tiles\.openfreemap\.org\/fonts\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'map-fonts',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],

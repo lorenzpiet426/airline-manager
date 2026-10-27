@@ -1,0 +1,24 @@
+{
+  "_comment": "GDP per capita (current USD) for places the World Bank API does not cover. Rounded estimates; 'parent' = use that country's value (small territories). Listed in docs/DATA_SOURCES.md.",
+  "values": {
+    "TW": { "usd": 33200, "year": 2024, "source": "IMF World Economic Outlook (Taiwan Province of China)" },
+    "KP": { "usd": 1000, "year": 2023, "source": "estimate (UN national accounts order of magnitude)" },
+    "YE": { "usd": 600, "year": 2023, "source": "estimate (last World Bank values, post-conflict)" },
+    "SS": { "usd": 450, "year": 2023, "source": "estimate (IMF order of magnitude)" },
+    "ER": { "usd": 650, "year": 2023, "source": "estimate (IMF order of magnitude)" },
+    "EH": { "usd": 3000, "year": 2023, "source": "estimate (below Morocco)" },
+    "RE": { "usd": 26000, "year": 2022, "source": "INSEE regional GDP per inhabitant, converted" },
+    "GP": { "usd": 28000, "year": 2022, "source": "INSEE regional GDP per inhabitant, converted" },
+    "MQ": { "usd": 30000, "year": 2022, "source": "INSEE regional GDP per inhabitant, converted" },
+    "GF": { "usd": 18000, "year": 2022, "source": "INSEE regional GDP per inhabitant, converted" },
+    "YT": { "usd": 12000, "year": 2022, "source": "INSEE regional GDP per inhabitant, converted" },
+    "JE": { "usd": 60000, "year": 2022, "source": "estimate (Jersey statistics order of magnitude)" },
+    "GG": { "usd": 55000, "year": 2022, "source": "estimate (Guernsey statistics order of magnitude)" }
+  },
+  "parent": {
+    "AI": "GB", "MS": "GB", "VG": "GB", "FK": "GB", "SH": "GB", "GI": "GB",
+    "BL": "FR", "PM": "FR", "WF": "NC",
+    "BQ": "CW", "CC": "AU", "CX": "AU", "NF": "AU",
+    "CK": "NZ", "NU": "NZ", "UM": "US"
+  }
+}

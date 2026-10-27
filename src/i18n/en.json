@@ -39,7 +39,6 @@
   },
   "comingSoon": {
     "title": "Coming in Phase {{phase}}",
-    "map": "The world map with every commercial airport arrives in Phase 1.2.",
     "network": "Opening routes and planning your network arrives in Phase 1.4.",
     "fleet": "Leasing your first aircraft arrives in Phase 1.3.",
     "finance": "Weekly profit & loss, cash and key figures arrive in Phase 1.4."
@@ -61,5 +60,41 @@
   "lang": {
     "en": "English",
     "de": "Deutsch"
+  },
+  "common": {
+    "close": "Close"
+  },
+  "map": {
+    "loading": "Loading world data…",
+    "searchPlaceholder": "Search airport, city or code",
+    "noResults": "No airport found",
+    "globe": "Globe",
+    "airportsCount": "airports with scheduled flights"
+  },
+  "airport": {
+    "size": {
+      "large": "Large airport",
+      "medium": "Medium airport",
+      "small": "Small airport"
+    },
+    "section": {
+      "position": "Position",
+      "runways": "Runways",
+      "market": "Market"
+    },
+    "coordinates": "Coordinates",
+    "elevation": "Elevation",
+    "localTime": "Local time",
+    "timeZone": "Time zone",
+    "noRunwayData": "No runway data available.",
+    "surface": {
+      "hard": "paved",
+      "soft": "unpaved",
+      "unknown": "unknown"
+    },
+    "catchment": "Catchment (100 km)",
+    "gdpPerCapita": "GDP per capita",
+    "tourists": "Tourist arrivals (country)",
+    "marketNote": "Catchment = people living in cities within 100 km. Passenger demand is calculated from these figures in Phase 1.4."
   }
 }

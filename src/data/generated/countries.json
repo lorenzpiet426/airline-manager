@@ -1,0 +1,2108 @@
+{
+ "AE": {
+  "code": "AE",
+  "name": "United Arab Emirates",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 50274,
+  "gdpYear": 2024,
+  "tourismArrivals": 25282000,
+  "tourismYear": 2019
+ },
+ "AF": {
+  "code": "AF",
+  "name": "Afghanistan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 417,
+  "gdpYear": 2024,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "AG": {
+  "code": "AG",
+  "name": "Antigua and Barbuda",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 24819,
+  "gdpYear": 2025,
+  "tourismArrivals": 1035000,
+  "tourismYear": 2019
+ },
+ "AI": {
+  "code": "AI",
+  "name": "Anguilla",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 57602,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "AL": {
+  "code": "AL",
+  "name": "Albania",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 12998,
+  "gdpYear": 2025,
+  "tourismArrivals": 6406000,
+  "tourismYear": 2019
+ },
+ "AM": {
+  "code": "AM",
+  "name": "Armenia",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 9474,
+  "gdpYear": 2025,
+  "tourismArrivals": 1894000,
+  "tourismYear": 2019
+ },
+ "AO": {
+  "code": "AO",
+  "name": "Angola",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 3129,
+  "gdpYear": 2025,
+  "tourismArrivals": 218000,
+  "tourismYear": 2019
+ },
+ "AR": {
+  "code": "AR",
+  "name": "Argentina",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 14898,
+  "gdpYear": 2025,
+  "tourismArrivals": 7399000,
+  "tourismYear": 2019
+ },
+ "AS": {
+  "code": "AS",
+  "name": "American Samoa",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 18017,
+  "gdpYear": 2022,
+  "tourismArrivals": 19200,
+  "tourismYear": 2019
+ },
+ "AT": {
+  "code": "AT",
+  "name": "Austria",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 62930,
+  "gdpYear": 2025,
+  "tourismArrivals": 31884000,
+  "tourismYear": 2019
+ },
+ "AU": {
+  "code": "AU",
+  "name": "Australia",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 65130,
+  "gdpYear": 2025,
+  "tourismArrivals": 9466000,
+  "tourismYear": 2019
+ },
+ "AW": {
+  "code": "AW",
+  "name": "Aruba",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 38591,
+  "gdpYear": 2024,
+  "tourismArrivals": 1951000,
+  "tourismYear": 2019
+ },
+ "AZ": {
+  "code": "AZ",
+  "name": "Azerbaijan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 7411,
+  "gdpYear": 2025,
+  "tourismArrivals": 3170000,
+  "tourismYear": 2019
+ },
+ "BA": {
+  "code": "BA",
+  "name": "Bosnia and Herzegovina",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 10382,
+  "gdpYear": 2025,
+  "tourismArrivals": 1198000,
+  "tourismYear": 2019
+ },
+ "BB": {
+  "code": "BB",
+  "name": "Barbados",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 28365,
+  "gdpYear": 2025,
+  "tourismArrivals": 966000,
+  "tourismYear": 2019
+ },
+ "BD": {
+  "code": "BD",
+  "name": "Bangladesh",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 2597,
+  "gdpYear": 2025,
+  "tourismArrivals": 323000,
+  "tourismYear": 2019
+ },
+ "BE": {
+  "code": "BE",
+  "name": "Belgium",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 60750,
+  "gdpYear": 2025,
+  "tourismArrivals": 9343000,
+  "tourismYear": 2019
+ },
+ "BF": {
+  "code": "BF",
+  "name": "Burkina Faso",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1148,
+  "gdpYear": 2025,
+  "tourismArrivals": 143000,
+  "tourismYear": 2019
+ },
+ "BG": {
+  "code": "BG",
+  "name": "Bulgaria",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 20328,
+  "gdpYear": 2025,
+  "tourismArrivals": 12552000,
+  "tourismYear": 2019
+ },
+ "BH": {
+  "code": "BH",
+  "name": "Bahrain",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 30597,
+  "gdpYear": 2025,
+  "tourismArrivals": 11061000,
+  "tourismYear": 2019
+ },
+ "BI": {
+  "code": "BI",
+  "name": "Burundi",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 234,
+  "gdpYear": 2025,
+  "tourismArrivals": 299000,
+  "tourismYear": 2017
+ },
+ "BJ": {
+  "code": "BJ",
+  "name": "Benin",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1658,
+  "gdpYear": 2025,
+  "tourismArrivals": 337000,
+  "tourismYear": 2019
+ },
+ "BL": {
+  "code": "BL",
+  "name": "Saint Barthélemy",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 48986,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "BM": {
+  "code": "BM",
+  "name": "Bermuda",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 142250,
+  "gdpYear": 2024,
+  "tourismArrivals": 805000,
+  "tourismYear": 2019
+ },
+ "BN": {
+  "code": "BN",
+  "name": "Brunei",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 32235,
+  "gdpYear": 2025,
+  "tourismArrivals": 4449000,
+  "tourismYear": 2019
+ },
+ "BO": {
+  "code": "BO",
+  "name": "Bolivia",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 5148,
+  "gdpYear": 2025,
+  "tourismArrivals": 1239000,
+  "tourismYear": 2019
+ },
+ "BQ": {
+  "code": "BQ",
+  "name": "Caribbean Netherlands",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 22833,
+  "gdpYear": 2024,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "BR": {
+  "code": "BR",
+  "name": "Brazil",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 10713,
+  "gdpYear": 2025,
+  "tourismArrivals": 6353000,
+  "tourismYear": 2019
+ },
+ "BS": {
+  "code": "BS",
+  "name": "Bahamas",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 39455,
+  "gdpYear": 2024,
+  "tourismArrivals": 7250000,
+  "tourismYear": 2019
+ },
+ "BT": {
+  "code": "BT",
+  "name": "Bhutan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 4493,
+  "gdpYear": 2025,
+  "tourismArrivals": 316000,
+  "tourismYear": 2019
+ },
+ "BW": {
+  "code": "BW",
+  "name": "Botswana",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 7778,
+  "gdpYear": 2025,
+  "tourismArrivals": 1830000,
+  "tourismYear": 2018
+ },
+ "BY": {
+  "code": "BY",
+  "name": "Belarus",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 10279,
+  "gdpYear": 2025,
+  "tourismArrivals": 11832000,
+  "tourismYear": 2019
+ },
+ "BZ": {
+  "code": "BZ",
+  "name": "Belize",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 7865,
+  "gdpYear": 2025,
+  "tourismArrivals": 1674000,
+  "tourismYear": 2019
+ },
+ "CA": {
+  "code": "CA",
+  "name": "Canada",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 55698,
+  "gdpYear": 2025,
+  "tourismArrivals": 32430000,
+  "tourismYear": 2019
+ },
+ "CC": {
+  "code": "CC",
+  "name": "Cocos (Keeling) Islands",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 65130,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "CD": {
+  "code": "CD",
+  "name": "Democratic Republic of the Congo",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 807,
+  "gdpYear": 2025,
+  "tourismArrivals": 351000,
+  "tourismYear": 2016
+ },
+ "CF": {
+  "code": "CF",
+  "name": "Central African Republic",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 556,
+  "gdpYear": 2025,
+  "tourismArrivals": 87000,
+  "tourismYear": 2019
+ },
+ "CG": {
+  "code": "CG",
+  "name": "Republic of the Congo",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 2515,
+  "gdpYear": 2025,
+  "tourismArrivals": 158000,
+  "tourismYear": 2018
+ },
+ "CH": {
+  "code": "CH",
+  "name": "Switzerland",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 114769,
+  "gdpYear": 2025,
+  "tourismArrivals": 11818000,
+  "tourismYear": 2019
+ },
+ "CI": {
+  "code": "CI",
+  "name": "Côte d'Ivoire",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 3050,
+  "gdpYear": 2025,
+  "tourismArrivals": 2070000,
+  "tourismYear": 2019
+ },
+ "CK": {
+  "code": "CK",
+  "name": "Cook Islands",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 49591,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "CL": {
+  "code": "CL",
+  "name": "Chile",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 17995,
+  "gdpYear": 2025,
+  "tourismArrivals": 5431000,
+  "tourismYear": 2019
+ },
+ "CM": {
+  "code": "CM",
+  "name": "Cameroon",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1972,
+  "gdpYear": 2025,
+  "tourismArrivals": 1021000,
+  "tourismYear": 2019
+ },
+ "CN": {
+  "code": "CN",
+  "name": "China",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 13862,
+  "gdpYear": 2025,
+  "tourismArrivals": 162538000,
+  "tourismYear": 2019
+ },
+ "CO": {
+  "code": "CO",
+  "name": "Colombia",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 8562,
+  "gdpYear": 2025,
+  "tourismArrivals": 4531000,
+  "tourismYear": 2019
+ },
+ "CR": {
+  "code": "CR",
+  "name": "Costa Rica",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 19970,
+  "gdpYear": 2025,
+  "tourismArrivals": 3366000,
+  "tourismYear": 2019
+ },
+ "CU": {
+  "code": "CU",
+  "name": "Cuba",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 9605,
+  "gdpYear": 2020,
+  "tourismArrivals": 4276000,
+  "tourismYear": 2019
+ },
+ "CV": {
+  "code": "CV",
+  "name": "Cape Verde",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 5796,
+  "gdpYear": 2025,
+  "tourismArrivals": 758000,
+  "tourismYear": 2019
+ },
+ "CW": {
+  "code": "CW",
+  "name": "Curaçao",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 22833,
+  "gdpYear": 2024,
+  "tourismArrivals": 1293000,
+  "tourismYear": 2019
+ },
+ "CX": {
+  "code": "CX",
+  "name": "Christmas Island",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 65130,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "CY": {
+  "code": "CY",
+  "name": "Cyprus",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 41783,
+  "gdpYear": 2025,
+  "tourismArrivals": 4117000,
+  "tourismYear": 2019
+ },
+ "CZ": {
+  "code": "CZ",
+  "name": "Czech Republic",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 35917,
+  "gdpYear": 2025,
+  "tourismArrivals": 37202000,
+  "tourismYear": 2019
+ },
+ "DE": {
+  "code": "DE",
+  "name": "Germany",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 60496,
+  "gdpYear": 2025,
+  "tourismArrivals": 39563000,
+  "tourismYear": 2019
+ },
+ "DJ": {
+  "code": "DJ",
+  "name": "Djibouti",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 3906,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "DK": {
+  "code": "DK",
+  "name": "Denmark",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 76970,
+  "gdpYear": 2025,
+  "tourismArrivals": 33093000,
+  "tourismYear": 2019
+ },
+ "DM": {
+  "code": "DM",
+  "name": "Dominica",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 10989,
+  "gdpYear": 2025,
+  "tourismArrivals": 322000,
+  "tourismYear": 2019
+ },
+ "DO": {
+  "code": "DO",
+  "name": "Dominican Republic",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 11059,
+  "gdpYear": 2025,
+  "tourismArrivals": 7550000,
+  "tourismYear": 2019
+ },
+ "DZ": {
+  "code": "DZ",
+  "name": "Algeria",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 6051,
+  "gdpYear": 2025,
+  "tourismArrivals": 2371000,
+  "tourismYear": 2019
+ },
+ "EC": {
+  "code": "EC",
+  "name": "Ecuador",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 7125,
+  "gdpYear": 2025,
+  "tourismArrivals": 2108000,
+  "tourismYear": 2019
+ },
+ "EE": {
+  "code": "EE",
+  "name": "Estonia",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 34418,
+  "gdpYear": 2025,
+  "tourismArrivals": 6103000,
+  "tourismYear": 2019
+ },
+ "EG": {
+  "code": "EG",
+  "name": "Egypt",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 3086,
+  "gdpYear": 2025,
+  "tourismArrivals": 13026000,
+  "tourismYear": 2019
+ },
+ "EH": {
+  "code": "EH",
+  "name": "Western Sahara (disputed territory)",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 3000,
+  "gdpYear": 2023,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "ER": {
+  "code": "ER",
+  "name": "Eritrea",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 650,
+  "gdpYear": 2023,
+  "tourismArrivals": 142000,
+  "tourismYear": 2016
+ },
+ "ES": {
+  "code": "ES",
+  "name": "Spain",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 38627,
+  "gdpYear": 2025,
+  "tourismArrivals": 126170000,
+  "tourismYear": 2019
+ },
+ "ET": {
+  "code": "ET",
+  "name": "Ethiopia",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 933,
+  "gdpYear": 2025,
+  "tourismArrivals": 812000,
+  "tourismYear": 2019
+ },
+ "FI": {
+  "code": "FI",
+  "name": "Finland",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 56149,
+  "gdpYear": 2025,
+  "tourismArrivals": 3290000,
+  "tourismYear": 2019
+ },
+ "FJ": {
+  "code": "FJ",
+  "name": "Fiji",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 6642,
+  "gdpYear": 2025,
+  "tourismArrivals": 969000,
+  "tourismYear": 2019
+ },
+ "FK": {
+  "code": "FK",
+  "name": "Falkland Islands",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 57602,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "FM": {
+  "code": "FM",
+  "name": "Micronesia",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 4414,
+  "gdpYear": 2025,
+  "tourismArrivals": 18000,
+  "tourismYear": 2019
+ },
+ "FO": {
+  "code": "FO",
+  "name": "Faroe Islands",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 74175,
+  "gdpYear": 2024,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "FR": {
+  "code": "FR",
+  "name": "France",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 48986,
+  "gdpYear": 2025,
+  "tourismArrivals": 217877000,
+  "tourismYear": 2019
+ },
+ "GA": {
+  "code": "GA",
+  "name": "Gabon",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 8263,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "GB": {
+  "code": "GB",
+  "name": "United Kingdom",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 57602,
+  "gdpYear": 2025,
+  "tourismArrivals": 40857000,
+  "tourismYear": 2019
+ },
+ "GD": {
+  "code": "GD",
+  "name": "Grenada",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 12107,
+  "gdpYear": 2025,
+  "tourismArrivals": 526000,
+  "tourismYear": 2019
+ },
+ "GE": {
+  "code": "GE",
+  "name": "Georgia",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 9692,
+  "gdpYear": 2025,
+  "tourismArrivals": 7726000,
+  "tourismYear": 2019
+ },
+ "GF": {
+  "code": "GF",
+  "name": "French Guiana",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 18000,
+  "gdpYear": 2022,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "GG": {
+  "code": "GG",
+  "name": "Guernsey",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 55000,
+  "gdpYear": 2022,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "GH": {
+  "code": "GH",
+  "name": "Ghana",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 3257,
+  "gdpYear": 2025,
+  "tourismArrivals": 897000,
+  "tourismYear": 2015
+ },
+ "GI": {
+  "code": "GI",
+  "name": "Gibraltar",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 57602,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "GL": {
+  "code": "GL",
+  "name": "Greenland",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 58499,
+  "gdpYear": 2023,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "GM": {
+  "code": "GM",
+  "name": "Gambia",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 919,
+  "gdpYear": 2025,
+  "tourismArrivals": 620000,
+  "tourismYear": 2019
+ },
+ "GN": {
+  "code": "GN",
+  "name": "Guinea",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1877,
+  "gdpYear": 2025,
+  "tourismArrivals": 99000,
+  "tourismYear": 2017
+ },
+ "GP": {
+  "code": "GP",
+  "name": "Guadeloupe",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 28000,
+  "gdpYear": 2022,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "GQ": {
+  "code": "GQ",
+  "name": "Equatorial Guinea",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 6615,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "GR": {
+  "code": "GR",
+  "name": "Greece",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 26948,
+  "gdpYear": 2025,
+  "tourismArrivals": 34005000,
+  "tourismYear": 2019
+ },
+ "GT": {
+  "code": "GT",
+  "name": "Guatemala",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 6598,
+  "gdpYear": 2025,
+  "tourismArrivals": 2560000,
+  "tourismYear": 2019
+ },
+ "GU": {
+  "code": "GU",
+  "name": "Guam",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 41833,
+  "gdpYear": 2022,
+  "tourismArrivals": 1667000,
+  "tourismYear": 2019
+ },
+ "GW": {
+  "code": "GW",
+  "name": "Guinea-Bissau",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1124,
+  "gdpYear": 2025,
+  "tourismArrivals": 52400,
+  "tourismYear": 2019
+ },
+ "GY": {
+  "code": "GY",
+  "name": "Guyana",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 32414,
+  "gdpYear": 2025,
+  "tourismArrivals": 315000,
+  "tourismYear": 2019
+ },
+ "HK": {
+  "code": "HK",
+  "name": "Hong Kong",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 56983,
+  "gdpYear": 2025,
+  "tourismArrivals": 55913000,
+  "tourismYear": 2019
+ },
+ "HN": {
+  "code": "HN",
+  "name": "Honduras",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 3598,
+  "gdpYear": 2025,
+  "tourismArrivals": 2315000,
+  "tourismYear": 2019
+ },
+ "HR": {
+  "code": "HR",
+  "name": "Croatia",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 27104,
+  "gdpYear": 2025,
+  "tourismArrivals": 60021000,
+  "tourismYear": 2019
+ },
+ "HT": {
+  "code": "HT",
+  "name": "Haiti",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 2694,
+  "gdpYear": 2025,
+  "tourismArrivals": 938000,
+  "tourismYear": 2019
+ },
+ "HU": {
+  "code": "HU",
+  "name": "Hungary",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 25907,
+  "gdpYear": 2025,
+  "tourismArrivals": 61397000,
+  "tourismYear": 2019
+ },
+ "ID": {
+  "code": "ID",
+  "name": "Indonesia",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 5060,
+  "gdpYear": 2025,
+  "tourismArrivals": 16107000,
+  "tourismYear": 2019
+ },
+ "IE": {
+  "code": "IE",
+  "name": "Ireland",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 131592,
+  "gdpYear": 2025,
+  "tourismArrivals": 10951000,
+  "tourismYear": 2019
+ },
+ "IL": {
+  "code": "IL",
+  "name": "Israel",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 60337,
+  "gdpYear": 2025,
+  "tourismArrivals": 4905000,
+  "tourismYear": 2019
+ },
+ "IM": {
+  "code": "IM",
+  "name": "Isle of Man",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 90015,
+  "gdpYear": 2023,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "IN": {
+  "code": "IN",
+  "name": "India",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 2702,
+  "gdpYear": 2025,
+  "tourismArrivals": 17914000,
+  "tourismYear": 2019
+ },
+ "IQ": {
+  "code": "IQ",
+  "name": "Iraq",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 5410,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "IR": {
+  "code": "IR",
+  "name": "Iran",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 3924,
+  "gdpYear": 2025,
+  "tourismArrivals": 9107000,
+  "tourismYear": 2019
+ },
+ "IS": {
+  "code": "IS",
+  "name": "Iceland",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 98323,
+  "gdpYear": 2025,
+  "tourismArrivals": 2202000,
+  "tourismYear": 2019
+ },
+ "IT": {
+  "code": "IT",
+  "name": "Italy",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 43309,
+  "gdpYear": 2025,
+  "tourismArrivals": 95399000,
+  "tourismYear": 2019
+ },
+ "JE": {
+  "code": "JE",
+  "name": "Jersey",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 60000,
+  "gdpYear": 2022,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "JM": {
+  "code": "JM",
+  "name": "Jamaica",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 8003,
+  "gdpYear": 2025,
+  "tourismArrivals": 4233000,
+  "tourismYear": 2019
+ },
+ "JO": {
+  "code": "JO",
+  "name": "Jordan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 5348,
+  "gdpYear": 2025,
+  "tourismArrivals": 5361000,
+  "tourismYear": 2019
+ },
+ "JP": {
+  "code": "JP",
+  "name": "Japan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 35951,
+  "gdpYear": 2025,
+  "tourismArrivals": 31881000,
+  "tourismYear": 2019
+ },
+ "KE": {
+  "code": "KE",
+  "name": "Kenya",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 2363,
+  "gdpYear": 2025,
+  "tourismArrivals": 2049000,
+  "tourismYear": 2019
+ },
+ "KG": {
+  "code": "KG",
+  "name": "Kyrgyzstan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 3081,
+  "gdpYear": 2025,
+  "tourismArrivals": 8508000,
+  "tourismYear": 2019
+ },
+ "KH": {
+  "code": "KH",
+  "name": "Cambodia",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 2872,
+  "gdpYear": 2025,
+  "tourismArrivals": 6611000,
+  "tourismYear": 2019
+ },
+ "KI": {
+  "code": "KI",
+  "name": "Kiribati",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 2559,
+  "gdpYear": 2025,
+  "tourismArrivals": 12000,
+  "tourismYear": 2019
+ },
+ "KM": {
+  "code": "KM",
+  "name": "Comoros",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 2056,
+  "gdpYear": 2025,
+  "tourismArrivals": 45100,
+  "tourismYear": 2019
+ },
+ "KN": {
+  "code": "KN",
+  "name": "Saint Kitts and Nevis",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 25223,
+  "gdpYear": 2025,
+  "tourismArrivals": 1107000,
+  "tourismYear": 2019
+ },
+ "KP": {
+  "code": "KP",
+  "name": "North Korea",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 1000,
+  "gdpYear": 2023,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "KR": {
+  "code": "KR",
+  "name": "South Korea",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 36227,
+  "gdpYear": 2025,
+  "tourismArrivals": 17503000,
+  "tourismYear": 2019
+ },
+ "KW": {
+  "code": "KW",
+  "name": "Kuwait",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 32312,
+  "gdpYear": 2025,
+  "tourismArrivals": 8565000,
+  "tourismYear": 2019
+ },
+ "KY": {
+  "code": "KY",
+  "name": "Cayman Islands",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 104293,
+  "gdpYear": 2024,
+  "tourismArrivals": 2334000,
+  "tourismYear": 2019
+ },
+ "KZ": {
+  "code": "KZ",
+  "name": "Kazakhstan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 14692,
+  "gdpYear": 2025,
+  "tourismArrivals": 8515000,
+  "tourismYear": 2019
+ },
+ "LA": {
+  "code": "LA",
+  "name": "Laos",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 2325,
+  "gdpYear": 2025,
+  "tourismArrivals": 4791000,
+  "tourismYear": 2019
+ },
+ "LB": {
+  "code": "LB",
+  "name": "Lebanon",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 4473,
+  "gdpYear": 2024,
+  "tourismArrivals": 1936000,
+  "tourismYear": 2019
+ },
+ "LC": {
+  "code": "LC",
+  "name": "Saint Lucia",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 14746,
+  "gdpYear": 2025,
+  "tourismArrivals": 1220000,
+  "tourismYear": 2019
+ },
+ "LK": {
+  "code": "LK",
+  "name": "Sri Lanka",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 5002,
+  "gdpYear": 2025,
+  "tourismArrivals": 2027000,
+  "tourismYear": 2019
+ },
+ "LR": {
+  "code": "LR",
+  "name": "Liberia",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 915,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "LS": {
+  "code": "LS",
+  "name": "Lesotho",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1089,
+  "gdpYear": 2025,
+  "tourismArrivals": 1142000,
+  "tourismYear": 2019
+ },
+ "LT": {
+  "code": "LT",
+  "name": "Lithuania",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 32959,
+  "gdpYear": 2025,
+  "tourismArrivals": 6150000,
+  "tourismYear": 2019
+ },
+ "LU": {
+  "code": "LU",
+  "name": "Luxembourg",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 147252,
+  "gdpYear": 2025,
+  "tourismArrivals": 1041000,
+  "tourismYear": 2019
+ },
+ "LV": {
+  "code": "LV",
+  "name": "Latvia",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 26312,
+  "gdpYear": 2025,
+  "tourismArrivals": 8342000,
+  "tourismYear": 2019
+ },
+ "LY": {
+  "code": "LY",
+  "name": "Libya",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 6449,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "MA": {
+  "code": "MA",
+  "name": "Morocco",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 4672,
+  "gdpYear": 2025,
+  "tourismArrivals": 13109000,
+  "tourismYear": 2019
+ },
+ "MD": {
+  "code": "MD",
+  "name": "Moldova",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 8622,
+  "gdpYear": 2025,
+  "tourismArrivals": 174000,
+  "tourismYear": 2019
+ },
+ "ME": {
+  "code": "ME",
+  "name": "Montenegro",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 14817,
+  "gdpYear": 2025,
+  "tourismArrivals": 2510000,
+  "tourismYear": 2019
+ },
+ "MF": {
+  "code": "MF",
+  "name": "Saint Martin",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 21668,
+  "gdpYear": 2021,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "MG": {
+  "code": "MG",
+  "name": "Madagascar",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 599,
+  "gdpYear": 2025,
+  "tourismArrivals": 486000,
+  "tourismYear": 2019
+ },
+ "MH": {
+  "code": "MH",
+  "name": "Marshall Islands",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 8489,
+  "gdpYear": 2025,
+  "tourismArrivals": 6100,
+  "tourismYear": 2019
+ },
+ "MK": {
+  "code": "MK",
+  "name": "North Macedonia",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 10490,
+  "gdpYear": 2025,
+  "tourismArrivals": 758000,
+  "tourismYear": 2019
+ },
+ "ML": {
+  "code": "ML",
+  "name": "Mali",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1193,
+  "gdpYear": 2025,
+  "tourismArrivals": 217000,
+  "tourismYear": 2019
+ },
+ "MM": {
+  "code": "MM",
+  "name": "Myanmar",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 1489,
+  "gdpYear": 2025,
+  "tourismArrivals": 4364000,
+  "tourismYear": 2019
+ },
+ "MN": {
+  "code": "MN",
+  "name": "Mongolia",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 7108,
+  "gdpYear": 2025,
+  "tourismArrivals": 637000,
+  "tourismYear": 2019
+ },
+ "MO": {
+  "code": "MO",
+  "name": "Macau",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 75902,
+  "gdpYear": 2025,
+  "tourismArrivals": 39406000,
+  "tourismYear": 2019
+ },
+ "MP": {
+  "code": "MP",
+  "name": "Northern Mariana Islands",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 23786,
+  "gdpYear": 2022,
+  "tourismArrivals": 487000,
+  "tourismYear": 2019
+ },
+ "MQ": {
+  "code": "MQ",
+  "name": "Martinique",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 30000,
+  "gdpYear": 2022,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "MR": {
+  "code": "MR",
+  "name": "Mauritania",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 2198,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "MS": {
+  "code": "MS",
+  "name": "Montserrat",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 57602,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "MT": {
+  "code": "MT",
+  "name": "Malta",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 47907,
+  "gdpYear": 2025,
+  "tourismArrivals": 3519000,
+  "tourismYear": 2019
+ },
+ "MU": {
+  "code": "MU",
+  "name": "Mauritius",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 12991,
+  "gdpYear": 2025,
+  "tourismArrivals": 1418000,
+  "tourismYear": 2019
+ },
+ "MV": {
+  "code": "MV",
+  "name": "Maldives",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 14615,
+  "gdpYear": 2025,
+  "tourismArrivals": 1703000,
+  "tourismYear": 2019
+ },
+ "MW": {
+  "code": "MW",
+  "name": "Malawi",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 672,
+  "gdpYear": 2025,
+  "tourismArrivals": 871000,
+  "tourismYear": 2018
+ },
+ "MX": {
+  "code": "MX",
+  "name": "Mexico",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 13889,
+  "gdpYear": 2025,
+  "tourismArrivals": 97406000,
+  "tourismYear": 2019
+ },
+ "MY": {
+  "code": "MY",
+  "name": "Malaysia",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 13125,
+  "gdpYear": 2025,
+  "tourismArrivals": 26101000,
+  "tourismYear": 2019
+ },
+ "MZ": {
+  "code": "MZ",
+  "name": "Mozambique",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 627,
+  "gdpYear": 2025,
+  "tourismArrivals": 2033000,
+  "tourismYear": 2019
+ },
+ "NA": {
+  "code": "NA",
+  "name": "Namibia",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 4876,
+  "gdpYear": 2025,
+  "tourismArrivals": 1651000,
+  "tourismYear": 2019
+ },
+ "NC": {
+  "code": "NC",
+  "name": "New Caledonia",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 29213,
+  "gdpYear": 2024,
+  "tourismArrivals": 130000,
+  "tourismYear": 2019
+ },
+ "NE": {
+  "code": "NE",
+  "name": "Niger",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 775,
+  "gdpYear": 2025,
+  "tourismArrivals": 192000,
+  "tourismYear": 2019
+ },
+ "NF": {
+  "code": "NF",
+  "name": "Norfolk Island",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 65130,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "NG": {
+  "code": "NG",
+  "name": "Nigeria",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1224,
+  "gdpYear": 2025,
+  "tourismArrivals": 5265000,
+  "tourismYear": 2016
+ },
+ "NI": {
+  "code": "NI",
+  "name": "Nicaragua",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 3173,
+  "gdpYear": 2025,
+  "tourismArrivals": 1455000,
+  "tourismYear": 2019
+ },
+ "NL": {
+  "code": "NL",
+  "name": "Netherlands",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 73684,
+  "gdpYear": 2025,
+  "tourismArrivals": 20129000,
+  "tourismYear": 2019
+ },
+ "NO": {
+  "code": "NO",
+  "name": "Norway",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 94594,
+  "gdpYear": 2025,
+  "tourismArrivals": 5879000,
+  "tourismYear": 2019
+ },
+ "NP": {
+  "code": "NP",
+  "name": "Nepal",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 1536,
+  "gdpYear": 2025,
+  "tourismArrivals": 1197000,
+  "tourismYear": 2019
+ },
+ "NR": {
+  "code": "NR",
+  "name": "Nauru",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 14640,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "NU": {
+  "code": "NU",
+  "name": "Niue",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 49591,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "NZ": {
+  "code": "NZ",
+  "name": "New Zealand",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 49591,
+  "gdpYear": 2025,
+  "tourismArrivals": 3888000,
+  "tourismYear": 2019
+ },
+ "OM": {
+  "code": "OM",
+  "name": "Oman",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 19947,
+  "gdpYear": 2025,
+  "tourismArrivals": 3506000,
+  "tourismYear": 2019
+ },
+ "PA": {
+  "code": "PA",
+  "name": "Panama",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 19790,
+  "gdpYear": 2025,
+  "tourismArrivals": 2494000,
+  "tourismYear": 2019
+ },
+ "PE": {
+  "code": "PE",
+  "name": "Peru",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 9684,
+  "gdpYear": 2025,
+  "tourismArrivals": 5275000,
+  "tourismYear": 2019
+ },
+ "PF": {
+  "code": "PF",
+  "name": "French Polynesia",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 22440,
+  "gdpYear": 2024,
+  "tourismArrivals": 300000,
+  "tourismYear": 2019
+ },
+ "PG": {
+  "code": "PG",
+  "name": "Papua New Guinea",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 3020,
+  "gdpYear": 2025,
+  "tourismArrivals": 211000,
+  "tourismYear": 2019
+ },
+ "PH": {
+  "code": "PH",
+  "name": "Philippines",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 4171,
+  "gdpYear": 2025,
+  "tourismArrivals": 8261000,
+  "tourismYear": 2019
+ },
+ "PK": {
+  "code": "PK",
+  "name": "Pakistan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 1596,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "PL": {
+  "code": "PL",
+  "name": "Poland",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 28420,
+  "gdpYear": 2025,
+  "tourismArrivals": 88515000,
+  "tourismYear": 2019
+ },
+ "PM": {
+  "code": "PM",
+  "name": "Saint Pierre and Miquelon",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 48986,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "PR": {
+  "code": "PR",
+  "name": "Puerto Rico",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 40620,
+  "gdpYear": 2025,
+  "tourismArrivals": 4931000,
+  "tourismYear": 2019
+ },
+ "PT": {
+  "code": "PT",
+  "name": "Portugal",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 32082,
+  "gdpYear": 2025,
+  "tourismArrivals": 17283000,
+  "tourismYear": 2019
+ },
+ "PW": {
+  "code": "PW",
+  "name": "Palau",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 19532,
+  "gdpYear": 2025,
+  "tourismArrivals": 94000,
+  "tourismYear": 2019
+ },
+ "PY": {
+  "code": "PY",
+  "name": "Paraguay",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 7027,
+  "gdpYear": 2025,
+  "tourismArrivals": 4368000,
+  "tourismYear": 2019
+ },
+ "QA": {
+  "code": "QA",
+  "name": "Qatar",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 72525,
+  "gdpYear": 2025,
+  "tourismArrivals": 2136500,
+  "tourismYear": 2019
+ },
+ "RE": {
+  "code": "RE",
+  "name": "Réunion",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 26000,
+  "gdpYear": 2022,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "RO": {
+  "code": "RO",
+  "name": "Romania",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 22538,
+  "gdpYear": 2025,
+  "tourismArrivals": 12815000,
+  "tourismYear": 2019
+ },
+ "RS": {
+  "code": "RS",
+  "name": "Serbia",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 15262,
+  "gdpYear": 2025,
+  "tourismArrivals": 1847000,
+  "tourismYear": 2019
+ },
+ "RU": {
+  "code": "RU",
+  "name": "Russia",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 17547,
+  "gdpYear": 2025,
+  "tourismArrivals": 24419000,
+  "tourismYear": 2019
+ },
+ "RW": {
+  "code": "RW",
+  "name": "Rwanda",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1124,
+  "gdpYear": 2025,
+  "tourismArrivals": 1634000,
+  "tourismYear": 2019
+ },
+ "SA": {
+  "code": "SA",
+  "name": "Saudi Arabia",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 34537,
+  "gdpYear": 2025,
+  "tourismArrivals": 20292000,
+  "tourismYear": 2019
+ },
+ "SB": {
+  "code": "SB",
+  "name": "Solomon Islands",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 2086,
+  "gdpYear": 2025,
+  "tourismArrivals": 28900,
+  "tourismYear": 2019
+ },
+ "SC": {
+  "code": "SC",
+  "name": "Seychelles",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 19449,
+  "gdpYear": 2025,
+  "tourismArrivals": 428000,
+  "tourismYear": 2019
+ },
+ "SD": {
+  "code": "SD",
+  "name": "Sudan",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1165,
+  "gdpYear": 2025,
+  "tourismArrivals": 836000,
+  "tourismYear": 2018
+ },
+ "SE": {
+  "code": "SE",
+  "name": "Sweden",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 63133,
+  "gdpYear": 2025,
+  "tourismArrivals": 7616000,
+  "tourismYear": 2019
+ },
+ "SG": {
+  "code": "SG",
+  "name": "Singapore",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 98814,
+  "gdpYear": 2025,
+  "tourismArrivals": 19116000,
+  "tourismYear": 2019
+ },
+ "SH": {
+  "code": "SH",
+  "name": "Saint Helena, Ascension and Tristan da Cunha",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 57602,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "SI": {
+  "code": "SI",
+  "name": "Slovenia",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 37376,
+  "gdpYear": 2025,
+  "tourismArrivals": 4702000,
+  "tourismYear": 2019
+ },
+ "SK": {
+  "code": "SK",
+  "name": "Slovakia",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 28544,
+  "gdpYear": 2025,
+  "tourismArrivals": 15299000,
+  "tourismYear": 2018
+ },
+ "SL": {
+  "code": "SL",
+  "name": "Sierra Leone",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 846,
+  "gdpYear": 2025,
+  "tourismArrivals": 71000,
+  "tourismYear": 2019
+ },
+ "SN": {
+  "code": "SN",
+  "name": "Senegal",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1955,
+  "gdpYear": 2025,
+  "tourismArrivals": 1376000,
+  "tourismYear": 2017
+ },
+ "SO": {
+  "code": "SO",
+  "name": "Somalia",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 661,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "SR": {
+  "code": "SR",
+  "name": "Suriname",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 7070,
+  "gdpYear": 2025,
+  "tourismArrivals": 279000,
+  "tourismYear": 2017
+ },
+ "SS": {
+  "code": "SS",
+  "name": "South Sudan",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 450,
+  "gdpYear": 2023,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "ST": {
+  "code": "ST",
+  "name": "São Tomé and Principe",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 4084,
+  "gdpYear": 2025,
+  "tourismArrivals": 33400,
+  "tourismYear": 2018
+ },
+ "SV": {
+  "code": "SV",
+  "name": "El Salvador",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 5767,
+  "gdpYear": 2025,
+  "tourismArrivals": 2639000,
+  "tourismYear": 2019
+ },
+ "SX": {
+  "code": "SX",
+  "name": "Sint Maarten",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 42978,
+  "gdpYear": 2025,
+  "tourismArrivals": 1952000,
+  "tourismYear": 2019
+ },
+ "SY": {
+  "code": "SY",
+  "name": "Syria",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 1057,
+  "gdpYear": 2022,
+  "tourismArrivals": 2424000,
+  "tourismYear": 2019
+ },
+ "SZ": {
+  "code": "SZ",
+  "name": "Eswatini",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 4108,
+  "gdpYear": 2025,
+  "tourismArrivals": 1226000,
+  "tourismYear": 2019
+ },
+ "TC": {
+  "code": "TC",
+  "name": "Turks and Caicos Islands",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 37507,
+  "gdpYear": 2024,
+  "tourismArrivals": 1599000,
+  "tourismYear": 2019
+ },
+ "TD": {
+  "code": "TD",
+  "name": "Chad",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1022,
+  "gdpYear": 2025,
+  "tourismArrivals": 81000,
+  "tourismYear": 2019
+ },
+ "TG": {
+  "code": "TG",
+  "name": "Togo",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1384,
+  "gdpYear": 2025,
+  "tourismArrivals": 876000,
+  "tourismYear": 2019
+ },
+ "TH": {
+  "code": "TH",
+  "name": "Thailand",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 8057,
+  "gdpYear": 2025,
+  "tourismArrivals": 39916000,
+  "tourismYear": 2019
+ },
+ "TJ": {
+  "code": "TJ",
+  "name": "Tajikistan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 1637,
+  "gdpYear": 2025,
+  "tourismArrivals": 1035000,
+  "tourismYear": 2018
+ },
+ "TL": {
+  "code": "TL",
+  "name": "Timor-Leste",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 1341,
+  "gdpYear": 2025,
+  "tourismArrivals": 74800,
+  "tourismYear": 2019
+ },
+ "TM": {
+  "code": "TM",
+  "name": "Turkmenistan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 6540,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "TN": {
+  "code": "TN",
+  "name": "Tunisia",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 4657,
+  "gdpYear": 2025,
+  "tourismArrivals": 9429000,
+  "tourismYear": 2019
+ },
+ "TO": {
+  "code": "TO",
+  "name": "Tonga",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 6547,
+  "gdpYear": 2025,
+  "tourismArrivals": 94000,
+  "tourismYear": 2019
+ },
+ "TR": {
+  "code": "TR",
+  "name": "Turkey",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 18599,
+  "gdpYear": 2025,
+  "tourismArrivals": 51747000,
+  "tourismYear": 2019
+ },
+ "TT": {
+  "code": "TT",
+  "name": "Trinidad and Tobago",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 18967,
+  "gdpYear": 2025,
+  "tourismArrivals": 480000,
+  "tourismYear": 2019
+ },
+ "TV": {
+  "code": "TV",
+  "name": "Tuvalu",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 6041,
+  "gdpYear": 2025,
+  "tourismArrivals": 3600,
+  "tourismYear": 2019
+ },
+ "TW": {
+  "code": "TW",
+  "name": "Taiwan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 33200,
+  "gdpYear": 2024,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "TZ": {
+  "code": "TZ",
+  "name": "Tanzania",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1319,
+  "gdpYear": 2025,
+  "tourismArrivals": 1527000,
+  "tourismYear": 2019
+ },
+ "UG": {
+  "code": "UG",
+  "name": "Uganda",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1206,
+  "gdpYear": 2025,
+  "tourismArrivals": 1543000,
+  "tourismYear": 2019
+ },
+ "UM": {
+  "code": "UM",
+  "name": "United States Minor Outlying Islands",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 90027,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "US": {
+  "code": "US",
+  "name": "United States",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 90027,
+  "gdpYear": 2025,
+  "tourismArrivals": 165478000,
+  "tourismYear": 2019
+ },
+ "UY": {
+  "code": "UY",
+  "name": "Uruguay",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 25216,
+  "gdpYear": 2025,
+  "tourismArrivals": 3480000,
+  "tourismYear": 2019
+ },
+ "UZ": {
+  "code": "UZ",
+  "name": "Uzbekistan",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 3968,
+  "gdpYear": 2025,
+  "tourismArrivals": 6749000,
+  "tourismYear": 2019
+ },
+ "VC": {
+  "code": "VC",
+  "name": "Saint Vincent and the Grenadines",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 12562,
+  "gdpYear": 2025,
+  "tourismArrivals": 392000,
+  "tourismYear": 2019
+ },
+ "VE": {
+  "code": "VE",
+  "name": "Venezuela",
+  "continent": "SA",
+  "gdpPerCapitaUsd": 3495,
+  "gdpYear": 2025,
+  "tourismArrivals": 429000,
+  "tourismYear": 2017
+ },
+ "VG": {
+  "code": "VG",
+  "name": "British Virgin Islands",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 57602,
+  "gdpYear": 2025,
+  "tourismArrivals": 302400,
+  "tourismYear": 2019
+ },
+ "VI": {
+  "code": "VI",
+  "name": "U.S. Virgin Islands",
+  "continent": "NA",
+  "gdpPerCapitaUsd": 44321,
+  "gdpYear": 2022,
+  "tourismArrivals": 2074000,
+  "tourismYear": 2019
+ },
+ "VN": {
+  "code": "VN",
+  "name": "Vietnam",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 5066,
+  "gdpYear": 2025,
+  "tourismArrivals": 18009000,
+  "tourismYear": 2019
+ },
+ "VU": {
+  "code": "VU",
+  "name": "Vanuatu",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 4039,
+  "gdpYear": 2025,
+  "tourismArrivals": 256000,
+  "tourismYear": 2019
+ },
+ "WF": {
+  "code": "WF",
+  "name": "Wallis and Futuna",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 29213,
+  "gdpYear": 2024,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "WS": {
+  "code": "WS",
+  "name": "Samoa",
+  "continent": "OC",
+  "gdpPerCapitaUsd": 5873,
+  "gdpYear": 2025,
+  "tourismArrivals": 181000,
+  "tourismYear": 2019
+ },
+ "XK": {
+  "code": "XK",
+  "name": "Kosovo",
+  "continent": "EU",
+  "gdpPerCapitaUsd": 7899,
+  "gdpYear": 2025,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "XP": {
+  "code": "XP",
+  "name": "Paracel Islands (disputed)",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 6779,
+  "gdpYear": 2025,
+  "tourismArrivals": 790163363,
+  "tourismYear": 2019
+ },
+ "YE": {
+  "code": "YE",
+  "name": "Yemen",
+  "continent": "AS",
+  "gdpPerCapitaUsd": 600,
+  "gdpYear": 2023,
+  "tourismArrivals": 398000,
+  "tourismYear": 2015
+ },
+ "YT": {
+  "code": "YT",
+  "name": "Mayotte",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 12000,
+  "gdpYear": 2022,
+  "tourismArrivals": null,
+  "tourismYear": null
+ },
+ "ZA": {
+  "code": "ZA",
+  "name": "South Africa",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 6598,
+  "gdpYear": 2025,
+  "tourismArrivals": 14797000,
+  "tourismYear": 2019
+ },
+ "ZM": {
+  "code": "ZM",
+  "name": "Zambia",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 1318,
+  "gdpYear": 2025,
+  "tourismArrivals": 1266000,
+  "tourismYear": 2019
+ },
+ "ZW": {
+  "code": "ZW",
+  "name": "Zimbabwe",
+  "continent": "AF",
+  "gdpPerCapitaUsd": 3021,
+  "gdpYear": 2025,
+  "tourismArrivals": 2294000,
+  "tourismYear": 2019
+ }
+}

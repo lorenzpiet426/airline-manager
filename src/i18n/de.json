@@ -39,7 +39,6 @@
   },
   "comingSoon": {
     "title": "Kommt in Phase {{phase}}",
-    "map": "Die Weltkarte mit allen Verkehrsflughäfen kommt in Phase 1.2.",
     "network": "Strecken eröffnen und dein Netz planen kommt in Phase 1.4.",
     "fleet": "Das Leasen deines ersten Flugzeugs kommt in Phase 1.3.",
     "finance": "Wöchentliche Gewinn- und Verlustrechnung, Kassa und Kennzahlen kommen in Phase 1.4."
@@ -61,5 +60,41 @@
   "lang": {
     "en": "English",
     "de": "Deutsch"
+  },
+  "common": {
+    "close": "Schließen"
+  },
+  "map": {
+    "loading": "Weltdaten werden geladen…",
+    "searchPlaceholder": "Flughafen, Stadt oder Code suchen",
+    "noResults": "Kein Flughafen gefunden",
+    "globe": "Globus",
+    "airportsCount": "Flughäfen mit Linienverkehr"
+  },
+  "airport": {
+    "size": {
+      "large": "Großflughafen",
+      "medium": "Mittlerer Flughafen",
+      "small": "Kleiner Flughafen"
+    },
+    "section": {
+      "position": "Position",
+      "runways": "Pisten",
+      "market": "Markt"
+    },
+    "coordinates": "Koordinaten",
+    "elevation": "Höhe",
+    "localTime": "Ortszeit",
+    "timeZone": "Zeitzone",
+    "noRunwayData": "Keine Pistendaten vorhanden.",
+    "surface": {
+      "hard": "befestigt",
+      "soft": "unbefestigt",
+      "unknown": "unbekannt"
+    },
+    "catchment": "Einzugsgebiet (100 km)",
+    "gdpPerCapita": "BIP pro Kopf",
+    "tourists": "Touristenankünfte (Land)",
+    "marketNote": "Einzugsgebiet = Einwohner der Städte im Umkreis von 100 km. Daraus wird in Phase 1.4 die Passagiernachfrage berechnet."
   }
 }

@@ -586,82 +586,345 @@ button {
   max-width: 40ch;
 }
 
-/* ---------- Map placeholder ---------- */
+/* ---------- Map screen ---------- */
 .screen--map {
   max-width: none;
   height: 100%;
   padding: 0;
 }
 
-.mapstub {
+.mapview {
   position: relative;
+  height: 100%;
+  min-height: 320px;
+  overflow: hidden;
+  background: var(--map-ocean);
+}
+
+/* ".mapview" in front makes this beat MapLibre's own ".maplibregl-map { position: relative }" */
+.mapview .worldmap {
+  position: absolute;
+  inset: 0;
+}
+
+.mapview__loading {
   display: grid;
   place-items: center;
   height: 100%;
-  min-height: 320px;
-  background: radial-gradient(ellipse at 55% 35%, color-mix(in srgb, var(--accent) 7%, var(--bg)) 0%, var(--bg) 70%);
-}
-
-.mapstub svg {
-  width: 100%;
-  height: 100%;
-}
-
-.mapstub__grid {
-  stroke: var(--line);
-  stroke-width: 0.3;
-}
-
-.mapstub__equator {
-  stroke: var(--line-strong);
-  stroke-width: 0.4;
-  stroke-dasharray: 2 2;
-}
-
-.mapstub__hub {
-  fill: var(--accent);
-}
-
-.mapstub__pulse {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 0.5;
-  opacity: 0.6;
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: pulse 2.4s ease-out infinite;
-}
-
-@keyframes pulse {
-  from { transform: scale(0.3); opacity: 0.8; }
-  to { transform: scale(1.6); opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mapstub__pulse { animation: none; }
-}
-
-.mapstub__label {
-  fill: var(--accent);
+  color: var(--text-dim);
   font-family: var(--font-mono);
-  font-size: 5px;
 }
 
-.mapstub__note {
+.mapview__toolbar {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+  top: 12px;
+  left: 12px;
+  right: 12px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   gap: 8px;
-  max-width: 420px;
-  padding: 14px;
-  border: 1px solid var(--line);
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.mapview__toolbar > * {
+  pointer-events: auto;
+}
+
+.map-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--panel) 92%, transparent);
   color: var(--text-dim);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.map-button[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mapview__legend {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* MapLibre's attribution button, matched to the theme */
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  color: var(--text-dim);
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--text-dim);
+}
+
+/* Credits stay out of the way while an airport panel is open */
+.mapview:has(.airport-panel) .maplibregl-ctrl-bottom-right {
+  display: none;
+}
+
+/* ---------- Airport search ---------- */
+.airport-search {
+  position: relative;
+  flex: 0 1 380px;
+  min-width: 0;
+}
+
+.airport-search__input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 95%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px prevents iPhone from zooming into the field */
+  box-shadow: var(--shadow);
+}
+
+.airport-search__input::placeholder {
+  color: var(--text-faint);
+}
+
+.airport-search__results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.airport-search__result {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px;
+  border: none;
+  border-radius: var(--radius-small);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+[aria-selected='true'] > .airport-search__result,
+.airport-search__result:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.airport-search__code {
+  flex: none;
+  width: 3.4em;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.airport-search__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.airport-search__empty {
+  padding: 8px;
+  color: var(--text-dim);
+}
+
+/* ---------- Airport detail panel ---------- */
+.airport-panel {
+  position: absolute;
+  top: 64px;
+  right: 12px;
+  bottom: 12px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  overflow-y: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+/* Phone: bottom sheet above the tab bar */
+@media (max-width: 767px) {
+  .airport-panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 62%;
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+    padding-inline: calc(16px + var(--safe-left)) calc(16px + var(--safe-right));
+    animation: sheet-up 220ms ease-out;
+  }
+  .airport-panel::before {
+    content: '';
+    align-self: center;
+    width: 36px;
+    height: 4px;
+    margin: -6px 0 6px;
+    border-radius: 2px;
+    background: var(--line-strong);
+  }
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(40%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .airport-panel { animation: none; }
+}
+
+.airport-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.airport-panel__codes {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.airport-panel__iata {
+  font-family: var(--font-mono);
+  font-size: 1.9rem;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+.airport-panel__icao {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+.airport-panel__size--large {
+  border-color: color-mix(in srgb, var(--green) 50%, transparent);
+  color: var(--green);
+}
+
+.airport-panel__name {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.airport-panel__section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.airport-panel__section h3 {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.airport-panel .facts {
+  font-size: 0.9rem;
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.runways {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runway {
+  display: grid;
+  grid-template-columns: 4.6em 1fr auto;
+  grid-template-areas: 'ends bar dims' 'ends surface surface';
+  column-gap: 10px;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.runway__ends {
+  grid-area: ends;
+  color: var(--text);
+}
+
+.runway__bar {
+  grid-area: bar;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.runway__bar > span {
+  display: block;
+  height: 100%;
+  background: var(--text-faint);
+}
+
+.runway__dims {
+  grid-area: dims;
+}
+
+.runway__surface {
+  grid-area: surface;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.runway__surface--soft {
+  color: var(--amber);
 }
 
 /* ---------- Phone "More" menu ---------- */
