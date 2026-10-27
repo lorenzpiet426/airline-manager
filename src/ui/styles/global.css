@@ -1405,3 +1405,156 @@ a.button {
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* ---------- Network & planner ---------- */
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbar-row > p {
+  flex: 1 1 320px;
+}
+
+.planner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.planner > .newgame__actions {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 899px) {
+  .planner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.planner .airport-search {
+  flex: none;
+}
+
+.planner .airport-search__input {
+  box-shadow: none;
+}
+
+.choices--list {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+@media (max-width: 559px) {
+  .choices--list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepper .button {
+  min-width: 44px;
+  justify-content: center;
+}
+
+.stepper__value {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+}
+
+.slider {
+  width: 100%;
+  min-height: 40px;
+  accent-color: var(--accent);
+}
+
+/* ---------- Finance ---------- */
+.bignum {
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.bars {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  height: 120px;
+}
+
+.bars__col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.bars__half {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.bars__half--up {
+  justify-content: flex-end;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.bars__bar {
+  display: block;
+  min-height: 2px;
+  border-radius: 2px;
+}
+
+.bars__bar--profit { background: var(--green); }
+.bars__bar--loss { background: var(--red); }
+
+.pnl .pnl__total {
+  padding-top: 6px;
+  border-top: 1px solid var(--line-strong);
+  font-weight: 600;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table th {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--text-dim);
+  font-weight: 500;
+  text-align: left;
+}
+
+.table td {
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.table .num {
+  text-align: right;
+}
+
+@media (max-width: 559px) {
+  .planner .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stepper__value {
+  white-space: nowrap;
+}

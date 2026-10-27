@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export type TimeMode = 'realtime' | 'weekly';
 export type Realism = 'realistic' | 'hardcore';
@@ -71,9 +71,62 @@ export interface LeaseOffer {
   expiresAt: SimTime;
 }
 
+/** A scheduled connection from the hub, flown as round trips by one aircraft. */
+export interface Route {
+  id: string;
+  airlineId: string;
+  originId: string;
+  destinationId: string;
+  distanceKm: number;
+  aircraftId: string;
+  /** Round trips per week. */
+  frequency: number;
+  /** Fare relative to the market fare (1 = market fare, 0.8 = 20 % cheaper). */
+  fareFactor: number;
+  /** Outbound flight number (odd, e.g. 101); the return flight is the next number. */
+  flightNumber: number;
+  openedAt: SimTime;
+}
+
+/** Profit-and-loss lines in the airline's book currency (costs are positive numbers). */
+export interface PnlLines {
+  revenue: number;
+  fuel: number;
+  crew: number;
+  maintenance: number;
+  airport: number;
+  handling: number;
+  navigation: number;
+  distribution: number;
+  lease: number;
+}
+
+export interface RouteStats {
+  flights: number;
+  seats: number;
+  pax: number;
+  revenue: number;
+  /** Costs caused by flying the route (fuel, maintenance, fees, handling, sales); no crew or lease. */
+  directCosts: number;
+}
+
+/** One week (Monday to Sunday, UTC) of an airline's accounts. */
+export interface PnlWeek {
+  start: SimTime;
+  lines: PnlLines;
+  routes: Record<string, RouteStats>;
+}
+
+export interface AirlineFinance {
+  week: PnlWeek;
+  /** Completed weeks, oldest first (the last two years). */
+  history: PnlWeek[];
+}
+
 /** Things that will happen at a fixed time. Processed in time order by advance(). */
 export type ScheduledEvent =
   | { at: SimTime; seq: number; kind: 'monthStart' }
+  | { at: SimTime; seq: number; kind: 'dayStart' }
   | { at: SimTime; seq: number; kind: 'delivery'; aircraftId: string };
 
 /** A line in the ops message log. The screen translates `kind` and fills in `params`. */
@@ -81,7 +134,7 @@ export interface GameMessage {
   id: number;
   at: SimTime;
   airlineId: string | null;
-  kind: 'founded' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative';
+  kind: 'founded' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport';
   level: 'normal' | 'info' | 'caution' | 'warning';
   params: Record<string, string | number>;
 }
@@ -111,6 +164,8 @@ export interface GameState {
   airlines: Record<string, Airline>;
   aircraft: Record<string, Aircraft>;
   market: { offers: LeaseOffer[] };
+  routes: Record<string, Route>;
+  finance: Record<string, AirlineFinance>;
   queue: ScheduledEvent[];
   messages: GameMessage[];
   ledger: LedgerEntry[];
@@ -119,3 +174,11 @@ export interface GameState {
 }
 
 export const MAX_MESSAGES = 200;
+export const MAX_PNL_WEEKS = 104;
+
+export const emptyPnl = (): PnlLines => ({
+  revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0,
+});
+
+export const pnlCosts = (l: PnlLines): number =>
+  l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease;

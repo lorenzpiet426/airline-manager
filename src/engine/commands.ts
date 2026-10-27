@@ -3,17 +3,17 @@
 import { getAircraftType } from '../data/aircraft';
 import { bookCurrencyFor } from '../data/currencies';
 import { registrationPattern } from '../data/registrations';
-import type { Airport } from '../data/types';
 import { book, nextId, postMessage, schedule } from './core';
+import { checkRoute, roundTripHours, WEEKLY_AVAILABLE_HOURS } from './economics';
+import { distanceKm } from './geo';
 import { convert, money, roundNice, type FxRates, type Money } from './money';
+import { newFinance } from './operations';
 import { randomInt } from './rng';
-import type { Controller, GameState } from './state';
+import type { Controller, GameState, Route } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay, toDate } from './time';
+import type { EngineWorld } from './world';
 
-/** Static world data the engine needs to check commands. */
-export interface EngineWorld {
-  airportById: ReadonlyMap<string, Airport>;
-}
+export type { EngineWorld } from './world';
 
 /** Starting capital choices for a startup, in euros (converted into the hub's currency). */
 export const CAPITAL_OPTIONS_EUR = [25_000_000, 75_000_000, 200_000_000] as const;
@@ -38,7 +38,36 @@ export interface LeaseAircraft {
   payload: { offerId: string };
 }
 
-export type Command = FoundAirline | LeaseAircraft;
+export interface RouteSettings {
+  aircraftId: string;
+  /** Round trips per week. */
+  frequency: number;
+  /** Fare relative to the market fare, 0.5 … 1.5. */
+  fareFactor: number;
+}
+
+export interface OpenRoute {
+  type: 'OpenRoute';
+  airlineId: string;
+  payload: RouteSettings & { destinationId: string };
+}
+
+export interface UpdateRoute {
+  type: 'UpdateRoute';
+  airlineId: string;
+  payload: RouteSettings & { routeId: string };
+}
+
+export interface CloseRoute {
+  type: 'CloseRoute';
+  airlineId: string;
+  payload: { routeId: string };
+}
+
+export type Command = FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute;
+
+export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
+export const MAX_FREQUENCY = 84;
 
 export type CommandError =
   | 'nameLength'
@@ -50,7 +79,19 @@ export type CommandError =
   | 'capitalInvalid'
   | 'airlineUnknown'
   | 'offerGone'
-  | 'insufficientCash';
+  | 'insufficientCash'
+  | 'airportUnknown'
+  | 'sameAirport'
+  | 'routeExists'
+  | 'routeUnknown'
+  | 'aircraftUnknown'
+  | 'frequencyInvalid'
+  | 'fareInvalid'
+  | 'range'
+  | 'runwayOrigin'
+  | 'runwayDestination'
+  | 'etops'
+  | 'aircraftBusy';
 
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError };
 
@@ -62,6 +103,12 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       return foundAirline(state, world, command.payload);
     case 'LeaseAircraft':
       return leaseAircraft(state, world, command.airlineId, command.payload.offerId);
+    case 'OpenRoute':
+      return openRoute(state, world, command.airlineId, command.payload);
+    case 'UpdateRoute':
+      return updateRoute(state, world, command.airlineId, command.payload);
+    case 'CloseRoute':
+      return closeRoute(state, world, command.airlineId, command.payload.routeId);
   }
 }
 
@@ -99,6 +146,7 @@ function foundAirline(state: GameState, world: EngineWorld, p: FoundAirline['pay
     cash: money(0, currency),
     foundedAt: state.time,
   };
+  state.finance[id] = newFinance(state.time);
   const capital = book(state, id, 'capital', startingCapital(state.fx, p.capitalEur, currency));
   postMessage(state, {
     airlineId: id,
@@ -151,6 +199,103 @@ function leaseAircraft(state: GameState, world: EngineWorld, airlineId: string, 
     params: { registration, type: getAircraftType(offer.typeId).name, lessor: offer.lessor, deliveryAt },
   });
   return { ok: true, id };
+}
+
+/** Hours per week an aircraft spends on its routes (flying + turnarounds), optionally ignoring one route. */
+export function aircraftHours(state: GameState, aircraftId: string, exceptRouteId?: string): number {
+  const aircraft = state.aircraft[aircraftId];
+  if (!aircraft) return 0;
+  const type = getAircraftType(aircraft.typeId);
+  return Object.values(state.routes)
+    .filter((r) => r.aircraftId === aircraftId && r.id !== exceptRouteId)
+    .reduce((sum, r) => sum + roundTripHours(type, r.distanceKm) * r.frequency, 0);
+}
+
+/** Checks route settings against all rules; shared by opening and changing a route (and by the planner screen). */
+export function validateRoute(
+  state: GameState,
+  world: EngineWorld,
+  airlineId: string,
+  destinationId: string,
+  settings: RouteSettings,
+  exceptRouteId?: string,
+): CommandError | null {
+  const airline = state.airlines[airlineId];
+  if (!airline) return 'airlineUnknown';
+  const from = world.airportById.get(airline.hubId);
+  const to = world.airportById.get(destinationId);
+  if (!from || !to) return 'airportUnknown';
+  if (from.id === to.id) return 'sameAirport';
+  const aircraft = state.aircraft[settings.aircraftId];
+  if (!aircraft || aircraft.airlineId !== airlineId) return 'aircraftUnknown';
+  if (!Number.isInteger(settings.frequency) || settings.frequency < 1 || settings.frequency > MAX_FREQUENCY) return 'frequencyInvalid';
+  if (!(settings.fareFactor >= FARE_FACTOR_RANGE[0] && settings.fareFactor <= FARE_FACTOR_RANGE[1])) return 'fareInvalid';
+  const type = getAircraftType(aircraft.typeId);
+  const problem = checkRoute(world, type, from, to);
+  if (problem) return problem;
+  const hours = aircraftHours(state, aircraft.id, exceptRouteId) + roundTripHours(type, distanceKm(from, to)) * settings.frequency;
+  if (hours > WEEKLY_AVAILABLE_HOURS[type.category] + 1e-9) return 'aircraftBusy';
+  return null;
+}
+
+function openRoute(state: GameState, world: EngineWorld, airlineId: string, p: OpenRoute['payload']): CommandResult {
+  const error = validateRoute(state, world, airlineId, p.destinationId, p);
+  if (error) return fail(error);
+  const airline = state.airlines[airlineId]!;
+  const routes = Object.values(state.routes).filter((r) => r.airlineId === airlineId);
+  if (routes.some((r) => r.destinationId === p.destinationId)) return fail('routeExists');
+  const from = world.airportById.get(airline.hubId)!;
+  const to = world.airportById.get(p.destinationId)!;
+  // Flight numbers: outbound odd (101, 103 …), return = outbound + 1, like most airlines.
+  const used = new Set(routes.map((r) => r.flightNumber));
+  let flightNumber = 101;
+  while (used.has(flightNumber)) flightNumber += 2;
+  const route: Route = {
+    id: nextId(state, 'R'),
+    airlineId,
+    originId: from.id,
+    destinationId: to.id,
+    distanceKm: Math.round(distanceKm(from, to)),
+    aircraftId: p.aircraftId,
+    frequency: p.frequency,
+    fareFactor: p.fareFactor,
+    flightNumber,
+    openedAt: state.time,
+  };
+  state.routes[route.id] = route;
+  postMessage(state, {
+    airlineId,
+    kind: 'routeOpened',
+    level: 'info',
+    params: { flight: `${airline.iata} ${flightNumber}`, from: from.iata ?? from.id, to: to.iata ?? to.id, frequency: p.frequency },
+  });
+  return { ok: true, id: route.id };
+}
+
+function updateRoute(state: GameState, world: EngineWorld, airlineId: string, p: UpdateRoute['payload']): CommandResult {
+  const route = state.routes[p.routeId];
+  if (!route || route.airlineId !== airlineId) return fail('routeUnknown');
+  const error = validateRoute(state, world, airlineId, route.destinationId, p, route.id);
+  if (error) return fail(error);
+  route.aircraftId = p.aircraftId;
+  route.frequency = p.frequency;
+  route.fareFactor = p.fareFactor;
+  return { ok: true, id: route.id };
+}
+
+function closeRoute(state: GameState, world: EngineWorld, airlineId: string, routeId: string): CommandResult {
+  const route = state.routes[routeId];
+  if (!route || route.airlineId !== airlineId) return fail('routeUnknown');
+  delete state.routes[routeId];
+  const airline = state.airlines[airlineId]!;
+  const to = world.airportById.get(route.destinationId);
+  postMessage(state, {
+    airlineId,
+    kind: 'routeClosed',
+    level: 'info',
+    params: { flight: `${airline.iata} ${route.flightNumber}`, to: to?.iata ?? route.destinationId },
+  });
+  return { ok: true, id: routeId };
 }
 
 /** A registration that follows the country's pattern and is not used yet in this game. */

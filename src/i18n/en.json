@@ -55,12 +55,7 @@
     "messagesTitle": "Ops messages",
     "noMessages": "No messages yet.",
     "nextTitle": "Coming next",
-    "nextHint": "Routes, flights and ticket revenue arrive in Phase 1.4. Until then your aircraft wait at the hub, and the lease rent is already due every month."
-  },
-  "comingSoon": {
-    "title": "Coming in Phase {{phase}}",
-    "network": "Opening routes and planning your network arrives in Phase 1.4.",
-    "finance": "Weekly profit & loss, cash and key figures arrive in Phase 1.4."
+    "nextHint": "Save slots, export/import and a dashboard with key figures (load factor, unit revenue and cost) arrive in Phase 1.5. Competing AI airlines follow in Phase 2."
   },
   "settings": {
     "title": "Settings",
@@ -95,7 +90,9 @@
     "searchPlaceholder": "Search airport, city or code",
     "noResults": "No airport found",
     "globe": "Globe",
-    "airportsCount": "airports with scheduled flights"
+    "airportsCount": "airports with scheduled flights",
+    "legendRoutes": "routes",
+    "legendAirborne": "in the air"
   },
   "airport": {
     "size": {
@@ -137,7 +134,11 @@
     "leaseSigned": "Lease signed: {{type}} {{registration}} from {{lessor}}, delivery on {{date}}.",
     "delivered": "{{type}} {{registration}} delivered to {{airport}} in your colours.",
     "rentPaid": "Monthly lease rent paid: {{amount}}.",
-    "cashNegative": "Cash is below zero! Without money coming in, the airline cannot keep paying its bills."
+    "cashNegative": "Cash is below zero! Without money coming in, the airline cannot keep paying its bills.",
+    "routeOpened": "New route {{flight}}: {{from}}–{{to}}, {{frequency}}× per week.",
+    "routeClosed": "Route {{flight}} to {{to}} closed.",
+    "weekProfit": "Week closed: revenue {{revenue}}, profit {{profit}}.",
+    "weekLoss": "Week closed: revenue {{revenue}}, loss {{profit}}."
   },
   "newGame": {
     "title": "Found your airline",
@@ -187,7 +188,19 @@
     "capitalInvalid": "Please choose a starting capital.",
     "airlineUnknown": "No airline found.",
     "offerGone": "This offer is no longer available.",
-    "insufficientCash": "Not enough cash for the deposit"
+    "insufficientCash": "Not enough cash for the deposit",
+    "airportUnknown": "Please choose a destination.",
+    "sameAirport": "The destination is your hub.",
+    "routeExists": "You already fly to this destination.",
+    "routeUnknown": "This route no longer exists.",
+    "aircraftUnknown": "Please choose one of your aircraft.",
+    "frequencyInvalid": "Choose between 1 and 84 round trips per week.",
+    "fareInvalid": "The fare must be between −50 % and +50 % of the market fare.",
+    "range": "Too far: this aircraft type cannot fly that distance non-stop.",
+    "runwayOrigin": "The runway at your hub is too short for this aircraft on this distance.",
+    "runwayDestination": "The destination's runway is too short (or unpaved) for this aircraft on this distance.",
+    "etops": "Not allowed: the route goes too far from any diversion airport for this aircraft's ETOPS approval.",
+    "aircraftBusy": "This aircraft doesn't have enough hours left in its week. Fly less often or use another aircraft."
   },
   "fleet": {
     "title": "Fleet",
@@ -226,6 +239,87 @@
     "confirmText_one": "Pay a deposit of {{deposit}} now. Rent of {{rent}} per month starts on delivery ({{date}}) and runs for {{count}} year.",
     "confirmText_other": "Pay a deposit of {{deposit}} now. Rent of {{rent}} per month starts on delivery ({{date}}) and runs for {{count}} years.",
     "sign": "Sign lease",
-    "lease": "Lease…"
+    "lease": "Lease…",
+    "hours": "Schedule",
+    "hoursValue": "{{used}} of {{max}} h per week",
+    "routesOf": "Routes",
+    "noRoutes": "none yet"
+  },
+  "network": {
+    "title": "Network",
+    "intro": "Your routes from the hub. Each route is flown by one aircraft as round trips; an aircraft can fly several routes until its week is full.",
+    "open": "Open route",
+    "routes": "Routes",
+    "empty": "No routes yet. Open your first route to start flying.",
+    "perWeek_one": "{{count}}× per week",
+    "perWeek_other": "{{count}}× per week",
+    "perWeekShort": "per week",
+    "aircraft": "Aircraft",
+    "waitingDelivery": "waiting for delivery",
+    "distance": "Distance",
+    "fare": "Fare",
+    "farePercent": "{{value}} % vs market",
+    "lfShort": "LF",
+    "lastWeekPax": "Passengers last week",
+    "lastWeekResult": "Route result last week",
+    "noDataYet": "after the first full week",
+    "edit": "Edit route",
+    "editTitle": "Change route",
+    "openTitle": "Open a new route",
+    "destination": "Destination",
+    "change": "Change",
+    "hoursUsed": "{{used}} of {{max}} h/week used",
+    "rangeKm": "range {{km}} km",
+    "frequency": "Round trips",
+    "maxFrequency_one": "This aircraft has room for {{count}} more round trip.",
+    "maxFrequency_other": "This aircraft has room for up to {{count}} round trips.",
+    "fareValue": "{{fare}} one way (market fare {{market}})",
+    "forecast": "Forecast",
+    "market": "Market size",
+    "marketValue": "≈ {{pax}} passengers per year",
+    "competition": "Competition",
+    "competitionValue_one": "other airlines fly about {{count}}× per week each way",
+    "competitionValue_other": "other airlines fly about {{count}}× per week each way",
+    "noCompetition": "nobody flies this route yet",
+    "passengers": "Passengers",
+    "revenue": "Ticket revenue",
+    "contribution": "Route result",
+    "fixedNote": "Not included: crew salaries and lease for {{registration}} ({{cost}} per week), which all routes of this aircraft share. The route uses {{hours}} block hours per week.",
+    "forecastNote": "Forecast for a normal week once the route is known; new routes start with about 60 % of these passengers and grow over 8 weeks. Fuel prices change every week.",
+    "close": "Close route",
+    "closeConfirm": "Close this route? Flights stop immediately.",
+    "save": "Save changes"
+  },
+  "finance": {
+    "title": "Finance",
+    "cash": "Cash",
+    "cashNote": "Ticket revenue and flight costs are booked every day; lease rents leave on the 1st of each month.",
+    "history": "Weekly result",
+    "weeks_one": "{{count}} week",
+    "weeks_other": "last {{count}} weeks",
+    "noWeeks": "No completed week yet. Weeks run Monday to Sunday (UTC).",
+    "period": "Period",
+    "lastWeek": "Last week",
+    "thisWeek": "This week so far",
+    "pnl": "Profit & loss",
+    "line": {
+      "revenue": "Ticket revenue",
+      "fuel": "Fuel",
+      "crew": "Crew salaries",
+      "maintenance": "Maintenance",
+      "airport": "Airport fees",
+      "handling": "Ground handling & catering",
+      "navigation": "Air navigation charges",
+      "distribution": "Sales & distribution",
+      "lease": "Aircraft leases"
+    },
+    "result": "Result",
+    "margin": "Margin",
+    "pnlNote": "Lease costs are spread over the days of the month here, even though the cash leaves once a month. Overheads (head office, marketing, insurance) follow in a later phase.",
+    "routes": "Routes",
+    "direct": "direct",
+    "noRoutes": "No flights in this period.",
+    "route": "Route",
+    "directNote": "Route result = ticket revenue minus fuel, maintenance, fees, handling and sales. Crews and leases are paid per aircraft, not per route."
   }
 }

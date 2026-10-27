@@ -55,12 +55,7 @@
     "messagesTitle": "Ops-Meldungen",
     "noMessages": "Noch keine Meldungen.",
     "nextTitle": "Als Nächstes",
-    "nextHint": "Strecken, Flüge und Ticketerlöse kommen in Phase 1.4. Bis dahin warten deine Flugzeuge am Drehkreuz – die Leasingrate ist aber schon jeden Monat fällig."
-  },
-  "comingSoon": {
-    "title": "Kommt in Phase {{phase}}",
-    "network": "Strecken eröffnen und dein Netz planen kommt in Phase 1.4.",
-    "finance": "Wöchentliche Gewinn- und Verlustrechnung, Kassa und Kennzahlen kommen in Phase 1.4."
+    "nextHint": "Speicherplätze, Export/Import und ein Dashboard mit Kennzahlen (Auslastung, Erlös und Kosten pro Sitzkilometer) kommen in Phase 1.5. Konkurrierende KI-Airlines folgen in Phase 2."
   },
   "settings": {
     "title": "Einstellungen",
@@ -95,7 +90,9 @@
     "searchPlaceholder": "Flughafen, Stadt oder Code suchen",
     "noResults": "Kein Flughafen gefunden",
     "globe": "Globus",
-    "airportsCount": "Flughäfen mit Linienverkehr"
+    "airportsCount": "Flughäfen mit Linienverkehr",
+    "legendRoutes": "Strecken",
+    "legendAirborne": "in der Luft"
   },
   "airport": {
     "size": {
@@ -137,7 +134,11 @@
     "leaseSigned": "Leasingvertrag unterzeichnet: {{type}} {{registration}} von {{lessor}}, Auslieferung am {{date}}.",
     "delivered": "{{type}} {{registration}} in deinen Farben in {{airport}} ausgeliefert.",
     "rentPaid": "Monatliche Leasingraten bezahlt: {{amount}}.",
-    "cashNegative": "Die Kassa ist im Minus! Ohne Einnahmen kann die Airline ihre Rechnungen nicht mehr lange bezahlen."
+    "cashNegative": "Die Kassa ist im Minus! Ohne Einnahmen kann die Airline ihre Rechnungen nicht mehr lange bezahlen.",
+    "routeOpened": "Neue Strecke {{flight}}: {{from}}–{{to}}, {{frequency}}× pro Woche.",
+    "routeClosed": "Strecke {{flight}} nach {{to}} eingestellt.",
+    "weekProfit": "Woche abgeschlossen: Erlöse {{revenue}}, Gewinn {{profit}}.",
+    "weekLoss": "Woche abgeschlossen: Erlöse {{revenue}}, Verlust {{profit}}."
   },
   "newGame": {
     "title": "Gründe deine Airline",
@@ -187,7 +188,19 @@
     "capitalInvalid": "Bitte ein Startkapital wählen.",
     "airlineUnknown": "Keine Airline gefunden.",
     "offerGone": "Dieses Angebot ist nicht mehr verfügbar.",
-    "insufficientCash": "Zu wenig Geld für die Kaution"
+    "insufficientCash": "Zu wenig Geld für die Kaution",
+    "airportUnknown": "Bitte ein Ziel wählen.",
+    "sameAirport": "Das Ziel ist dein Drehkreuz.",
+    "routeExists": "Dieses Ziel fliegst du schon an.",
+    "routeUnknown": "Diese Strecke gibt es nicht mehr.",
+    "aircraftUnknown": "Bitte eines deiner Flugzeuge wählen.",
+    "frequencyInvalid": "Wähle zwischen 1 und 84 Umläufen pro Woche.",
+    "fareInvalid": "Der Preis muss zwischen −50 % und +50 % des Marktpreises liegen.",
+    "range": "Zu weit: Dieser Flugzeugtyp schafft die Strecke nicht nonstop.",
+    "runwayOrigin": "Die Piste an deinem Drehkreuz ist für dieses Flugzeug auf dieser Distanz zu kurz.",
+    "runwayDestination": "Die Piste am Ziel ist für dieses Flugzeug auf dieser Distanz zu kurz (oder unbefestigt).",
+    "etops": "Nicht erlaubt: Die Strecke führt für die ETOPS-Zulassung dieses Flugzeugs zu weit weg von jedem Ausweichflughafen.",
+    "aircraftBusy": "Dieses Flugzeug hat in seiner Woche nicht mehr genug Stunden frei. Seltener fliegen oder ein anderes Flugzeug nehmen."
   },
   "fleet": {
     "title": "Flotte",
@@ -226,6 +239,87 @@
     "confirmText_one": "Jetzt {{deposit}} Kaution zahlen. Die Rate von {{rent}} pro Monat beginnt mit der Auslieferung ({{date}}) und läuft {{count}} Jahr.",
     "confirmText_other": "Jetzt {{deposit}} Kaution zahlen. Die Rate von {{rent}} pro Monat beginnt mit der Auslieferung ({{date}}) und läuft {{count}} Jahre.",
     "sign": "Vertrag unterzeichnen",
-    "lease": "Leasen…"
+    "lease": "Leasen…",
+    "hours": "Einsatzplan",
+    "hoursValue": "{{used}} von {{max}} h pro Woche",
+    "routesOf": "Strecken",
+    "noRoutes": "noch keine"
+  },
+  "network": {
+    "title": "Netz",
+    "intro": "Deine Strecken ab dem Drehkreuz. Jede Strecke fliegt ein Flugzeug in Umläufen (hin und zurück); ein Flugzeug kann mehrere Strecken fliegen, bis seine Woche voll ist.",
+    "open": "Strecke eröffnen",
+    "routes": "Strecken",
+    "empty": "Noch keine Strecken. Eröffne deine erste Strecke, um loszufliegen.",
+    "perWeek_one": "{{count}}× pro Woche",
+    "perWeek_other": "{{count}}× pro Woche",
+    "perWeekShort": "pro Woche",
+    "aircraft": "Flugzeug",
+    "waitingDelivery": "wartet auf Auslieferung",
+    "distance": "Entfernung",
+    "fare": "Ticketpreis",
+    "farePercent": "{{value}} % zum Markt",
+    "lfShort": "SLF",
+    "lastWeekPax": "Passagiere letzte Woche",
+    "lastWeekResult": "Streckenergebnis letzte Woche",
+    "noDataYet": "nach der ersten vollen Woche",
+    "edit": "Strecke bearbeiten",
+    "editTitle": "Strecke ändern",
+    "openTitle": "Neue Strecke eröffnen",
+    "destination": "Ziel",
+    "change": "Ändern",
+    "hoursUsed": "{{used}} von {{max}} h/Woche verplant",
+    "rangeKm": "Reichweite {{km}} km",
+    "frequency": "Umläufe",
+    "maxFrequency_one": "Dieses Flugzeug hat Platz für {{count}} weiteren Umlauf.",
+    "maxFrequency_other": "Dieses Flugzeug hat Platz für bis zu {{count}} Umläufe.",
+    "fareValue": "{{fare}} pro Strecke (Marktpreis {{market}})",
+    "forecast": "Prognose",
+    "market": "Marktgröße",
+    "marketValue": "≈ {{pax}} Passagiere pro Jahr",
+    "competition": "Konkurrenz",
+    "competitionValue_one": "andere Airlines fliegen etwa {{count}}× pro Woche und Richtung",
+    "competitionValue_other": "andere Airlines fliegen etwa {{count}}× pro Woche und Richtung",
+    "noCompetition": "diese Strecke fliegt noch niemand",
+    "passengers": "Passagiere",
+    "revenue": "Ticketerlöse",
+    "contribution": "Streckenergebnis",
+    "fixedNote": "Nicht enthalten: Crew-Gehälter und Leasing für {{registration}} ({{cost}} pro Woche), die sich alle Strecken dieses Flugzeugs teilen. Die Strecke braucht {{hours}} Blockstunden pro Woche.",
+    "forecastNote": "Prognose für eine normale Woche, sobald die Strecke bekannt ist; neue Strecken starten mit etwa 60 % dieser Passagiere und wachsen über 8 Wochen. Der Treibstoffpreis ändert sich jede Woche.",
+    "close": "Strecke einstellen",
+    "closeConfirm": "Diese Strecke einstellen? Die Flüge enden sofort.",
+    "save": "Änderungen speichern"
+  },
+  "finance": {
+    "title": "Finanzen",
+    "cash": "Kassa",
+    "cashNote": "Ticketerlöse und Flugkosten werden täglich gebucht; die Leasingraten gehen am 1. jedes Monats ab.",
+    "history": "Wochenergebnis",
+    "weeks_one": "{{count}} Woche",
+    "weeks_other": "letzte {{count}} Wochen",
+    "noWeeks": "Noch keine abgeschlossene Woche. Wochen laufen von Montag bis Sonntag (UTC).",
+    "period": "Zeitraum",
+    "lastWeek": "Letzte Woche",
+    "thisWeek": "Diese Woche bisher",
+    "pnl": "Gewinn- und Verlustrechnung",
+    "line": {
+      "revenue": "Ticketerlöse",
+      "fuel": "Treibstoff",
+      "crew": "Crew-Gehälter",
+      "maintenance": "Wartung",
+      "airport": "Flughafengebühren",
+      "handling": "Bodenabfertigung & Catering",
+      "navigation": "Flugsicherungsgebühren",
+      "distribution": "Vertrieb",
+      "lease": "Flugzeug-Leasing"
+    },
+    "result": "Ergebnis",
+    "margin": "Marge",
+    "pnlNote": "Die Leasingkosten werden hier auf die Tage des Monats verteilt, auch wenn das Geld einmal im Monat abgeht. Gemeinkosten (Zentrale, Marketing, Versicherung) folgen in einer späteren Phase.",
+    "routes": "Strecken",
+    "direct": "direkt",
+    "noRoutes": "Keine Flüge in diesem Zeitraum.",
+    "route": "Strecke",
+    "directNote": "Streckenergebnis = Ticketerlöse minus Treibstoff, Wartung, Gebühren, Abfertigung und Vertrieb. Crews und Leasing werden pro Flugzeug bezahlt, nicht pro Strecke."
   }
 }

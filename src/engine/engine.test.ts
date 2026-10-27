@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import airportsJson from '../data/generated/airports.json';
-import type { Airport } from '../data/types';
+import countriesJson from '../data/generated/countries.json';
+import type { Airport, Country } from '../data/types';
 import { getAircraftType } from '../data/aircraft';
 import { advance } from './advance';
-import { applyCommand, type EngineWorld, type FoundAirline } from './commands';
+import { applyCommand, type FoundAirline } from './commands';
+import { buildEngineWorld } from './world';
 import { createGame } from './game';
 import { typicalRentUsd } from './market';
 import { simTime, toDate } from './time';
 
 const airports = airportsJson as Airport[];
-const world: EngineWorld = { airportById: new Map(airports.map((a) => [a.id, a])) };
+const world = buildEngineWorld(airports, countriesJson as unknown as Record<string, Country>);
 const VIE = airports.find((a) => a.iata === 'VIE')!;
 const JFK = airports.find((a) => a.iata === 'JFK')!;
 
@@ -109,9 +111,9 @@ describe('leasing an aircraft', () => {
       error: 'offerGone',
     });
 
-    advance(state, aircraft.deliveryAt - 1);
+    advance(state, world, aircraft.deliveryAt - 1);
     expect(aircraft.status).toBe('delivering');
-    advance(state, aircraft.deliveryAt);
+    advance(state, world, aircraft.deliveryAt);
     expect(aircraft.status).toBe('active');
     expect(state.messages.some((m) => m.kind === 'delivered')).toBe(true);
   });
@@ -131,19 +133,20 @@ describe('leasing an aircraft', () => {
     const offer = state.market.offers[0]!;
     const result = applyCommand(state, world, { type: 'LeaseAircraft', airlineId, payload: { offerId: offer.id } });
     const aircraft = state.aircraft[(result as { id: string }).id]!;
-    advance(state, aircraft.deliveryAt);
-    const afterDelivery = state.airlines[airlineId]!.cash.amount;
+    advance(state, world, aircraft.deliveryAt);
     const d = toDate(aircraft.deliveryAt);
-    advance(state, simTime(d.getUTCFullYear(), d.getUTCMonth() + 2, 1)); // the next 1st of the month
+    const firstOfMonth = simTime(d.getUTCFullYear(), d.getUTCMonth() + 2, 1);
+    advance(state, world, firstOfMonth); // the next 1st of the month
     const rentEur = Math.round(offer.monthlyRent.amount / state.fx.USD!);
-    expect(afterDelivery - state.airlines[airlineId]!.cash.amount).toBe(rentEur);
+    const rent = state.ledger.find((l) => l.kind === 'leaseRent' && l.at === firstOfMonth);
+    expect(rent?.amount).toEqual({ amount: -rentEur, currency: 'EUR' });
   });
 });
 
 describe('time and market', () => {
   it('runs a year: 12 monthly market refreshes, offers never expired', () => {
     const state = newGame();
-    advance(state, simTime(2027, 1, 1));
+    advance(state, world, simTime(2027, 1, 1));
     expect(toDate(state.time).toISOString()).toBe('2027-01-01T00:00:00.000Z');
     expect(state.market.offers.length).toBe(36);
     expect(state.market.offers.every((o) => o.expiresAt > state.time)).toBe(true);

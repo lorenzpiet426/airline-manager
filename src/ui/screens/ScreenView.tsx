@@ -1,11 +1,12 @@
 import { Suspense, lazy } from 'react';
 import type { Route } from '../navigation';
 import { OpsScreen } from './OpsScreen';
-import { ComingSoonScreen } from './ComingSoonScreen';
 import { SettingsScreen } from './SettingsScreen';
 import { MoreScreen } from './MoreScreen';
 import { FleetScreen } from './FleetScreen';
 import { NewGameScreen } from './NewGameScreen';
+import { NetworkScreen } from './NetworkScreen';
+import { FinanceScreen } from './FinanceScreen';
 
 // The map code is big (MapLibre), so it is only downloaded when the map is first opened.
 const MapScreen = lazy(() => import('./MapScreen'));
@@ -22,13 +23,13 @@ export function ScreenView({ route, isWide }: { route: Route; isWide: boolean })
         </Suspense>
       );
     case 'network':
-      return <ComingSoonScreen route="network" phase="1.4" />;
+      return <NetworkScreen />;
     case 'fleet':
       return <FleetScreen />;
     case 'new':
       return <NewGameScreen />;
     case 'finance':
-      return <ComingSoonScreen route="finance" phase="1.4" />;
+      return <FinanceScreen />;
     case 'settings':
       return <SettingsScreen />;
     case 'more':

@@ -9,6 +9,12 @@ import type { Airport, AirportSize, Country, Runway, RunwaySurface } from '../sr
 const RAW = join(import.meta.dirname, 'raw');
 const OUT = join(import.meta.dirname, '..', 'src', 'data', 'generated');
 const CATCHMENT_KM = 100;
+/** Cities this close to an airport can fly from it (for splitting people between airports). */
+const MARKET_KM = 150;
+/** How strongly travellers prefer big airports (more flights) over small ones close by. */
+const MARKET_SIZE_WEIGHT: Record<AirportSize, number> = { large: 1, medium: 0.25, small: 0.06 };
+/** Distance decay of airport choice (km): an airport 50 km further away is ~2.7× less attractive. */
+const MARKET_DECAY_KM = 50;
 
 // ---------- Small helpers ----------
 
@@ -161,9 +167,36 @@ for (const a of parseCsv(await readFile(join(RAW, 'airports.csv'), 'utf8'))) {
     runways,
     longestRunwayM: runways[0]?.lengthM ?? 0,
     catchmentPop,
+    marketPop: 0,
   });
 }
 airports.sort((x, y) => x.id.localeCompare(y.id));
+
+// Market population: every city's people are shared among the airports within reach,
+// weighted by airport size and distance (a "Huff" choice model). Unlike the catchment, nobody is
+// counted twice: London's millions are split between Heathrow, Gatwick, Stansted, Luton and City.
+{
+  const byLat = [...airports].sort((a, b) => a.lat - b.lat);
+  const band = MARKET_KM / 111 + 0.01;
+  for (const city of cities) {
+    let lo = 0;
+    let hi = byLat.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (byLat[mid]!.lat < city.lat - band) lo = mid + 1;
+      else hi = mid;
+    }
+    const near: { airport: Airport; w: number }[] = [];
+    for (let i = lo; i < byLat.length && byLat[i]!.lat <= city.lat + band; i++) {
+      const airport = byLat[i]!;
+      const d = distanceKm(city.lat, city.lon, airport.lat, airport.lon);
+      if (d <= MARKET_KM) near.push({ airport, w: MARKET_SIZE_WEIGHT[airport.size] * Math.exp(-d / MARKET_DECAY_KM) });
+    }
+    const total = near.reduce((sum, n) => sum + n.w, 0);
+    for (const n of near) n.airport.marketPop += (city.pop * n.w) / total;
+  }
+  for (const a of airports) a.marketPop = Math.round(a.marketPop);
+}
 
 // ---------- Countries (OurAirports + World Bank) ----------
 

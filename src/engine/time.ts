@@ -28,3 +28,11 @@ export function daysInMonth(time: SimTime): number {
   const d = toDate(time);
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
 }
+
+export const MINUTES_PER_WEEK = 7 * MINUTES_PER_DAY;
+
+/** Monday 00:00 UTC of the week containing `time` (1 January 1950 was a Sunday). */
+export function startOfWeek(time: SimTime): SimTime {
+  const day = Math.floor(time / MINUTES_PER_DAY);
+  return (day - ((day + 6) % 7)) * MINUTES_PER_DAY;
+}

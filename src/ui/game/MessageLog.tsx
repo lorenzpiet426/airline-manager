@@ -27,6 +27,17 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.rentPaid', { amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }) });
       case 'cashNegative':
         return t('msg.cashNegative');
+      case 'routeOpened':
+        return t('msg.routeOpened', p);
+      case 'routeClosed':
+        return t('msg.routeClosed', p);
+      case 'weekReport': {
+        const currency = String(p.currency);
+        return t(Number(p.profit) >= 0 ? 'msg.weekProfit' : 'msg.weekLoss', {
+          revenue: formatMoney(language, { amount: Number(p.revenue), currency }),
+          profit: formatMoney(language, { amount: Math.abs(Number(p.profit)), currency }),
+        });
+      }
     }
   };
 

@@ -8,6 +8,9 @@ import { WorldMap, type MapFocus } from '../map/WorldMap';
 import { AirportPanel } from '../map/AirportPanel';
 import { AirportSearch } from '../map/AirportSearch';
 import { formatNumber } from '../../i18n/format';
+import { useGame } from '../../game/store';
+import { useEngineWorld } from '../game/useEngineWorld';
+import { useNetworkOverlay } from '../map/useNetworkOverlay';
 
 export default function MapScreen() {
   const { t } = useTranslation();
@@ -17,6 +20,8 @@ export default function MapScreen() {
   const isWide = useMediaQuery('(min-width: 768px)');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focus, setFocus] = useState<MapFocus | null>(null);
+  const game = useGame();
+  const overlay = useNetworkOverlay(game, useEngineWorld());
 
   const selected = selectedId && world ? world.airportById.get(selectedId) : undefined;
 
@@ -25,6 +30,7 @@ export default function MapScreen() {
       <div className="mapview">
         {world ? (
           <WorldMap
+            overlay={overlay}
             airports={world.airports}
             basemap={world.basemap}
             selectedId={selectedId}
@@ -62,6 +68,13 @@ export default function MapScreen() {
         {world && !selected && (
           <div className="mapview__legend">
             <span className="mono">{formatNumber(settings.language, world.airports.length)}</span> {t('map.airportsCount')}
+            {overlay && overlay.routes.features.length > 0 && (
+              <>
+                {' · '}
+                <span className="mono text--info">{overlay.routes.features.length}</span> {t('map.legendRoutes')} ·{' '}
+                <span className="mono text--info">{overlay.planes.features.length}</span> {t('map.legendAirborne')}
+              </>
+            )}
           </div>
         )}
 

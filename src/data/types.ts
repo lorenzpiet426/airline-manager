@@ -31,6 +31,8 @@ export interface Airport {
   longestRunwayM: number;
   /** People living in cities (≥15,000 inhabitants) within 100 km — a first measure of the catchment area */
   catchmentPop: number;
+  /** People who would fly from this airport: city populations shared between nearby airports by size and distance. */
+  marketPop: number;
 }
 
 export interface Country {

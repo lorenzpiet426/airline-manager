@@ -1,9 +1,10 @@
 // The engine's home: a background thread (Web Worker). It owns the game state, runs the clock
 // and applies commands; the screen only receives copies of the state to display.
 import * as Comlink from 'comlink';
-import type { Airport } from '../data/types';
+import type { Airport, Country } from '../data/types';
 import { advance } from '../engine/advance';
-import { applyCommand, type Command, type CommandResult, type EngineWorld } from '../engine/commands';
+import { applyCommand, type Command, type CommandResult } from '../engine/commands';
+import { buildEngineWorld, type EngineWorld } from '../engine/world';
 import { createGame, migrate, type NewGameOptions } from '../engine/game';
 import type { GameState } from '../engine/state';
 import { MINUTES_PER_DAY } from '../engine/time';
@@ -24,11 +25,14 @@ let timer: ReturnType<typeof setInterval> | null = null;
 let listener: ((snapshot: EngineSnapshot) => void) | null = null;
 let rev = 0;
 let worldPromise: Promise<EngineWorld> | null = null;
+/** Set once the world data has loaded; the clock only runs with a loaded world. */
+let world: EngineWorld | null = null;
 
 function loadWorld(): Promise<EngineWorld> {
-  worldPromise ??= import('../data/generated/airports.json').then((m) => ({
-    airportById: new Map((m.default as Airport[]).map((a) => [a.id, a])),
-  }));
+  worldPromise ??= Promise.all([import('../data/generated/airports.json'), import('../data/generated/countries.json')]).then(
+    ([airports, countries]) =>
+      (world = buildEngineWorld(airports.default as Airport[], countries.default as unknown as Record<string, Country>)),
+  );
   return worldPromise;
 }
 
@@ -41,13 +45,13 @@ function emit(): EngineSnapshot {
 
 function tick() {
   const now = performance.now();
-  if (!state || speed === 0) return;
+  if (!state || !world || speed === 0) return;
   carry += ((now - lastTick) / 1000) * speed;
   lastTick = now;
   const minutes = Math.floor(carry);
   if (minutes < 1) return;
   carry -= minutes;
-  advance(state, state.time + minutes);
+  advance(state, world, state.time + minutes);
   emit();
 }
 
@@ -79,7 +83,8 @@ const api = {
   },
 
   /** Loads a saved game. Returns false if the save cannot be used. */
-  load(raw: unknown): EngineSnapshot | null {
+  async load(raw: unknown): Promise<EngineSnapshot | null> {
+    await loadWorld();
     const loaded = migrate(raw);
     if (!loaded) return null;
     state = loaded;
@@ -95,8 +100,8 @@ const api = {
   setSpeed,
 
   /** Turn-based mode: simulate the next 7 days. */
-  endWeek(): EngineSnapshot {
-    if (state) advance(state, state.time + 7 * MINUTES_PER_DAY);
+  async endWeek(): Promise<EngineSnapshot> {
+    if (state) advance(state, await loadWorld(), state.time + 7 * MINUTES_PER_DAY);
     return emit();
   },
 

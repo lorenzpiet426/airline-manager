@@ -246,7 +246,7 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
   together with leasing); game state, commands, clock with **pause/speed (real-time)** and
   **turn-based weekly** mode; new-game wizard (name, IATA-style code, colors, hub, starting capital);
   lease aircraft. *Test: start an airline, lease a plane.*
-- **1.4 Routes & money:** open routes (range/runway checks), weekly frequency, fares, demand model
+- **1.4 Routes & money:** ✅ open routes (range/runway checks), weekly frequency, fares, demand model
   (gravity + business/leisure), cost model (fuel, crew, airport, navigation, maintenance, lease),
   weekly P&L, **planes flying on the map**. *Test: does a VIE–LHR A320 route make believable money?*
 - **1.5 Saves & dashboard:** multiple local save slots, export/import, dashboard with KPIs (load factor,
@@ -338,6 +338,14 @@ Server-authoritative shared world running the same engine (free tier to be resea
 | 2026-10-27 | Real-time speeds: pause, 1 min / 10 min / 1 h / 1 day of game time per real second; turn-based mode advances 7 days per "End week" | Covers watching flights up to fast-forwarding months |
 | 2026-10-27 | Money stored as whole currency units (no cents) | Airline accounts at this scale don't need cents; avoids rounding drift |
 | 2026-10-27 | One automatic save in localStorage until Phase 1.5 (save slots in IndexedDB) | Reloading the page must not lose the game while testing |
+| 2026-10-27 | Until Phase 2: "invisible incumbents" — real markets already have airlines; the player wins a share by frequency, price and speed | Owner choice; keeps profits realistic from day one |
+| 2026-10-27 | Fares: market fare per route + slider −50 % … +50 % (fare classes in Phase 9) | Owner choice |
+| 2026-10-27 | Simple scheduling: route = hub → destination, one aircraft, weekly round trips; an aircraft can fly several routes until its weekly hours are used (112–154 h by category) | Owner choice |
+| 2026-10-27 | All routes start at the hub; one route per destination | Simple scheduling; bases/hubs elsewhere in Phase 7 |
+| 2026-10-27 | Economics computed per route per day (aggregate), individual flights only derived for the map (weekly pattern, 06:00–21:00 hub time) | Architecture §3.3 "two levels of detail" |
+| 2026-10-27 | Weekly P&L Monday–Sunday UTC; lease cost accrued daily in the P&L while the cash leaves monthly; crews paid per active aircraft | Readable weekly reports without monthly spikes |
+| 2026-10-27 | Real 2026 jet fuel prices (EIA weekly) in the game, incl. the March 2026 spike | Realism; airlines really had to cope with it |
+| 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
 ### 2026-10-27 — Session 1 (Phase 0)
@@ -413,3 +421,28 @@ Server-authoritative shared world running the same engine (free tier to be resea
 - Known: `airports.json` is bundled twice (map + engine worker, ~250 kB gzip extra) — share it later (e.g. fetch once).
 - **Next:** Phase 1.4 — routes (range/runway checks), demand model, costs (fuel, crew, airport, navigation, maintenance),
   weekly P&L, planes flying on the map.
+- Owner confirmed: 1.3 tested on phone.
+
+### 2026-10-27 — Session 5 (Phase 1.4 Routes & money) ✅
+- Owner decisions: invisible incumbents, market fare + slider, aircraft can fly several routes (§7).
+- **Data:** Eurostat 2019 route totals for Austria (calibration), EIA weekly jet fuel 2026 (`src/data/fuel.ts`),
+  fuel burn + maintenance per type, new `marketPop` per airport (pipeline: cities shared between airports, Huff model).
+- **Engine:** `geo.ts` (great circle, bearing), `world.ts` (EngineWorld incl. countries, diversion airports, tourism),
+  `economics.ts` (block time, range/runway/ETOPS checks, demand, market fare, costs, `routeWeek` forecast),
+  `operations.ts` (daily booking of revenue/costs per route, crew + lease accrual, weekly P&L close on Mondays,
+  route ramp-up 60 % → 100 % over 8 weeks from first flight), `flights.ts` (weekly flight pattern per aircraft,
+  airborne position), commands `OpenRoute`/`UpdateRoute`/`CloseRoute` with `validateRoute`. Save version 2 with
+  migration from version 1 (Phase 1.3 saves keep working). Flight numbers: outbound odd from 101, return +1.
+- **UI:** Network screen (route cards with last week's passengers, load factor, result; route planner with destination
+  search, aircraft choice with free hours, frequency stepper, fare slider and live weekly forecast incl. cost lines),
+  Finance screen (cash, 12-week result bars, P&L last week / this week so far, route results table), Fleet shows hours
+  and routes per aircraft, map shows routes as great circles and airborne aircraft in livery colour (labels from zoom 4.5),
+  new ops messages (route opened/closed, weekly result). Map style moved to `src/ui/map/mapStyle.ts`.
+- Tests: 41 (incl. Eurostat calibration, rail cut-off, CASK/LF plausibility, range/runway/ETOPS, P&L reports,
+  ramp-up, flight pattern, v1 → v2 save upgrade, MapLibre style validation).
+- Verified in browser: VIE–ATH 14×/wk at −25 % + VIE–LIS 4×/wk on one 737-800 → ~5 % weekly margin in April 2026
+  (after the fuel spike); aircraft symbol seen landing in Athens; Finance and Network screens on desktop and phone.
+- Lessons: the in-app browser pane often doesn't run animation frames, so MapLibre can't even load its style there —
+  validate the style with `validateStyleMin` (test) instead of relying on screenshots; front the tab before screenshots.
+- **Next:** Phase 1.5 — save slots, export/import, dashboard with KPIs (load factor, RASK/CASK, cash). Ideas noted:
+  overheads (head office, marketing, insurance), seasonality (Phase 2), connecting traffic (Phase 7).

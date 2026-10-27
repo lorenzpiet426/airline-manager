@@ -4,21 +4,27 @@ import { getAircraftType } from '../data/aircraft';
 import { book, postMessage, schedule } from './core';
 import { refreshMarket } from './market';
 import { money } from './money';
+import { dailyStep } from './operations';
 import type { GameState, ScheduledEvent } from './state';
-import { daysInMonth, startOfNextMonth, type SimTime } from './time';
+import { daysInMonth, MINUTES_PER_DAY, startOfNextMonth, type SimTime } from './time';
+import type { EngineWorld } from './world';
 
 /** Processes every scheduled event up to `until` (in time order), then sets the clock to `until`. */
-export function advance(state: GameState, until: SimTime): void {
+export function advance(state: GameState, world: EngineWorld, until: SimTime): void {
   while (state.queue.length && state.queue[0]!.at <= until) {
     const event = state.queue.shift()!;
     state.time = Math.max(state.time, event.at);
-    handle(state, event);
+    handle(state, world, event);
   }
   state.time = Math.max(state.time, until);
 }
 
-function handle(state: GameState, event: ScheduledEvent): void {
+function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): void {
   switch (event.kind) {
+    case 'dayStart':
+      dailyStep(state, world);
+      schedule(state, { at: state.time + MINUTES_PER_DAY, kind: 'dayStart' });
+      break;
     case 'monthStart':
       payMonthlyRents(state);
       refreshMarket(state);

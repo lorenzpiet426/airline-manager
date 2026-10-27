@@ -4,10 +4,11 @@
 // the game, so the map works offline. Only label fonts are fetched from OpenFreeMap (then cached).
 import { useEffect, useRef } from 'react';
 import * as maplibregl from 'maplibre-gl';
-import type { ExpressionSpecification, LayerSpecification, StyleSpecification } from 'maplibre-gl';
+import type { GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
-import type { FeatureCollection, Point } from 'geojson';
+import type { FeatureCollection, LineString, Point } from 'geojson';
+import { applyThemeColors, baseStyle, EMPTY } from './mapStyle';
 import type { Airport } from '../../data/types';
 import type { Basemap } from '../../data/world';
 import type { MapProjection } from '../../settings/settings';
@@ -20,7 +21,17 @@ export interface MapFocus {
   seq: number;
 }
 
+/** Your network on the map: route lines and the aircraft currently in the air. */
+export interface MapOverlay {
+  routes: FeatureCollection<LineString>;
+  planes: FeatureCollection<Point>;
+  /** Livery main colour for the aircraft symbols. */
+  color: string;
+}
+
+
 interface Props {
+  overlay: MapOverlay | null;
   airports: Airport[];
   basemap: Basemap;
   selectedId: string | null;
@@ -35,137 +46,24 @@ interface Props {
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
 const VIE: [number, number] = [16.5697, 48.1103];
-const LABEL_FONT = ['Noto Sans Regular'];
 
-/** Reads a colour token from tokens.css (so the map follows the dark/light theme). */
-const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-
-function graticule(stepDeg: number): FeatureCollection {
-  const features: FeatureCollection['features'] = [];
-  for (let lon = -180; lon <= 180; lon += stepDeg) {
-    features.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[lon, -85], [lon, 0], [lon, 85]] } });
-  }
-  for (let lat = -75; lat <= 75; lat += stepDeg) {
-    const coordinates: [number, number][] = [];
-    for (let lon = -180; lon <= 180; lon += 5) coordinates.push([lon, lat]);
-    features.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } });
-  }
-  return { type: 'FeatureCollection', features };
+/** The aircraft symbol (same shape as the Fleet icon), drawn as a tintable "SDF" image. */
+function planeImage(): ImageData {
+  const size = 48;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  ctx.scale(size / 24, size / 24);
+  ctx.fillStyle = '#000';
+  ctx.fill(
+    new Path2D(
+      'M12 2.5c.9 0 1.5 1 1.5 2.3v5l7.5 4.4v2l-7.5-2.3v4.5l2.3 1.7v1.4L12 20.6l-3.8.9v-1.4l2.3-1.7v-4.5L3 16.2v-2l7.5-4.4v-5c0-1.3.6-2.3 1.5-2.3z',
+    ),
+  );
+  return ctx.getImageData(0, 0, size, size);
 }
 
-function airportsGeoJson(airports: Airport[]): FeatureCollection<Point> {
-  const rank = { large: 3, medium: 2, small: 1 } as const;
-  return {
-    type: 'FeatureCollection',
-    features: airports.map((a) => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [a.lon, a.lat] },
-      properties: { id: a.id, code: a.iata ?? a.icao ?? a.id, size: a.size, rank: rank[a.size] },
-    })),
-  };
-}
-
-/** A value that depends on the airport size (large / medium / small). */
-const sizeValue = (large: number | string, medium: number | string, small: number | string) =>
-  ['match', ['get', 'size'], 'large', large, 'medium', medium, small] as ExpressionSpecification;
-
-/** The complete map style, with all data included from the start (no waiting for a "loaded" event). */
-function baseStyle(basemap: Basemap, airports: Airport[]): StyleSpecification {
-  return {
-    version: 8,
-    glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
-    sources: {
-      graticule: { type: 'geojson', data: graticule(15) },
-      land: { type: 'geojson', data: basemap.land },
-      borders: { type: 'geojson', data: basemap.borders },
-      airports: { type: 'geojson', data: airportsGeoJson(airports) },
-    },
-    layers: [
-      { id: 'ocean', type: 'background', paint: { 'background-color': token('--map-ocean') } },
-      { id: 'graticule', type: 'line', source: 'graticule', paint: { 'line-color': token('--map-grid'), 'line-width': 0.6 } },
-      { id: 'land', type: 'fill', source: 'land', paint: { 'fill-color': token('--map-land') } },
-      { id: 'borders', type: 'line', source: 'borders', paint: { 'line-color': token('--map-border'), 'line-width': 0.6 } },
-      {
-        id: 'airports',
-        type: 'circle',
-        source: 'airports',
-        layout: { 'circle-sort-key': ['get', 'rank'] },
-        paint: {
-          'circle-radius': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            1,
-            sizeValue(2, 1.1, 0.7),
-            5,
-            sizeValue(4, 2.5, 1.6),
-            9,
-            sizeValue(7, 5, 3.5),
-          ],
-          'circle-color': sizeValue(token('--map-airport-large'), token('--map-airport'), token('--map-airport')),
-          'circle-opacity': sizeValue(0.95, 0.85, 0.7),
-        },
-      } as LayerSpecification,
-      {
-        id: 'airport-selected',
-        type: 'circle',
-        source: 'airports',
-        filter: ['==', ['get', 'id'], ''],
-        paint: {
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 7, 9, 13],
-          'circle-color': 'rgba(0,0,0,0)',
-          'circle-stroke-color': token('--cyan'),
-          'circle-stroke-width': 2,
-        },
-      },
-      // Invisible, larger circles so small airports are easy to tap with a finger.
-      {
-        id: 'airport-hit',
-        type: 'circle',
-        source: 'airports',
-        paint: { 'circle-radius': 12, 'circle-opacity': 0 },
-      },
-      ...(['large', 'medium', 'small'] as const).map(
-        (size, i): LayerSpecification => ({
-          id: `labels-${size}`,
-          type: 'symbol',
-          source: 'airports',
-          minzoom: [2.5, 5, 7][i],
-          filter: ['==', ['get', 'size'], size],
-          layout: {
-            'text-field': ['get', 'code'],
-            'text-font': LABEL_FONT,
-            'text-size': [12, 11, 10][i]!,
-            'text-anchor': 'top',
-            'text-offset': [0, 0.5],
-            'text-padding': 3,
-          },
-          paint: {
-            'text-color': token('--map-label'),
-            'text-halo-color': token('--map-label-halo'),
-            'text-halo-width': 1.4,
-          },
-        }),
-      ),
-    ],
-  };
-}
-
-/** Re-applies theme colours to an existing map (no reload needed). */
-function applyThemeColors(map: maplibregl.Map) {
-  map.setPaintProperty('ocean', 'background-color', token('--map-ocean'));
-  map.setPaintProperty('graticule', 'line-color', token('--map-grid'));
-  map.setPaintProperty('land', 'fill-color', token('--map-land'));
-  map.setPaintProperty('borders', 'line-color', token('--map-border'));
-  map.setPaintProperty('airports', 'circle-color', sizeValue(token('--map-airport-large'), token('--map-airport'), token('--map-airport')));
-  map.setPaintProperty('airport-selected', 'circle-stroke-color', token('--cyan'));
-  for (const size of ['large', 'medium', 'small']) {
-    map.setPaintProperty(`labels-${size}`, 'text-color', token('--map-label'));
-    map.setPaintProperty(`labels-${size}`, 'text-halo-color', token('--map-label-halo'));
-  }
-}
-
-export function WorldMap({ airports, basemap, selectedId, onSelect, focus, projection, theme, initialZoom }: Props) {
+export function WorldMap({ overlay, airports, basemap, selectedId, onSelect, focus, projection, theme, initialZoom }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const loadedRef = useRef(false);
@@ -194,6 +92,7 @@ export function WorldMap({ airports, basemap, selectedId, onSelect, focus, proje
 
     // "style.load" = layers exist and can be changed; it does not wait for anything to be drawn.
     map.on('style.load', () => {
+      if (!map.hasImage('plane')) map.addImage('plane', planeImage(), { sdf: true, pixelRatio: 2 });
       // Start with the data credits folded into the small ⓘ button (MapLibre opens it once on start).
       const foldCredits = () =>
         map.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
@@ -242,6 +141,16 @@ export function WorldMap({ airports, basemap, selectedId, onSelect, focus, proje
   );
 
   useEffect(() => whenReady((map) => applyThemeColors(map)), [theme]);
+
+  useEffect(
+    () =>
+      whenReady((map) => {
+        (map.getSource('routes') as GeoJSONSource | undefined)?.setData(overlay?.routes ?? EMPTY);
+        (map.getSource('planes') as GeoJSONSource | undefined)?.setData(overlay?.planes ?? EMPTY);
+        if (overlay) map.setPaintProperty('planes', 'icon-color', overlay.color);
+      }),
+    [overlay],
+  );
 
   useEffect(() => whenReady((map) => map.setProjection({ type: projection })), [projection]);
 

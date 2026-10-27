@@ -5,6 +5,8 @@ import { Segmented } from '../components/Segmented';
 import { TailFin } from '../components/TailFin';
 import { usePlayer } from '../game/usePlayer';
 import { getAircraftType, type AircraftCategory } from '../../data/aircraft';
+import { aircraftHours } from '../../engine/commands';
+import { WEEKLY_AVAILABLE_HOURS } from '../../engine/economics';
 import { useWorld } from '../../data/world';
 import type { CommandError } from '../../engine/commands';
 import { convert } from '../../engine/money';
@@ -112,6 +114,17 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
               <dd>{aircraft.lease.lessor}</dd>
               <dt>{t('fleet.leaseEnds')}</dt>
               <dd className="mono">{formatGameDate(language, toDate(aircraft.lease.endAt), false)}</dd>
+              <dt>{t('fleet.hours')}</dt>
+              <dd className="mono">
+                {t('fleet.hoursValue', { used: Math.round(aircraftHours(game, aircraft.id)), max: WEEKLY_AVAILABLE_HOURS[type.category] })}
+              </dd>
+              <dt>{t('fleet.routesOf')}</dt>
+              <dd className="mono">
+                {Object.values(game.routes)
+                  .filter((r) => r.aircraftId === aircraft.id)
+                  .map((r) => world?.airportById.get(r.destinationId)?.iata ?? r.destinationId)
+                  .join(' · ') || t('fleet.noRoutes')}
+              </dd>
             </dl>
           </li>
         );
