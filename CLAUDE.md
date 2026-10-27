@@ -21,6 +21,9 @@ session. **Keep it updated at the end of every session** (progress log, decision
 7. Every dataset gets an entry in `docs/DATA_SOURCES.md` (source, license, date downloaded, how it is processed).
 8. Explain things simply: short "What I built / why" notes after each step. No jargon without a one-line explanation.
 9. Achievements never give artificial rewards (no free money or bonuses). Everything stays realistic.
+10. **Git: stage files explicitly by path** (never `git add -A` / `git add .`) and check `git status` before committing.
+    Downloads and raw datasets belong in `tools/raw/` (git-ignored). (2026-10-27: an FAA ZIP the owner saved in the
+    project root was committed by `git add -A` and removed again in the next commit; it remains in history.)
 
 ---
 
