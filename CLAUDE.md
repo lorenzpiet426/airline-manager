@@ -560,6 +560,23 @@ education", forbid making the data available to others (§3 iii) and require a w
   entries where value == key, then rebuild routes (Bucharest, Dhaka, Don Mueang missing until then).
   Still to do in step 2: merge extra airlines (build-airlines), airline articles (business model, bases, fleet tables,
   seat layouts), split Eurostat totals into airline frequencies, FAA/Canada registers, validation report.
+- **Pipeline step 2 (continued, same day):** fixed title resolution (API errors were silently treated as "no redirect";
+  now batches split on error), parser accepts both `{{Airport-dest-list}}` and `{{Airport destination list}}` (big
+  airports like MUC/CDG use the latter) → **51,760 airline routes, 824 airlines** (35,490 confirmed by both ends);
+  129 brands/subsidiaries merged (cumulative second Wikidata pass; brands without own ICAO code get their Wikidata id);
+  airline articles (+ 26 separate "… fleet" articles via Main/Excerpt links) → `airline-details.json`: business model
+  (560 legacy, 123 low-cost, 80 regional, 61 charter), hubs/bases, current fleet only (first table with "In service"),
+  27,214 aircraft; aircraft types 84 → **103** (commuter, older and regional types: Caravan, PC-12, Islander, King Air,
+  MD-80, A300/A310, 717, 737-200, Avro RJ, An-24/26, Metro, Jetstream 32, Do 228, MA60, Tu-204, MC-21…);
+  `tools/aircraft-names.ts` (name patterns incl. Boeing customer codes), `tools/xlsx.ts` (register reader);
+  `networks.json` (weekly flights where Eurostat has totals: 10,703 routes); `docs/validation/real-airlines.md`
+  (Austrian, Lufthansa, Ryanair, Wizz: destinations vs. their Wikipedia lists, frequencies vs. Eurostat, fleets vs.
+  Austrian/Irish registers). Austro Control register **does** have operators (68 × Austrian Airlines AG = our draft).
+  `src/data/generated/README.md` lists licences (networks/details = CC BY-SA 4.0). Tests: 54.
+- **Still to do before 2.1a screens:** fleets from FAA (owner's download in tools/raw) and Canada registers
+  (individual aircraft for US/Canadian airlines); then 2.1a: load real airlines into the engine (replace invisible
+  incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
+  map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.
 - **Next pipeline steps (original list):** Wikipedia articles (business model, bases, destination lists, fleet tables, seat layouts;
   ambiguous destinations listed for the owner); Brazil ANAC + Canada register; split Eurostat route totals between the
   airlines that serve each route; fleets; validation report (Austrian, Lufthansa, Ryanair, Wizz Air); then 2.1a screens.

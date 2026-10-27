@@ -26,7 +26,11 @@ describe('real airlines (Wikidata)', () => {
 
   it('has one airline per ICAO code, only known airports as hubs, and no cargo-only carriers', () => {
     expect(airlines.length).toBeGreaterThan(1000);
-    expect(new Set(airlines.map((a) => a.icao)).size).toBe(airlines.length);
+    expect(new Set(airlines.map((a) => a.id)).size).toBe(airlines.length);
+    const codes = airlines.map((a) => a.icao).filter(Boolean);
+    expect(new Set(codes).size).toBe(codes.length);
+    // Brands without their own ICAO code (e.g. United Express) are identified by their Wikidata id.
+    for (const a of airlines) if (!a.icao) expect(a.id, a.name).toMatch(/^Q\d+$/);
     for (const a of airlines) for (const h of a.hubs) expect(airportIds.has(h), `${a.icao} ${h}`).toBe(true);
     // Airlines tagged as cargo carriers in Wikidata are left out (others without passenger routes drop out later).
     expect(byIcao.has('FDX')).toBe(false); // FedEx Express

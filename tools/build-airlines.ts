@@ -81,33 +81,73 @@ for (const item of items.values()) {
   if (!other || item.sitelinks > other.sitelinks) byIcao.set(item.icao, item);
 }
 
-const airlines = [...byIcao.values()]
-  .sort((a, b) => a.icao.localeCompare(b.icao))
-  .map((i) => ({
-    id: i.icao,
-    name: i.name,
-    iata: i.iata,
-    icao: i.icao,
-    callsign: i.callsign,
-    country: i.country,
-    hubs: [...i.hubs].sort(),
-    model: model(i.types),
-    alliance: i.alliance,
-    parent: i.parent,
-    founded: i.founded,
-    wikidata: i.qid,
-    wikipedia: i.article,
-    /** Wikipedia language versions: a rough measure of how well known the airline is. */
-    fame: i.sitelinks,
-    source: 'wikipedia' as const,
-  }));
+// Brands and subsidiaries found via Wikipedia's airport tables (second Wikidata pass): United Express, QantasLink, AJet…
+// They keep their own ICAO code if they have one that is still free, otherwise they get their Wikidata id.
+interface Extra { item: Item; parentIcao: string | null }
+const extras: Extra[] = [];
+try {
+  const extra = JSON.parse(await readFile(join(RAW, 'wikidata-airlines-extra.json'), 'utf8')) as { rows: Row[] };
+  const byQid = new Map<string, Extra>();
+  for (const r of extra.rows) {
+    const qid = r.a!.replace('http://www.wikidata.org/entity/', '');
+    if (items.has(qid) && byIcao.get(items.get(qid)!.icao)?.qid === qid) continue; // already in the list
+    const e =
+      byQid.get(qid) ??
+      ({
+        item: {
+          qid, name: r.label ?? qid, icao: r.icao ?? '', iata: r.iata ?? null, country: r.countryCode ?? null,
+          hubs: new Set(), types: new Set(), alliance: null, parent: r.parentLabel ?? null, founded: null, callsign: null,
+          article: r.article ? decodeURIComponent(r.article.replace('https://en.wikipedia.org/wiki/', '')).replace(/_/g, ' ') : null,
+          sitelinks: Number(r.sitelinks ?? 0),
+        },
+        parentIcao: r.parentIcao ?? null,
+      } satisfies Extra);
+    if (r.hubIcao && airportIds.has(r.hubIcao)) e.item.hubs.add(r.hubIcao);
+    byQid.set(qid, e);
+  }
+  extras.push(...byQid.values());
+} catch {
+  // second pass not run yet
+}
+
+const toRow = (i: Item, id: string, extra: Partial<{ brand: boolean; parentIcao: string | null }> = {}) => ({
+  id,
+  name: i.name,
+  iata: i.iata,
+  // A brand whose code is already taken by the main airline gets no code of its own.
+  icao: extra.brand ? null : i.icao || null,
+  callsign: i.callsign,
+  country: i.country,
+  hubs: [...i.hubs].sort(),
+  model: model(i.types),
+  alliance: i.alliance,
+  parent: i.parent,
+  ...(extra.parentIcao ? { parentIcao: extra.parentIcao } : {}),
+  ...(extra.brand ? { brand: true } : {}),
+  founded: i.founded,
+  wikidata: i.qid,
+  wikipedia: i.article,
+  /** Wikipedia language versions: a rough measure of how well known the airline is. */
+  fame: i.sitelinks,
+  source: 'wikipedia' as const,
+});
+
+const airlines = [
+  ...[...byIcao.values()].map((i) => toRow(i, i.icao)),
+  ...extras.map(({ item, parentIcao }) => {
+    const ownCode = item.icao && !byIcao.has(item.icao);
+    if (ownCode) byIcao.set(item.icao, item);
+    // No (free) ICAO code: a brand flown for another airline, identified by its Wikidata id.
+    return toRow(item, ownCode ? item.icao : item.qid, { brand: !ownCode, parentIcao });
+  }),
+].sort((a, b) => a.id.localeCompare(b.id));
 
 await writeFile(
   join(OUT, 'airlines.json'),
   `{"source":"Wikidata (CC0), downloaded ${downloaded.slice(0, 10)}","airlines":[\n${airlines.map((a) => JSON.stringify(a)).join(',\n')}\n]}\n`,
 );
 console.log(
-  `Airlines: ${airlines.length} (excluded ${excluded} cargo/helicopter/military/other items, ` +
-    `${items.size - excluded - airlines.length} duplicate codes); with hub: ${airlines.filter((a) => a.hubs.length).length}; ` +
+  `Airlines: ${airlines.length} incl. ${extras.length} brands/subsidiaries (excluded ${excluded} cargo/helicopter/` +
+    `military/other items); with hub: ${airlines.filter((a) => a.hubs.length).length}; ` +
     `with IATA: ${airlines.filter((a) => a.iata).length}; with Wikipedia article: ${airlines.filter((a) => a.wikipedia).length}`,
 );

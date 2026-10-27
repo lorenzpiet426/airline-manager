@@ -84,7 +84,7 @@ export interface AirlineDestinations {
 }
 
 /**
- * Reads every {{Airport-dest-list}} in an airport article. Destinations after "Seasonal:" are seasonal,
+ * Reads every {{Airport-dest-list}} / {{Airport destination list}} in an airport article. Destinations after "Seasonal:" are seasonal,
  * after "Charter:" or "Seasonal charter:" charter flights.
  */
 export function parseAirportDestinations(wikitext: string, section = 'Passenger'): AirlineDestinations[] {
@@ -95,7 +95,8 @@ export function parseAirportDestinations(wikitext: string, section = 'Passenger'
   const end = scope.slice(5).search(/\n===?\s*(Cargo|Statistics|Traffic)/i);
   if (end >= 0) scope = scope.slice(0, end + 5);
   const result: AirlineDestinations[] = [];
-  for (const block of scope.matchAll(/\{\{\s*Airport-dest-list([\s\S]*?)\n\}\}/gi)) {
+  // The template has two names: {{Airport-dest-list}} and {{Airport destination list}}.
+  for (const block of scope.matchAll(/\{\{\s*Airport[- ]dest(?:ination)?[- ]list([\s\S]*?)\n\}\}/gi)) {
     const cells = splitTopLevel(block[1]!).slice(1); // [0] is the text before the first "|"
     for (let i = 0; i + 1 < cells.length; i += 2) {
       const airlineCell = cells[i]!;
@@ -121,6 +122,31 @@ export function parseAirportDestinations(wikitext: string, section = 'Passenger'
   return result;
 }
 
+/** Resolves one batch (≤ 50 titles); on an API error the batch is split in halves until each part works. */
+async function resolveBatch(batch: string[]): Promise<Map<string, string>> {
+  const params = new URLSearchParams({ action: 'query', titles: batch.join('|'), redirects: '1', format: 'json', formatversion: '2' });
+  const res = await fetch('https://en.wikipedia.org/w/api.php', { method: 'POST', body: params, headers: { 'User-Agent': USER_AGENT } });
+  if (!res.ok) throw new Error(`Wikipedia: HTTP ${res.status} resolving titles`);
+  const json = await res.json();
+  await new Promise((r) => setTimeout(r, 300));
+  if (!json.query) {
+    // e.g. "toomanyvalues" when a title contains a hidden separator: split until the bad title is alone, then skip it.
+    if (batch.length === 1) return new Map([[batch[0]!, batch[0]!]]);
+    const half = Math.ceil(batch.length / 2);
+    return new Map([...(await resolveBatch(batch.slice(0, half))), ...(await resolveBatch(batch.slice(half)))]);
+  }
+  const step = new Map<string, string>();
+  for (const n of json.query.normalized ?? []) step.set(n.from, n.to);
+  for (const r of json.query.redirects ?? []) step.set(r.from, r.to);
+  const out = new Map<string, string>();
+  for (const t of batch) {
+    let target = t;
+    for (let hops = 0; hops < 3 && step.has(target); hops++) target = step.get(target)!;
+    out.set(t, target);
+  }
+  return out;
+}
+
 /**
  * Where article titles point to after Wikipedia's redirects and spelling normalisation
  * (e.g. "Charles de Gaulle Airport" → "Paris Charles de Gaulle Airport"). 50 titles per request, cached.
@@ -135,20 +161,7 @@ export async function resolveTitles(titles: string[]): Promise<Map<string, strin
   }
   const todo = [...new Set(titles)].filter((t) => !(t in cache));
   for (let i = 0; i < todo.length; i += 50) {
-    const batch = todo.slice(i, i + 50);
-    const params = new URLSearchParams({ action: 'query', titles: batch.join('|'), redirects: '1', format: 'json', formatversion: '2' });
-    const res = await fetch(`https://en.wikipedia.org/w/api.php?${params}`, { headers: { 'User-Agent': USER_AGENT } });
-    if (!res.ok) throw new Error(`Wikipedia: HTTP ${res.status} resolving titles`);
-    const q = (await res.json()).query ?? {};
-    const step = new Map<string, string>();
-    for (const n of q.normalized ?? []) step.set(n.from, n.to);
-    for (const r of q.redirects ?? []) step.set(r.from, r.to);
-    for (const t of batch) {
-      let target = t;
-      for (let hops = 0; hops < 3 && step.has(target); hops++) target = step.get(target)!;
-      cache[t] = target;
-    }
-    await new Promise((r) => setTimeout(r, 500));
+    for (const [from, to] of await resolveBatch(todo.slice(i, i + 50))) cache[from] = to;
   }
   await mkdir(CACHE, { recursive: true });
   await writeFile(file, JSON.stringify(cache));

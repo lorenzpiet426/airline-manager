@@ -1,7 +1,7 @@
 // Who flies where, from Wikipedia's "Airlines and destinations" tables of 3,400+ airport articles (CC BY-SA 4.0).
-// Every listed airline and destination is matched to the game's airlines (ICAO code) and airports.
+// Every listed airline and destination is matched to the game's airlines (id) and airports.
 // A route is an airline + airport pair; it is kept if either end lists it (usually both do).
-// Output: src/data/generated/routes-wikipedia.json (+ a list of unmatched names in tools/raw for checking).
+// Output: tools/raw/routes-wikipedia.json (+ a list of unmatched names in tools/raw for checking).
 // Run: node tools/build-wikipedia-routes.ts
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -17,7 +17,7 @@ const { downloaded, airports: articles } = JSON.parse(await readFile(join(RAW, '
 };
 const airportTitles = JSON.parse(await readFile(join(RAW, 'wikidata-airport-titles.json'), 'utf8')) as Record<string, string>;
 const gameAirports = new Set((JSON.parse(await readFile(join(OUT, 'airports.json'), 'utf8')) as { id: string }[]).map((a) => a.id));
-const airlines = JSON.parse(await readFile(join(OUT, 'airlines.json'), 'utf8')).airlines as { icao: string; wikipedia: string | null }[];
+const airlines = JSON.parse(await readFile(join(OUT, 'airlines.json'), 'utf8')).airlines as { id: string; wikipedia: string | null }[];
 
 // 1. Read every table.
 const tables = Object.entries(articles)
@@ -37,7 +37,8 @@ const resolved = await resolveTitles([...airlineTitles, ...destTitles, ...airlin
 const canonical = (t: string) => resolved.get(t) ?? t;
 
 const airlineByArticle = new Map<string, string>();
-for (const a of airlines) if (a.wikipedia) airlineByArticle.set(canonical(a.wikipedia), a.icao);
+// Airline id: the ICAO code, or the Wikidata id for brands without their own code.
+for (const a of airlines) if (a.wikipedia) airlineByArticle.set(canonical(a.wikipedia), a.id);
 const airportByArticle = new Map<string, string>();
 for (const [title, icao] of Object.entries(airportTitles)) {
   airportByArticle.set(title, icao);
@@ -81,7 +82,7 @@ for (const t of tables) {
 
 const list = [...routes.values()].sort((x, y) => x.airline.localeCompare(y.airline) || x.a.localeCompare(y.a) || x.b.localeCompare(y.b));
 await writeFile(
-  join(OUT, 'routes-wikipedia.json'),
+  join(RAW, 'routes-wikipedia.json'), // intermediate step (networks.json is the result shipped with the game)
   `{"source":"English Wikipedia, 'Airlines and destinations' sections of airport articles (CC BY-SA 4.0), downloaded ${downloaded.slice(0, 10)}",` +
     `"routes":[\n${list.map((r) => JSON.stringify({ airline: r.airline, a: r.a, b: r.b, seasonal: r.seasonal, charter: r.charter, both: r.listedAtA && r.listedAtB })).join(',\n')}\n]}\n`,
 );

@@ -10,9 +10,20 @@ const RAW = join(import.meta.dirname, 'raw');
 const { airlineArticlesToLookUp } = JSON.parse(await readFile(join(RAW, 'wikipedia-unmatched.json'), 'utf8')) as { airlineArticlesToLookUp: string[] };
 const iri = (t: string) => `<https://en.wikipedia.org/wiki/${encodeURIComponent(t.replace(/ /g, '_')).replace(/%2F/g, '/').replace(/%3A/g, ':')}>`;
 
-const rows: Record<string, string>[] = [];
-for (let i = 0; i < airlineArticlesToLookUp.length; i += 100) {
-  const batch = airlineArticlesToLookUp.slice(i, i + 100);
+// Cumulative: keep earlier finds and only look up articles not seen before.
+const file = join(RAW, 'wikidata-airlines-extra.json');
+let rows: Record<string, string>[] = [];
+let looked: string[] = [];
+try {
+  const prev = JSON.parse(await readFile(file, 'utf8'));
+  rows = prev.rows ?? [];
+  looked = prev.looked ?? [];
+} catch {
+  // first run
+}
+const todo = airlineArticlesToLookUp.filter((t) => !looked.includes(t));
+for (let i = 0; i < todo.length; i += 100) {
+  const batch = todo.slice(i, i + 100);
   const query = `
 SELECT ?a ?label ?icao ?iata ?countryCode ?hubIcao ?parentLabel ?parentIcao ?article ?sitelinks WHERE {
   VALUES ?article { ${batch.map(iri).join(' ')} }
@@ -33,5 +44,5 @@ SELECT ?a ?label ?icao ?iata ?countryCode ?hubIcao ?parentLabel ?parentIcao ?art
   for (const b of json.results.bindings) rows.push(Object.fromEntries(Object.entries(b).map(([k, v]) => [k, v.value])));
   await new Promise((r) => setTimeout(r, 1000));
 }
-await writeFile(join(RAW, 'wikidata-airlines-extra.json'), JSON.stringify({ downloaded: new Date().toISOString(), rows }));
-console.log(`Wikidata extra airlines: ${new Set(rows.map((r) => r.a)).size} of ${airlineArticlesToLookUp.length} articles found`);
+await writeFile(file, JSON.stringify({ downloaded: new Date().toISOString(), rows, looked: [...looked, ...todo] }));
+console.log(`Wikidata extra airlines: ${new Set(rows.map((r) => r.a)).size} found in total (${todo.length} new articles looked up)`);
