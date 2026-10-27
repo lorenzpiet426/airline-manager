@@ -538,6 +538,17 @@ building screens.**
   ❌ India DGCA, UK G-INFO, Airbus/Boeing O&D (terms forbid reuse → hand-check only); ❓ BITRE, CASA, Malta (sites
   unreachable from here → owner checks in a browser).
 - Austrian hand-check templates created: `data-hand/austrian/routes.csv`, `fleet.csv`, `README.md` (format explained).
-- **Next:** owner approves the source list, sends the OpenSky email, checks BITRE/CASA/Malta/ANAC licence by hand and
-  downloads the FAA ZIP; then build the pipeline (Wikidata + Wikipedia → airlines/hubs/destinations; official stats
+- Owner approved the source list ("Build").
+- **Pipeline step 1 (same session):** `tools/download-airlines.ts` + `build-airlines.ts` → `airlines.json` (1,657 real
+  passenger airlines from Wikidata, CC0; shared ICAO codes resolved by Wikipedia language count — DLH = Lufthansa,
+  THY = Turkish); `tools/download-eurostat-routes.ts` + `build-eurostat-routes.ts` → `routes-eurostat.json` (12,315
+  directed routes, weekly flights/seats/passengers, season **S24** = Apr–Sep 2024, the newest published; VIE–LHR
+  59/week each way, VIE–JFK 6.3). Aircraft database 26 → **84 types** (turboprops incl. ATR 42/72-500, Dash 8-100/200/300,
+  Saab, Dornier, Twin Otter, L-410; CRJ/ERJ/E1/Superjet/C909/Fokker; A318/A319/A319neo, 737-300/700/900ER, 737-7/-10
+  (2027), 757, C919; A330-200/-800, A340, A380, 767, 777-200ER/LR/-300, 747-400/-8; freighters with `payloadT`, kept
+  off the lease market). npm scripts `data:airlines:download` / `data:airlines:build`. Tests: 49.
+- **Next pipeline steps:** Wikipedia articles (business model, bases, destination lists, fleet tables, seat layouts;
+  ambiguous destinations listed for the owner); Brazil ANAC + Canada register; split Eurostat route totals between the
+  airlines that serve each route; fleets; validation report (Austrian, Lufthansa, Ryanair, Wizz Air); then 2.1a screens.
+- (Earlier plan text:) build the pipeline (Wikidata + Wikipedia → airlines/hubs/destinations; official stats
   for frequencies; registers for fleets; new aircraft types), validation report, then 2.1a screens.

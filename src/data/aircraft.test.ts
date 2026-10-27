@@ -11,12 +11,23 @@ describe('aircraft database', () => {
       expect(t.seats.typical, t.id).toBeLessThanOrEqual(t.seats.max);
       expect(t.rangeKm, t.id).toBeGreaterThan(1000);
       expect(t.rangeKm, t.id).toBeLessThan(18000);
-      expect(t.takeoffM, t.id).toBeGreaterThan(1000);
+      expect(t.takeoffM, t.id).toBeGreaterThan(300); // a Twin Otter needs 366 m
       expect(t.takeoffM, t.id).toBeLessThan(3500);
-      expect(t.built[0], t.id).toBe(t.eis);
+      // Built from entry into service (±1 year); converted freighters were built earlier as passenger jets.
+      expect(t.built[0], t.id).toBeLessThanOrEqual(t.eis + 1);
+      if (t.payloadT === undefined) expect(t.built[0], t.id).toBeGreaterThanOrEqual(t.eis - 3);
+      else expect(t.payloadT, t.id).toBeGreaterThan(5);
       if (t.built[1] !== null) expect(t.built[1], t.id).toBeGreaterThanOrEqual(t.built[0]);
       expect(t.lease.usdK * 1000 * 12 * 15, t.id).toBeLessThan(t.listPriceUsdM * 1e6 * 1.5);
     }
+  });
+
+  it('covers the common types flown today, incl. turboprops, regional jets and freighters', () => {
+    const icaos = new Set(AIRCRAFT_TYPES.map((t) => t.icao));
+    for (const code of ['AT45', 'AT75', 'DH8C', 'CRJ9', 'E195', 'A319', 'B737', 'B739', 'B752', 'A332', 'A388', 'B763', 'B772', 'B744', 'MD11']) {
+      expect(icaos.has(code), code).toBe(true);
+    }
+    expect(AIRCRAFT_TYPES.filter((t) => t.payloadT !== undefined).length).toBeGreaterThanOrEqual(8);
   });
 
   it('orders the A320 family sensibly', () => {

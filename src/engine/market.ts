@@ -1,6 +1,6 @@
 // The aircraft lease market: lessors offer used aircraft that a startup can lease.
 // Offers appear and expire every month. Rents depend on type and age, like in reality.
-import { AIRCRAFT_TYPES, isInService, type AircraftType } from '../data/aircraft';
+import { AIRCRAFT_TYPES, isFreighter, isInService, type AircraftType } from '../data/aircraft';
 import { nextId } from './core';
 import { money } from './money';
 import { pick, random, randomInt } from './rng';
@@ -67,7 +67,8 @@ export function refreshMarket(state: GameState): void {
   const now = state.time;
   const year = yearOf(now);
   state.market.offers = state.market.offers.filter((o) => o.expiresAt > now);
-  const types = AIRCRAFT_TYPES.filter((t) => isInService(t, year) && buildYears(t, year));
+  // Passenger aircraft only: cargo operations come in a later phase.
+  const types = AIRCRAFT_TYPES.filter((t) => !isFreighter(t) && isInService(t, year) && buildYears(t, year));
   if (!types.length) return;
   // Common types show up more often, but rare ones still appear (square root of fleet size).
   const weights = types.map((t) => Math.sqrt(t.fleetWeight));

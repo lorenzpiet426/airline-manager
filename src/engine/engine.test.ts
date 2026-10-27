@@ -53,6 +53,8 @@ describe('new game', () => {
       if (type.built[1] !== null) expect(offer.builtYear).toBeLessThanOrEqual(type.built[1]);
     }
     expect(state.market.offers.some((o) => o.typeId === 'B779')).toBe(false);
+    // Freighters are not offered to a passenger startup.
+    expect(state.market.offers.every((o) => getAircraftType(o.typeId).payloadT === undefined)).toBe(true);
   });
 
   it('is deterministic: same seed → same world', () => {
