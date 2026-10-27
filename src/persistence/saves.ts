@@ -16,6 +16,13 @@ export interface SlotMeta extends SaveSummary {
   /** Real-world time of the last save (ms since 1970). */
   savedAt: number;
   bytes: number;
+  /** Cloud sync (Phase 3): the cloud revision this slot matches, and the local save time it was synced at. */
+  sync?: SlotSync;
+}
+
+export interface SlotSync {
+  rev: number;
+  savedAt: number;
 }
 
 interface SlotData {
@@ -41,10 +48,12 @@ export async function listSlots(): Promise<SlotMeta[]> {
   return (await getDb().slots.toArray()).sort((a, b) => b.savedAt - a.savedAt);
 }
 
+/** Writes a slot. A meta without `sync` keeps the slot's sync state (autosaves don't know it). */
 export async function writeSlot(meta: SlotMeta, data: Uint8Array): Promise<void> {
   const d = getDb();
   await d.transaction('rw', d.slots, d.data, async () => {
-    await d.slots.put(meta);
+    const sync = meta.sync ?? (await d.slots.get(meta.id))?.sync;
+    await d.slots.put(sync ? { ...meta, sync } : meta);
     await d.data.put({ id: meta.id, data });
   });
 }
@@ -55,15 +64,27 @@ export async function readSlot(id: string): Promise<{ meta: SlotMeta; data: Uint
   return meta && data ? { meta, data: data.data } : null;
 }
 
+/** Records that a slot matches a cloud revision (only if it wasn't saved again meanwhile). */
+export async function markSynced(id: string, sync: SlotSync): Promise<void> {
+  const d = getDb();
+  await d.transaction('rw', d.slots, async () => {
+    const meta = await d.slots.get(id);
+    if (meta && meta.savedAt === sync.savedAt) await d.slots.put({ ...meta, sync });
+  });
+}
+
 /** Deletes a slot; deleting a game also deletes its copies. */
-export async function deleteSlot(id: string): Promise<void> {
+export async function deleteSlot(id: string): Promise<string[]> {
   const d = getDb();
   const meta = await d.slots.get(id);
   const ids = meta?.kind === 'game' ? (await d.slots.where('gameId').equals(id).primaryKeys()) : [id];
+  const synced = (await d.slots.bulkGet([...new Set([id, ...ids])])).filter((m): m is SlotMeta => !!m?.sync).map((m) => m.id);
   await d.transaction('rw', d.slots, d.data, async () => {
     await d.slots.bulkDelete([...new Set([id, ...ids])]);
     await d.data.bulkDelete([...new Set([id, ...ids])]);
   });
+  // The deleted slots that were in the cloud (they are deleted there at the next sync).
+  return synced;
 }
 
 // The game that is open on this device, so it reopens after a reload.

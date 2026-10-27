@@ -8,15 +8,17 @@ import { refreshMarket } from './market';
 import { newFinance } from './operations';
 import { sumPeriods } from './finance';
 import { emptyAi, SAVE_VERSION, type GameOptions, type GameState, type PnlWeek } from './state';
-import { MINUTES_PER_DAY, simTime, startOfDay, startOfMonth, startOfNextMonth } from './time';
+import { MINUTES_PER_DAY, simTime, startOfDay, startOfMonth, startOfNextMonth, type SimTime } from './time';
 
 export interface NewGameOptions extends GameOptions {
   seed: number;
   startYear: number;
+  /** Start at this moment instead of 1 January (real-clock games start now). */
+  startTime?: SimTime;
 }
 
 export function createGame(options: NewGameOptions): GameState {
-  const startTime = simTime(options.startYear, 1, 1);
+  const startTime = options.startTime ?? simTime(options.startYear, 1, 1);
   const state: GameState = {
     version: SAVE_VERSION,
     seed: options.seed >>> 0,
@@ -41,7 +43,7 @@ export function createGame(options: NewGameOptions): GameState {
   };
   refreshMarket(state);
   schedule(state, { at: startOfNextMonth(startTime), kind: 'monthStart' });
-  schedule(state, { at: startTime + MINUTES_PER_DAY, kind: 'dayStart' });
+  schedule(state, { at: startOfDay(startTime) + MINUTES_PER_DAY, kind: 'dayStart' });
   return state;
 }
 

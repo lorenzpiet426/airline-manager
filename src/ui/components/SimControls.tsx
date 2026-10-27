@@ -12,13 +12,21 @@ const SPEED_KEYS: Record<Speed, string> = {
 };
 const SPEED_SYMBOLS: Record<Speed, string> = { 0: 'II', 1: '▶', 10: '▶▶', 60: '▶▶▶', 1440: '▶▶▶▶' };
 
-/** Real-time mode: pause and four speeds. Turn-based mode: an "End week" button. */
+/** Real-time mode: pause and four speeds. Turn-based mode: an "End week" button. Real clock: a LIVE sign. */
 export function SimControls() {
   const { t } = useTranslation();
   const game = useGame();
   const speed = useSpeed();
   const [busy, setBusy] = useState(false);
   if (!game) return null;
+
+  if (game.options.timeMode === 'realclock') {
+    return (
+      <span className="sim-live" title={t('sim.liveHint')}>
+        <span className="dot dot--normal" aria-hidden="true" /> {t('sim.live')}
+      </span>
+    );
+  }
 
   if (game.options.timeMode === 'weekly') {
     return (

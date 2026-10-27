@@ -49,11 +49,13 @@
     "clockTitle": "Game clock",
     "mode": {
       "realtime": "Real-time",
-      "weekly": "Turn-based (weekly)"
+      "weekly": "Turn-based (weekly)",
+      "realclock": "Real clock"
     },
     "modeHint": {
       "realtime": "Time runs continuously. Pause any time; choose a speed from 1 game minute to 1 game day per second.",
-      "weekly": "Time stands still while you decide. “End week” simulates the next 7 days in one go."
+      "weekly": "Time stands still while you decide. “End week” simulates the next 7 days in one go.",
+      "realclock": "The game runs on the real clock: VIE–JFK takes about 9 real hours. The world keeps going while the app is closed; when you come back, the missed time is simulated and summed up for you."
     },
     "messagesTitle": "Ops messages",
     "noMessages": "No messages yet.",
@@ -73,7 +75,11 @@
     "currentGame": "You are running {{name}}.",
     "autosaveNote": "The game saves itself automatically on this device, in its own save slot. Copies, other games, export and import: Saves.",
     "noGame": "No game running.",
-    "toSaves": "Saves & backups"
+    "toSaves": "Saves & backups",
+    "timeMode": "Time",
+    "realClockHint": "Switch this game to the real clock: from now on 1 game minute = 1 real minute, and the world keeps running while the app is closed. The game is at {{date}}: if that is before today, the time until today is simulated first; if it is later, the game keeps its date and runs on at real speed.",
+    "realClockSwitch": "Switch to real clock",
+    "realClockConfirm": "Switch to the real clock? Pause and speed buttons disappear, and the world keeps running while the app is closed. This can't be undone."
   },
   "more": {
     "title": "More"
@@ -130,7 +136,9 @@
     "speed2": "10 game minutes per second",
     "speed3": "1 game hour per second",
     "speed4": "1 game day per second",
-    "endWeek": "End week ▸"
+    "endWeek": "End week ▸",
+    "live": "LIVE",
+    "liveHint": "Real clock: 1 game minute = 1 real minute"
   },
   "msg": {
     "founded": "{{name}} founded at {{hub}} with {{capital}} starting capital.",
@@ -196,7 +204,8 @@
     "laterHint": "Hardcore realism, historical start years, the Austrian Airlines takeover and competitors arrive in later phases.",
     "found": "Found airline",
     "replaceWarning": "You already have a game running. Founding a new airline replaces it.",
-    "scheduling": "Scheduling"
+    "scheduling": "Scheduling",
+    "startDateNow": "Today (real date and time)"
   },
   "errors": {
     "nameLength": "The name needs 2 to 40 characters.",
@@ -236,7 +245,8 @@
     "cabinTooLong": "The rows don't fit: the cabin is too long. Remove rows or reduce the pitch.",
     "exitLimit": "Too many seats: the aircraft's emergency exits are certified for fewer passengers.",
     "inRefit": "The aircraft is in the hangar for a refit.",
-    "cabinUnchanged": "Nothing changed."
+    "cabinUnchanged": "Nothing changed.",
+    "alreadyRealClock": "This game already runs on the real clock."
   },
   "fleet": {
     "title": "Fleet",
@@ -645,5 +655,48 @@
     "crowd": "Crowding",
     "noRatings": "No ratings yet: they come in with your first passengers.",
     "note": "Last week's passengers: points compared with what they expect of the class. Seat = seat product and pitch; aircraft = age (new is nicer); price = value for money; crowding = very full cabins. Punctuality and service join in Phase 9."
+  },
+  "away": {
+    "title": "While you were away",
+    "hours_one": "You were away for {{count}} hour.",
+    "hours_other": "You were away for {{count}} hours.",
+    "days_one": "You were away for {{count}} day.",
+    "days_other": "You were away for {{count}} days.",
+    "catchingUp": "Catching up the time you were away: {{from}} → {{to}} …",
+    "flights": "Flights flown",
+    "pax": "Passengers",
+    "revenue": "Revenue",
+    "result": "Result",
+    "cash": "Cash",
+    "note": "Your flights kept flying and the other airlines kept reacting. Nobody made decisions for you — managers who can come in Phase 8.",
+    "close": "Got it"
+  },
+  "cloud": {
+    "title": "Cloud sync",
+    "unavailable": "Cloud sync isn't set up in this version yet.",
+    "intro": "Sign in with your Google account to keep your games the same on phone and computer. Your saves are stored in the game's free Firebase database; only you can read them.",
+    "signIn": "Sign in with Google",
+    "signedInAs": "Signed in as {{who}}",
+    "status": {
+      "unavailable": "Off",
+      "starting": "Starting…",
+      "signedOut": "Signed out",
+      "syncing": "Syncing…",
+      "synced": "Up to date",
+      "error": "Problem"
+    },
+    "lastSync": "Last sync: {{when}}",
+    "auto": "Syncs automatically: when the app starts, when you leave it, when you come back and every few minutes while you play.",
+    "syncNow": "Sync now",
+    "signOut": "Sign out",
+    "failed": "Sync didn't work ({{error}}). Your saves on this device are safe; it tries again later.",
+    "conflict": "{{name}} was played on this device and on another one: here {{here}}, in the cloud {{there}}. Which one do you want to continue? The other one is kept as a copy.",
+    "keepHere": "Keep this device's",
+    "keepCloud": "Keep the cloud's",
+    "otherFromCloud": "From the other device ({{when}})",
+    "otherFromDevice": "From this device ({{when}})",
+    "slotSynced": "☁ in the cloud",
+    "slotPending": "☁ waiting to sync",
+    "slotLocal": "only on this device"
   }
 }

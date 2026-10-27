@@ -317,7 +317,8 @@ Server-authoritative shared world running the same engine (free tier to be resea
 ## 5. Things the owner will need to do (when the time comes)
 - ~~Before Phase 1.1: install Node.js~~ — done by Claude into `~/.local/node` (2026-10-27).
 - ~~Phase 1.1: create a free GitHub account~~ — done (lorenzpiet426), 2026-10-27.
-- **Phase 3:** create a free **Firebase** project with a Google account (no credit card; stay on the Spark plan).
+- **Phase 3 (now):** create a free **Firebase** project with a Google account (no credit card; stay on the Spark plan) and send
+  Claude the web app config (steps given 2026-10-28).
 
 ## 5b. Phase 2.1 data brief from the owner (2026-10-27, final version) — real airlines
 **General rules**
@@ -415,6 +416,10 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-28 | Cabins: **refits cost money and hangar days** (free before delivery); editor with **rows, pitch and seat product** per class; **one fare slider per class** | Owner choice (recommended options) |
 | 2026-10-28 | Reputation "the realistic option" (owner): **per-class ratings from every passenger's experience feed one brand score**, plus **awareness** growing with passengers; real airlines get modelled values by type | Owner choice; how reviews and word of mouth work |
 | 2026-10-28 | European business has a **movable curtain** (unused business rows are sold as economy each flight) | How European network carriers really fly; avoids empty business cabins |
+| 2026-10-28 | Phase 3: **Google sign-in**, **automatic sync with safe conflicts** (choose which version continues, the other is kept as a copy) | Owner choice (recommended options) |
+| 2026-10-28 | Real clock for **new games and existing ones (one-way switch)**; a game behind today catches up to today, a game ahead keeps its date (offset) and runs at real speed | Owner choice; engine never reads the clock itself (commands carry `now`) |
+| 2026-10-28 | Real clock: **the world keeps running while the app is closed**, full catch-up + "While you were away" report; no automatic decisions until managers (Phase 8) | Owner choice |
+| 2026-10-28 | firebase pinned to **13.0.0** (13.1.0 was < 2 weeks old); loaded as a separate chunk only when a Firebase project is configured | Supply-chain rule; keeps the game fast without sync |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -709,6 +714,31 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: long-haul point-to-point still loses money (transfer traffic comes in Phase 7); seat weight doesn't change
   fuel burn yet; lounges are a per-passenger cost (own lounges with Phase 7).
 - **Next:** owner tries cabins; then Phase 3 (cloud sync + real-clock mode) or what the owner prefers.
+- Owner confirmed: cabins tried.
+
+### 2026-10-28 — Session 10 (Phase 3: cloud sync + real-clock mode) — real clock ✅, cloud sync waiting for the Firebase project
+- Owner decisions: Google sign-in, automatic sync with safe conflicts, real clock for new + existing games, world keeps
+  running with a report (§7).
+- **Real clock:** time mode `realclock` (`GameOptions.clockOffset`), new games start now (`NewGameOptions.startTime`),
+  command `SetTimeMode` (Settings; one way). Worker: live tick every second sets game time = real time; gaps ≥ 60 min
+  are caught up week by week with a progress banner (`CatchUpBanner`), then `awaySummary` (`engine/away.ts`: flights,
+  pax, revenue, result, cash before/after, player messages) → "While you were away" panel on Ops. App back in the
+  foreground → `wake()`. LIVE sign instead of speed buttons. No save version change.
+- **Cloud sync (code done, not connected yet):** `persistence/sync.ts` (pure `planSync`: upload / download / delete in
+  cloud / delete here / conflict, by comparing each slot's `sync: {rev, savedAt}` with the cloud revision; `runSync`,
+  `resolveConflict` keeps the other version as a copy), `persistence/cloudFirebase.ts` (Google sign-in with pop-up,
+  redirect fallback; Firestore `users/{uid}/slots/{id}` + `chunks/{n}` of ≤ 700 KB; uploads in a transaction that checks
+  the revision), `firestore.rules` (only the owner of the data), `persistence/firebaseConfig.ts` (**null until the owner's
+  project config is pasted in**), `game/cloud.ts` (sync on start before the last game reopens (max 6 s wait), on
+  leaving/returning, every 3 min if something changed; autosaves held during a sync; open game reopened if replaced;
+  deletions remembered and done in the cloud), Saves screen: Cloud panel (sign in, status, sync now, conflicts) and a
+  cloud state per slot. `deleteSlot` returns the synced ids; `writeSlot` keeps a slot's sync state.
+- Tests: 103 (sync rules, two devices via a fake cloud incl. conflict + copy, deletes both ways, open game never
+  overwritten; real-clock start, switch behind/ahead, away report = accounts).
+- Verified in browser: test game switched to the real clock, 132 days caught up in seconds with report, LIVE sign,
+  game time = real UTC, no console errors.
+- **Owner to do:** create the Firebase project (steps in the chat of this session; rules in `firestore.rules`) and send
+  the web config → paste into `firebaseConfig.ts`, test sign-in/sync live on phone + computer.
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.

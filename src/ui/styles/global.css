@@ -2353,3 +2353,23 @@ a.button {
   flex-direction: column;
   gap: 12px;
 }
+
+/* ─── Real clock (Phase 3) ─────────────────────────────────────────────── */
+
+.sim-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.catchup {
+  margin-bottom: 12px;
+}

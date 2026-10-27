@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { Clocks, GameClock } from '../components/StatusBar';
 import { useGame } from '../../game/store';
 import { MOBILE_TABS, MORE_ROUTES, hrefFor, type Route } from '../navigation';
+import { CatchUpBanner } from '../game/AwayReport';
 
 // Phone layout: compact header on top, content in the middle, tab bar at the bottom
 // where your thumb reaches it. Respects the iPhone notch and home indicator (safe areas).
@@ -21,7 +22,10 @@ export function MobileShell({ route, children }: { route: Route; children: React
         <span className="mobile__title">{t(`nav.${route}`)}</span>
         {game ? <GameClock compact /> : <Clocks compact />}
       </header>
-      <main className="mobile__content">{children}</main>
+      <main className="mobile__content">
+        <CatchUpBanner />
+        {children}
+      </main>
       <nav className="tabbar" aria-label={t('nav.main')}>
         {MOBILE_TABS.map((item) => (
           <a

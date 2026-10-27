@@ -4,11 +4,19 @@ import { Segmented } from '../components/Segmented';
 import { updateSettings, useSettings, type Language, type ThemePreference } from '../../settings/settings';
 import { usePlayer } from '../game/usePlayer';
 import { hrefFor } from '../navigation';
+import { sendCommand } from '../../game/store';
+import { formatGameDate } from '../../i18n/format';
+import { fromDate, toDate } from '../../engine/time';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
   const settings = useSettings();
-  const { airline } = usePlayer();
+  const { game, airline } = usePlayer();
+
+  const switchToRealClock = async (airlineId: string) => {
+    if (!window.confirm(t('settings.realClockConfirm'))) return;
+    await sendCommand({ type: 'SetTimeMode', airlineId, payload: { timeMode: 'realclock', now: fromDate(new Date()) } });
+  };
 
   return (
     <div className="screen screen--narrow">
@@ -49,6 +57,16 @@ export function SettingsScreen() {
             <a href={hrefFor('saves')} className="button">
               {t('settings.toSaves')}
             </a>
+            <span className="field__label">{t('settings.timeMode')}</span>
+            <p className="mono">{t(`ops.mode.${game!.options.timeMode}`)}</p>
+            {game!.options.timeMode !== 'realclock' && (
+              <>
+                <p className="muted small">{t('settings.realClockHint', { date: formatGameDate(settings.language, toDate(game!.time), false) })}</p>
+                <button type="button" className="button" onClick={() => void switchToRealClock(airline.id)}>
+                  {t('settings.realClockSwitch')}
+                </button>
+              </>
+            )}
           </>
         ) : (
           <p className="muted">{t('settings.noGame')}</p>

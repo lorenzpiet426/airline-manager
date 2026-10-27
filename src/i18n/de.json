@@ -49,11 +49,13 @@
     "clockTitle": "Spieluhr",
     "mode": {
       "realtime": "Echtzeit",
-      "weekly": "Rundenbasiert (wöchentlich)"
+      "weekly": "Rundenbasiert (wöchentlich)",
+      "realclock": "Echtzeit-Uhr"
     },
     "modeHint": {
       "realtime": "Die Zeit läuft durchgehend. Jederzeit pausieren; Tempo von 1 Spielminute bis 1 Spieltag pro Sekunde.",
-      "weekly": "Die Zeit steht still, während du entscheidest. „Woche beenden“ simuliert die nächsten 7 Tage auf einmal."
+      "weekly": "Die Zeit steht still, während du entscheidest. „Woche beenden“ simuliert die nächsten 7 Tage auf einmal.",
+      "realclock": "Das Spiel läuft nach der echten Uhr: VIE–JFK dauert etwa 9 echte Stunden. Die Welt läuft weiter, während die App geschlossen ist; wenn du zurückkommst, wird die verpasste Zeit simuliert und für dich zusammengefasst."
     },
     "messagesTitle": "Ops-Meldungen",
     "noMessages": "Noch keine Meldungen.",
@@ -73,7 +75,11 @@
     "currentGame": "Du führst {{name}}.",
     "autosaveNote": "Das Spiel speichert sich automatisch auf diesem Gerät, in seinem eigenen Spielstand. Kopien, andere Spiele, Export und Import: Spielstände.",
     "noGame": "Kein Spiel aktiv.",
-    "toSaves": "Spielstände & Sicherungen"
+    "toSaves": "Spielstände & Sicherungen",
+    "timeMode": "Zeit",
+    "realClockHint": "Stell dieses Spiel auf die echte Uhr um: ab dann ist 1 Spielminute = 1 echte Minute, und die Welt läuft weiter, während die App geschlossen ist. Das Spiel steht am {{date}}: Liegt das vor heute, wird die Zeit bis heute zuerst simuliert; liegt es später, behält das Spiel sein Datum und läuft in echter Geschwindigkeit weiter.",
+    "realClockSwitch": "Auf echte Uhr umstellen",
+    "realClockConfirm": "Auf die echte Uhr umstellen? Pause- und Tempotasten verschwinden, und die Welt läuft weiter, während die App geschlossen ist. Das kann nicht rückgängig gemacht werden."
   },
   "more": {
     "title": "Mehr"
@@ -130,7 +136,9 @@
     "speed2": "10 Spielminuten pro Sekunde",
     "speed3": "1 Spielstunde pro Sekunde",
     "speed4": "1 Spieltag pro Sekunde",
-    "endWeek": "Woche beenden ▸"
+    "endWeek": "Woche beenden ▸",
+    "live": "LIVE",
+    "liveHint": "Echte Uhr: 1 Spielminute = 1 echte Minute"
   },
   "msg": {
     "founded": "{{name}} in {{hub}} gegründet, Startkapital {{capital}}.",
@@ -196,7 +204,8 @@
     "laterHint": "Hardcore-Realismus, historische Startjahre, die Übernahme von Austrian Airlines und Konkurrenten kommen in späteren Phasen.",
     "found": "Airline gründen",
     "replaceWarning": "Du hast bereits ein laufendes Spiel. Eine neue Airline ersetzt es.",
-    "scheduling": "Flugplanung"
+    "scheduling": "Flugplanung",
+    "startDateNow": "Heute (echtes Datum und Uhrzeit)"
   },
   "errors": {
     "nameLength": "Der Name braucht 2 bis 40 Zeichen.",
@@ -236,7 +245,8 @@
     "cabinTooLong": "Die Reihen passen nicht: Die Kabine ist zu lang. Weniger Reihen oder kleineren Sitzabstand wählen.",
     "exitLimit": "Zu viele Sitze: Die Notausgänge des Flugzeugs sind für weniger Passagiere zugelassen.",
     "inRefit": "Das Flugzeug ist für einen Umbau im Hangar.",
-    "cabinUnchanged": "Nichts geändert."
+    "cabinUnchanged": "Nichts geändert.",
+    "alreadyRealClock": "Dieses Spiel läuft schon nach der echten Uhr."
   },
   "fleet": {
     "title": "Flotte",
@@ -645,5 +655,48 @@
     "crowd": "Enge",
     "noRatings": "Noch keine Bewertungen: Sie kommen mit deinen ersten Passagieren.",
     "note": "Passagiere der letzten Woche: Punkte im Vergleich zu dem, was sie von der Klasse erwarten. Sitz = Sitzprodukt und Sitzabstand; Flugzeug = Alter (neu ist schöner); Preis = Preis-Leistung; Enge = sehr volle Kabinen. Pünktlichkeit und Service kommen in Phase 9 dazu."
+  },
+  "away": {
+    "title": "Während du weg warst",
+    "hours_one": "Du warst {{count}} Stunde weg.",
+    "hours_other": "Du warst {{count}} Stunden weg.",
+    "days_one": "Du warst {{count}} Tag weg.",
+    "days_other": "Du warst {{count}} Tage weg.",
+    "catchingUp": "Die Zeit, in der du weg warst, wird nachgeholt: {{from}} → {{to}} …",
+    "flights": "Geflogene Flüge",
+    "pax": "Passagiere",
+    "revenue": "Umsatz",
+    "result": "Ergebnis",
+    "cash": "Kasse",
+    "note": "Deine Flüge sind weitergeflogen und die anderen Airlines haben weiter reagiert. Niemand hat für dich entschieden — Manager, die das können, kommen in Phase 8.",
+    "close": "Verstanden"
+  },
+  "cloud": {
+    "title": "Cloud-Synchronisierung",
+    "unavailable": "Die Cloud-Synchronisierung ist in dieser Version noch nicht eingerichtet.",
+    "intro": "Melde dich mit deinem Google-Konto an, damit deine Spiele auf Handy und Computer gleich sind. Die Spielstände liegen in der kostenlosen Firebase-Datenbank des Spiels; nur du kannst sie lesen.",
+    "signIn": "Mit Google anmelden",
+    "signedInAs": "Angemeldet als {{who}}",
+    "status": {
+      "unavailable": "Aus",
+      "starting": "Startet…",
+      "signedOut": "Abgemeldet",
+      "syncing": "Synchronisiert…",
+      "synced": "Aktuell",
+      "error": "Problem"
+    },
+    "lastSync": "Zuletzt synchronisiert: {{when}}",
+    "auto": "Synchronisiert automatisch: beim Start der App, wenn du sie verlässt, wenn du zurückkommst und alle paar Minuten beim Spielen.",
+    "syncNow": "Jetzt synchronisieren",
+    "signOut": "Abmelden",
+    "failed": "Synchronisieren hat nicht geklappt ({{error}}). Deine Spielstände auf diesem Gerät sind sicher; es wird später erneut versucht.",
+    "conflict": "{{name}} wurde auf diesem und auf einem anderen Gerät gespielt: hier {{here}}, in der Cloud {{there}}. Mit welchem willst du weiterspielen? Das andere bleibt als Kopie erhalten.",
+    "keepHere": "Dieses Gerät behalten",
+    "keepCloud": "Cloud behalten",
+    "otherFromCloud": "Vom anderen Gerät ({{when}})",
+    "otherFromDevice": "Von diesem Gerät ({{when}})",
+    "slotSynced": "☁ in der Cloud",
+    "slotPending": "☁ wartet auf Sync",
+    "slotLocal": "nur auf diesem Gerät"
   }
 }

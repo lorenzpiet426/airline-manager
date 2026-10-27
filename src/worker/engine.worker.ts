@@ -10,10 +10,17 @@ import { createGame, migrate, type NewGameOptions } from '../engine/game';
 import { ensureFlights } from '../engine/schedule';
 import { decodeSave, encodeSave, summarize, type SaveSummary } from '../persistence/saveFile';
 import type { GameState } from '../engine/state';
-import { MINUTES_PER_DAY } from '../engine/time';
-import type { EngineSnapshot, Speed } from './protocol';
+import { fromDate, MINUTES_PER_DAY, type SimTime } from '../engine/time';
+import { awaySummary, markAway } from '../engine/away';
+import type { AwayReport, EngineSnapshot, Speed } from './protocol';
 
 const TICK_MS = 100;
+/** Real clock: how often the game time is set to the real time. */
+const LIVE_TICK_MS = 1000;
+/** Real clock: gaps from this many minutes on are a catch-up with a "While you were away" report. */
+const AWAY_REPORT_MIN = 60;
+/** Real clock: during a catch-up, the screen hears about the progress every this many game days. */
+const CATCH_UP_STEP_DAYS = 7;
 
 export interface Outcome {
   result: CommandResult;
@@ -30,6 +37,9 @@ let rev = 0;
 let worldPromise: Promise<EngineWorld> | null = null;
 /** Set once the world data has loaded; the clock only runs with a loaded world. */
 let world: EngineWorld | null = null;
+let liveTimer: ReturnType<typeof setInterval> | null = null;
+let catchingUp: { from: SimTime; to: SimTime } | null = null;
+let away: AwayReport | null = null;
 
 function loadWorld(): Promise<EngineWorld> {
   worldPromise ??= Promise.all([
@@ -45,7 +55,8 @@ function loadWorld(): Promise<EngineWorld> {
 
 /** Sends the new state to the screen and returns the same snapshot. */
 function emit(): EngineSnapshot {
-  const snapshot = { rev: ++rev, state, speed };
+  const snapshot: EngineSnapshot = { rev: ++rev, state, speed, ...(catchingUp ? { catchingUp } : {}), ...(away ? { away } : {}) };
+  away = null;
   listener?.(snapshot);
   return snapshot;
 }
@@ -62,8 +73,58 @@ function tick() {
   emit();
 }
 
+/** Real clock: the game time that matches the real time now. */
+const realNow = (s: GameState): SimTime => fromDate(new Date()) + (s.options.clockOffset ?? 0);
+
+/**
+ * Real clock: brings the game up to the real time. Small steps just advance; a longer gap (the app was closed or in
+ * the background) is simulated week by week with progress for the screen, then summed up in a report.
+ */
+let busy = false;
+async function liveTick(): Promise<void> {
+  if (busy || !state || !world || state.options.timeMode !== 'realclock') return;
+  const target = realNow(state);
+  if (target <= state.time) return;
+  busy = true;
+  try {
+    const s = state;
+    if (target - s.time < AWAY_REPORT_MIN) {
+      advance(s, world, target);
+      emit();
+      return;
+    }
+    const player = Object.values(s.airlines).find((a) => a.controller === 'human');
+    const mark = player ? markAway(s, player.id) : null;
+    catchingUp = { from: s.time, to: target };
+    emit();
+    while (s.time < target && state === s) {
+      advance(s, world, Math.min(target, s.time + CATCH_UP_STEP_DAYS * MINUTES_PER_DAY));
+      emit();
+      await new Promise((resolve) => setTimeout(resolve, 0)); // let commands and the screen in between
+    }
+    catchingUp = null;
+    if (state === s && mark) away = awaySummary(s, mark);
+    emit();
+  } finally {
+    busy = false;
+  }
+}
+
+function startLive(): void {
+  if (!liveTimer) liveTimer = setInterval(() => void liveTick(), LIVE_TICK_MS);
+  void liveTick();
+}
+
+function stopLive(): void {
+  if (liveTimer) clearInterval(liveTimer);
+  liveTimer = null;
+  catchingUp = null;
+}
+
 function setSpeed(next: Speed): EngineSnapshot {
   speed = state?.options.timeMode === 'realtime' ? next : 0;
+  if (state?.options.timeMode === 'realclock') startLive();
+  else stopLive();
   carry = 0;
   lastTick = performance.now();
   if (speed > 0 && !timer) timer = setInterval(tick, TICK_MS);
@@ -104,14 +165,21 @@ const api = {
   async command(command: Command): Promise<Outcome> {
     if (!state) return { result: { ok: false, error: 'airlineUnknown' }, snapshot: emit() };
     const result = applyCommand(state, await loadWorld(), command);
+    // Switching to the real clock starts it (and catches up to today).
+    if (result.ok && command.type === 'SetTimeMode') return { result, snapshot: setSpeed(0) };
     return { result, snapshot: emit() };
+  },
+
+  /** Real clock: catch up now (the app came back to the foreground). */
+  async wake(): Promise<void> {
+    await liveTick();
   },
 
   setSpeed,
 
   /** Turn-based mode: simulate the next 7 days. */
   async endWeek(): Promise<EngineSnapshot> {
-    if (state) advance(state, await loadWorld(), state.time + 7 * MINUTES_PER_DAY);
+    if (state?.options.timeMode === 'weekly') advance(state, await loadWorld(), state.time + 7 * MINUTES_PER_DAY);
     return emit();
   },
 

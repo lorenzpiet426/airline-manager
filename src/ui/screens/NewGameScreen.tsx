@@ -13,6 +13,7 @@ import { startNewGame, useGame } from '../../game/store';
 import { countryName, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
+import { fromDate } from '../../engine/time';
 
 /** Colour pairs to start from; any colour can be picked afterwards. */
 const LIVERY_PRESETS: [string, string][] = [
@@ -59,7 +60,15 @@ export function NewGameScreen() {
     setBusy(true);
     setError(null);
     const result = await startNewGame(
-      { seed: crypto.getRandomValues(new Uint32Array(1))[0]!, startYear: 2026, timeMode, realism: 'realistic', scheduling },
+      {
+        seed: crypto.getRandomValues(new Uint32Array(1))[0]!,
+        startYear: 2026,
+        // A real-clock game starts now; the others on 1 January.
+        ...(timeMode === 'realclock' ? { startTime: fromDate(new Date()) } : {}),
+        timeMode,
+        realism: 'realistic',
+        scheduling,
+      },
       {
         type: 'FoundAirline',
         payload: { name, iata, icao, primary: colors[0], secondary: colors[1], hubId, capitalEur, controller: 'human' },
@@ -191,6 +200,7 @@ export function NewGameScreen() {
           options={[
             { value: 'realtime', label: t('ops.mode.realtime') },
             { value: 'weekly', label: t('ops.mode.weekly') },
+            { value: 'realclock', label: t('ops.mode.realclock') },
           ]}
           onChange={setTimeMode}
         />
@@ -210,7 +220,7 @@ export function NewGameScreen() {
           <dt>{t('newGame.scenario')}</dt>
           <dd>{t('newGame.scenarioStartup')}</dd>
           <dt>{t('newGame.startDate')}</dt>
-          <dd>{t('newGame.startDateValue')}</dd>
+          <dd>{timeMode === 'realclock' ? t('newGame.startDateNow') : t('newGame.startDateValue')}</dd>
           <dt>{t('newGame.realism')}</dt>
           <dd>{t('newGame.realismRealistic')}</dd>
         </dl>

@@ -6,7 +6,8 @@ import type { SimTime } from './time';
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
 export const SAVE_VERSION = 7;
 
-export type TimeMode = 'realtime' | 'weekly';
+/** Real-time with speeds, turn-based weeks, or tied to the real clock (Phase 3: 1 game minute = 1 real minute). */
+export type TimeMode = 'realtime' | 'weekly' | 'realclock';
 export type Realism = 'realistic' | 'hardcore';
 export type Controller = 'human' | 'ai';
 /** Simple = weekly frequency per route, the game sets the times; Detailed = the player's own timetable. */
@@ -16,6 +17,8 @@ export interface GameOptions {
   timeMode: TimeMode;
   realism: Realism;
   scheduling: Scheduling;
+  /** Real clock: game time = real UTC time + this many minutes (a game that was ahead of today when it switched). */
+  clockOffset?: number;
 }
 
 export interface Airline {

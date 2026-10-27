@@ -20,7 +20,7 @@ import {
   type SlotMeta,
 } from '../persistence/saves';
 import type { EngineApi, Outcome } from '../worker/engine.worker';
-import type { EngineSnapshot, Speed } from '../worker/protocol';
+import type { AwayReport, EngineSnapshot, Speed } from '../worker/protocol';
 
 /** The single autosave of versions before Phase 1.5 (moved into a save slot on first start). */
 const LEGACY_AUTOSAVE_KEY = 'am.autosave.v1';
@@ -38,6 +38,13 @@ let lastSavedAt = 0;
 let slotId: string | null = null;
 let slots: SlotMeta[] = [];
 let saving: Promise<void> | null = null;
+/** Cloud sync holds autosaves while it compares and replaces slots (Phase 3). */
+let autosaveHeld = 0;
+let autosaveMissed = false;
+/** Cloud sync can make the first start wait until the newest version of the game has been downloaded. */
+let bootGate: Promise<void> | null = null;
+/** Real clock: the last "While you were away" report, until the player closes it. */
+let awayReport: AwayReport | null = null;
 let saveAgain = false;
 
 function notify() {
@@ -62,6 +69,8 @@ function getEngine(): Comlink.Remote<EngineApi> {
 function accept(next: EngineSnapshot | null) {
   if (!next || next.rev <= snapshot.rev) return;
   snapshot = next;
+  if (next.away) awayReport = next.away;
+  if (!next.state) awayReport = null;
   notify();
 }
 
@@ -98,6 +107,10 @@ async function writeCurrent(): Promise<void> {
 function autosave(force: boolean): Promise<void> {
   const state = snapshot.state;
   if (!state || !slotId) return Promise.resolve();
+  if (autosaveHeld > 0) {
+    autosaveMissed = true;
+    return Promise.resolve();
+  }
   const day = Math.floor(state.time / MINUTES_PER_DAY);
   if (!force && (day === lastSavedDay || Date.now() - lastSavedAt < AUTOSAVE_INTERVAL_MS)) return saving ?? Promise.resolve();
   lastSavedDay = day;
@@ -131,6 +144,8 @@ async function adopt(id: string): Promise<void> {
 }
 
 async function boot() {
+  await null; // let the cloud module register its gate first
+  if (bootGate) await bootGate;
   try {
     const id = currentSlotId();
     const saved = id ? await readSlot(id) : null;
@@ -163,7 +178,15 @@ async function boot() {
 if (typeof window !== 'undefined') {
   void boot();
   // Save when the app goes to the background (phones may close it without warning).
-  document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && void autosave(true));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') void autosave(true).then(() => visibilityHook?.('hidden'));
+    // Back in the foreground: newest version from the cloud first, then (real clock) catch up the missed time.
+    else
+      void (async () => {
+        await visibilityHook?.('visible');
+        if (snapshot.state?.options.timeMode === 'realclock') await getEngine().wake();
+      })();
+  });
 }
 
 function subscribe(listener: () => void) {
@@ -176,6 +199,61 @@ const getSpeed = () => snapshot.speed;
 const getBooting = () => booting;
 const getSlots = () => slots;
 const getSlotId = () => slotId;
+
+// ─── Hooks for cloud sync (Phase 3) ─────────────────────────────────────────
+
+let visibilityHook: ((state: 'hidden' | 'visible') => Promise<void>) | null = null;
+let deleteHook: ((ids: string[]) => void) | null = null;
+
+/** Called by the cloud module: wait for `gate` before the first game opens; get told about app switches and deletes. */
+export function connectCloud(hooks: { gate: Promise<void> | null; visibility: (state: 'hidden' | 'visible') => Promise<void>; deleted: (ids: string[]) => void }): void {
+  bootGate = hooks.gate;
+  visibilityHook = hooks.visibility;
+  deleteHook = hooks.deleted;
+}
+
+/**
+ * Runs `fn` with autosaves held back (the open game is saved first). `fn` gets the open slot's id; if it replaced that
+ * slot, it returns true and the game is reopened from it, otherwise a held-back autosave is done now.
+ */
+export async function withAutosaveHeld(fn: (openSlotId: string | null) => Promise<boolean>): Promise<void> {
+  await autosave(true);
+  autosaveHeld++;
+  let reopen = false;
+  try {
+    reopen = await fn(slotId);
+  } finally {
+    autosaveHeld--;
+  }
+  if (reopen && slotId) {
+    const saved = await readSlot(slotId);
+    const loaded = saved ? await getEngine().loadBytes(saved.data) : null;
+    if (loaded) accept(loaded);
+  } else if (autosaveMissed) {
+    autosaveMissed = false;
+    await autosave(true);
+  }
+  await refreshSlots();
+}
+
+export const reloadSlotList = refreshSlots;
+const getAway = () => awayReport;
+const getCatchingUp = () => snapshot.catchingUp ?? null;
+
+/** Real clock: the "While you were away" report (null when there is none or it was closed). */
+export function useAwayReport(): AwayReport | null {
+  return useSyncExternalStore(subscribe, getAway);
+}
+
+export function dismissAwayReport(): void {
+  awayReport = null;
+  notify();
+}
+
+/** Real clock: the game is simulating the time it was closed. */
+export function useCatchingUp(): EngineSnapshot['catchingUp'] | null {
+  return useSyncExternalStore(subscribe, getCatchingUp);
+}
 
 /** The current game, or null when no game is running. */
 export function useGame(): GameState | null {
@@ -262,7 +340,8 @@ export async function loadSlot(id: string): Promise<boolean> {
 
 export async function deleteSave(id: string): Promise<void> {
   if (id === slotId) await closeGame();
-  await deleteSlot(id);
+  const synced = await deleteSlot(id);
+  if (synced.length) deleteHook?.(synced);
   await refreshSlots();
 }
 

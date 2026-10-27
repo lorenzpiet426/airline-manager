@@ -7,6 +7,7 @@ import { SimControls } from '../components/SimControls';
 import { GameClock } from '../components/StatusBar';
 import { Dashboard } from '../game/Dashboard';
 import { ReputationPanel } from '../game/ReputationPanel';
+import { AwayReportPanel } from '../game/AwayReport';
 import { MessageLog } from '../game/MessageLog';
 import { usePlayer } from '../game/usePlayer';
 import { useBooting } from '../../game/store';
@@ -119,6 +120,8 @@ export function OpsScreen() {
       />
 
       <div className="grid">
+        <AwayReportPanel />
+
         <Panel title={t('dashboard.title')} code="KPI" className="panel--wide">
           <Dashboard game={game} airline={airline} />
         </Panel>

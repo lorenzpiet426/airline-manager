@@ -1,0 +1,9 @@
+rules_version = '2';
+// Cloud sync for Airline Manager: every player can only read and write their own saves.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

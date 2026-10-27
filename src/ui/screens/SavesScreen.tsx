@@ -10,6 +10,8 @@ import { storageEstimate, type SlotMeta } from '../../persistence/saves';
 import { formatGameDate, formatNumber, localeFor } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
+import { CloudPanel } from '../game/CloudPanel';
+import { useCloud } from '../../game/cloud';
 
 /** Offers a file to the player (download on computers, share/save sheet on phones). */
 function downloadFile(bytes: Uint8Array, fileName: string) {
@@ -33,6 +35,7 @@ export function SavesScreen() {
   const game = useGame();
   const currentId = useCurrentSlotId();
   const slots = useSlots();
+  const cloud = useCloud();
   const [copyName, setCopyName] = useState('');
   const [notice, setNotice] = useState<{ level: 'info' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -101,7 +104,15 @@ export function SavesScreen() {
           {!copy && `${slot.iata} · ${hub(slot.hubId)} · `}
           {formatGameDate(language, toDate(slot.gameTime), false)} · {slot.bytes < 1024 * 1024 ? `${formatNumber(language, Math.ceil(slot.bytes / 1024))} KB` : `${formatNumber(language, mb(slot.bytes), 1)} MB`}
         </span>
-        <span className="muted small">{t('saves.savedAt', { when: savedAt(slot.savedAt) })}</span>
+        <span className="muted small">
+          {t('saves.savedAt', { when: savedAt(slot.savedAt) })}
+          {cloud.user && (
+            <span className={`save-row__cloud ${slot.sync && slot.savedAt <= slot.sync.savedAt ? 'text--normal' : 'muted'}`}>
+              {' · '}
+              {t(slot.sync ? (slot.savedAt <= slot.sync.savedAt ? 'cloud.slotSynced' : 'cloud.slotPending') : 'cloud.slotLocal')}
+            </span>
+          )}
+        </span>
       </div>
       <div className="save-row__actions">
         {slot.id !== currentId && (
@@ -124,6 +135,8 @@ export function SavesScreen() {
       <h1 className="screen__title">{t('saves.title')}</h1>
       <p className="muted">{t('saves.intro')}</p>
       {notice && <p className={`notice notice--${notice.level === 'error' ? 'error' : 'ok'}`}>{notice.text}</p>}
+
+      <CloudPanel />
 
       {game && currentId && (
         <Panel title={t('saves.currentTitle')} code="AUTO">

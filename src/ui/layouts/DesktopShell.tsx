@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Icon } from '../components/Icon';
 import { StatusBar } from '../components/StatusBar';
 import { DESKTOP_NAV, DESKTOP_NAV_BOTTOM, hrefFor, type NavItem, type Route } from '../navigation';
+import { CatchUpBanner } from '../game/AwayReport';
 
 // Computer / tablet layout: an ops console with a navigation rail on the left
 // (icon-only on narrow screens, see CSS), a status bar on top and the screen in the middle.
@@ -38,7 +39,10 @@ export function DesktopShell({ route, children }: { route: Route; children: Reac
       </nav>
       <div className="desktop__main">
         <StatusBar />
-        <main className="desktop__content">{children}</main>
+        <main className="desktop__content">
+          <CatchUpBanner />
+          {children}
+        </main>
       </div>
     </div>
   );

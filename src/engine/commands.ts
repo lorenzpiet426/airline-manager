@@ -13,7 +13,7 @@ import { randomInt } from './rng';
 import { cabinCode, DEFAULT_CLASS_FARES, REFIT_DEPRECIATION_YEARS, refitQuote, totalSeats, validateCabin, type CabinError } from './cabins';
 import { newReputation } from './reputation';
 import type { CabinLayout, ClassFares, Controller, GameState, Route } from './state';
-import { MINUTES_PER_DAY, simTime, startOfDay, toDate } from './time';
+import { MINUTES_PER_DAY, simTime, startOfDay, toDate, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
 export type { EngineWorld } from './world';
@@ -87,7 +87,18 @@ export interface RefitCabin {
   payload: { aircraftId: string; cabin: CabinLayout };
 }
 
-export type Command = FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/**
+ * Ties the game to the real clock (one way). `now` is the real time when the player switched (commands carry their
+ * time, the engine never reads the clock itself). A game behind today catches up to now; a game ahead of today keeps
+ * its date and runs on at real speed.
+ */
+export interface SetTimeMode {
+  type: 'SetTimeMode';
+  airlineId: string;
+  payload: { timeMode: 'realclock'; now: SimTime };
+}
+
+export type Command = SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 export const MAX_FREQUENCY = 84;
@@ -116,6 +127,7 @@ export type CommandError =
   | 'etops'
   | 'aircraftBusy'
   | 'alreadyDetailed'
+  | 'alreadyRealClock'
   | 'inRefit'
   | 'cabinUnchanged'
   | CabinError
@@ -141,6 +153,12 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       if (state.options.scheduling === 'detailed') return fail('alreadyDetailed');
       if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
       makeDetailed(state);
+      return { ok: true };
+    case 'SetTimeMode':
+      if (state.options.timeMode === 'realclock') return fail('alreadyRealClock');
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      state.options.timeMode = 'realclock';
+      state.options.clockOffset = Math.max(0, state.time - command.payload.now);
       return { ok: true };
     case 'RefitCabin':
       return refitCabin(state, command.airlineId, command.payload.aircraftId, command.payload.cabin);
