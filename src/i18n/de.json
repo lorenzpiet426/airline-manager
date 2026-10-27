@@ -193,7 +193,8 @@
     "realismRealistic": "Realistisch",
     "laterHint": "Hardcore-Realismus, historische Startjahre, die Übernahme von Austrian Airlines und Konkurrenten kommen in späteren Phasen.",
     "found": "Airline gründen",
-    "replaceWarning": "Du hast bereits ein laufendes Spiel. Eine neue Airline ersetzt es."
+    "replaceWarning": "Du hast bereits ein laufendes Spiel. Eine neue Airline ersetzt es.",
+    "scheduling": "Flugplanung"
   },
   "errors": {
     "nameLength": "Der Name braucht 2 bis 40 Zeichen.",
@@ -217,7 +218,14 @@
     "runwayOrigin": "Die Piste an deinem Drehkreuz ist für dieses Flugzeug auf dieser Distanz zu kurz.",
     "runwayDestination": "Die Piste am Ziel ist für dieses Flugzeug auf dieser Distanz zu kurz (oder unbefestigt).",
     "etops": "Nicht erlaubt: Die Strecke führt für die ETOPS-Zulassung dieses Flugzeugs zu weit weg von jedem Ausweichflughafen.",
-    "aircraftBusy": "Dieses Flugzeug hat in seiner Woche nicht mehr genug Stunden frei. Seltener fliegen oder ein anderes Flugzeug nehmen."
+    "aircraftBusy": "Dieses Flugzeug hat in seiner Woche nicht mehr genug Stunden frei. Seltener fliegen oder ein anderes Flugzeug nehmen.",
+    "noFlights": "Füge mindestens einen Flug zum Flugplan hinzu.",
+    "timeInvalid": "Abflugzeiten gehen in 5-Minuten-Schritten (z. B. 07:05).",
+    "daysInvalid": "Wähle mindestens einen Verkehrstag.",
+    "groundTooShort": "Die Bodenzeit am Ziel ist kürzer als die Mindest-Umdrehzeit dieses Flugzeugs.",
+    "groundTooLong": "Die Bodenzeit darf höchstens 36 Stunden betragen.",
+    "overlap": "Dieses Flugzeug fliegt zu dieser Zeit schon (inklusive Umdrehzeit am Drehkreuz). Wähle eine andere Zeit oder ein anderes Flugzeug.",
+    "alreadyDetailed": "Dieses Spiel nutzt bereits die detaillierte Flugplanung."
   },
   "fleet": {
     "title": "Flotte",
@@ -264,7 +272,7 @@
   },
   "network": {
     "title": "Netz",
-    "intro": "Deine Strecken ab dem Drehkreuz. Jede Strecke fliegt ein Flugzeug in Umläufen (hin und zurück); ein Flugzeug kann mehrere Strecken fliegen, bis seine Woche voll ist.",
+    "intro": "Deine Strecken ab dem Drehkreuz. Einfache Flugplanung: Du wählst Flugzeug und Umläufe pro Woche, das Spiel legt die Abflugzeiten fest.",
     "open": "Strecke eröffnen",
     "routes": "Strecken",
     "empty": "Noch keine Strecken. Eröffne deine erste Strecke, um loszufliegen.",
@@ -300,7 +308,7 @@
     "revenue": "Ticketerlöse",
     "contribution": "Streckenergebnis",
     "fixedNote": "Nicht enthalten: Crew-Gehälter und Leasing für {{registration}} ({{cost}} pro Woche), die sich alle Strecken dieses Flugzeugs teilen, sowie die Gemeinkosten der Airline. Die Strecke braucht {{hours}} Blockstunden pro Woche.",
-    "forecastNote": "Prognose für die Saison dieses Monats, sobald die Strecke bekannt ist; neue Strecken starten mit etwa 60 % dieser Passagiere und wachsen über 8 Wochen. Der Sommer ist stärker als der Winter, der Treibstoffpreis ändert sich jede Woche. Wenn du den Markt unterbietest, gehen andere Airlines etwa die Hälfte deiner Preissenkung mit.",
+    "forecastNote": "Prognose für die Saison dieses Monats, sobald die Strecke bekannt ist; neue Strecken starten mit etwa 60 % dieser Passagiere und wachsen über 8 Wochen. Der Sommer ist stärker als der Winter, der Treibstoffpreis ändert sich jede Woche. Andere Airlines reagieren innerhalb von etwa einem Monat auf deine Preise und deinen Flugplan.",
     "close": "Strecke einstellen",
     "closeConfirm": "Diese Strecke einstellen? Die Flüge enden sofort.",
     "save": "Änderungen speichern",
@@ -308,7 +316,9 @@
     "seasonValue": "{{value}} % zum Durchschnittsmonat",
     "plusConnections": "Dazu Umsteigeverbindungen über andere Drehkreuze.",
     "fareLevel": "Preise {{value}} %",
-    "reacted": "reagiert"
+    "reacted": "reagiert",
+    "introDetailed": "Deine Strecken ab dem Drehkreuz mit eigenem Flugplan: Jeder Flug hat eine Abflugzeit, Verkehrstage und ein Flugzeug.",
+    "fixedNoteDetailed": "Nicht enthalten: Crew-Gehälter und Leasing von {{registration}} (zusammen {{cost}} pro Woche), die sie mit ihren anderen Strecken teilen, und die Gemeinkosten der Airline. Die Strecke braucht {{hours}} Blockstunden pro Woche."
   },
   "finance": {
     "title": "Finanzen",
@@ -431,5 +441,56 @@
       "manufacturers": "Flugzeugleistung: Sitze, Reichweite, Startstrecke, Gewicht.",
       "plex": "Die Schriftarten des Spiels."
     }
+  },
+  "timetable": {
+    "title": "Flugplan",
+    "board": "Flugplan",
+    "mode": {
+      "simple": "Einfache Flugplanung: Das Spiel legt die Zeiten fest.",
+      "detailed": "Detaillierte Flugplanung: dein eigener Flugplan."
+    },
+    "modeName": {
+      "simple": "Einfach",
+      "detailed": "Detailliert"
+    },
+    "modeHint": {
+      "simple": "Du wählst Umläufe pro Woche; das Spiel plant die Abflugzeiten (ab 06:00 Ortszeit am Drehkreuz). Du kannst später auf „Detailliert“ umstellen.",
+      "detailed": "Du legst jeden Flug selbst fest: Abflugzeit, Verkehrstage, Flugzeug und Bodenzeit – wie die Netzplanung einer echten Airline."
+    },
+    "switch": "Auf Detailliert umstellen",
+    "switchConfirm": "Auf detaillierte Flugplanung umstellen? Deine bisherigen Flüge werden zu einem Flugplan, den du bearbeiten kannst. Das kann nicht rückgängig gemacht werden.",
+    "departuresFrom": "Abflüge {{airport}}",
+    "empty": "Noch keine Flüge.",
+    "newFlight": "neuer Flug",
+    "remove": "Flug entfernen",
+    "departure": "Abflug {{airport}} (Ortszeit)",
+    "ground": "Bodenzeit {{airport}} (Min.)",
+    "days": "Tage",
+    "daily": "Täglich",
+    "nightStop": "Nightstop",
+    "add": "Flug hinzufügen",
+    "hint": "Alle Zeiten sind Ortszeiten: Abflug in {{hub}}-Zeit, Rückflug in {{dest}}-Zeit. Die Bodenzeit umfasst Aussteigen, Reinigung, Catering und Boarding (mindestens die Mindest-Umdrehzeit des Flugzeugs); ab 8 Stunden ist es ein Nightstop.",
+    "allDays": "Alle Tage",
+    "noFlights": "An diesem Tag keine Flüge.",
+    "flight": "Flug",
+    "from": "Von",
+    "to": "Nach",
+    "dep": "Ab",
+    "arr": "An",
+    "boardNote": "Ortszeiten am jeweiligen Flughafen. Tage: 1 = Montag … 7 = Sonntag, wie in Airline-Flugplänen; +1 = Ankunft am nächsten Tag.",
+    "perFlight": "Flüge",
+    "paxPerFlight": "Pax/Flug",
+    "timesNote": "Passagiere wählen nach Abflugzeit: Geschäftsreisende wollen früh morgens hin und abends zurück, Urlauber sind flexibel, meiden aber Nachtflüge; Freitag und Sonntag sind voller als Dienstag. Flüge knapp neben denen eines Konkurrenten (oder deinen eigenen) teilen sich die Passagiere. Richtung Osten geht es schneller (Westwind). Die Zeiten der Konkurrenz erzeugt das Spiel (echte Zeiten dürfen nicht kopiert werden), markiert als „modelliert“; * = nicht täglich.",
+    "hour": "Stunde",
+    "minute": "Minute"
+  },
+  "timeline": {
+    "title": "Woche von {{registration}} (Drehkreuz-Zeit)",
+    "label": "Umlaufplan von {{registration}}",
+    "ground": "am Boden {{minutes}} Min.",
+    "turn": "Umdrehzeit am Drehkreuz",
+    "note": "Jede Zeile ist ein Tag in Ortszeit des Drehkreuzes: Hinflug, Zeit am Ziel (hell), Rückflug, Umdrehzeit (blass). Magenta = Strecke in Bearbeitung, rot = Überschneidung.",
+    "show": "Woche zeigen",
+    "hide": "Woche ausblenden"
   }
 }

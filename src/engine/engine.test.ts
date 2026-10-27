@@ -15,7 +15,7 @@ const world = buildEngineWorld(airports, countriesJson as unknown as Record<stri
 const VIE = airports.find((a) => a.iata === 'VIE')!;
 const JFK = airports.find((a) => a.iata === 'JFK')!;
 
-const newGame = (seed = 42) => createGame({ seed, startYear: 2026, timeMode: 'realtime', realism: 'realistic' });
+const newGame = (seed = 42) => createGame({ seed, startYear: 2026, timeMode: 'realtime', realism: 'realistic', scheduling: 'simple' });
 
 const founding = (overrides: Partial<FoundAirline['payload']> = {}): FoundAirline => ({
   type: 'FoundAirline',

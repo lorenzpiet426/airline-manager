@@ -4,10 +4,12 @@ import { getAircraftType } from '../data/aircraft';
 import { aiDailyStep } from './ai';
 import { postMessage } from './core';
 import { crewCostPerDayUsd, overheadPerDayUsd, routeWeek, totalCosts, type RoutePlan } from './economics';
+import { pairsOfRoute, plannedFlights } from './schedule';
+import { dayBit } from './timetable';
 import { mergePnl, newPeriod, type PnlPeriod } from './finance';
 import type { FxRates } from './money';
 import { MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type GameState, type Route, type RouteStats } from './state';
-import { daysInMonth, MINUTES_PER_DAY, startOfMonth, startOfWeek, toDate, yearOf, type SimTime } from './time';
+import { daysInMonth, MINUTES_PER_DAY, startOfMonth, startOfWeek, toDate, weekdayOf, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
 /** New routes start with 60 % of their passengers and reach 100 % after 8 weeks of flying. */
@@ -18,17 +20,20 @@ export function newFinance(now: SimTime): AirlineFinance {
   return { week: newPeriod(startOfWeek(now)), history: [], month: newPeriod(startOfMonth(now)), months: [] };
 }
 
-/** The plan the economics model needs for an existing route. */
-export function planFor(state: GameState, route: Route, now = state.time): RoutePlan {
-  const aircraft = state.aircraft[route.aircraftId]!;
+/** The plan the economics model needs for an existing route: its timetable (aircraft already flying only). */
+export function planFor(state: GameState, world: EngineWorld, route: Route, now = state.time, includeDelivering = false): RoutePlan | null {
+  const flights = plannedFlights(state, world, route, now, includeDelivering);
+  if (!flights.length) return null;
+  // A route planned before its aircraft arrives starts its ramp-up with the first flight.
+  const firstDelivery = Math.min(...pairsOfRoute(state, route.id).map((p) => state.aircraft[p.aircraftId]?.deliveryAt ?? Infinity));
   return {
-    type: getAircraftType(aircraft.typeId),
-    seats: aircraft.seats,
+    type: flights[0]!.type,
+    seats: flights[0]!.seats,
     frequency: route.frequency,
     fareFactor: route.fareFactor,
-    ageYears: yearOf(now) - aircraft.builtYear,
-    // A route planned before its aircraft arrives starts its ramp-up with the first flight.
-    rampUp: rampUp(Math.max(route.openedAt, aircraft.deliveryAt), now),
+    ageYears: flights[0]!.ageYears,
+    rampUp: rampUp(Math.max(route.openedAt, Number.isFinite(firstDelivery) ? firstDelivery : route.openedAt), now),
+    flights,
   };
 }
 
@@ -50,16 +55,17 @@ function bookDay(state: GameState, world: EngineWorld): void {
   const days: Record<string, PnlPeriod> = {};
   const dayOf = (airlineId: string) => (days[airlineId] ??= newPeriod(state.time - MINUTES_PER_DAY));
 
+  // The flights of the weekday that just ended, with that day's demand (Fridays are busier than Tuesdays).
+  const weekday = dayBit(weekdayOf(state.time - 1));
   for (const route of Object.values(state.routes)) {
-    const aircraft = state.aircraft[route.aircraftId];
     const airline = state.airlines[route.airlineId];
     const from = world.airportById.get(route.originId);
     const to = world.airportById.get(route.destinationId);
-    if (!aircraft || aircraft.status !== 'active' || !airline || !from || !to) continue;
-    const week = routeWeek(world, from, to, planFor(state, route), date, { ai: state.ai });
-    const k = usdTo(state.fx, airline.currency) / 7; // one day, in book currency
-    const day = dayOf(airline.id);
-    const lines = day.lines;
+    const plan = airline && from && to ? planFor(state, world, route, state.time - 1) : null;
+    if (!plan || !from || !to || !airline) continue;
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday });
+    const k = usdTo(state.fx, airline.currency); // in book currency
+    const lines = dayOf(airline.id).lines;
     lines.revenue += week.revenue * k;
     lines.fuel += week.costs.fuel * k;
     lines.maintenance += week.costs.maintenance * k;
@@ -67,10 +73,10 @@ function bookDay(state: GameState, world: EngineWorld): void {
     lines.handling += week.costs.handling * k;
     lines.navigation += week.costs.navigation * k;
     lines.distribution += week.costs.distribution * k;
-    const stats: RouteStats = (day.routes[route.id] ??= { flights: 0, seats: 0, pax: 0, revenue: 0, directCosts: 0 });
-    stats.flights += week.flights / 7;
-    stats.seats += week.seats / 7;
-    stats.pax += week.pax / 7;
+    const stats: RouteStats = (dayOf(airline.id).routes[route.id] ??= { flights: 0, seats: 0, pax: 0, revenue: 0, directCosts: 0 });
+    stats.flights += week.flights;
+    stats.seats += week.seats;
+    stats.pax += week.pax;
     stats.revenue += week.revenue * k;
     stats.directCosts += totalCosts(week.costs) * k;
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) + (week.revenue - totalCosts(week.costs)) * k;

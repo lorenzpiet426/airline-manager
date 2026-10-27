@@ -257,8 +257,8 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
 
 *Order change (2026-10-27): Phase 2 comes before step 1.5, and detailed scheduling (from Phase 7) becomes step 2.2:*
 - **2.1 Visible AI competitors** — owner chose **real airlines** (see §5b): 2.1a ✅ real airlines visible and competing
-  (static); 2.1b AI behaviour by airline type.
-- **2.2 Detailed scheduling:** own departure times per flight, block times, turnarounds, aircraft rotation timeline,
+  (static); 2.1b ✅ AI behaviour by airline type.
+- **2.2 Detailed scheduling:** ✅ own departure times per flight, block times, turnarounds, aircraft rotation timeline,
   time-of-day preferences in passenger choice; competitors get timetables too.
 - then back to **1.5** (save slots, export/import, dashboard), then the rest of Phase 2 (cabin classes, reputation).
 
@@ -400,6 +400,12 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-27 | Roadmap: **2.1 visible AI competitors → 2.2 detailed scheduling** (own departure times, block times, turnarounds, rotation timeline; passengers prefer good times) **→ 1.5** save slots/dashboard | Owner wants timetables, not only frequencies; detailed scheduling moved forward from Phase 7 (hub waves stay in Phase 7) |
 | 2026-10-27 | **No OpenSky data** (owner); real-airline data only from open, reusable sources (§5b) | OpenSky terms forbid publishing derived data without a licence; owner chose not to ask |
 | 2026-10-27 | Finance history: weeks kept 2 years, calendar months kept for the whole game; quarters/years summed from months | Owner wants to see patterns over time; months stay small enough to keep forever |
+| 2026-10-27 | 2.1b: AI for the **whole world, simplified** (monthly reviews, only changed routes), plus **world news** | Owner choice; keeps a year of play fast (≈ 0.5 s) |
+| 2026-10-27 | 2.2: timetables as **flight pairs on aircraft timelines** (departure time, days of operation, ground time; return = flight number + 1) | Owner choice; like real airline rotations |
+| 2026-10-27 | 2.2: **Simple or Detailed scheduling chosen per game**; Simple games can switch to Detailed once (timetable kept) | Owner choice; matches the spec |
+| 2026-10-27 | 2.2: **realistic time-of-day demand** (business/leisure decision windows, weekdays, night arrivals, clustering) | Owner choice |
+| 2026-10-27 | 2.2: **competitors get generated, plausible timetables** tagged "modelled" (real times only in non-copyable sources) | Owner choice |
+| 2026-10-27 | Timetable times stored in **hub local time** (published-timetable convention), converted with IANA time zones incl. summer time; 24-hour pickers (no AM/PM) | Aviation convention |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -616,7 +622,34 @@ education", forbid making the data available to others (§3 iii) and require a w
   **World news** panel on Ops (≤ 2/day), planner shows competitor fare level and "reacted", airline pages show the
   network as it is in the game (new routes, closed count, bankruptcy). Tests: 65 (price war, home rival defence, entry,
   one-year stability/speed/size, determinism).
-- **Next:** 2.2 detailed scheduling, then 1.5 (save slots → IndexedDB, export, dashboard).
+- **Next (then):** 2.2 detailed scheduling, then 1.5 (save slots → IndexedDB, export, dashboard).
+- Owner confirmed: 2.1b tried.
+
+### 2026-10-27 — Session 7 (Phase 2.2 Detailed scheduling) ✅
+- Owner decisions (all recommended options): flights on aircraft timelines; Simple/Detailed per game (switch once);
+  realistic time preferences; generated competitor timetables (§7).
+- **Engine:** `timetable.ts` (directional block times with westerly wind, rounded to 5 min; decision-window passenger
+  choice per hour; weekday factors; generated competitor timetables; day-mask helpers), `schedule.ts` (`FlightPair` =
+  out + ground + back on weekdays, hub local time; `validateSpecs`: overlaps incl. hub turnaround and week wrap,
+  minimum ground time, max 36 h, 5-min steps, weekly hours; `autoPlanAircraft` = Simple mode planner (old
+  06:00–21:00 back-to-back logic, grouped into weekday pairs); `ensureFlights` for old saves; `makeDetailed` gives every
+  pair its own flight number). `routeWeek` now works **flight by flight** (per weekday and direction; competitors
+  from `competitorDepartures`; mixed aircraft types per route; result per flight in `byFlight`). Daily booking books the
+  flights of that weekday. `time.ts`: `utcOffsetMin` (IANA, cached), `weekdayOf`. Map legs from the pairs.
+  Commands: `OpenRoute`/`UpdateRoute` take `flights` in Detailed mode, new `SetScheduling`. AI sees the player's real
+  timetable. Save version 6 (migration: Simple, pairs planned on load). Balance unchanged (see DATA_SOURCES).
+- **UI:** wizard choice Simple/Detailed; Network: Routes / Timetable tabs (departures board, local times, days
+  "12345··", weekday filter), switch-to-Detailed button, route cards show departures; route planner: timetable editor
+  (aircraft, 24-hour time pickers, weekday toggles, ground time, computed local times, night stop chip), live rotation
+  chart per aircraft (`AircraftTimeline`: magenta = editing, red = collision), forecast per flight (pax/flight, LF) and
+  competitors' departure times (modelled); Fleet: "Show week" rotation chart per aircraft.
+- Tests: 76 (wind, summer time, morning vs night, clustering, Friday vs Tuesday, competitor waves, detailed open/
+  overlap/night stop/ground time, weekday booking, switch to Detailed, v5 → v6 upgrade).
+- Verified in browser: old save migrated (Simple times), switched to Detailed, edited and saved a timetable,
+  collisions shown in red and blocked, phone 375 px without sideways scrolling, 6 game days simulated, no console errors.
+- Known: Simple auto-plan leaves gaps (e.g. empty Sundays) like before; crew duty limits, curfews and slots come later
+  (Phases 7/8); real airlines' planes still not on the map.
+- **Next:** 1.5 — save slots (IndexedDB), export/import, dashboard with KPIs.
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.

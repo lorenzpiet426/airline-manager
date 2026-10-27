@@ -41,3 +41,30 @@ export function startOfWeek(time: SimTime): SimTime {
   const day = Math.floor(time / MINUTES_PER_DAY);
   return (day - ((day + 6) % 7)) * MINUTES_PER_DAY;
 }
+
+const offsetCache = new Map<string, number>();
+const offsetFormats = new Map<string, Intl.DateTimeFormat>();
+
+/** Offset of a time zone from UTC in minutes on the day of `time` (Vienna: +60 in winter, +120 in summer). */
+export function utcOffsetMin(timeZone: string, time: SimTime): number {
+  const day = Math.floor(time / MINUTES_PER_DAY);
+  const key = `${timeZone}|${day}`;
+  let offset = offsetCache.get(key);
+  if (offset !== undefined) return offset;
+  let format = offsetFormats.get(timeZone);
+  if (!format) {
+    format = new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+    offsetFormats.set(timeZone, format);
+  }
+  // Noon UTC of that day, read as local wall-clock time; the difference is the offset.
+  const at = toDate(day * MINUTES_PER_DAY + 720);
+  const p = Object.fromEntries(format.formatToParts(at).map((x) => [x.type, x.value]));
+  const local = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute));
+  offset = Math.round((local - at.getTime()) / 60_000);
+  if (offsetCache.size > 50_000) offsetCache.clear();
+  offsetCache.set(key, offset);
+  return offset;
+}
+
+/** Day of the week, 0 = Monday … 6 = Sunday. */
+export const weekdayOf = (time: SimTime): number => (Math.floor(time / MINUTES_PER_DAY) + 6) % 7;

@@ -8,7 +8,7 @@ import { useWorld } from '../../data/world';
 import { bookCurrencyFor, ECB_RATES } from '../../data/currencies';
 import type { Airport } from '../../data/types';
 import { CAPITAL_OPTIONS_EUR, startingCapital, type CommandError } from '../../engine/commands';
-import type { TimeMode } from '../../engine/state';
+import type { Scheduling, TimeMode } from '../../engine/state';
 import { startNewGame, useGame } from '../../game/store';
 import { countryName, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
@@ -47,6 +47,7 @@ export function NewGameScreen() {
   const [hubId, setHubId] = useState('LOWW');
   const [capitalEur, setCapitalEur] = useState<number>(CAPITAL_OPTIONS_EUR[1]);
   const [timeMode, setTimeMode] = useState<TimeMode>('realtime');
+  const [scheduling, setScheduling] = useState<Scheduling>('simple');
   const [error, setError] = useState<CommandError | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -58,7 +59,7 @@ export function NewGameScreen() {
     setBusy(true);
     setError(null);
     const result = await startNewGame(
-      { seed: crypto.getRandomValues(new Uint32Array(1))[0]!, startYear: 2026, timeMode, realism: 'realistic' },
+      { seed: crypto.getRandomValues(new Uint32Array(1))[0]!, startYear: 2026, timeMode, realism: 'realistic', scheduling },
       {
         type: 'FoundAirline',
         payload: { name, iata, icao, primary: colors[0], secondary: colors[1], hubId, capitalEur, controller: 'human' },
@@ -194,6 +195,17 @@ export function NewGameScreen() {
           onChange={setTimeMode}
         />
         <p className="muted small">{t(`ops.modeHint.${timeMode}`)}</p>
+        <span className="field__label">{t('newGame.scheduling')}</span>
+        <Segmented
+          label={t('newGame.scheduling')}
+          value={scheduling}
+          options={[
+            { value: 'simple', label: t('timetable.modeName.simple') },
+            { value: 'detailed', label: t('timetable.modeName.detailed') },
+          ]}
+          onChange={setScheduling}
+        />
+        <p className="muted small">{t(`timetable.modeHint.${scheduling}`)}</p>
         <dl className="facts">
           <dt>{t('newGame.scenario')}</dt>
           <dd>{t('newGame.scenarioStartup')}</dd>

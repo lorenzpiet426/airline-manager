@@ -7,6 +7,7 @@ import { applyCommand, type Command, type CommandResult } from '../engine/comman
 import { buildEngineWorld, type EngineWorld } from '../engine/world';
 import { loadRealAirlines } from '../data/realAirlinesData';
 import { createGame, migrate, type NewGameOptions } from '../engine/game';
+import { ensureFlights } from '../engine/schedule';
 import type { GameState } from '../engine/state';
 import { MINUTES_PER_DAY } from '../engine/time';
 import type { EngineSnapshot, Speed } from './protocol';
@@ -89,9 +90,10 @@ const api = {
 
   /** Loads a saved game. Returns false if the save cannot be used. */
   async load(raw: unknown): Promise<EngineSnapshot | null> {
-    await loadWorld();
+    const world = await loadWorld();
     const loaded = migrate(raw);
     if (!loaded) return null;
+    ensureFlights(loaded, world);
     state = loaded;
     return setSpeed(0);
   },

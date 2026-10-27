@@ -4,15 +4,18 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export type TimeMode = 'realtime' | 'weekly';
 export type Realism = 'realistic' | 'hardcore';
 export type Controller = 'human' | 'ai';
+/** Simple = weekly frequency per route, the game sets the times; Detailed = the player's own timetable. */
+export type Scheduling = 'simple' | 'detailed';
 
 export interface GameOptions {
   timeMode: TimeMode;
   realism: Realism;
+  scheduling: Scheduling;
 }
 
 export interface Airline {
@@ -86,6 +89,25 @@ export interface Route {
   /** Outbound flight number (odd, e.g. 101); the return flight is the next number. */
   flightNumber: number;
   openedAt: SimTime;
+}
+
+/**
+ * One round trip in the timetable: outbound from the hub at a local time on some weekdays, a ground time at the
+ * destination, and the return flight (flight number + 1).
+ */
+export interface FlightPair {
+  id: string;
+  airlineId: string;
+  routeId: string;
+  aircraftId: string;
+  /** Outbound flight number (odd); the return flight is the next number. */
+  flightNumber: number;
+  /** Outbound departure, minutes after midnight hub local time. */
+  dep: number;
+  /** Weekdays of the outbound departure, bit 0 = Monday … bit 6 = Sunday. */
+  days: number;
+  /** Minutes on the ground at the destination before the return flight. */
+  groundMin: number;
 }
 
 /** Profit-and-loss lines in the airline's book currency (costs are positive numbers). */
@@ -211,6 +233,8 @@ export interface GameState {
   aircraft: Record<string, Aircraft>;
   market: { offers: LeaseOffer[] };
   routes: Record<string, Route>;
+  /** The timetable: flight pairs of all routes (Phase 2.2). */
+  flights: Record<string, FlightPair>;
   finance: Record<string, AirlineFinance>;
   /** Changes made by the real airlines' AI (2.1b). */
   ai: AiState;

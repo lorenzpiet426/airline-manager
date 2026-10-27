@@ -5,6 +5,7 @@ import { bookCurrencyFor } from '../data/currencies';
 import { registrationPattern } from '../data/registrations';
 import { book, nextId, postMessage, schedule } from './core';
 import { checkRoute, roundTripHours, WEEKLY_AVAILABLE_HOURS } from './economics';
+import { aircraftHours, autoPlanAircraft, makeDetailed, pairsOfRoute, setRoutePairs, validateSpecs, type FlightSpec, type ScheduleError } from './schedule';
 import { distanceKm } from './geo';
 import { convert, money, roundNice, type FxRates, type Money } from './money';
 import { newFinance } from './operations';
@@ -14,6 +15,8 @@ import { MINUTES_PER_DAY, simTime, startOfDay, toDate } from './time';
 import type { EngineWorld } from './world';
 
 export type { EngineWorld } from './world';
+export { aircraftHours } from './schedule';
+export type { FlightSpec } from './schedule';
 
 /** Starting capital choices for a startup, in euros (converted into the hub's currency). */
 export const CAPITAL_OPTIONS_EUR = [25_000_000, 75_000_000, 200_000_000] as const;
@@ -44,6 +47,8 @@ export interface RouteSettings {
   frequency: number;
   /** Fare relative to the market fare, 0.5 … 1.5. */
   fareFactor: number;
+  /** Detailed scheduling: the route's complete timetable (aircraftId/frequency are then taken from it). */
+  flights?: FlightSpec[];
 }
 
 export interface OpenRoute {
@@ -64,7 +69,14 @@ export interface CloseRoute {
   payload: { routeId: string };
 }
 
-export type Command = FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute;
+/** Switches the game from Simple to Detailed scheduling (one way: the timetable is kept and becomes editable). */
+export interface SetScheduling {
+  type: 'SetScheduling';
+  airlineId: string;
+  payload: { scheduling: 'detailed' };
+}
+
+export type Command = FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 export const MAX_FREQUENCY = 84;
@@ -91,7 +103,9 @@ export type CommandError =
   | 'runwayOrigin'
   | 'runwayDestination'
   | 'etops'
-  | 'aircraftBusy';
+  | 'aircraftBusy'
+  | 'alreadyDetailed'
+  | ScheduleError;
 
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError };
 
@@ -109,6 +123,11 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       return updateRoute(state, world, command.airlineId, command.payload);
     case 'CloseRoute':
       return closeRoute(state, world, command.airlineId, command.payload.routeId);
+    case 'SetScheduling':
+      if (state.options.scheduling === 'detailed') return fail('alreadyDetailed');
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      makeDetailed(state);
+      return { ok: true };
   }
 }
 
@@ -201,16 +220,6 @@ function leaseAircraft(state: GameState, world: EngineWorld, airlineId: string, 
   return { ok: true, id };
 }
 
-/** Hours per week an aircraft spends on its routes (flying + turnarounds), optionally ignoring one route. */
-export function aircraftHours(state: GameState, aircraftId: string, exceptRouteId?: string): number {
-  const aircraft = state.aircraft[aircraftId];
-  if (!aircraft) return 0;
-  const type = getAircraftType(aircraft.typeId);
-  return Object.values(state.routes)
-    .filter((r) => r.aircraftId === aircraftId && r.id !== exceptRouteId)
-    .reduce((sum, r) => sum + roundTripHours(type, r.distanceKm) * r.frequency, 0);
-}
-
 /** Checks route settings against all rules; shared by opening and changing a route (and by the planner screen). */
 export function validateRoute(
   state: GameState,
@@ -226,16 +235,37 @@ export function validateRoute(
   const to = world.airportById.get(destinationId);
   if (!from || !to) return 'airportUnknown';
   if (from.id === to.id) return 'sameAirport';
+  if (!(settings.fareFactor >= FARE_FACTOR_RANGE[0] && settings.fareFactor <= FARE_FACTOR_RANGE[1])) return 'fareInvalid';
+  if (state.options.scheduling === 'detailed') {
+    const existing = exceptRouteId ? state.routes[exceptRouteId] : undefined;
+    const route: Route = existing ?? { ...draftRoute(airlineId, from, to), id: '' };
+    return validateSpecs(state, world, route, settings.flights ?? [])?.error ?? null;
+  }
   const aircraft = state.aircraft[settings.aircraftId];
   if (!aircraft || aircraft.airlineId !== airlineId) return 'aircraftUnknown';
   if (!Number.isInteger(settings.frequency) || settings.frequency < 1 || settings.frequency > MAX_FREQUENCY) return 'frequencyInvalid';
-  if (!(settings.fareFactor >= FARE_FACTOR_RANGE[0] && settings.fareFactor <= FARE_FACTOR_RANGE[1])) return 'fareInvalid';
   const type = getAircraftType(aircraft.typeId);
   const problem = checkRoute(world, type, from, to);
   if (problem) return problem;
   const hours = aircraftHours(state, aircraft.id, exceptRouteId) + roundTripHours(type, distanceKm(from, to)) * settings.frequency;
   if (hours > WEEKLY_AVAILABLE_HOURS[type.category] + 1e-9) return 'aircraftBusy';
   return null;
+}
+
+/** A route that is not saved yet (for checks and forecasts in the planner). */
+export function draftRoute(airlineId: string, from: { id: string; lat: number; lon: number }, to: { id: string; lat: number; lon: number }): Route {
+  return {
+    id: 'draft',
+    airlineId,
+    originId: from.id,
+    destinationId: to.id,
+    distanceKm: Math.round(distanceKm(from, to)),
+    aircraftId: '',
+    frequency: 0,
+    fareFactor: 1,
+    flightNumber: 0,
+    openedAt: 0,
+  };
 }
 
 function openRoute(state: GameState, world: EngineWorld, airlineId: string, p: OpenRoute['payload']): CommandResult {
@@ -251,11 +281,8 @@ function openRoute(state: GameState, world: EngineWorld, airlineId: string, p: O
   let flightNumber = 101;
   while (used.has(flightNumber)) flightNumber += 2;
   const route: Route = {
+    ...draftRoute(airlineId, from, to),
     id: nextId(state, 'R'),
-    airlineId,
-    originId: from.id,
-    destinationId: to.id,
-    distanceKm: Math.round(distanceKm(from, to)),
     aircraftId: p.aircraftId,
     frequency: p.frequency,
     fareFactor: p.fareFactor,
@@ -263,11 +290,13 @@ function openRoute(state: GameState, world: EngineWorld, airlineId: string, p: O
     openedAt: state.time,
   };
   state.routes[route.id] = route;
+  if (state.options.scheduling === 'detailed') setRoutePairs(state, route, p.flights ?? []);
+  else autoPlanAircraft(state, world, route.aircraftId);
   postMessage(state, {
     airlineId,
     kind: 'routeOpened',
     level: 'info',
-    params: { flight: `${airline.iata} ${flightNumber}`, from: from.iata ?? from.id, to: to.iata ?? to.id, frequency: p.frequency },
+    params: { flight: `${airline.iata} ${flightNumber}`, from: from.iata ?? from.id, to: to.iata ?? to.id, frequency: route.frequency },
   });
   return { ok: true, id: route.id };
 }
@@ -277,9 +306,16 @@ function updateRoute(state: GameState, world: EngineWorld, airlineId: string, p:
   if (!route || route.airlineId !== airlineId) return fail('routeUnknown');
   const error = validateRoute(state, world, airlineId, route.destinationId, p, route.id);
   if (error) return fail(error);
-  route.aircraftId = p.aircraftId;
-  route.frequency = p.frequency;
   route.fareFactor = p.fareFactor;
+  if (state.options.scheduling === 'detailed') {
+    setRoutePairs(state, route, p.flights ?? []);
+  } else {
+    const before = route.aircraftId;
+    route.aircraftId = p.aircraftId;
+    route.frequency = p.frequency;
+    autoPlanAircraft(state, world, route.aircraftId);
+    if (before !== route.aircraftId) autoPlanAircraft(state, world, before);
+  }
   return { ok: true, id: route.id };
 }
 
@@ -287,6 +323,9 @@ function closeRoute(state: GameState, world: EngineWorld, airlineId: string, rou
   const route = state.routes[routeId];
   if (!route || route.airlineId !== airlineId) return fail('routeUnknown');
   delete state.routes[routeId];
+  const aircraftIds = new Set(pairsOfRoute(state, routeId).map((p) => p.aircraftId));
+  for (const pair of pairsOfRoute(state, routeId)) delete state.flights[pair.id];
+  if (state.options.scheduling === 'simple') for (const id of aircraftIds) autoPlanAircraft(state, world, id);
   const airline = state.airlines[airlineId]!;
   const to = world.airportById.get(route.destinationId);
   postMessage(state, {

@@ -18,11 +18,12 @@ import {
   routeWeek,
   totalCosts,
   WEEKLY_AVAILABLE_HOURS,
-  type Supplier,
+  type RouteContext,
 } from './economics';
 import { typicalRentUsd } from './market';
 import { fleetSize, type BusinessModel, type RealAirline } from './realAirlines';
 import { random } from './rng';
+import { plannedFlights } from './schedule';
 import type { AiRouteState, GameState } from './state';
 import { MINUTES_PER_DAY, toDate } from './time';
 import type { EngineWorld } from './world';
@@ -137,7 +138,7 @@ interface Evaluation {
 }
 
 /** Weekly result of the airline on a route, including its aircraft costs (crew, lease). */
-function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A: Airport, B: Airport, weekly: number, fare: number, extra: Supplier[], date: Date, withChanges: boolean): Evaluation | null {
+function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A: Airport, B: Airport, weekly: number, fare: number, extra: RouteContext['extra'], date: Date, withChanges: boolean): Evaluation | null {
   const km = market(world, A, B).distanceKm;
   const ac = aircraftFor(airline, km);
   if (!ac || weekly <= 0) return null;
@@ -157,10 +158,14 @@ function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A:
 }
 
 /** The player's flights on a route, as competitors for the AI. */
-function playerSuppliers(state: GameState, a: string, b: string): Supplier[] {
+function playerSuppliers(state: GameState, world: EngineWorld, a: string, b: string): NonNullable<RouteContext['extra']> {
   return Object.values(state.routes)
-    .filter((r) => ((r.originId === a && r.destinationId === b) || (r.originId === b && r.destinationId === a)) && state.aircraft[r.aircraftId]?.status === 'active')
-    .map((r) => ({ weekly: r.frequency, fareFactor: r.fareFactor }));
+    .filter((r) => (r.originId === a && r.destinationId === b) || (r.originId === b && r.destinationId === a))
+    .flatMap((r) => {
+      // The player's real timetable, seen from airport a.
+      const flights = plannedFlights(state, world, r, state.time).map((f) => ({ dir: (r.originId === a ? f.dir : 1 - f.dir) as 0 | 1, days: f.days, dep: f.dep }));
+      return flights.length ? [{ weekly: r.frequency, fareFactor: r.fareFactor, flights }] : [];
+    });
 }
 
 // ─── Daily AI step ──────────────────────────────────────────────────────────────
@@ -278,7 +283,7 @@ function reviewAirline(ctx: Ctx, airline: RealAirline): void {
     const change = state.ai.routes[key];
     if (change?.closed) continue;
     const pair = r.a < r.b ? `${r.a}|${r.b}` : `${r.b}|${r.a}`;
-    const players = ctx.playerPairs.has(pair) ? playerSuppliers(state, r.a, r.b) : [];
+    const players = ctx.playerPairs.has(pair) ? playerSuppliers(state, world, r.a, r.b) : [];
     if (!change && !players.length && !state.ai.added[pair]) continue;
     const A = world.airportById.get(r.a);
     const B = world.airportById.get(r.b);

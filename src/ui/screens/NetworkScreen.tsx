@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react';
+import { Segmented } from '../components/Segmented';
+import { DeparturesBoard } from '../network/DeparturesBoard';
+import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
+import { daysText, hhmmText } from '../game/timetableText';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
 import { SourceTag } from '../components/SourceTag';
@@ -10,12 +14,20 @@ import { getAircraftType } from '../../data/aircraft';
 import { useWorld } from '../../data/world';
 import {
   aircraftHours,
+  applyCommand,
+  draftRoute,
   FARE_FACTOR_RANGE,
   MAX_FREQUENCY,
   validateRoute,
+  type Command,
   type CommandError,
+  type FlightSpec,
 } from '../../engine/commands';
+import { planFor } from '../../engine/operations';
+import { pairsOfRoute, validateSpecs } from '../../engine/schedule';
+import { dayCount } from '../../engine/timetable';
 import {
+  competitorDepartures,
   competitorsOn,
   crewCostPerDayUsd,
   market,
@@ -28,7 +40,7 @@ import {
 import { distanceKm } from '../../engine/geo';
 import { convert, money } from '../../engine/money';
 import type { Airline, GameState, Route } from '../../engine/state';
-import { toDate, yearOf } from '../../engine/time';
+import { fromDate, toDate } from '../../engine/time';
 import { sendCommand } from '../../game/store';
 import { formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
@@ -48,7 +60,10 @@ type Editing = { mode: 'new' } | { mode: 'edit'; routeId: string } | null;
 export function NetworkScreen() {
   const { t } = useTranslation();
   const { game, airline } = usePlayer();
+  const world = useWorld();
+  const engineWorld = useEngineWorld();
   const [editing, setEditing] = useState<Editing>(null);
+  const [tab, setTab] = useState<'routes' | 'timetable'>('routes');
 
   if (!game || !airline) {
     return (
@@ -68,6 +83,12 @@ export function NetworkScreen() {
     .filter((r) => r.airlineId === airline.id)
     .sort((a, b) => a.flightNumber - b.flightNumber);
   const hasAircraft = Object.values(game.aircraft).some((a) => a.airlineId === airline.id);
+  const code = (id: string) => world?.airportById.get(id)?.iata ?? id;
+  const detailed = game.options.scheduling === 'detailed';
+  const switchToDetailed = async () => {
+    if (!window.confirm(t('timetable.switchConfirm'))) return;
+    await sendCommand({ type: 'SetScheduling', airlineId: airline.id, payload: { scheduling: 'detailed' } });
+  };
 
   return (
     <div className="screen">
@@ -83,7 +104,7 @@ export function NetworkScreen() {
       ) : (
         <>
           <div className="toolbar-row">
-            <p className="muted">{t('network.intro')}</p>
+            <p className="muted">{t(detailed ? 'network.introDetailed' : 'network.intro')}</p>
             {hasAircraft ? (
               <button type="button" className="button button--primary" onClick={() => setEditing({ mode: 'new' })}>
                 {t('network.open')}
@@ -94,7 +115,33 @@ export function NetworkScreen() {
               </a>
             )}
           </div>
-          {routes.length === 0 ? (
+          <div className="toolbar-row">
+            <Segmented
+              label={t('network.title')}
+              value={tab}
+              options={[
+                { value: 'routes', label: t('network.routes') },
+                { value: 'timetable', label: t('timetable.board') },
+              ]}
+              onChange={setTab}
+            />
+            <span className="muted small">
+              {t(`timetable.mode.${game.options.scheduling}`)}
+              {!detailed && (
+                <>
+                  {' '}
+                  <button type="button" className="button button--small" onClick={() => void switchToDetailed()}>
+                    {t('timetable.switch')}
+                  </button>
+                </>
+              )}
+            </span>
+          </div>
+          {tab === 'timetable' && engineWorld ? (
+            <Panel title={t('timetable.board')} code="FIDS">
+              <DeparturesBoard game={game} world={engineWorld} airline={airline} code={code} />
+            </Panel>
+          ) : routes.length === 0 ? (
             <Panel title={t('network.routes')}>
               <p className="muted">{t('network.empty')}</p>
             </Panel>
@@ -117,7 +164,10 @@ function RouteCard({ game, airline, route, onEdit }: { game: GameState; airline:
   const world = useWorld();
   const to = world?.airportById.get(route.destinationId);
   const from = world?.airportById.get(route.originId);
-  const aircraft = game.aircraft[route.aircraftId];
+  const pairs = pairsOfRoute(game, route.id);
+  const fleet = [...new Set(pairs.map((p) => p.aircraftId))].map((id) => game.aircraft[id]).filter((a) => a !== undefined);
+  const departures = [...new Set(pairs.map((p) => p.dep))].sort((a, b) => a - b);
+  const numbers = [...new Set(pairs.map((p) => p.flightNumber))].sort((a, b) => a - b);
   const history = game.finance[airline.id]?.history ?? [];
   const stats = history[history.length - 1]?.routes[route.id];
   const result = stats ? stats.revenue - stats.directCosts : null;
@@ -131,7 +181,7 @@ function RouteCard({ game, airline, route, onEdit }: { game: GameState; airline:
           </span>
           <span className="muted">
             <span className="mono">
-              {airline.iata} {route.flightNumber}/{route.flightNumber + 1}
+              {airline.iata} {numbers.length > 1 ? numbers.join(', ') : `${route.flightNumber}/${route.flightNumber + 1}`}
             </span>{' '}
             · {to?.city ?? ''}
           </span>
@@ -141,9 +191,15 @@ function RouteCard({ game, airline, route, onEdit }: { game: GameState; airline:
       <dl className="facts facts--compact">
         <dt>{t('network.aircraft')}</dt>
         <dd className="mono">
-          {aircraft?.registration} · {aircraft && getAircraftType(aircraft.typeId).name}
-          {aircraft?.status === 'delivering' && <span className="text--caution"> · {t('network.waitingDelivery')}</span>}
+          {fleet.map((aircraft) => (
+            <span key={aircraft.id} className="block">
+              {aircraft.registration} · {getAircraftType(aircraft.typeId).name}
+              {aircraft.status === 'delivering' && <span className="text--caution"> · {t('network.waitingDelivery')}</span>}
+            </span>
+          ))}
         </dd>
+        <dt>{t('timetable.departuresFrom', { airport: from?.iata ?? route.originId })}</dt>
+        <dd className="mono">{departures.map(hhmmText).join(' · ') || '—'}</dd>
         <dt>{t('network.distance')}</dt>
         <dd className="mono">{formatNumber(language, route.distanceKm)} km</dd>
         <dt>{t('network.fare')}</dt>
@@ -182,43 +238,74 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   const world = useWorld();
   const engineWorld = useEngineWorld();
   const fleet = Object.values(game.aircraft).filter((a) => a.airlineId === airline.id);
+  const detailed = game.options.scheduling === 'detailed';
+  const code = (id: string) => world?.airportById.get(id)?.iata ?? id;
 
   const [destinationId, setDestinationId] = useState<string | null>(route?.destinationId ?? null);
   const [aircraftId, setAircraftId] = useState(route?.aircraftId ?? fleet[0]?.id ?? '');
   const [frequency, setFrequency] = useState(route?.frequency ?? 7);
   const [fareFactor, setFareFactor] = useState(route?.fareFactor ?? 1);
+  const [specs, setSpecs] = useState<FlightSpec[]>(() =>
+    route ? pairsOfRoute(game, route.id).map((p) => ({ id: p.id, aircraftId: p.aircraftId, dep: p.dep, days: p.days, groundMin: p.groundMin })) : [],
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<CommandError | null>(null);
 
   const hub = world?.airportById.get(airline.hubId);
   const dest = destinationId ? world?.airportById.get(destinationId) : undefined;
   const aircraft = game.aircraft[aircraftId];
-  const settings = { aircraftId, frequency, fareFactor };
+  const draft = useMemo(() => (hub && dest ? (route ?? draftRoute(airline.id, hub, dest)) : null), [hub, dest, route, airline.id]);
+  const settings = detailed ? { aircraftId: specs[0]?.aircraftId ?? '', frequency: 0, fareFactor, flights: specs } : { aircraftId, frequency, fareFactor };
   const problem =
     engineWorld && destinationId ? validateRoute(game, engineWorld, airline.id, destinationId, settings, route?.id) : null;
+  const specProblem = detailed && engineWorld && draft ? validateSpecs(game, engineWorld, draft, specs) : null;
   const duplicate = !route && destinationId && Object.values(game.routes).some((r) => r.airlineId === airline.id && r.destinationId === destinationId);
 
   const book = (usd: number) => convert(money(usd, 'USD'), airline.currency, game.fx);
   const fmt = (usd: number) => formatMoney(language, book(usd), false);
 
+  const pickDestination = (id: string) => {
+    setDestinationId(id);
+    const to = world?.airportById.get(id);
+    if (detailed && !specs.length && engineWorld && hub && to) setSpecs([nextSpec(game, engineWorld, draftRoute(airline.id, hub, to), [], fleet.map((a) => a.id))]);
+  };
+
+  // The forecast runs the command on a copy of the game: same timetable the engine will fly (Simple: the game's own
+  // times for this aircraft; Detailed: the player's flights).
   const forecast = useMemo(() => {
-    if (!engineWorld || !hub || !dest || !aircraft) return null;
-    const type = getAircraftType(aircraft.typeId);
+    if (!engineWorld || !hub || !dest || problem || duplicate) return null;
+    const sim = structuredClone(game);
+    const command: Command = route
+      ? { type: 'UpdateRoute', airlineId: airline.id, payload: { routeId: route.id, ...settings } }
+      : { type: 'OpenRoute', airlineId: airline.id, payload: { destinationId: dest.id, ...settings } };
+    const result = applyCommand(sim, engineWorld, command);
+    const simRoute = result.ok && result.id ? sim.routes[result.id] : undefined;
+    const plan = simRoute ? planFor(sim, engineWorld, simRoute, game.time, true) : null;
+    if (!simRoute || !plan) return null;
     const date = toDate(game.time);
-    const plan = { type, seats: aircraft.seats, frequency, fareFactor, ageYears: yearOf(game.time) - aircraft.builtYear, rampUp: 1 };
+    const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, { ai: game.ai });
+    const pairs = pairsOfRoute(sim, simRoute.id).filter((p) => sim.aircraft[p.aircraftId]);
+    const used = [...new Set(pairs.map((p) => p.aircraftId))].map((id) => game.aircraft[id]!).filter(Boolean);
+    const type = aircraft ? getAircraftType(aircraft.typeId) : null;
     return {
       market: market(engineWorld, hub, dest),
       competitors: competitorsOn(engineWorld, hub, dest, undefined, game.ai),
       marketFare: marketFareUsd(engineWorld, hub, dest, date),
-      week: routeWeek(engineWorld, hub, dest, plan, date, { ai: game.ai }),
-      aircraftWeekUsd:
-        crewCostPerDayUsd(engineWorld, type, aircraft.seats, hub.country) * 7 +
-        convert(aircraft.lease.monthlyRent, 'USD', game.fx).amount * (12 / 52),
-      roundTrip: roundTripHours(type, distanceKm(hub, dest)),
-      available: WEEKLY_AVAILABLE_HOURS[type.category] - aircraftHours(game, aircraft.id, route?.id),
-      capacity: WEEKLY_AVAILABLE_HOURS[type.category],
+      week,
+      flightNumbers: week.timetable.map((f, i) => pairs[i >> 1]!.flightNumber + f.dir),
+      aircraftWeekUsd: used.reduce(
+        (sum, a) =>
+          sum +
+          crewCostPerDayUsd(engineWorld, getAircraftType(a.typeId), a.seats, hub.country) * 7 +
+          convert(a.lease.monthlyRent, 'USD', game.fx).amount * (12 / 52),
+        0,
+      ),
+      registrations: used.map((a) => a.registration).join(', '),
+      roundTrip: type ? roundTripHours(type, distanceKm(hub, dest)) : 1,
+      available: type && aircraft ? WEEKLY_AVAILABLE_HOURS[type.category] - aircraftHours(game, aircraft.id, route?.id) : 0,
     };
-  }, [engineWorld, hub, dest, aircraft, frequency, fareFactor, game, route?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engineWorld, hub, dest, aircraftId, frequency, fareFactor, specs, game, route?.id, problem, duplicate]);
 
   const maxFrequency = forecast ? Math.max(0, Math.min(MAX_FREQUENCY, Math.floor(forecast.available / forecast.roundTrip))) : MAX_FREQUENCY;
 
@@ -244,6 +331,8 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   const w = forecast?.week;
   const contribution = w ? w.revenue - totalCosts(w.costs) : 0;
   const shown = problem ?? (duplicate ? 'routeExists' : null) ?? error;
+  const numbers = new Map(route ? pairsOfRoute(game, route.id).map((p) => [p.id, p.flightNumber] as const) : []);
+  const time = fromDate(toDate(game.time));
 
   return (
     <div className="planner">
@@ -255,7 +344,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
             <span className="hubcard__text">
               <span>{dest.name}</span>
               <span className="muted small">
-                {dest.city} · {formatNumber(language, forecast?.market.distanceKm ?? 0)} km
+                {dest.city} · {formatNumber(language, forecast?.market.distanceKm ?? (hub ? distanceKm(hub, dest) : 0))} km
               </span>
             </span>
             {!route && (
@@ -265,43 +354,49 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
             )}
           </div>
         ) : (
-          world && <AirportSearch world={world} onPick={(a) => setDestinationId(a.id)} />
+          world && <AirportSearch world={world} onPick={(a) => pickDestination(a.id)} />
         )}
 
-        <span className="field__label">{t('network.aircraft')}</span>
-        <div className="choices choices--list" role="radiogroup" aria-label={t('network.aircraft')}>
-          {fleet.map((a) => {
-            const type = getAircraftType(a.typeId);
-            const used = aircraftHours(game, a.id, route?.id);
-            return (
-              <button key={a.id} type="button" role="radio" aria-checked={a.id === aircraftId} className="choice" onClick={() => setAircraftId(a.id)}>
-                <span className="choice__title mono">
-                  {a.registration} · {type.name}
-                </span>
-                <span className="muted small">
-                  {t('network.hoursUsed', { used: Math.round(used), max: WEEKLY_AVAILABLE_HOURS[type.category] })} ·{' '}
-                  {t('network.rangeKm', { km: formatNumber(language, type.rangeKm) })}
-                  {a.status === 'delivering' && ` · ${t('network.waitingDelivery')}`}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {!detailed && (
+          <>
+            <span className="field__label">{t('network.aircraft')}</span>
+            <div className="choices choices--list" role="radiogroup" aria-label={t('network.aircraft')}>
+              {fleet.map((a) => {
+                const type = getAircraftType(a.typeId);
+                const used = aircraftHours(game, a.id, route?.id);
+                return (
+                  <button key={a.id} type="button" role="radio" aria-checked={a.id === aircraftId} className="choice" onClick={() => setAircraftId(a.id)}>
+                    <span className="choice__title mono">
+                      {a.registration} · {type.name}
+                    </span>
+                    <span className="muted small">
+                      {t('network.hoursUsed', { used: Math.round(used), max: WEEKLY_AVAILABLE_HOURS[type.category] })} ·{' '}
+                      {t('network.rangeKm', { km: formatNumber(language, type.rangeKm) })}
+                      {a.status === 'delivering' && ` · ${t('network.waitingDelivery')}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
 
         <div className="field-row">
-          <div className="field">
-            <span className="field__label">{t('network.frequency')}</span>
-            <div className="stepper">
-              <button type="button" className="button" aria-label="−" onClick={() => setFrequency((f) => Math.max(1, f - 1))}>
-                −
-              </button>
-              <span className="stepper__value mono">{t('network.perWeek', { count: frequency })}</span>
-              <button type="button" className="button" aria-label="+" onClick={() => setFrequency((f) => Math.min(MAX_FREQUENCY, f + 1))}>
-                +
-              </button>
+          {!detailed && (
+            <div className="field">
+              <span className="field__label">{t('network.frequency')}</span>
+              <div className="stepper">
+                <button type="button" className="button" aria-label="−" onClick={() => setFrequency((f) => Math.max(1, f - 1))}>
+                  −
+                </button>
+                <span className="stepper__value mono">{t('network.perWeek', { count: frequency })}</span>
+                <button type="button" className="button" aria-label="+" onClick={() => setFrequency((f) => Math.min(MAX_FREQUENCY, f + 1))}>
+                  +
+                </button>
+              </div>
+              <span className="muted small">{t('network.maxFrequency', { count: maxFrequency })}</span>
             </div>
-            <span className="muted small">{t('network.maxFrequency', { count: maxFrequency })}</span>
-          </div>
+          )}
           <label className="field">
             <span className="field__label">
               {t('network.fare')}: {t('network.farePercent', { value: signed(fareFactor) })}
@@ -326,6 +421,24 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
         {shown && <p className="notice notice--error">{t(`errors.${shown}`)}</p>}
       </Panel>
 
+      {detailed && draft && engineWorld && (
+        <Panel title={t('timetable.title')} code={t('network.perWeek', { count: specs.reduce((sum, x) => sum + dayCount(x.days), 0) })}>
+          <TimetableEditor
+            game={game}
+            world={engineWorld}
+            route={draft}
+            specs={specs}
+            numbers={numbers}
+            errorIndex={specProblem?.index ?? null}
+            onChange={(next) => {
+              setSpecs(next);
+              setError(null);
+            }}
+            code={code}
+          />
+        </Panel>
+      )}
+
       {forecast && w && (
         <Panel title={t('network.forecast')} code={t('network.perWeekShort')}>
           <dl className="facts">
@@ -339,10 +452,11 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
               {forecast.competitors && forecast.competitors.length > 0 ? (
                 <ul className="competitors">
                   {forecast.competitors.map((c) => {
-                    const airline = engineWorld?.realAirlines?.byId.get(c.airlineId);
+                    const other = engineWorld?.realAirlines?.byId.get(c.airlineId);
+                    const deps = engineWorld && hub && dest ? competitorDepartures(engineWorld, c.airlineId, hub, dest, c.weekly, time) : [];
                     return (
                       <li key={c.airlineId} className="competitor">
-                        {airline && <TailFin primary={airline.colors.primary} secondary={airline.colors.secondary} size={22} />}
+                        {other && <TailFin primary={other.colors.primary} secondary={other.colors.secondary} size={22} />}
                         <a href={hrefFor('airlines', { id: c.airlineId })} className="competitor__name">
                           {c.name}
                         </a>
@@ -353,6 +467,12 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                         </span>
                         {c.changed && <span className="chip chip--planned">{t('network.reacted')}</span>}
                         <SourceTag tag={c.source} />
+                        {deps.length > 0 && (
+                          <span className="competitor__times mono small muted">
+                            {t('timetable.departuresFrom', { airport: hub?.iata ?? '' })}: {deps.map((d) => hhmmText(d.dep) + (d.weight < 0.99 ? '*' : '')).join(' · ')}{' '}
+                            <SourceTag tag="modelled" />
+                          </span>
+                        )}
                       </li>
                     );
                   })}
@@ -385,10 +505,49 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
               <strong>{fmt(contribution)}</strong>
             </dd>
           </dl>
+
+          <span className="field__label">{t('timetable.perFlight')}</span>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>{t('timetable.flight')}</th>
+                  <th>{t('timetable.from')}</th>
+                  <th className="num">{t('timetable.dep')}</th>
+                  <th className="num">{t('timetable.arr')}</th>
+                  <th>{t('timetable.days')}</th>
+                  <th className="num">{t('timetable.paxPerFlight')}</th>
+                  <th className="num">{t('network.lfShort')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {w.timetable
+                  .map((f, i) => ({ f, r: w.byFlight[i]!, n: forecast.flightNumbers[i]! }))
+                  .sort((x, y) => x.f.dir - y.f.dir || x.f.dep - y.f.dep)
+                  .map(({ f, r, n }, i) => {
+                    const lf = r.seats ? r.pax / r.seats : 0;
+                    return (
+                      <tr key={i}>
+                        <td className="mono">
+                          {airline.iata} {n}
+                        </td>
+                        <td className="mono">{f.dir === 0 ? hub?.iata : dest?.iata}</td>
+                        <td className="num mono">{hhmmText(f.dep)}</td>
+                        <td className="num mono">{hhmmText(r.arr)}</td>
+                        <td className="mono">{daysText(f.days)}</td>
+                        <td className="num mono">{formatNumber(language, r.flights ? r.pax / r.flights : 0)}</td>
+                        <td className={`num mono ${lfClass(lf)}`}>{formatNumber(language, lf * 100)} %</td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted small">{t('timetable.timesNote')}</p>
           <p className="muted small">
-            {t('network.fixedNote', {
+            {t(detailed ? 'network.fixedNoteDetailed' : 'network.fixedNote', {
               cost: fmt(forecast.aircraftWeekUsd),
-              registration: aircraft?.registration ?? '',
+              registration: forecast.registrations,
               hours: Math.round(w.blockHours),
             })}
           </p>

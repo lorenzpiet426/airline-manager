@@ -22,7 +22,7 @@ const ap = (id: string) => world.airportById.get(id)!;
 
 /** A Vienna startup with one A320neo already in service, flying VIE → `dest`. */
 function startup(dest: string, frequency: number, fareFactor: number, seed = 1) {
-  const state = createGame({ seed, startYear: 2026, timeMode: 'realtime', realism: 'realistic' });
+  const state = createGame({ seed, startYear: 2026, timeMode: 'realtime', realism: 'realistic', scheduling: 'simple' });
   const founded = applyCommand(state, world, {
     type: 'FoundAirline',
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 200_000_000, controller: 'human' },
@@ -78,7 +78,7 @@ describe('AI airlines react by type (2.1b)', () => {
   });
 
   it('keeps the real world stable when the player does nothing, and stays fast and small', () => {
-    const state = createGame({ seed: 9, startYear: 2026, timeMode: 'realtime', realism: 'realistic' });
+    const state = createGame({ seed: 9, startYear: 2026, timeMode: 'realtime', realism: 'realistic', scheduling: 'simple' });
     const t0 = performance.now();
     advance(state, world, simTime(2027, 1, 1));
     const seconds = (performance.now() - t0) / 1000;

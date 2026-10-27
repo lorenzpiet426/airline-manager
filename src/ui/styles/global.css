@@ -1758,3 +1758,228 @@ a.button {
 }
 
 .chip--warning { color: var(--red); }
+
+/* ─── Timetables (2.2) ───────────────────────────────────────────────────── */
+
+.button--small {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+.block {
+  display: block;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.competitor__times {
+  flex-basis: 100%;
+  padding-left: 30px;
+}
+
+/* Rotation chart: one row per day, bars positioned in % of 24 hours. */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 8px 0;
+}
+
+.timeline__hours {
+  position: relative;
+  height: 14px;
+  margin-left: 30px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-faint);
+}
+
+.timeline__hours span {
+  position: absolute;
+  transform: translateX(-2px);
+}
+
+.timeline__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeline__day {
+  width: 24px;
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.timeline__track {
+  position: relative;
+  flex: 1;
+  height: 20px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(to right, var(--bg-raised) 0 calc(25% - 1px), var(--line) calc(25% - 1px) 25%);
+  overflow: hidden;
+}
+
+.timeline__bar {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  line-height: 16px;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--accent-ink);
+}
+
+.timeline__bar--out,
+.timeline__bar--back {
+  background: var(--cyan);
+}
+
+.timeline__bar--ground {
+  top: 7px;
+  bottom: 7px;
+  background: color-mix(in srgb, var(--cyan) 35%, transparent);
+}
+
+.timeline__bar--turn {
+  top: 8px;
+  bottom: 8px;
+  background: color-mix(in srgb, var(--text-faint) 45%, transparent);
+}
+
+.timeline__bar--draft.timeline__bar--out,
+.timeline__bar--draft.timeline__bar--back {
+  background: var(--magenta);
+}
+
+.timeline__bar--draft.timeline__bar--ground {
+  background: color-mix(in srgb, var(--magenta) 35%, transparent);
+}
+
+.timeline__bar--conflict.timeline__bar--out,
+.timeline__bar--conflict.timeline__bar--back {
+  background: var(--red);
+  color: #fff;
+}
+
+/* Timetable editor */
+.tt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.tt-row--error {
+  border-color: var(--red);
+}
+
+.tt-row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tt-row__flight {
+  font-weight: 600;
+  color: var(--magenta);
+}
+
+.tt-row__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.tt-row__times {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.tt-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tt-day {
+  min-width: 36px;
+  min-height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.tt-day--wide {
+  padding: 0 10px;
+}
+
+.tt-day[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.tt-timeline {
+  margin-top: 12px;
+}
+
+/* Departures board */
+.board__table td {
+  white-space: nowrap;
+}
+
+.board__time {
+  color: var(--flap-text);
+  font-weight: 600;
+}
+
+:root[data-theme='light'] .board__time {
+  color: var(--text);
+}
+
+.board__return td {
+  color: var(--text-dim);
+}
+
+.tt-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tt-time .input {
+  flex: 1;
+  min-width: 0;
+}

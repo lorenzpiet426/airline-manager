@@ -1,12 +1,10 @@
-// Turns "VIE–LHR 14× per week on OE-LAB" into actual flights with times, so the map can show
-// where every aircraft is. Simple scheduling: each aircraft repeats the same week; the first
-// departure of a day is at 06:00 hub time and nobody departs after 21:00 hub time.
-import { getAircraftType, TURNAROUND_MIN } from '../data/aircraft';
-import type { Airport } from '../data/types';
-import { blockHours } from './economics';
+// Turns the timetable (flight pairs, see schedule.ts) into actual flights with UTC times, so the map can show where
+// every aircraft is. Each aircraft repeats the same week.
+import { pairBlocks, pairsOfAircraft } from './schedule';
 import { bearing, intermediatePoint } from './geo';
-import type { GameState, Route } from './state';
-import { MINUTES_PER_DAY, MINUTES_PER_WEEK, startOfWeek, type SimTime } from './time';
+import type { GameState } from './state';
+import { MINUTES_PER_DAY, MINUTES_PER_WEEK, startOfWeek, utcOffsetMin, type SimTime } from './time';
+import { hasDay } from './timetable';
 import type { EngineWorld } from './world';
 
 export interface Leg {
@@ -20,60 +18,29 @@ export interface Leg {
   arr: number;
 }
 
-const FIRST_DEPARTURE_H = 6;
-const LAST_DEPARTURE_H = 21;
-
-/** Hub local time is approximated from longitude (15° = 1 hour); good enough for a weekly pattern. */
-const hubOffsetMin = (hub: Airport) => Math.round(hub.lon / 15) * 60;
-
-/** The repeating weekly pattern of one aircraft. */
+/** The repeating weekly pattern of one aircraft, in UTC, sorted by departure. */
 export function weeklyLegs(state: GameState, world: EngineWorld, aircraftId: string): Leg[] {
   const aircraft = state.aircraft[aircraftId];
   if (!aircraft) return [];
-  const routes = Object.values(state.routes)
-    .filter((r) => r.aircraftId === aircraftId)
-    .sort((a, b) => a.flightNumber - b.flightNumber);
-  if (!routes.length) return [];
-  const hub = world.airportById.get(routes[0]!.originId);
-  if (!hub) return [];
-  const type = getAircraftType(aircraft.typeId);
-  const turn = TURNAROUND_MIN[type.category];
-  const offset = hubOffsetMin(hub);
-
-  // Interleave the routes so that each one's flights spread over the week: per pass, a route
-  // with three times the frequency of the smallest gets three round trips.
-  const queue: Route[] = [];
-  const left = new Map(routes.map((r) => [r.id, r.frequency]));
-  const smallest = Math.min(...routes.map((r) => r.frequency));
-  while ([...left.values()].some((n) => n > 0)) {
-    for (const r of routes) {
-      const per = Math.max(1, Math.round(r.frequency / smallest));
-      for (let i = 0; i < per && left.get(r.id)! > 0; i++) {
-        queue.push(r);
-        left.set(r.id, left.get(r.id)! - 1);
-      }
-    }
-  }
-
   const legs: Leg[] = [];
-  const localDay = (t: number) => Math.floor((t + offset) / MINUTES_PER_DAY);
-  const localMin = (t: number) => (((t + offset) % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-  let cursor = FIRST_DEPARTURE_H * 60 - offset; // Monday 06:00 hub time, in minutes after Monday 00:00 UTC
-  for (const route of queue) {
-    const tod = localMin(cursor);
-    if (tod > LAST_DEPARTURE_H * 60 || tod < FIRST_DEPARTURE_H * 60) {
-      // Night stop: wait for 06:00 hub time.
-      const nextDay = localDay(cursor) + (tod > LAST_DEPARTURE_H * 60 ? 1 : 0);
-      cursor = nextDay * MINUTES_PER_DAY + FIRST_DEPARTURE_H * 60 - offset;
+  for (const pair of pairsOfAircraft(state, aircraftId)) {
+    const route = state.routes[pair.routeId];
+    const hub = route && world.airportById.get(route.originId);
+    if (!route || !hub) continue;
+    const { out, back } = pairBlocks(world, aircraft.typeId, route);
+    const offset = utcOffsetMin(hub.tz, state.time);
+    for (let day = 0; day < 7; day++) {
+      if (!hasDay(pair.days, day)) continue;
+      // Hub local time → UTC; a departure just after local midnight on Monday belongs to the end of the UTC week.
+      let dep = day * MINUTES_PER_DAY + pair.dep - offset;
+      if (dep < 0) dep += MINUTES_PER_WEEK;
+      const common = { routeId: route.id, aircraftId };
+      legs.push({ ...common, flightNumber: pair.flightNumber, fromId: route.originId, toId: route.destinationId, dep, arr: dep + out });
+      const backDep = dep + out + pair.groundMin;
+      legs.push({ ...common, flightNumber: pair.flightNumber + 1, fromId: route.destinationId, toId: route.originId, dep: backDep, arr: backDep + back });
     }
-    const block = Math.round(blockHours(type, route.distanceKm) * 60);
-    const out = { dep: cursor, arr: cursor + block };
-    const back = { dep: out.arr + turn, arr: out.arr + turn + block };
-    legs.push({ routeId: route.id, aircraftId, flightNumber: route.flightNumber, fromId: route.originId, toId: route.destinationId, ...out });
-    legs.push({ routeId: route.id, aircraftId, flightNumber: route.flightNumber + 1, fromId: route.destinationId, toId: route.originId, ...back });
-    cursor = back.arr + turn;
   }
-  return legs;
+  return legs.sort((a, b) => a.dep - b.dep);
 }
 
 export interface AirborneFlight {

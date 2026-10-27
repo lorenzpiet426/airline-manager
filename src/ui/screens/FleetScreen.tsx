@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
 import { Segmented } from '../components/Segmented';
+import { AircraftTimeline } from '../components/AircraftTimeline';
 import { TailFin } from '../components/TailFin';
+import { useEngineWorld } from '../game/useEngineWorld';
+import { pairsOfAircraft } from '../../engine/schedule';
 import { usePlayer } from '../game/usePlayer';
 import { getAircraftType, type AircraftCategory } from '../../data/aircraft';
 import { aircraftHours } from '../../engine/commands';
@@ -61,6 +64,9 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
   const { t } = useTranslation();
   const { language } = useSettings();
   const world = useWorld();
+  const engineWorld = useEngineWorld();
+  const [open, setOpen] = useState<string | null>(null);
+  const code = (id: string) => world?.airportById.get(id)?.iata ?? id;
   const fleet = Object.values(game.aircraft)
     .filter((a) => a.airlineId === airline.id)
     .sort((a, b) => a.deliveryAt - b.deliveryAt);
@@ -120,12 +126,20 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
               </dd>
               <dt>{t('fleet.routesOf')}</dt>
               <dd className="mono">
-                {Object.values(game.routes)
-                  .filter((r) => r.aircraftId === aircraft.id)
-                  .map((r) => world?.airportById.get(r.destinationId)?.iata ?? r.destinationId)
+                {[...new Set(pairsOfAircraft(game, aircraft.id).map((p) => game.routes[p.routeId]?.destinationId ?? ''))]
+                  .filter(Boolean)
+                  .map(code)
                   .join(' · ') || t('fleet.noRoutes')}
               </dd>
             </dl>
+            {engineWorld && pairsOfAircraft(game, aircraft.id).length > 0 && (
+              <>
+                <button type="button" className="button button--small" aria-expanded={open === aircraft.id} onClick={() => setOpen(open === aircraft.id ? null : aircraft.id)}>
+                  {open === aircraft.id ? t('timeline.hide') : t('timeline.show')}
+                </button>
+                {open === aircraft.id && <AircraftTimeline game={game} world={engineWorld} aircraftId={aircraft.id} code={code} />}
+              </>
+            )}
           </li>
         );
       })}

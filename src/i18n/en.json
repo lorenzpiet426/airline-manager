@@ -193,7 +193,8 @@
     "realismRealistic": "Realistic",
     "laterHint": "Hardcore realism, historical start years, the Austrian Airlines takeover and competitors arrive in later phases.",
     "found": "Found airline",
-    "replaceWarning": "You already have a game running. Founding a new airline replaces it."
+    "replaceWarning": "You already have a game running. Founding a new airline replaces it.",
+    "scheduling": "Scheduling"
   },
   "errors": {
     "nameLength": "The name needs 2 to 40 characters.",
@@ -217,7 +218,14 @@
     "runwayOrigin": "The runway at your hub is too short for this aircraft on this distance.",
     "runwayDestination": "The destination's runway is too short (or unpaved) for this aircraft on this distance.",
     "etops": "Not allowed: the route goes too far from any diversion airport for this aircraft's ETOPS approval.",
-    "aircraftBusy": "This aircraft doesn't have enough hours left in its week. Fly less often or use another aircraft."
+    "aircraftBusy": "This aircraft doesn't have enough hours left in its week. Fly less often or use another aircraft.",
+    "noFlights": "Add at least one flight to the timetable.",
+    "timeInvalid": "Departure times go in 5-minute steps (e.g. 07:05).",
+    "daysInvalid": "Choose at least one day of operation.",
+    "groundTooShort": "The ground time at the destination is shorter than this aircraft's minimum turnaround.",
+    "groundTooLong": "The ground time can be at most 36 hours.",
+    "overlap": "This aircraft is already flying at that time (including the turnaround at the hub). Choose another time or aircraft.",
+    "alreadyDetailed": "This game already uses detailed scheduling."
   },
   "fleet": {
     "title": "Fleet",
@@ -264,7 +272,7 @@
   },
   "network": {
     "title": "Network",
-    "intro": "Your routes from the hub. Each route is flown by one aircraft as round trips; an aircraft can fly several routes until its week is full.",
+    "intro": "Your routes from the hub. Simple scheduling: you choose aircraft and round trips per week, the game sets the departure times.",
     "open": "Open route",
     "routes": "Routes",
     "empty": "No routes yet. Open your first route to start flying.",
@@ -300,7 +308,7 @@
     "revenue": "Ticket revenue",
     "contribution": "Route result",
     "fixedNote": "Not included: crew salaries and lease for {{registration}} ({{cost}} per week), which all routes of this aircraft share, and the airline's overheads. The route uses {{hours}} block hours per week.",
-    "forecastNote": "Forecast for this month's season once the route is known; new routes start with about 60 % of these passengers and grow over 8 weeks. Summer is busier than winter, and fuel prices change every week. If you undercut the market, other airlines match about half of your price cut.",
+    "forecastNote": "Forecast for this month's season once the route is known; new routes start with about 60 % of these passengers and grow over 8 weeks. Summer is busier than winter, and fuel prices change every week. Other airlines react to your prices and timetable within about a month.",
     "close": "Close route",
     "closeConfirm": "Close this route? Flights stop immediately.",
     "save": "Save changes",
@@ -308,7 +316,9 @@
     "seasonValue": "{{value}} % vs average month",
     "plusConnections": "Plus one-stop connections via other hubs.",
     "fareLevel": "fares {{value}} %",
-    "reacted": "reacted"
+    "reacted": "reacted",
+    "introDetailed": "Your routes from the hub with your own timetable: every flight has a departure time, days of operation and an aircraft.",
+    "fixedNoteDetailed": "Not included: crew salaries and leases of {{registration}} ({{cost}} per week together), which they share with their other routes, and the airline's overheads. The route uses {{hours}} block hours per week."
   },
   "finance": {
     "title": "Finance",
@@ -431,5 +441,56 @@
       "manufacturers": "Aircraft performance: seats, range, take-off distance, weight.",
       "plex": "The game's typefaces."
     }
+  },
+  "timetable": {
+    "title": "Timetable",
+    "board": "Timetable",
+    "mode": {
+      "simple": "Simple scheduling: the game sets the times.",
+      "detailed": "Detailed scheduling: your own timetable."
+    },
+    "modeName": {
+      "simple": "Simple",
+      "detailed": "Detailed"
+    },
+    "modeHint": {
+      "simple": "You choose round trips per week; the game plans departure times (from 06:00 hub time). You can switch to Detailed later.",
+      "detailed": "You set every flight yourself: departure time, days of operation, aircraft and ground time — like a real airline's network planning."
+    },
+    "switch": "Switch to Detailed",
+    "switchConfirm": "Switch to detailed scheduling? Your current flights become a timetable you can edit. This cannot be undone.",
+    "departuresFrom": "Departures {{airport}}",
+    "empty": "No flights yet.",
+    "newFlight": "new flight",
+    "remove": "Remove flight",
+    "departure": "Departure {{airport}} (local)",
+    "ground": "Ground time {{airport}} (min)",
+    "days": "Days",
+    "daily": "Daily",
+    "nightStop": "night stop",
+    "add": "Add flight",
+    "hint": "Times are local: departure in {{hub}} time, the return in {{dest}} time. The ground time includes unloading, cleaning, catering and boarding (at least the aircraft's minimum turnaround); 8 hours or more is a night stop.",
+    "allDays": "All days",
+    "noFlights": "No flights on this day.",
+    "flight": "Flight",
+    "from": "From",
+    "to": "To",
+    "dep": "Dep.",
+    "arr": "Arr.",
+    "boardNote": "Local times at each airport. Days: 1 = Monday … 7 = Sunday, as in airline timetables; +1 = arrives the next day.",
+    "perFlight": "Flights",
+    "paxPerFlight": "Pax/flight",
+    "timesNote": "Passengers choose by departure time: business travellers want early mornings out and evenings back, holidaymakers are flexible but avoid night flights; Fridays and Sundays are busier than Tuesdays. Flights close to a competitor's (or your own) share their passengers. Eastbound flights are faster (westerly winds). Competitors' times are generated by the game (real times may not be copied), marked “modelled”; * = not every day.",
+    "hour": "Hour",
+    "minute": "Minute"
+  },
+  "timeline": {
+    "title": "Week of {{registration}} (hub time)",
+    "label": "Rotation chart of {{registration}}",
+    "ground": "on the ground {{minutes}} min",
+    "turn": "turnaround at the hub",
+    "note": "Each row is a day in hub local time: flight out, time at the destination (light), flight back, turnaround (faint). Magenta = the route you are editing, red = collision.",
+    "show": "Show week",
+    "hide": "Hide week"
   }
 }

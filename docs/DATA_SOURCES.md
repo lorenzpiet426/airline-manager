@@ -99,6 +99,27 @@ All in `src/engine/economics.ts`, amounts in USD, converted to the airline's boo
   and almost nothing is profitable in January. Over a year a well-run airline makes a few percent, like real airlines
   (European carriers typically lose money in the winter quarter).
 
+## Timetables and time-of-day demand (Phase 2.2)
+`src/engine/timetable.ts`, `src/engine/schedule.ts`. No dataset: modelled from general industry knowledge, tagged
+"modelled" in the game. Real departure times of real airlines exist only in sources we may not copy (OAG, Cirium,
+Flightradar24…), so competitors' timetables are **generated**.
+- **Block time** per direction: 0.45 h taxi/climb/descent + great-circle × 1.06 ÷ (cruise speed + wind), rounded up to
+  5 minutes. Wind = 50 km/h westerly at 30–55° latitude (weaker towards the tropics), so eastbound flights are faster
+  (VIE–JFK ≈ 50 min longer than JFK–VIE; real timetables show 40–70 min).
+- **Passenger choice** (simplified "decision window" model, as used in airline network planning): travellers have a
+  wished local departure hour (business: peaks 06–08 and 16–19; leisure: broad 07–21; long-haul: all day into the late
+  evening). Flights within ±1 h (business) / ±3 h (leisure) are equally fine, further away appeal fades (time constant
+  1.5 h / 3 h). Night arrivals 00:30–05:00 count ×0.3 (long-haul ×0.6). The one-stop alternative is always available.
+  Shares are computed per hour of the day; an airline's flights get an extra ×(daily flights)^0.3 (frequency S-curve),
+  which reproduces the earlier frequency^1.3 rule when flights are evenly spread.
+- **Weekdays**: business Mon 1.15, Tue/Wed 1.0, Thu/Fri 1.1, Sat 0.55, Sun 0.9; leisure Mon 0.95, Tue/Wed 0.85,
+  Thu 1.0, Fri 1.15, Sat 1.1, Sun 1.15 (normalised to a weekly average of 1).
+- **Generated competitor timetables**: from the airline's home end (hub/base, else home country) 1 flight → 07:00,
+  2 → 07:00 + 17:30, more → evenly 06:30–20:30; long-haul eastbound from 13:30, westbound from 10:45; small airline-
+  specific offset (±15 min). Flights from the other end are the returns after block time + 45 min (long-haul 2 h).
+- **Check**: with the new model the best plans from VIE (A320neo, 20 destinations) make about the same as before
+  (July ≈ 21 % vs 24 %, April 18 % vs 21 %, January ≈ 1 % vs 3 %); good departure times can now beat bad ones.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

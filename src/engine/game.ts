@@ -20,13 +20,14 @@ export function createGame(options: NewGameOptions): GameState {
     rng: options.seed >>> 0,
     time: startTime,
     startTime,
-    options: { timeMode: options.timeMode, realism: options.realism },
+    options: { timeMode: options.timeMode, realism: options.realism, scheduling: options.scheduling },
     fx: { ...ECB_RATES },
     fxDate: FX_DATE,
     airlines: {},
     aircraft: {},
     market: { offers: [] },
     routes: {},
+    flights: {},
     finance: {},
     ai: emptyAi(),
     queue: [],
@@ -80,6 +81,13 @@ export function migrate(raw: unknown): GameState | null {
     // Version 5 (2.1b): the AI airlines start from the real-world data with no changes yet.
     state.ai = emptyAi();
     state.version = 5;
+  }
+  if (state.version === 5) {
+    // Version 6 (2.2): timetables. Older games keep Simple scheduling; their flight pairs are planned on loading
+    // (ensureFlights, needs the world data).
+    state.options.scheduling = 'simple';
+    state.flights = {};
+    state.version = 6;
   }
   if (state.version !== SAVE_VERSION) return null;
   return state;

@@ -109,7 +109,7 @@ describe('route rules', () => {
 });
 
 function airlineWithAircraft(typeId = 'A20N') {
-  const state = createGame({ seed: 1, startYear: 2026, timeMode: 'realtime', realism: 'realistic' });
+  const state = createGame({ seed: 1, startYear: 2026, timeMode: 'realtime', realism: 'realistic', scheduling: 'simple' });
   const founded = applyCommand(state, world, {
     type: 'FoundAirline',
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 75_000_000, controller: 'human' },
@@ -192,13 +192,13 @@ describe('operating routes', () => {
 
 describe('saves from Phase 1.3', () => {
   it('upgrades a version 1 save', () => {
-    const state = createGame({ seed: 3, startYear: 2026, timeMode: 'weekly', realism: 'realistic' }) as Partial<GameState>;
+    const state = createGame({ seed: 3, startYear: 2026, timeMode: 'weekly', realism: 'realistic', scheduling: 'simple' }) as Partial<GameState>;
     delete state.routes;
     delete state.finance;
     state.queue = state.queue!.filter((e) => e.kind !== 'dayStart');
     state.version = 1;
     const upgraded = migrate(JSON.parse(JSON.stringify(state)))!;
-    expect(upgraded.version).toBe(5);
+    expect(upgraded.version).toBe(6);
     expect(upgraded.ai).toEqual({ routes: {}, added: {}, airlines: {} });
     expect(upgraded.routes).toEqual({});
     expect(upgraded.queue.some((e) => e.kind === 'dayStart')).toBe(true);

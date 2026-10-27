@@ -8,14 +8,29 @@ import type { Airport } from '../data/types';
 import { distanceKm, greatCirclePoints } from './geo';
 import type { BusinessModel, SourceTag } from './realAirlines';
 import type { AiState } from './state';
+import { fromDate, utcOffsetMin, type SimTime } from './time';
+import {
+  BLOCK_OVERHEAD_H,
+  blockMinutes,
+  dailyWeights,
+  DAYS_ALL,
+  dayShares,
+  hasDay,
+  homeDepartures,
+  isEastbound,
+  LONG_HAUL_MIN,
+  ROUTING_FACTOR,
+  seedOf,
+  shiftDays,
+  spreadDays,
+  weekdayFactor,
+  wrapDay,
+  type DayOption,
+} from './timetable';
 import { longestHardRunwayM, type EngineWorld } from './world';
 
 // ─── Flight times ──────────────────────────────────────────────────────────────
 
-/** Airways are not straight lines: real routings are ~6 % longer than the great circle. */
-const ROUTING_FACTOR = 1.06;
-/** Taxi out/in, climb and descent add roughly this much to the cruise time (hours). */
-const BLOCK_OVERHEAD_H = 0.45;
 
 /** Gate-to-gate time ("block time") in hours. */
 export const blockHours = (type: AircraftType, km: number): number =>
@@ -83,8 +98,6 @@ const GROUND_KM = 400;
 const GROUND_EXP = 4;
 /** Share of a price cut the existing airlines match. */
 const INCUMBENT_PRICE_MATCH = 0.5;
-/** Travellers prefer the airline with more flights more than proportionally (an "S-curve"). */
-const FREQUENCY_EXP = 1.3;
 /** Big airports draw passengers from far away (tourism, transfers): at least this many "market people". */
 const LARGE_AIRPORT_FLOOR = 500_000;
 
@@ -319,6 +332,19 @@ function navigationChargeUsd(world: EngineWorld, type: AircraftType, from: Airpo
 
 // ─── A route week ──────────────────────────────────────────────────────────────
 
+/** One flight of a timetable on this route, as the economics model sees it. */
+export interface PlannedFlight {
+  /** 0 = outbound (from → to), 1 = return. */
+  dir: 0 | 1;
+  /** Weekdays it departs (local time at its departure airport), bit 0 = Monday. */
+  days: number;
+  /** Local departure, minutes after midnight. */
+  dep: number;
+  type: AircraftType;
+  seats: number;
+  ageYears: number;
+}
+
 export interface RoutePlan {
   type: AircraftType;
   seats: number;
@@ -329,6 +355,8 @@ export interface RoutePlan {
   ageYears: number;
   /** New routes take a few weeks until everybody knows them (0…1). */
   rampUp: number;
+  /** The timetable; without it, a typical timetable for `frequency` round trips of `type` is assumed. */
+  flights?: PlannedFlight[];
 }
 
 export interface RouteCosts {
@@ -338,6 +366,16 @@ export interface RouteCosts {
   handling: number;
   navigation: number;
   distribution: number;
+}
+
+/** Result per timetable flight (summed over its weekdays). */
+export interface FlightResult {
+  flights: number;
+  seats: number;
+  pax: number;
+  /** Local arrival time, minutes after the departure day's midnight at the arrival airport. */
+  arr: number;
+  blockMin: number;
 }
 
 export interface RouteWeek {
@@ -352,10 +390,21 @@ export interface RouteWeek {
   revenue: number;
   costs: RouteCosts;
   blockHours: number;
+  /** The timetable used (the plan's own, or the assumed typical one). */
+  timetable: PlannedFlight[];
+  /** Per timetable flight, in the same order. */
+  byFlight: FlightResult[];
 }
 
 /** "Smooth minimum": passengers carried approach the seats offered without a hard edge (some flights fill, some don't). */
 const carried = (demand: number, seats: number) => (seats <= 0 ? 0 : (demand * seats) / (demand ** 4 + seats ** 4) ** 0.25);
+
+/** A timed non-stop offer by somebody else, e.g. the player's flights when an AI airline does its sums. */
+export interface TimedSupplierFlight {
+  dir: 0 | 1;
+  days: number;
+  dep: number;
+}
 
 /** Who else is on the route, seen from the airline being calculated. */
 export interface RouteContext {
@@ -364,70 +413,212 @@ export interface RouteContext {
   /** Leave this real airline out of the competitors (when calculating that airline's own route). */
   exclude?: string;
   /** More non-stop offers on the route, e.g. the player's flights when an AI airline does its sums. */
-  extra?: Supplier[];
+  extra?: (Supplier & { flights?: TimedSupplierFlight[] })[];
+  /** Only these weekdays (bit 0 = Monday), e.g. to book a single day; default: the whole week. */
+  days?: number;
 }
 
-/** Forecast of one week on a route (both directions), in USD. */
+/** Cruise speed assumed for other airlines' jets when generating their timetables. */
+const GENERIC_CRUISE_KMH = 830;
+const genericTurnMin = (longHaul: boolean) => (longHaul ? 120 : 45);
+
+/** Is `a` the home end of this airline's route a–b (hub/base, else home country)? */
+function homeAt(world: EngineWorld, airlineId: string, a: Airport, b: Airport): boolean {
+  const airline = world.realAirlines?.byId.get(airlineId);
+  if (!airline) return a.id < b.id;
+  const bases = [...airline.hubs, ...airline.bases];
+  if (bases.includes(a.id)) return true;
+  if (bases.includes(b.id)) return false;
+  if (airline.country === a.country) return true;
+  if (airline.country === b.country) return false;
+  return a.id < b.id;
+}
+
+/**
+ * The generated timetable of another airline in one direction (local departure minutes and the share of days each
+ * flight operates). Flights from its home airport leave in typical waves; flights from the other end are the
+ * return legs after a turnaround.
+ */
+export function competitorDepartures(world: EngineWorld, airlineId: string, A: Airport, B: Airport, weekly: number, time: SimTime): { dep: number; arr: number; weight: number }[] {
+  const weights = dailyWeights(weekly);
+  if (!weights.length) return [];
+  const km = Math.max(distanceKm(A, B), 50);
+  const blockAB = blockMinutes(GENERIC_CRUISE_KMH, A, B, km);
+  const long = blockAB > LONG_HAUL_MIN;
+  const offA = utcOffsetMin(A.tz, time);
+  const offB = utcOffsetMin(B.tz, time);
+  let deps: number[];
+  if (homeAt(world, airlineId, A, B)) {
+    deps = homeDepartures(weights.length, seedOf(airlineId + B.id), long, isEastbound(A, B));
+  } else {
+    const blockBA = blockMinutes(GENERIC_CRUISE_KMH, B, A, km);
+    deps = homeDepartures(weights.length, seedOf(airlineId + A.id), long, isEastbound(B, A)).map(
+      (d) => wrapDay(d - offB + blockBA + genericTurnMin(long) + offA).min,
+    );
+  }
+  return deps.map((dep, i) => ({ dep, arr: dep - offA + blockAB + offB, weight: weights[i]! }));
+}
+
+/** A typical timetable for `frequency` round trips (used when a plan has none, e.g. for the AI's own sums). */
+export function typicalTimetable(plan: RoutePlan, from: Airport, to: Airport, time: SimTime): PlannedFlight[] {
+  const km = Math.max(distanceKm(from, to), 50);
+  const out = blockMinutes(plan.type.cruiseKmh, from, to, km);
+  const long = out > LONG_HAUL_MIN;
+  const slots = Math.ceil(plan.frequency / 7);
+  const deps = homeDepartures(slots, seedOf(from.id + to.id), long, isEastbound(from, to));
+  const offFrom = utcOffsetMin(from.tz, time);
+  const offTo = utcOffsetMin(to.tz, time);
+  const turn = Math.max(TURNAROUND_MIN[plan.type.category], genericTurnMin(long));
+  const flights: PlannedFlight[] = [];
+  deps.forEach((dep, i) => {
+    const days = i < slots - 1 ? DAYS_ALL : spreadDays(plan.frequency - 7 * (slots - 1));
+    const back = wrapDay(dep - offFrom + out + turn + offTo);
+    const common = { type: plan.type, seats: plan.seats, ageYears: plan.ageYears };
+    flights.push({ dir: 0, days, dep, ...common }, { dir: 1, days: shiftDays(days, back.shift), dep: back.min, ...common });
+  });
+  return flights;
+}
+
+/** Forecast of one week on a route (both directions), in USD, flight by flight. */
 export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: RoutePlan, date: Date, ctx: RouteContext = {}): RouteWeek {
   const m = market(world, from, to);
+  const time = fromDate(date);
   const fare = marketFareUsd(world, from, to, date) * plan.fareFactor;
   const biz = m.businessShare;
   const ff = Math.max(0.3, plan.fareFactor);
-  // Cheaper than the market: more people fly at all, and more choose you over the others.
-  // Holidaymakers react much more strongly to price than business travellers.
-  const stimulation = biz * ff ** -0.6 + (1 - biz) * ff ** -1.6;
-  // Competition: the real airlines on this route with their current frequencies and fares (they react to price cuts
-  // themselves, month by month, see ai.ts) or, without real airline data, "invisible incumbents" that are assumed to
-  // match about half of any price cut right away.
-  const competitors = competitorsOn(world, from, to, m, ctx.ai)?.filter((c) => c.airlineId !== ctx.exclude) ?? null;
-  const relative = !competitors && ff < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - ff) : ff;
-  const attraction = biz * relative ** -1.2 + (1 - biz) * relative ** -2.6;
-  // Slow aircraft lose travellers on long routes (an ATR needs 3 h to London, a jet 2 h).
-  const jetBlock = BLOCK_OVERHEAD_H + (m.distanceKm * ROUTING_FACTOR) / 830;
-  const speed = Math.min(1, jetBlock / blockHours(plan.type, m.distanceKm)) ** 2;
-  const mine = plan.frequency ** FREQUENCY_EXP * attraction * speed;
-  // Everyone else attracts travellers by frequency and price level; plus one-stop connections via other hubs.
-  const fareAttraction = (x: number) => biz * Math.max(0.3, x) ** -1.2 + (1 - biz) * Math.max(0.3, x) ** -2.6;
-  const nonstop =
-    (competitors
-      ? competitors.reduce((s, c) => s + c.weekly ** FREQUENCY_EXP * fareAttraction(c.fareFactor), 0)
-      : m.incumbentFlights ** FREQUENCY_EXP) +
-    (ctx.extra ?? []).reduce((s, x) => s + x.weekly ** FREQUENCY_EXP * fareAttraction(x.fareFactor) * (x.speed ?? 1), 0);
-  const others = nonstop + m.connectingFlights ** FREQUENCY_EXP;
-  const share = mine / (mine + others) || 0;
   const season = seasonFactor(from, to, biz, date);
-  const demandPerDirection = m.weeklyPax * share * stimulation * season * plan.rampUp;
-  const seatsPerDirection = plan.frequency * plan.seats;
-  const paxPerDirection = carried(demandPerDirection, seatsPerDirection);
+  const timetable = plan.flights ?? typicalTimetable(plan, from, to, time);
+  const longHaul = blockMinutes(GENERIC_CRUISE_KMH, from, to, m.distanceKm) > LONG_HAUL_MIN;
+  const jetBlock = BLOCK_OVERHEAD_H + (m.distanceKm * ROUTING_FACTOR) / 830;
+  const ends = [from, to] as const;
+  const offsets = ends.map((a) => utcOffsetMin(a.tz, time));
+  const days = ctx.days ?? DAYS_ALL;
 
-  const flights = plan.frequency * 2;
-  const pax = paxPerDirection * 2;
-  const block = blockHours(plan.type, m.distanceKm);
+  // Per timetable flight: block time, arrival, appeal from speed (slow aircraft lose travellers on long routes).
+  const info = timetable.map((f) => {
+    const A = ends[f.dir];
+    const B = ends[1 - f.dir]!;
+    const blockMin = blockMinutes(f.type.cruiseKmh, A, B, m.distanceKm);
+    return {
+      blockMin,
+      arr: f.dep - offsets[f.dir]! + blockMin + offsets[1 - f.dir]!,
+      speed: Math.min(1, jetBlock / blockHours(f.type, m.distanceKm)) ** 2,
+    };
+  });
+  // Demand per flight and weekday.
+  const demand = timetable.map(() => [0, 0, 0, 0, 0, 0, 0]);
+
+  for (const dir of [0, 1] as const) {
+    const A = ends[dir];
+    const B = ends[1 - dir]!;
+    // Competition: the real airlines on this route with their current frequencies and fares (they react to price cuts
+    // themselves, month by month, see ai.ts) or, without real airline data, "invisible incumbents" that are assumed to
+    // match about half of any price cut right away.
+    const competitors = competitorsOn(world, A, B, undefined, ctx.ai)?.filter((c) => c.airlineId !== ctx.exclude) ?? null;
+    const relative = !competitors && ff < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - ff) : ff;
+    const others: { dep: number; arr: number; weight: number; fare: number; speed: number; group: string; days?: number }[] = [];
+    if (competitors) {
+      for (const c of competitors) {
+        for (const d of competitorDepartures(world, c.airlineId, A, B, c.weekly, time)) others.push({ ...d, fare: c.fareFactor, speed: 1, group: c.airlineId });
+      }
+    } else {
+      for (const d of competitorDepartures(world, 'incumbent', A, B, m.incumbentFlights, time)) others.push({ ...d, fare: 1, speed: 1, group: 'incumbent' });
+    }
+    (ctx.extra ?? []).forEach((x, i) => {
+      if (x.flights) {
+        for (const f of x.flights.filter((f) => f.dir === dir)) {
+          const arr = f.dep - offsets[dir]! + blockMinutes(GENERIC_CRUISE_KMH, A, B, m.distanceKm) + offsets[1 - dir]!;
+          others.push({ dep: f.dep, arr, weight: 1, fare: x.fareFactor, speed: x.speed ?? 1, group: `extra${i}`, days: f.days });
+        }
+      } else {
+        for (const d of competitorDepartures(world, `extra${i}`, A, B, x.weekly, time)) others.push({ ...d, fare: x.fareFactor, speed: x.speed ?? 1, group: `extra${i}` });
+      }
+    });
+    const mineIdx = timetable.map((f, i) => (f.dir === dir ? i : -1)).filter((i) => i >= 0);
+
+    for (const segment of ['business', 'leisure'] as const) {
+      const segShare = segment === 'business' ? biz : 1 - biz;
+      // Holidaymakers react much more strongly to price than business travellers; cheaper fares also make more
+      // people fly at all ("stimulation").
+      const pull = (x: number) => Math.max(0.3, x) ** (segment === 'business' ? -1.2 : -2.6);
+      const stimulation = ff ** (segment === 'business' ? -0.6 : -1.6);
+      const cache = new Map<string, number[]>();
+      for (let day = 0; day < 7; day++) {
+        if (!hasDay(days, day)) continue;
+        const mine = mineIdx.filter((i) => hasDay(timetable[i]!.days, day));
+        const theirs = others.filter((o) => o.days === undefined || hasDay(o.days, day));
+        if (!mine.length) continue;
+        const key = `${mine.join(',')}|${theirs.length}`;
+        let shares = cache.get(key);
+        if (!shares) {
+          const options: DayOption[] = [
+            ...mine.map((i) => ({ dep: timetable[i]!.dep, arr: info[i]!.arr, pull: pull(relative) * info[i]!.speed, weight: 1, group: 'me' })),
+            ...theirs.map((o) => ({ dep: o.dep, arr: o.arr, pull: pull(o.fare) * o.speed, weight: o.weight, group: o.group })),
+          ];
+          shares = dayShares(options, segment, longHaul, m.connectingFlights / 7, 1);
+          cache.set(key, shares);
+        }
+        const travellers = (m.weeklyPax / 7) * segShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation;
+        mine.forEach((i, k) => (demand[i]![day]! += travellers * shares[k]!));
+      }
+    }
+  }
+
+  // Passengers, revenue and costs flight by flight.
+  const costs: RouteCosts = { fuel: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0 };
+  const fuelPrice = fuelUsdPerKg(date);
+  const nav = new Map<string, number>();
+  let flights = 0;
+  let seats = 0;
+  let pax = 0;
+  let totalDemand = 0;
+  let block = 0;
+  const byFlight: FlightResult[] = timetable.map((f, i) => {
+    const A = ends[f.dir];
+    const B = ends[1 - f.dir]!;
+    const result: FlightResult = { flights: 0, seats: 0, pax: 0, arr: info[i]!.arr, blockMin: info[i]!.blockMin };
+    for (let day = 0; day < 7; day++) {
+      if (!hasDay(days, day) || !hasDay(f.days, day)) continue;
+      const p = carried(demand[i]![day]!, f.seats);
+      result.flights += 1;
+      result.seats += f.seats;
+      result.pax += p;
+      totalDemand += demand[i]![day]!;
+    }
+    const n = result.flights;
+    if (!n) return result;
+    const h = info[i]!.blockMin / 60;
+    const mtowT = f.type.mtowKg / 1000;
+    costs.fuel += f.type.fuelKgPerHour * (h + 0.15) * n * fuelPrice;
+    costs.maintenance += f.type.maintUsdPerBlockHour * (1 + 0.01 * f.ageYears) * h * n;
+    // Landing fee per tonne of MTOW at the arrival airport, passenger fee at the departure airport.
+    costs.airport += (6 * mtowT * n * airportFactor(world, B)) + 13 * result.pax * airportFactor(world, A);
+    costs.handling += (250 + 7 * f.seats) * wageFactor(world, B.country) * n + result.pax * (1.5 + 0.0025 * m.distanceKm);
+    const navKey = `${f.type.id}|${f.dir}`;
+    if (!nav.has(navKey)) nav.set(navKey, navigationChargeUsd(world, f.type, A, B, m.distanceKm));
+    costs.navigation += nav.get(navKey)! * n;
+    flights += n;
+    seats += result.seats;
+    pax += result.pax;
+    block += h * n;
+    return result;
+  });
   const revenue = pax * fare;
-  const fuelKg = plan.type.fuelKgPerHour * (block + 0.15) * flights;
-  const mtowT = plan.type.mtowKg / 1000;
-  // Each airport: a landing fee per tonne of MTOW for every departure, plus a fee per departing passenger.
-  const airportFees = (a: Airport) => (plan.frequency * 6 * mtowT + 13 * paxPerDirection) * airportFactor(world, a);
-  const handlingPerTurn = (a: Airport) => (250 + 7 * plan.seats) * wageFactor(world, a.country);
+  costs.distribution = 0.05 * revenue;
 
   return {
     flights,
-    seats: seatsPerDirection * 2,
-    demand: demandPerDirection * 2,
+    seats,
+    demand: totalDemand,
     season,
     pax,
-    loadFactor: seatsPerDirection > 0 ? paxPerDirection / seatsPerDirection : 0,
+    loadFactor: seats > 0 ? pax / seats : 0,
     fareUsd: fare,
     revenue,
-    blockHours: block * flights,
-    costs: {
-      fuel: fuelKg * fuelUsdPerKg(date),
-      maintenance: plan.type.maintUsdPerBlockHour * (1 + 0.01 * plan.ageYears) * block * flights,
-      airport: airportFees(from) + airportFees(to),
-      handling: plan.frequency * (handlingPerTurn(from) + handlingPerTurn(to)) + pax * (1.5 + 0.0025 * m.distanceKm),
-      navigation: navigationChargeUsd(world, plan.type, from, to, m.distanceKm) * flights,
-      distribution: 0.05 * revenue,
-    },
+    costs,
+    blockHours: block,
+    timetable,
+    byFlight,
   };
 }
 
