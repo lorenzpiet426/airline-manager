@@ -344,7 +344,8 @@ difference explained in the validation report. Cabin layouts per airline where k
 
 **3. Austrian:** Claude drafts Austrian's network (routes + weekly flights) and fleet (types, registrations) from
 Eurostat, Wikipedia, Wikidata and the registers into `data-hand/austrian/`, shows it to the owner as a readable list;
-the owner reports errors. **Only entries the owner has confirmed are tagged `hand-checked`.**
+the owner reports errors. **Only entries the owner has confirmed are tagged `hand-checked`.** → Owner (2026-10-27):
+accepted the draft as it is, **no hand-check** — entries keep their tags (`wikipedia`, `official`, `modelled`).
 **4. Validation report** for Austrian, Lufthansa, Ryanair, Wizz Air: reconstruction vs. Wikipedia, every difference listed.
 **5. Aircraft types:** all common missing types incl. turboprops (ATR 42, Dash 8 family), regional jets, freighters.
 Then 2.1a (real airlines visible) / 2.1b (AI behaviour by airline type). **Show the owner which sources work before
@@ -546,7 +547,7 @@ education", forbid making the data available to others (§3 iii) and require a w
   airlines Wikipedia lists (Austrian 3×, destination's home airline 2×, others 1×, seasonal ½) — sums to ~1,400/week,
   probably 20–40 % too high (Wikipedia misses other airlines on some routes). Fleet: Wikipedia counts + register
   registrations matched by Austrian's series (OE-LB/LX/LZ/LA/LP/LW): 29 A320ceo, 5+2? A320neo, 6 A321, 3 767, 6 777,
-  4 787-9 (Wikipedia: 3), 13 E195; 31 on order. **Waiting for the owner's corrections.**
+  4 787-9 (Wikipedia: 3), 13 E195; 31 on order. Owner accepted it without hand-checking (nothing tagged `hand-checked`).
 - **Next pipeline steps:** Wikipedia articles (business model, bases, destination lists, fleet tables, seat layouts;
   ambiguous destinations listed for the owner); Brazil ANAC + Canada register; split Eurostat route totals between the
   airlines that serve each route; fleets; validation report (Austrian, Lufthansa, Ryanair, Wizz Air); then 2.1a screens.
