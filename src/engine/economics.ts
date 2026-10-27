@@ -2,12 +2,32 @@
 // what they pay, how long the flight takes and what it costs to operate. All amounts in US dollars;
 // they are converted into the airline's book currency when booked.
 // Calibration notes and sources: docs/DATA_SOURCES.md ("Economics model").
-import { TURNAROUND_MIN, type AircraftCategory, type AircraftType } from '../data/aircraft';
+import { getAircraftType, TURNAROUND_MIN, type AircraftCategory, type AircraftType } from '../data/aircraft';
 import { fuelUsdPerKg, jetFuelSpot } from '../data/fuel';
 import type { Airport } from '../data/types';
 import { distanceKm, greatCirclePoints } from './geo';
 import type { BusinessModel, SourceTag } from './realAirlines';
-import type { AiState } from './state';
+import {
+  abreast,
+  brandAppeal,
+  classDemandShare,
+  classFareRatio,
+  classFit,
+  CLASSES,
+  economyCabin,
+  expectedScore,
+  fareFactorOf,
+  haul,
+  MODEL_REPUTATION,
+  modelCabin,
+  premiumCrew,
+  seatAppeal,
+  seatScore,
+  serviceCostUsd,
+  START_REPUTATION,
+  type Segment,
+} from './cabins';
+import type { AiState, CabinClass, CabinLayout, CabinSection, ClassFares, ExperienceSums } from './state';
 import { fromDate, utcOffsetMin, type SimTime } from './time';
 import {
   BLOCK_OVERHEAD_H,
@@ -297,16 +317,16 @@ const PILOT_COST_USD = { short: 135_000, long: 175_000 };
 const CABIN_CREW_COST_USD = 45_000;
 
 /** Crew needed to keep one aircraft flying all week (several crews take turns). */
-export function crewPerAircraft(type: AircraftType, seats: number) {
+export function crewPerAircraft(type: AircraftType, seats: number, cabin?: CabinLayout) {
   const wide = type.category === 'widebody';
-  // EU rules: at least one cabin crew member per 50 seats; long-haul service needs more.
-  const cabinPerFlight = Math.max(1, Math.ceil(seats / (wide ? 35 : 50)));
+  // EU rules: at least one cabin crew member per 50 seats; long-haul service needs more, premium cabins even more.
+  const cabinPerFlight = Math.max(1, Math.ceil(seats / (wide ? 35 : 50))) + (cabin ? premiumCrew(type, cabin) : 0);
   return { pilots: wide ? 18 : 10, cabin: cabinPerFlight * (wide ? 8 : 5) };
 }
 
 /** Crew salaries for one aircraft per day (USD), paid whether it flies or not. */
-export function crewCostPerDayUsd(world: EngineWorld, type: AircraftType, seats: number, hubCountry: string): number {
-  const crew = crewPerAircraft(type, seats);
+export function crewCostPerDayUsd(world: EngineWorld, type: AircraftType, seats: number, hubCountry: string, cabin?: CabinLayout): number {
+  const crew = crewPerAircraft(type, seats, cabin);
   const pilot = type.category === 'widebody' ? PILOT_COST_USD.long : PILOT_COST_USD.short;
   return ((crew.pilots * pilot + crew.cabin * CABIN_CREW_COST_USD) * wageFactor(world, hubCountry)) / 365;
 }
@@ -342,16 +362,22 @@ export interface PlannedFlight {
   dep: number;
   type: AircraftType;
   seats: number;
+  /** The aircraft's cabin (seats per class, products, pitch). */
+  cabin: CabinLayout;
   ageYears: number;
 }
 
 export interface RoutePlan {
   type: AircraftType;
   seats: number;
+  /** Cabin of the assumed aircraft (default: all economy). */
+  cabin?: CabinLayout;
   /** Round trips per week. */
   frequency: number;
-  /** Your fare relative to the market fare (1 = market fare). */
+  /** Your economy fare relative to the market fare (1 = market fare). */
   fareFactor: number;
+  /** Premium classes' fares relative to their market fares (default: market fare). */
+  classFares?: ClassFares;
   ageYears: number;
   /** New routes take a few weeks until everybody knows them (0…1). */
   rampUp: number;
@@ -366,6 +392,8 @@ export interface RouteCosts {
   handling: number;
   navigation: number;
   distribution: number;
+  /** Catering, amenities and lounges. */
+  service: number;
 }
 
 /** Result per timetable flight (summed over its weekdays). */
@@ -378,6 +406,16 @@ export interface FlightResult {
   blockMin: number;
 }
 
+export interface ClassResult {
+  seats: number;
+  pax: number;
+  demand: number;
+  revenue: number;
+  /** Market fare of the class and your fare (USD, one way). */
+  marketFareUsd: number;
+  fareUsd: number;
+}
+
 export interface RouteWeek {
   flights: number;
   seats: number;
@@ -386,6 +424,7 @@ export interface RouteWeek {
   season: number;
   pax: number;
   loadFactor: number;
+  /** Your economy fare (USD). */
   fareUsd: number;
   revenue: number;
   costs: RouteCosts;
@@ -394,6 +433,10 @@ export interface RouteWeek {
   timetable: PlannedFlight[];
   /** Per timetable flight, in the same order. */
   byFlight: FlightResult[];
+  /** Per cabin class (only classes you offer). */
+  byClass: Partial<Record<CabinClass, ClassResult>>;
+  /** Passengers' experience per class (for the reputation). */
+  experience: Partial<Record<CabinClass, ExperienceSums>>;
 }
 
 /** "Smooth minimum": passengers carried approach the seats offered without a hard edge (some flights fill, some don't). */
@@ -404,7 +447,17 @@ export interface TimedSupplierFlight {
   dir: 0 | 1;
   days: number;
   dep: number;
+  cabin?: CabinLayout;
 }
+
+/** Brand reputation (0–100) and awareness (0–1) of an airline. */
+export interface Brand {
+  reputation: number;
+  awareness: number;
+}
+
+/** Another airline's offer described in full (the player's, seen by an AI airline). */
+export type ExtraSupplier = Supplier & { flights?: TimedSupplierFlight[]; cabin?: CabinLayout; classFares?: ClassFares; brand?: Brand };
 
 /** Who else is on the route, seen from the airline being calculated. */
 export interface RouteContext {
@@ -413,9 +466,11 @@ export interface RouteContext {
   /** Leave this real airline out of the competitors (when calculating that airline's own route). */
   exclude?: string;
   /** More non-stop offers on the route, e.g. the player's flights when an AI airline does its sums. */
-  extra?: (Supplier & { flights?: TimedSupplierFlight[] })[];
+  extra?: ExtraSupplier[];
   /** Only these weekdays (bit 0 = Monday), e.g. to book a single day; default: the whole week. */
   days?: number;
+  /** The calculated airline's reputation and awareness (default: neutral and well known). */
+  brand?: Brand;
 }
 
 /** Cruise speed assumed for other airlines' jets when generating their timetables. */
@@ -469,23 +524,62 @@ export function typicalTimetable(plan: RoutePlan, from: Airport, to: Airport, ti
   const offFrom = utcOffsetMin(from.tz, time);
   const offTo = utcOffsetMin(to.tz, time);
   const turn = Math.max(TURNAROUND_MIN[plan.type.category], genericTurnMin(long));
+  const cabin = plan.cabin ?? economyCabin(plan.type, plan.seats);
   const flights: PlannedFlight[] = [];
   deps.forEach((dep, i) => {
     const days = i < slots - 1 ? DAYS_ALL : spreadDays(plan.frequency - 7 * (slots - 1));
     const back = wrapDay(dep - offFrom + out + turn + offTo);
-    const common = { type: plan.type, seats: plan.seats, ageYears: plan.ageYears };
+    const common = { type: plan.type, seats: plan.seats, cabin, ageYears: plan.ageYears };
     flights.push({ dir: 0, days, dep, ...common }, { dir: 1, days: shiftDays(days, back.shift), dep: back.min, ...common });
   });
   return flights;
 }
 
-/** Forecast of one week on a route (both directions), in USD, flight by flight. */
+/** Aircraft assumed for other airlines' cabins: a typical short-haul and a typical long-haul type. */
+const GENERIC_TYPES = { short: 'A20N', long: 'B789' } as const;
+const modelCabins = new Map<string, CabinLayout>();
+/** The cabin other airlines of this type usually offer on short or long routes (modelled). */
+export function competitorCabin(model: BusinessModel, longHaul: boolean): CabinLayout {
+  const key = `${model}|${longHaul}`;
+  let cabin = modelCabins.get(key);
+  if (!cabin) {
+    cabin = modelCabin(getAircraftType(longHaul ? GENERIC_TYPES.long : GENERIC_TYPES.short), model, longHaul);
+    modelCabins.set(key, cabin);
+  }
+  return cabin;
+}
+
+const CLASS_INDEX: Record<CabinClass, number> = { F: 0, J: 1, W: 2, Y: 3 };
+
+/** Which class of a cabin suits a traveller wanting `wanted` best, and how appealing that is. */
+function bestClass(
+  cabin: readonly CabinSection[],
+  wanted: CabinClass,
+  segment: Segment,
+  t: number,
+  fare: (cls: CabinClass) => number,
+  pull: (x: number) => number,
+): { cls: CabinClass; appeal: number } | null {
+  let best: { cls: CabinClass; appeal: number } | null = null;
+  for (const s of cabin) {
+    if (s.seats <= 0) continue;
+    const appeal = classFit(wanted, s.cls, t) * pull(fare(s.cls)) * seatAppeal(segment, s, t);
+    if (!best || appeal > best.appeal) best = { cls: s.cls, appeal };
+  }
+  return best;
+}
+
+const NEUTRAL_BRAND: Brand = { reputation: START_REPUTATION, awareness: 1 };
+
+/** Forecast of one week on a route (both directions), in USD, flight by flight and class by class. */
 export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: RoutePlan, date: Date, ctx: RouteContext = {}): RouteWeek {
   const m = market(world, from, to);
   const time = fromDate(date);
-  const fare = marketFareUsd(world, from, to, date) * plan.fareFactor;
+  const t = haul(m.distanceKm);
+  const average = marketFareUsd(world, from, to, date);
+  const marketFare = (cls: CabinClass) => average * classFareRatio(cls, t);
+  const myFactor = (cls: CabinClass) => fareFactorOf(cls, plan.fareFactor, plan.classFares);
   const biz = m.businessShare;
-  const ff = Math.max(0.3, plan.fareFactor);
   const season = seasonFactor(from, to, biz, date);
   const timetable = plan.flights ?? typicalTimetable(plan, from, to, time);
   const longHaul = blockMinutes(GENERIC_CRUISE_KMH, from, to, m.distanceKm) > LONG_HAUL_MIN;
@@ -493,6 +587,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   const ends = [from, to] as const;
   const offsets = ends.map((a) => utcOffsetMin(a.tz, time));
   const days = ctx.days ?? DAYS_ALL;
+  const myBrand = ctx.brand ?? NEUTRAL_BRAND;
 
   // Per timetable flight: block time, arrival, appeal from speed (slow aircraft lose travellers on long routes).
   const info = timetable.map((f) => {
@@ -505,8 +600,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
       speed: Math.min(1, jetBlock / blockHours(f.type, m.distanceKm)) ** 2,
     };
   });
-  // Demand per flight and weekday.
-  const demand = timetable.map(() => [0, 0, 0, 0, 0, 0, 0]);
+  // Demand per flight, weekday and class (F, J, W, Y).
+  const demand = timetable.map(() => Array.from({ length: 7 }, () => [0, 0, 0, 0]));
 
   for (const dir of [0, 1] as const) {
     const A = ends[dir];
@@ -515,62 +610,93 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     // themselves, month by month, see ai.ts) or, without real airline data, "invisible incumbents" that are assumed to
     // match about half of any price cut right away.
     const competitors = competitorsOn(world, A, B, undefined, ctx.ai)?.filter((c) => c.airlineId !== ctx.exclude) ?? null;
-    const relative = !competitors && ff < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - ff) : ff;
-    const others: { dep: number; arr: number; weight: number; fare: number; speed: number; group: string; days?: number }[] = [];
+    const relative = (x: number) => (!competitors && x < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - x) : x);
+    type Other = { dep: number; arr: number; weight: number; fare: (cls: CabinClass) => number; speed: number; group: string; days?: number; cabin: CabinLayout; brand: Brand };
+    const others: Other[] = [];
     if (competitors) {
       for (const c of competitors) {
-        for (const d of competitorDepartures(world, c.airlineId, A, B, c.weekly, time)) others.push({ ...d, fare: c.fareFactor, speed: 1, group: c.airlineId });
+        const cabin = competitorCabin(c.model, longHaul);
+        const brand = { reputation: MODEL_REPUTATION[c.model], awareness: 1 };
+        for (const d of competitorDepartures(world, c.airlineId, A, B, c.weekly, time)) others.push({ ...d, fare: () => c.fareFactor, speed: 1, group: c.airlineId, cabin, brand });
       }
     } else {
-      for (const d of competitorDepartures(world, 'incumbent', A, B, m.incumbentFlights, time)) others.push({ ...d, fare: 1, speed: 1, group: 'incumbent' });
+      const cabin = competitorCabin('legacy', longHaul);
+      for (const d of competitorDepartures(world, 'incumbent', A, B, m.incumbentFlights, time)) {
+        others.push({ ...d, fare: () => 1, speed: 1, group: 'incumbent', cabin, brand: NEUTRAL_BRAND });
+      }
     }
     (ctx.extra ?? []).forEach((x, i) => {
+      const fare = (cls: CabinClass) => fareFactorOf(cls, x.fareFactor, x.classFares);
+      const brand = x.brand ?? NEUTRAL_BRAND;
+      const cabin = x.cabin ?? competitorCabin('legacy', longHaul);
       if (x.flights) {
         for (const f of x.flights.filter((f) => f.dir === dir)) {
           const arr = f.dep - offsets[dir]! + blockMinutes(GENERIC_CRUISE_KMH, A, B, m.distanceKm) + offsets[1 - dir]!;
-          others.push({ dep: f.dep, arr, weight: 1, fare: x.fareFactor, speed: x.speed ?? 1, group: `extra${i}`, days: f.days });
+          others.push({ dep: f.dep, arr, weight: 1, fare, speed: x.speed ?? 1, group: `extra${i}`, days: f.days, cabin: f.cabin ?? cabin, brand });
         }
       } else {
-        for (const d of competitorDepartures(world, `extra${i}`, A, B, x.weekly, time)) others.push({ ...d, fare: x.fareFactor, speed: x.speed ?? 1, group: `extra${i}` });
+        for (const d of competitorDepartures(world, `extra${i}`, A, B, x.weekly, time)) others.push({ ...d, fare, speed: x.speed ?? 1, group: `extra${i}`, cabin, brand });
       }
     });
     const mineIdx = timetable.map((f, i) => (f.dir === dir ? i : -1)).filter((i) => i >= 0);
+    if (!mineIdx.length) continue;
 
     for (const segment of ['business', 'leisure'] as const) {
       const segShare = segment === 'business' ? biz : 1 - biz;
       // Holidaymakers react much more strongly to price than business travellers; cheaper fares also make more
       // people fly at all ("stimulation").
       const pull = (x: number) => Math.max(0.3, x) ** (segment === 'business' ? -1.2 : -2.6);
-      const stimulation = ff ** (segment === 'business' ? -0.6 : -1.6);
-      const cache = new Map<string, number[]>();
-      for (let day = 0; day < 7; day++) {
-        if (!hasDay(days, day)) continue;
-        const mine = mineIdx.filter((i) => hasDay(timetable[i]!.days, day));
-        const theirs = others.filter((o) => o.days === undefined || hasDay(o.days, day));
-        if (!mine.length) continue;
-        const key = `${mine.join(',')}|${theirs.length}`;
-        let shares = cache.get(key);
-        if (!shares) {
-          const options: DayOption[] = [
-            ...mine.map((i) => ({ dep: timetable[i]!.dep, arr: info[i]!.arr, pull: pull(relative) * info[i]!.speed, weight: 1, group: 'me' })),
-            ...theirs.map((o) => ({ dep: o.dep, arr: o.arr, pull: pull(o.fare) * o.speed, weight: o.weight, group: o.group })),
-          ];
-          shares = dayShares(options, segment, longHaul, m.connectingFlights / 7, 1);
-          cache.set(key, shares);
+      const myBrandAppeal = brandAppeal(segment, myBrand.reputation, myBrand.awareness);
+      for (const wanted of CLASSES) {
+        const classShare = classDemandShare(segment, wanted, t);
+        if (classShare < 1e-4) continue;
+        // Each flight's best class for these travellers, and its appeal (class, seat, price, brand, speed).
+        const mine = mineIdx.map((i) => bestClass(timetable[i]!.cabin, wanted, segment, t, (c) => relative(myFactor(c)), pull));
+        const theirs = others.map((o) => bestClass(o.cabin, wanted, segment, t, o.fare, pull)?.appeal ?? 0);
+        const theirBrand = others.map((o) => brandAppeal(segment, o.brand.reputation, o.brand.awareness));
+        const firstClass = mine.find(Boolean)?.cls ?? 'Y';
+        const stimulation = Math.max(0.3, myFactor(firstClass)) ** (segment === 'business' ? -0.6 : -1.6);
+        const cache = new Map<string, number[]>();
+        for (let day = 0; day < 7; day++) {
+          if (!hasDay(days, day)) continue;
+          const today = mineIdx.map((i, k) => (hasDay(timetable[i]!.days, day) && mine[k] ? k : -1)).filter((k) => k >= 0);
+          if (!today.length) continue;
+          const otherIdx = others.map((o, j) => (o.days === undefined || hasDay(o.days, day) ? j : -1)).filter((j) => j >= 0);
+          const key = `${today.join(',')}|${otherIdx.length}`;
+          let shares = cache.get(key);
+          if (!shares) {
+            const options: DayOption[] = [
+              ...today.map((k) => {
+                const i = mineIdx[k]!;
+                return { dep: timetable[i]!.dep, arr: info[i]!.arr, pull: mine[k]!.appeal * info[i]!.speed * myBrandAppeal, weight: 1, group: 'me' };
+              }),
+              ...otherIdx.map((j) => {
+                const o = others[j]!;
+                return { dep: o.dep, arr: o.arr, pull: theirs[j]! * o.speed * theirBrand[j]!, weight: o.weight, group: o.group };
+              }),
+            ];
+            shares = dayShares(options, segment, longHaul, m.connectingFlights / 7, 1);
+            cache.set(key, shares);
+          }
+          const travellers = (m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation;
+          today.forEach((k, n) => {
+            demand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;
+          });
         }
-        const travellers = (m.weeklyPax / 7) * segShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation;
-        mine.forEach((i, k) => (demand[i]![day]! += travellers * shares[k]!));
       }
     }
   }
 
   // Passengers, revenue and costs flight by flight.
-  const costs: RouteCosts = { fuel: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0 };
+  const costs: RouteCosts = { fuel: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, service: 0 };
   const fuelPrice = fuelUsdPerKg(date);
   const nav = new Map<string, number>();
+  const byClass: Partial<Record<CabinClass, ClassResult>> = {};
+  const experience: Partial<Record<CabinClass, ExperienceSums>> = {};
   let flights = 0;
   let seats = 0;
   let pax = 0;
+  let revenue = 0;
   let totalDemand = 0;
   let block = 0;
   const byFlight: FlightResult[] = timetable.map((f, i) => {
@@ -579,11 +705,43 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     const result: FlightResult = { flights: 0, seats: 0, pax: 0, arr: info[i]!.arr, blockMin: info[i]!.blockMin };
     for (let day = 0; day < 7; day++) {
       if (!hasDay(days, day) || !hasDay(f.days, day)) continue;
-      const p = carried(demand[i]![day]!, f.seats);
       result.flights += 1;
-      result.seats += f.seats;
-      result.pax += p;
-      totalDemand += demand[i]![day]!;
+      // European business has a movable curtain: rows business doesn't need that day are sold as economy.
+      let freedRows = 0;
+      for (const s of f.cabin) {
+        if (s.seats <= 0) continue;
+        const d = demand[i]![day]![CLASS_INDEX[s.cls]]!;
+        let seatsToday = s.seats;
+        if (s.cls === 'Y') seatsToday += freedRows * abreast(f.type, 'economy');
+        const p = Math.min(carried(d, seatsToday), seatsToday);
+        if (s.product === 'euro') {
+          const per = abreast(f.type, 'euro');
+          const rows = Math.ceil(s.seats / per);
+          const needed = Math.min(rows, Math.max(1, Math.ceil(p / per)));
+          freedRows = f.cabin.some((x) => x.cls === 'Y') ? rows - needed : 0;
+          seatsToday = Math.min(s.seats, needed * per);
+        }
+        const factor = myFactor(s.cls);
+        const fareUsd = marketFare(s.cls) * factor;
+        const c = (byClass[s.cls] ??= { seats: 0, pax: 0, demand: 0, revenue: 0, marketFareUsd: marketFare(s.cls), fareUsd });
+        c.seats += seatsToday;
+        c.pax += p;
+        c.demand += d;
+        c.revenue += p * fareUsd;
+        result.seats += seatsToday;
+        result.pax += p;
+        revenue += p * fareUsd;
+        totalDemand += d;
+        costs.service += p * serviceCostUsd(s.cls, t);
+        // What these passengers will tell others: their seat, the aircraft's age, the price and how full it was.
+        const e = (experience[s.cls] ??= { pax: 0, product: 0, age: 0, value: 0, crowd: 0 });
+        const lf = p / seatsToday;
+        e.pax += p;
+        e.product += p * (seatScore(s.product, s.pitch, t) - expectedScore(s.cls, t));
+        e.age += p * (f.ageYears <= 3 ? 3 : -Math.min(8, 0.5 * Math.max(0, f.ageYears - 8)));
+        e.value += p * Math.min(8, Math.max(-10, (1 - factor) * 20));
+        e.crowd += p * (lf > 0.85 ? -(lf - 0.85) * 40 : 0);
+      }
     }
     const n = result.flights;
     if (!n) return result;
@@ -603,7 +761,6 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     block += h * n;
     return result;
   });
-  const revenue = pax * fare;
   costs.distribution = 0.05 * revenue;
 
   return {
@@ -613,14 +770,16 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     season,
     pax,
     loadFactor: seats > 0 ? pax / seats : 0,
-    fareUsd: fare,
+    fareUsd: marketFare('Y') * myFactor('Y'),
     revenue,
     costs,
     blockHours: block,
     timetable,
     byFlight,
+    byClass,
+    experience,
   };
 }
 
 export const totalCosts = (c: RouteCosts): number =>
-  c.fuel + c.maintenance + c.airport + c.handling + c.navigation + c.distribution;
+  c.fuel + c.maintenance + c.airport + c.handling + c.navigation + c.distribution + c.service;

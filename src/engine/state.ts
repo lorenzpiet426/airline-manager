@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export type TimeMode = 'realtime' | 'weekly';
 export type Realism = 'realistic' | 'hardcore';
@@ -45,18 +45,43 @@ export interface Lease {
 
 export type AircraftStatus = 'delivering' | 'active';
 
+/** Cabin classes: first, business, premium economy, economy. */
+export type CabinClass = 'F' | 'J' | 'W' | 'Y';
+/** Seat products (see cabins.ts): what a seat is, from an economy seat to a first-class suite. */
+export type SeatProduct = 'suite' | 'flat' | 'angled' | 'recliner' | 'euro' | 'premium' | 'economy';
+
+/** One class of a cabin: its seat product, seat pitch in inches and number of seats. */
+export interface CabinSection {
+  cls: CabinClass;
+  product: SeatProduct;
+  pitch: number;
+  seats: number;
+}
+
+/** A cabin layout, front to back (F, J, W, Y; each class at most once). */
+export type CabinLayout = CabinSection[];
+
+/** Fares of the premium classes relative to their market fares (economy uses the route's fareFactor). */
+export type ClassFares = Record<'W' | 'J' | 'F', number>;
+
 export interface Aircraft {
   id: string;
   typeId: string;
   airlineId: string;
   registration: string;
   builtYear: number;
+  /** Total seats (the sum of the cabin's classes). */
   seats: number;
+  cabin: CabinLayout;
   status: AircraftStatus;
   deliveryAt: SimTime;
   /** Where the aircraft is (after delivery: the airline's hub). */
   locationId: string;
   lease: Lease;
+  /** In the hangar for a cabin refit until this time (flights are cancelled). */
+  refitUntil?: SimTime;
+  /** Refit costs written off day by day (book currency), until `until`. */
+  cabinDepreciation?: { perDay: number; until: SimTime };
 }
 
 export interface LeaseOffer {
@@ -65,6 +90,8 @@ export interface LeaseOffer {
   lessor: string;
   builtYear: number;
   seats: number;
+  /** The layout of the aircraft's previous operator (can be changed for free before delivery). */
+  cabin: CabinLayout;
   monthlyRent: Money;
   deposit: Money;
   termMonths: number;
@@ -84,8 +111,10 @@ export interface Route {
   aircraftId: string;
   /** Round trips per week. */
   frequency: number;
-  /** Fare relative to the market fare (1 = market fare, 0.8 = 20 % cheaper). */
+  /** Economy fare relative to the market fare (1 = market fare, 0.8 = 20 % cheaper). */
   fareFactor: number;
+  /** Premium classes' fares relative to their market fares. */
+  classFares: ClassFares;
   /** Outbound flight number (odd, e.g. 101); the return flight is the next number. */
   flightNumber: number;
   openedAt: SimTime;
@@ -123,6 +152,10 @@ export interface PnlLines {
   lease: number;
   /** Head office, IT, marketing, insurance. */
   overhead: number;
+  /** Catering, amenities and lounges (Phase 2 cabins). */
+  service: number;
+  /** Write-off of investments such as cabin refits. */
+  depreciation: number;
 }
 
 export interface RouteStats {
@@ -137,6 +170,41 @@ export interface RouteStats {
   rpk?: number;
   /** Block hours flown. */
   blockHours?: number;
+  /** Seats, passengers and revenue per cabin class (Phase 2 cabins; missing in older periods). */
+  classes?: Partial<Record<CabinClass, ClassStats>>;
+}
+
+export interface ClassStats {
+  seats: number;
+  pax: number;
+  revenue: number;
+}
+
+/**
+ * Passengers' experience summed over a week (each value × passengers): their seat compared with what the class
+ * normally offers, the aircraft's age, value for money and how crowded the cabin was. 60 = as expected.
+ */
+export interface ExperienceSums {
+  pax: number;
+  product: number;
+  age: number;
+  value: number;
+  crowd: number;
+}
+
+/** What passengers think of an airline (Phase 2): reputation from experience, awareness from being seen. */
+export interface Reputation {
+  /** Brand reputation 0–100 (60 = neutral). */
+  score: number;
+  /** Ratings per class 0–100 (missing until somebody flew it). */
+  classes: Partial<Record<CabinClass, number>>;
+  /** How well known the airline is in its markets (0–1). */
+  awareness: number;
+  /** The running week and the last complete week. */
+  week: Partial<Record<CabinClass, ExperienceSums>>;
+  lastWeek: Partial<Record<CabinClass, ExperienceSums>>;
+  /** Weekly values, oldest first (two years). */
+  history: { start: SimTime; score: number; awareness: number }[];
 }
 
 /** One week (Monday to Sunday, UTC) of an airline's accounts. */
@@ -197,7 +265,8 @@ export const emptyAi = (): AiState => ({ routes: {}, added: {}, airlines: {} });
 export type ScheduledEvent =
   | { at: SimTime; seq: number; kind: 'monthStart' }
   | { at: SimTime; seq: number; kind: 'dayStart' }
-  | { at: SimTime; seq: number; kind: 'delivery'; aircraftId: string };
+  | { at: SimTime; seq: number; kind: 'delivery'; aircraftId: string }
+  | { at: SimTime; seq: number; kind: 'refitDone'; aircraftId: string };
 
 /** A line in the ops message log. The screen translates `kind` and fills in `params`. */
 export interface GameMessage {
@@ -207,12 +276,14 @@ export interface GameMessage {
   kind:
     | 'founded' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
-    | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt';
+    | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
+    // Cabins (Phase 2).
+    | 'cabinChanged' | 'refitStarted' | 'refitDone';
   level: 'normal' | 'info' | 'caution' | 'warning';
   params: Record<string, string | number>;
 }
 
-export type LedgerKind = 'capital' | 'leaseDeposit' | 'leaseRent';
+export type LedgerKind = 'capital' | 'leaseDeposit' | 'leaseRent' | 'refit';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {
@@ -243,6 +314,8 @@ export interface GameState {
   finance: Record<string, AirlineFinance>;
   /** Changes made by the real airlines' AI (2.1b). */
   ai: AiState;
+  /** Reputation of the player's airlines (real airlines use a value by airline type). */
+  reputation: Record<string, Reputation>;
   queue: ScheduledEvent[];
   messages: GameMessage[];
   ledger: LedgerEntry[];
@@ -255,7 +328,9 @@ export const MAX_PNL_WEEKS = 104;
 
 export const emptyPnl = (): PnlLines => ({
   revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0, overhead: 0,
+  service: 0, depreciation: 0,
 });
 
 export const pnlCosts = (l: PnlLines): number =>
-  l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead;
+  l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead +
+  (l.service ?? 0) + (l.depreciation ?? 0);

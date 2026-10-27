@@ -1,3 +1,4 @@
+import { economyCabin } from './cabins';
 import { describe, expect, it } from 'vitest';
 import airportsJson from '../data/generated/airports.json';
 import countriesJson from '../data/generated/countries.json';
@@ -15,7 +16,7 @@ import { weeklyLegs } from './flights';
 import { createGame, migrate } from './game';
 import { buildRealAirlines } from './realAirlines';
 import { ensureFlights, pairsOfRoute } from './schedule';
-import type { GameState } from './state';
+import { SAVE_VERSION, type GameState } from './state';
 import { fromDate, simTime, utcOffsetMin } from './time';
 import { blockMinutes, DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
@@ -35,7 +36,7 @@ function startup(scheduling: 'simple' | 'detailed') {
   const airlineId = (founded as { id: string }).id;
   for (const id of ['T1', 'T2']) {
     state.aircraft[id] = {
-      id, typeId: 'A20N', airlineId, registration: `OE-L${id}`, builtYear: 2020, seats: 180, status: 'active', deliveryAt: state.time, locationId: 'LOWW',
+      id, typeId: 'A20N', airlineId, registration: `OE-L${id}`, builtYear: 2020, seats: 180, cabin: economyCabin(A320, 180), status: 'active', deliveryAt: state.time, locationId: 'LOWW',
       lease: { lessor: 'AerCap', monthlyRent: { amount: 380_000, currency: 'USD' }, deposit: { amount: 760_000, currency: 'USD' }, startAt: state.time, endAt: state.time + 1e6 },
     };
   }
@@ -43,7 +44,7 @@ function startup(scheduling: 'simple' | 'detailed') {
 }
 
 const flights = (pairs: [number, number][], dir: 0 | 1 = 0): PlannedFlight[] =>
-  pairs.map(([dep, days]) => ({ dir, days, dep, type: A320, seats: 180, ageYears: 5 }));
+  pairs.map(([dep, days]) => ({ dir, days, dep, type: A320, seats: 180, cabin: economyCabin(A320, 180), ageYears: 5 }));
 const week = (from: string, to: string, timetable: PlannedFlight[], date = MAY) =>
   routeWeek(world, ap(from), ap(to), { type: A320, seats: 180, frequency: 7, fareFactor: 1, ageYears: 5, rampUp: 1, flights: timetable }, date);
 
@@ -157,7 +158,7 @@ describe('Detailed scheduling', () => {
     delete old.flights;
     delete (old.options as Partial<GameState['options']>).scheduling;
     const upgraded = migrate(old)!;
-    expect(upgraded.version).toBe(6);
+    expect(upgraded.version).toBe(SAVE_VERSION);
     ensureFlights(upgraded, world);
     expect(Object.keys(upgraded.flights).length).toBeGreaterThan(0);
     expect(weeklyLegs(upgraded, world, 'T1')).toHaveLength(14);

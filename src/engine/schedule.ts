@@ -6,7 +6,7 @@ import { getAircraftType, TURNAROUND_MIN } from '../data/aircraft';
 import type { Airport } from '../data/types';
 import { nextId } from './core';
 import { checkRoute, roundTripHours, WEEKLY_AVAILABLE_HOURS, type PlannedFlight } from './economics';
-import type { FlightPair, GameState, Route } from './state';
+import type { Aircraft, FlightPair, GameState, Route } from './state';
 import { MINUTES_PER_WEEK, utcOffsetMin, yearOf, type SimTime } from './time';
 import { blockMinutes, dayBit, dayCount, DAYS_ALL, hasDay, shiftDays, wrapDay } from './timetable';
 import type { EngineWorld } from './world';
@@ -68,25 +68,38 @@ export function pairTimes(world: EngineWorld, typeId: string, route: Route, spec
   };
 }
 
-/** The timetable of a route for the economics model (only aircraft that are flying already). */
+/** True while the aircraft is in the hangar for a cabin refit (its flights are cancelled). */
+export const inRefit = (aircraft: Aircraft, time: SimTime): boolean => (aircraft.refitUntil ?? 0) > time;
+
+/**
+ * The timetable of a route for the economics model: only aircraft that are flying already (not those still being
+ * delivered, unless asked, and not those in a refit).
+ */
 export function plannedFlights(state: GameState, world: EngineWorld, route: Route, time: SimTime, includeDelivering = false): PlannedFlight[] {
   const result: PlannedFlight[] = [];
   for (const pair of pairsOfRoute(state, route.id)) {
     const aircraft = state.aircraft[pair.aircraftId];
-    if (!aircraft || (!includeDelivering && aircraft.status !== 'active')) continue;
-    result.push(...specFlights(world, route, aircraft.typeId, aircraft.seats, yearOf(time) - aircraft.builtYear, pair, time));
+    if (!aircraft || (!includeDelivering && (aircraft.status !== 'active' || inRefit(aircraft, time)))) continue;
+    result.push(...specFlights(world, route, aircraft, yearOf(time) - aircraft.builtYear, pair, time));
   }
   return result;
 }
 
 /** The two flights of a pair (outbound in hub local time, return in destination local time). */
-export function specFlights(world: EngineWorld, route: Route, typeId: string, seats: number, ageYears: number, spec: Pick<FlightSpec, 'dep' | 'days' | 'groundMin'>, time: SimTime): PlannedFlight[] {
-  const times = pairTimes(world, typeId, route, spec, time);
+export function specFlights(
+  world: EngineWorld,
+  route: Route,
+  aircraft: Pick<Aircraft, 'typeId' | 'seats' | 'cabin'>,
+  ageYears: number,
+  spec: Pick<FlightSpec, 'dep' | 'days' | 'groundMin'>,
+  time: SimTime,
+): PlannedFlight[] {
+  const times = pairTimes(world, aircraft.typeId, route, spec, time);
   const back = wrapDay(times.backDep);
-  const type = getAircraftType(typeId);
+  const common = { type: getAircraftType(aircraft.typeId), seats: aircraft.seats, cabin: aircraft.cabin, ageYears };
   return [
-    { dir: 0, days: spec.days, dep: spec.dep, type, seats, ageYears },
-    { dir: 1, days: shiftDays(spec.days, back.shift), dep: back.min, type, seats, ageYears },
+    { dir: 0, days: spec.days, dep: spec.dep, ...common },
+    { dir: 1, days: shiftDays(spec.days, back.shift), dep: back.min, ...common },
   ];
 }
 

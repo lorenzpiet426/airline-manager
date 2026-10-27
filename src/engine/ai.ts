@@ -20,11 +20,12 @@ import {
   WEEKLY_AVAILABLE_HOURS,
   type RouteContext,
 } from './economics';
+import { haul, MODEL_REPUTATION, modelCabin, totalSeats } from './cabins';
 import { typicalRentUsd } from './market';
 import { fleetSize, type BusinessModel, type RealAirline } from './realAirlines';
 import { random } from './rng';
 import { plannedFlights } from './schedule';
-import type { AiRouteState, GameState } from './state';
+import type { AiRouteState, CabinLayout, GameState } from './state';
 import { MINUTES_PER_DAY, toDate } from './time';
 import type { EngineWorld } from './world';
 
@@ -142,13 +143,14 @@ function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A:
   const km = market(world, A, B).distanceKm;
   const ac = aircraftFor(airline, km);
   if (!ac || weekly <= 0) return null;
+  const cabin = airlineCabin(ac.type, airline.model, km, ac.seats);
   const w = routeWeek(
     world,
     A,
     B,
-    { type: ac.type, seats: ac.seats, frequency: weekly, fareFactor: fare, ageYears: 10, rampUp: 1 },
+    { type: ac.type, seats: totalSeats(cabin), cabin, frequency: weekly, fareFactor: fare, classFares: { W: fare, J: fare, F: fare }, ageYears: 10, rampUp: 1 },
     date,
-    { ai: withChanges ? state.ai : undefined, exclude: airline.id, extra },
+    { ai: withChanges ? state.ai : undefined, exclude: airline.id, extra, brand: { reputation: MODEL_REPUTATION[airline.model], awareness: 1 } },
   );
   const ownPerBlockHour =
     (crewCostPerDayUsd(world, ac.type, ac.seats, airline.country ?? 'US') * 7 + (typicalRentUsd(ac.type, 10) * 12) / 52) /
@@ -157,14 +159,25 @@ function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A:
   return { margin: profit / Math.max(1, w.revenue), profit, revenue: w.revenue, loadFactor: w.loadFactor };
 }
 
+/** The airline type's usual cabin on this aircraft, with the seat total from its fleet list where known. */
+function airlineCabin(type: AircraftType, model: RealAirline['model'], km: number, seats: number): CabinLayout {
+  const cabin = modelCabin(type, model, haul(km) >= 0.5);
+  const premium = totalSeats(cabin.filter((s) => s.cls !== 'Y'));
+  const y = cabin.find((s) => s.cls === 'Y');
+  if (!y || seats <= premium || seats > type.seats.max) return cabin;
+  return cabin.map((s) => (s === y ? { ...s, seats: seats - premium } : s));
+}
+
 /** The player's flights on a route, as competitors for the AI. */
 function playerSuppliers(state: GameState, world: EngineWorld, a: string, b: string): NonNullable<RouteContext['extra']> {
   return Object.values(state.routes)
     .filter((r) => (r.originId === a && r.destinationId === b) || (r.originId === b && r.destinationId === a))
     .flatMap((r) => {
-      // The player's real timetable, seen from airport a.
-      const flights = plannedFlights(state, world, r, state.time).map((f) => ({ dir: (r.originId === a ? f.dir : 1 - f.dir) as 0 | 1, days: f.days, dep: f.dep }));
-      return flights.length ? [{ weekly: r.frequency, fareFactor: r.fareFactor, flights }] : [];
+      // The player's real timetable and cabins, seen from airport a.
+      const flights = plannedFlights(state, world, r, state.time).map((f) => ({ dir: (r.originId === a ? f.dir : 1 - f.dir) as 0 | 1, days: f.days, dep: f.dep, cabin: f.cabin }));
+      const rep = state.reputation[r.airlineId];
+      const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
+      return flights.length ? [{ weekly: r.frequency, fareFactor: r.fareFactor, classFares: r.classFares, flights, brand }] : [];
     });
 }
 

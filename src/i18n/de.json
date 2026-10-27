@@ -153,7 +153,11 @@
     "aiNewRoute_one": "{{airline}} eröffnet {{from}}–{{to}} ({{count}}× pro Woche).",
     "aiNewRoute_other": "{{airline}} eröffnet {{from}}–{{to}} ({{count}}× pro Woche).",
     "aiBankrupt_one": "{{airline}} ist pleite und stellt den Flugbetrieb ein ({{count}} Strecke).",
-    "aiBankrupt_other": "{{airline}} ist pleite und stellt den Flugbetrieb ein ({{count}} Strecken)."
+    "aiBankrupt_other": "{{airline}} ist pleite und stellt den Flugbetrieb ein ({{count}} Strecken).",
+    "cabinChanged": "Neue Kabine für {{registration}} ({{cabin}}): vor der Auslieferung ohne Mehrkosten eingebaut.",
+    "refitStarted_one": "{{registration}} kommt für einen Kabinenumbau in den Hangar ({{cabin}}): {{amount}}, {{count}} Tag; zurück am {{date}}. Die Flüge fallen so lange aus.",
+    "refitStarted_other": "{{registration}} kommt für einen Kabinenumbau in den Hangar ({{cabin}}): {{amount}}, {{count}} Tage; zurück am {{date}}. Die Flüge fallen so lange aus.",
+    "refitDone": "{{registration}} ist mit der neuen Kabine aus dem Hangar zurück."
   },
   "newGame": {
     "title": "Gründe deine Airline",
@@ -223,7 +227,16 @@
     "groundTooShort": "Die Bodenzeit am Ziel ist kürzer als die Mindest-Umdrehzeit dieses Flugzeugs.",
     "groundTooLong": "Die Bodenzeit darf höchstens 36 Stunden betragen.",
     "overlap": "Dieses Flugzeug fliegt zu dieser Zeit schon (inklusive Umdrehzeit am Drehkreuz). Wähle eine andere Zeit oder ein anderes Flugzeug.",
-    "alreadyDetailed": "Dieses Spiel nutzt bereits die detaillierte Flugplanung."
+    "alreadyDetailed": "Dieses Spiel nutzt bereits die detaillierte Flugplanung.",
+    "cabinEmpty": "Die Kabine braucht mindestens einen Sitz.",
+    "cabinOrder": "Die Klassen müssen in der Reihenfolge First, Business, Premium Economy, Economy sein.",
+    "productInvalid": "Dieser Sitz passt nicht in dieses Flugzeug.",
+    "pitchInvalid": "Der Sitzabstand liegt außerhalb des Bereichs für diesen Sitz.",
+    "seatsInvalid": "Jede Klasse braucht mindestens einen Sitz.",
+    "cabinTooLong": "Die Reihen passen nicht: Die Kabine ist zu lang. Weniger Reihen oder kleineren Sitzabstand wählen.",
+    "exitLimit": "Zu viele Sitze: Die Notausgänge des Flugzeugs sind für weniger Passagiere zugelassen.",
+    "inRefit": "Das Flugzeug ist für einen Umbau im Hangar.",
+    "cabinUnchanged": "Nichts geändert."
   },
   "fleet": {
     "title": "Flotte",
@@ -266,7 +279,9 @@
     "hours": "Einsatzplan",
     "hoursValue": "{{used}} von {{max}} h pro Woche",
     "routesOf": "Strecken",
-    "noRoutes": "noch keine"
+    "noRoutes": "noch keine",
+    "cabin": "Kabine",
+    "inRefit": "Umbau bis {{date}}"
   },
   "network": {
     "title": "Netz",
@@ -316,7 +331,9 @@
     "fareLevel": "Preise {{value}} %",
     "reacted": "reagiert",
     "introDetailed": "Deine Strecken ab dem Drehkreuz mit eigenem Flugplan: Jeder Flug hat eine Abflugzeit, Verkehrstage und ein Flugzeug.",
-    "fixedNoteDetailed": "Nicht enthalten: Crew-Gehälter und Leasing von {{registration}} (zusammen {{cost}} pro Woche), die sie mit ihren anderen Strecken teilen, und die Gemeinkosten der Airline. Die Strecke braucht {{hours}} Blockstunden pro Woche."
+    "fixedNoteDetailed": "Nicht enthalten: Crew-Gehälter und Leasing von {{registration}} (zusammen {{cost}} pro Woche), die sie mit ihren anderen Strecken teilen, und die Gemeinkosten der Airline. Die Strecke braucht {{hours}} Blockstunden pro Woche.",
+    "classFare": "Tarif {{cls}}",
+    "classLf": "Auslastung je Klasse"
   },
   "finance": {
     "title": "Finanzen",
@@ -335,7 +352,9 @@
       "navigation": "Flugsicherungsgebühren",
       "distribution": "Vertrieb",
       "lease": "Flugzeug-Leasing",
-      "overhead": "Gemeinkosten (Zentrale, IT, Marketing, Versicherung)"
+      "overhead": "Gemeinkosten (Zentrale, IT, Marketing, Versicherung)",
+      "service": "Bordservice & Lounges",
+      "depreciation": "Abschreibungen (Kabinenumbauten)"
     },
     "result": "Ergebnis",
     "margin": "Marge",
@@ -561,5 +580,70 @@
     "note": "Streckenergebnisse hier vor Crews, Leasing und Gemeinkosten. Die Flottenauslastung rechnet mit der heutigen Zahl an Flugzeugen.",
     "toFinance": "Alle Zahlen →",
     "routesLastWeek": "Strecken letzte Woche"
+  },
+  "cabin": {
+    "edit": "Kabine",
+    "presets": "Mit einer typischen Kabine beginnen",
+    "style": {
+      "dense": "Eng bestuhlt (Low-Cost)",
+      "single": "Eine Klasse",
+      "twoShort": "Europa-Business + Economy",
+      "twoLong": "Langstrecken-Business + Economy",
+      "threeLong": "Business, Premium Economy, Economy",
+      "fourLong": "Vier Klassen (mit First)"
+    },
+    "summary": "{{seats}} Sitze von {{max}}, die die Notausgänge erlauben · {{used}} % der Kabinenlänge belegt",
+    "class": {
+      "F": "First",
+      "J": "Business",
+      "W": "Premium Economy",
+      "Y": "Economy"
+    },
+    "product": "Sitz",
+    "productName": {
+      "economy": "Economy-Sitz",
+      "premium": "Premium-Economy-Sitz",
+      "euro": "Europa-Business (Mittelsitz frei)",
+      "recliner": "Liegesitz (Recliner)",
+      "angled": "Schräges Liegebett",
+      "flat": "Flaches Bett",
+      "suite": "First-Class-Suite"
+    },
+    "abreast_one": "{{count}} pro Reihe",
+    "abreast_other": "{{count}} pro Reihe",
+    "pitch": "Sitzabstand",
+    "rows": "Reihen",
+    "rowsValue": "{{rows}} = {{seats}} Sitze",
+    "less": "Weniger",
+    "more": "Mehr",
+    "comfort": "Bewertung durch Passagiere",
+    "short": "Kurz",
+    "long": "Lang",
+    "expected": "Passagiere erwarten in dieser Klasse etwa {{score}}",
+    "comfortNote": "Bewertung des Sitzes auf Kurz- und Langstrecke (0–100). Grün: so gut, wie Passagiere es von der Klasse erwarten, gelb: etwas schlechter, rot: viel schlechter. Sitzabstand (Pitch) = Abstand von einem Sitz zum gleichen Punkt des Sitzes davor. Europa-Business hat einen verschiebbaren Vorhang: Reihen, die die Business auf einem Flug nicht braucht, werden als Economy verkauft.",
+    "fill": "Rest mit Economy füllen",
+    "freeBeforeDelivery": "Kostenlos: Das Flugzeug ist noch nicht ausgeliefert, der Leasinggeber baut die neue Kabine bei der Übergabe ein.",
+    "quote": "Umbau: {{cost}}, {{days}} Tage im Hangar ({{seats}} neue Sitze). Wird jetzt bezahlt und über 6 Jahre abgeschrieben. Die Flüge des Flugzeugs fallen während des Umbaus aus.",
+    "applyFree": "Diese Kabine nehmen",
+    "applyRefit": "Umbau beauftragen",
+    "cancel": "Schließen",
+    "barLabel": "Kabinenaufteilung: {{layout}}"
+  },
+  "reputation": {
+    "title": "Ruf",
+    "score": "Ruf der Marke",
+    "change": "{{value}} Punkte zur Vorwoche",
+    "scoreHint": "Was Passagiere über dich sagen (0–100, 60 = wie erwartet). Wächst langsam, Woche für Woche, aus jeder einzelnen Reise. Zum Vergleich, echte Airlines im Spiel: Netzwerk-Airlines {{legacy}}, Low-Cost {{lowcost}} (modelliert).",
+    "awareness": "Bekanntheit",
+    "awarenessHint": "Wie bekannt du in deinen Märkten bist. Sie wächst mit den Passagieren, die du beförderst; unbekannte Airlines gewinnen weniger Reisende.",
+    "class": "Klasse",
+    "rating": "Bewertung",
+    "lastWeek": "Letzte Woche",
+    "seat": "Sitz",
+    "age": "Flugzeug",
+    "value": "Preis",
+    "crowd": "Enge",
+    "noRatings": "Noch keine Bewertungen: Sie kommen mit deinen ersten Passagieren.",
+    "note": "Passagiere der letzten Woche: Punkte im Vergleich zu dem, was sie von der Klasse erwarten. Sitz = Sitzprodukt und Sitzabstand; Flugzeug = Alter (neu ist schöner); Preis = Preis-Leistung; Enge = sehr volle Kabinen. Pünktlichkeit und Service kommen in Phase 9 dazu."
   }
 }

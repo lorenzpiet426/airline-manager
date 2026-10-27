@@ -36,6 +36,12 @@
   --map-airport-large: #e6edf7;
   --map-label: #c6d2e6;
   --map-label-halo: #070d18;
+
+  /* Cabin classes (always shown with their name or letter, never by colour alone) */
+  --cls-f: #d9b44a;
+  --cls-j: #7b93ff;
+  --cls-w: #3cc4b0;
+  --cls-y: #5d6e8c;
   color-scheme: dark;
 }
 
@@ -71,6 +77,11 @@
   --map-airport-large: #0d1626;
   --map-label: #24324a;
   --map-label-halo: #f7f9fb;
+
+  --cls-f: #a67c00;
+  --cls-j: #3c5bd6;
+  --cls-w: #12866f;
+  --cls-y: #8090a8;
   color-scheme: light;
 }
 

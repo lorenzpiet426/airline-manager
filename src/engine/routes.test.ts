@@ -1,3 +1,4 @@
+import { economyCabin } from './cabins';
 import { describe, expect, it } from 'vitest';
 import airportsJson from '../data/generated/airports.json';
 import countriesJson from '../data/generated/countries.json';
@@ -9,7 +10,7 @@ import { checkRoute, market, routeWeek, totalCosts } from './economics';
 import { airborne, weeklyLegs } from './flights';
 import { createGame, migrate } from './game';
 import { distanceKm } from './geo';
-import { pnlCosts, type GameState } from './state';
+import { pnlCosts, SAVE_VERSION, type GameState } from './state';
 import { MINUTES_PER_DAY, simTime, startOfWeek } from './time';
 import { buildEngineWorld, longestHardRunwayM } from './world';
 
@@ -117,7 +118,7 @@ function airlineWithAircraft(typeId = 'A20N') {
   const airlineId = (founded as { id: string }).id;
   // Put a known aircraft straight into service for the test.
   state.aircraft.T1 = {
-    id: 'T1', typeId, airlineId, registration: 'OE-LTA', builtYear: 2020, seats: getAircraftType(typeId).seats.typical,
+    id: 'T1', typeId, airlineId, registration: 'OE-LTA', builtYear: 2020, seats: getAircraftType(typeId).seats.typical, cabin: economyCabin(getAircraftType(typeId), getAircraftType(typeId).seats.typical),
     status: 'active', deliveryAt: state.time, locationId: 'LOWW',
     lease: { lessor: 'AerCap', monthlyRent: { amount: 380_000, currency: 'USD' }, deposit: { amount: 760_000, currency: 'USD' }, startAt: state.time, endAt: state.time + 1e6 },
   };
@@ -198,7 +199,7 @@ describe('saves from Phase 1.3', () => {
     state.queue = state.queue!.filter((e) => e.kind !== 'dayStart');
     state.version = 1;
     const upgraded = migrate(JSON.parse(JSON.stringify(state)))!;
-    expect(upgraded.version).toBe(6);
+    expect(upgraded.version).toBe(SAVE_VERSION);
     expect(upgraded.ai).toEqual({ routes: {}, added: {}, airlines: {} });
     expect(upgraded.routes).toEqual({});
     expect(upgraded.queue.some((e) => e.kind === 'dayStart')).toBe(true);

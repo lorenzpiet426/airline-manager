@@ -2189,3 +2189,167 @@ a.button {
 .save-row__name .chip {
   margin-left: 6px;
 }
+
+/* ─── Cabins & reputation (Phase 2) ─────────────────────────────────────── */
+
+.chip--caution { color: var(--amber); }
+
+.notice--planned {
+  color: var(--magenta);
+  background: color-mix(in srgb, var(--magenta) 8%, transparent);
+}
+
+.cls-bg--F { background: var(--cls-f); }
+.cls-bg--J { background: var(--cls-j); }
+.cls-bg--W { background: var(--cls-w); }
+.cls-bg--Y { background: var(--cls-y); }
+
+.cls-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: baseline;
+}
+.cls-dot--F { background: var(--cls-f); }
+.cls-dot--J { background: var(--cls-j); }
+.cls-dot--W { background: var(--cls-w); }
+.cls-dot--Y { background: var(--cls-y); }
+
+/* Nose on the left, tail on the right; rounded like a fuselage. */
+.cabin-bar {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 26px;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 13px 6px 6px 13px;
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+
+.cabin-bar--compact {
+  height: 12px;
+  padding: 2px;
+  border-radius: 6px 3px 3px 6px;
+  margin: 2px 0 4px;
+}
+
+.cabin-bar__part {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2px;
+  border-radius: 3px;
+}
+
+.cabin-bar__part:first-child {
+  border-radius: 10px 3px 3px 10px;
+}
+
+.cabin-bar--compact .cabin-bar__part:first-child {
+  border-radius: 4px 2px 2px 4px;
+}
+
+.cabin-bar__text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--bg);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cabin-bar__free {
+  border-radius: 3px;
+  background: repeating-linear-gradient(135deg, transparent 0 4px, var(--line) 4px 6px);
+}
+
+.cabin-bar__over {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  border-left: 2px solid var(--red);
+  background: color-mix(in srgb, var(--red) 25%, transparent);
+}
+
+.cabin-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.cabin-classes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cabin-class {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px 12px;
+  align-items: end;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.cabin-class > * {
+  min-width: 0;
+}
+
+.cabin-class .input {
+  width: 100%;
+}
+
+.cabin-class--off {
+  opacity: 0.7;
+}
+
+.cabin-class__name {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-weight: 600;
+}
+
+.cabin-class__name input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.cabin-comfort {
+  display: flex;
+  gap: 6px;
+  min-height: 40px;
+  align-items: center;
+}
+
+.meter {
+  display: block;
+  height: 6px;
+  margin: 6px 0;
+  border-radius: 3px;
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+
+.meter__fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.reputation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

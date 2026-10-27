@@ -153,7 +153,11 @@
     "aiNewRoute_one": "{{airline}} opens {{from}}–{{to}} ({{count}}× per week).",
     "aiNewRoute_other": "{{airline}} opens {{from}}–{{to}} ({{count}}× per week).",
     "aiBankrupt_one": "{{airline}} has gone bankrupt and stops flying ({{count}} route).",
-    "aiBankrupt_other": "{{airline}} has gone bankrupt and stops flying ({{count}} routes)."
+    "aiBankrupt_other": "{{airline}} has gone bankrupt and stops flying ({{count}} routes).",
+    "cabinChanged": "New cabin for {{registration}} ({{cabin}}): fitted before delivery at no extra cost.",
+    "refitStarted_one": "{{registration}} goes into the hangar for a cabin refit ({{cabin}}): {{amount}}, {{count}} day; back on {{date}}. Its flights are cancelled meanwhile.",
+    "refitStarted_other": "{{registration}} goes into the hangar for a cabin refit ({{cabin}}): {{amount}}, {{count}} days; back on {{date}}. Its flights are cancelled meanwhile.",
+    "refitDone": "{{registration}} is back from the hangar with its new cabin."
   },
   "newGame": {
     "title": "Found your airline",
@@ -223,7 +227,16 @@
     "groundTooShort": "The ground time at the destination is shorter than this aircraft's minimum turnaround.",
     "groundTooLong": "The ground time can be at most 36 hours.",
     "overlap": "This aircraft is already flying at that time (including the turnaround at the hub). Choose another time or aircraft.",
-    "alreadyDetailed": "This game already uses detailed scheduling."
+    "alreadyDetailed": "This game already uses detailed scheduling.",
+    "cabinEmpty": "The cabin needs at least one seat.",
+    "cabinOrder": "Classes must be in the order first, business, premium economy, economy.",
+    "productInvalid": "This seat product doesn't fit this aircraft.",
+    "pitchInvalid": "The seat pitch is outside the range for this seat.",
+    "seatsInvalid": "Every class needs at least one seat.",
+    "cabinTooLong": "The rows don't fit: the cabin is too long. Remove rows or reduce the pitch.",
+    "exitLimit": "Too many seats: the aircraft's emergency exits are certified for fewer passengers.",
+    "inRefit": "The aircraft is in the hangar for a refit.",
+    "cabinUnchanged": "Nothing changed."
   },
   "fleet": {
     "title": "Fleet",
@@ -266,7 +279,9 @@
     "hours": "Schedule",
     "hoursValue": "{{used}} of {{max}} h per week",
     "routesOf": "Routes",
-    "noRoutes": "none yet"
+    "noRoutes": "none yet",
+    "cabin": "Cabin",
+    "inRefit": "Refit until {{date}}"
   },
   "network": {
     "title": "Network",
@@ -316,7 +331,9 @@
     "fareLevel": "fares {{value}} %",
     "reacted": "reacted",
     "introDetailed": "Your routes from the hub with your own timetable: every flight has a departure time, days of operation and an aircraft.",
-    "fixedNoteDetailed": "Not included: crew salaries and leases of {{registration}} ({{cost}} per week together), which they share with their other routes, and the airline's overheads. The route uses {{hours}} block hours per week."
+    "fixedNoteDetailed": "Not included: crew salaries and leases of {{registration}} ({{cost}} per week together), which they share with their other routes, and the airline's overheads. The route uses {{hours}} block hours per week.",
+    "classFare": "{{cls}} fare",
+    "classLf": "Load factor per class"
   },
   "finance": {
     "title": "Finance",
@@ -335,7 +352,9 @@
       "navigation": "Air navigation charges",
       "distribution": "Sales & distribution",
       "lease": "Aircraft leases",
-      "overhead": "Overheads (office, IT, marketing, insurance)"
+      "overhead": "Overheads (office, IT, marketing, insurance)",
+      "service": "In-flight service & lounges",
+      "depreciation": "Depreciation (cabin refits)"
     },
     "result": "Result",
     "margin": "Margin",
@@ -561,5 +580,70 @@
     "note": "Route results here are before crews, leases and overheads. Utilisation uses today's number of aircraft.",
     "toFinance": "All accounts →",
     "routesLastWeek": "Routes last week"
+  },
+  "cabin": {
+    "edit": "Cabin",
+    "presets": "Start from a typical layout",
+    "style": {
+      "dense": "Dense (low-cost)",
+      "single": "Single class",
+      "twoShort": "European business + economy",
+      "twoLong": "Long-haul business + economy",
+      "threeLong": "Business, premium economy, economy",
+      "fourLong": "Four classes (with first)"
+    },
+    "summary": "{{seats}} seats of {{max}} allowed by the exits · {{used}} % of the cabin length used",
+    "class": {
+      "F": "First",
+      "J": "Business",
+      "W": "Premium economy",
+      "Y": "Economy"
+    },
+    "product": "Seat",
+    "productName": {
+      "economy": "Economy seat",
+      "premium": "Premium economy seat",
+      "euro": "European business (middle seat free)",
+      "recliner": "Recliner",
+      "angled": "Angled lie-flat",
+      "flat": "Full flat bed",
+      "suite": "First-class suite"
+    },
+    "abreast_one": "{{count}} per row",
+    "abreast_other": "{{count}} per row",
+    "pitch": "Seat pitch",
+    "rows": "Rows",
+    "rowsValue": "{{rows}} = {{seats}} seats",
+    "less": "Less",
+    "more": "More",
+    "comfort": "Passenger rating",
+    "short": "Short",
+    "long": "Long",
+    "expected": "Passengers expect about {{score}} in this class",
+    "comfortNote": "Rating of the seat on short and long flights (0–100). Green: as good as passengers expect of this class, amber: a bit worse, red: much worse. Pitch = distance from one seat to the same point of the seat in front. European business has a movable curtain: on each flight, rows business doesn't need are sold as economy.",
+    "fill": "Fill the rest with economy",
+    "freeBeforeDelivery": "Free: the aircraft isn't delivered yet, the lessor fits the new cabin during the transition.",
+    "quote": "Refit: {{cost}}, {{days}} days in the hangar ({{seats}} new seats). Paid now, written off over 6 years. The aircraft's flights are cancelled during the refit.",
+    "applyFree": "Use this cabin",
+    "applyRefit": "Order refit",
+    "cancel": "Close",
+    "barLabel": "Cabin layout: {{layout}}"
+  },
+  "reputation": {
+    "title": "Reputation",
+    "score": "Brand reputation",
+    "change": "{{value}} points vs last week",
+    "scoreHint": "What passengers say about you (0–100, 60 = as expected). Built slowly, week by week, from every passenger's trip. For comparison, real airlines in the game: network carriers {{legacy}}, low-cost {{lowcost}} (modelled).",
+    "awareness": "Awareness",
+    "awarenessHint": "How well known you are in your markets. It grows with the passengers you carry; unknown airlines win fewer travellers.",
+    "class": "Class",
+    "rating": "Rating",
+    "lastWeek": "Last week",
+    "seat": "Seat",
+    "age": "Aircraft",
+    "value": "Price",
+    "crowd": "Crowding",
+    "noRatings": "No ratings yet: they come in with your first passengers.",
+    "note": "Last week's passengers: points compared with what they expect of the class. Seat = seat product and pitch; aircraft = age (new is nicer); price = value for money; crowding = very full cabins. Punctuality and service join in Phase 9."
   }
 }

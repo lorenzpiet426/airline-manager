@@ -33,6 +33,14 @@ function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): vo
     case 'delivery':
       deliver(state, event.aircraftId);
       break;
+    case 'refitDone': {
+      const aircraft = state.aircraft[event.aircraftId];
+      if (aircraft?.refitUntil === state.time) {
+        delete aircraft.refitUntil;
+        postMessage(state, { airlineId: aircraft.airlineId, kind: 'refitDone', level: 'normal', params: { registration: aircraft.registration } });
+      }
+      break;
+    }
   }
 }
 

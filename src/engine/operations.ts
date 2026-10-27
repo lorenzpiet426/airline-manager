@@ -3,12 +3,13 @@
 import { getAircraftType } from '../data/aircraft';
 import { aiDailyStep } from './ai';
 import { postMessage } from './core';
-import { crewCostPerDayUsd, overheadPerDayUsd, routeWeek, totalCosts, type RoutePlan } from './economics';
+import { crewCostPerDayUsd, overheadPerDayUsd, routeWeek, totalCosts, type ClassResult, type RoutePlan } from './economics';
 import { pairsOfRoute, plannedFlights } from './schedule';
 import { dayBit } from './timetable';
 import { mergePnl, newPeriod, type PnlPeriod } from './finance';
 import type { FxRates } from './money';
-import { MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type GameState, type Route, type RouteStats } from './state';
+import { MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type CabinClass, type GameState, type Route, type RouteStats } from './state';
+import { addExperience, closeReputationWeek } from './reputation';
 import { daysInMonth, MINUTES_PER_DAY, startOfMonth, startOfWeek, toDate, weekdayOf, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
@@ -29,8 +30,10 @@ export function planFor(state: GameState, world: EngineWorld, route: Route, now 
   return {
     type: flights[0]!.type,
     seats: flights[0]!.seats,
+    cabin: flights[0]!.cabin,
     frequency: route.frequency,
     fareFactor: route.fareFactor,
+    classFares: route.classFares,
     ageYears: flights[0]!.ageYears,
     rampUp: rampUp(Math.max(route.openedAt, Number.isFinite(firstDelivery) ? firstDelivery : route.openedAt), now),
     flights,
@@ -63,7 +66,10 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const to = world.airportById.get(route.destinationId);
     const plan = airline && from && to ? planFor(state, world, route, state.time - 1) : null;
     if (!plan || !from || !to || !airline) continue;
-    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday });
+    const rep = state.reputation[airline.id];
+    const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand });
+    if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
     const lines = dayOf(airline.id).lines;
     lines.revenue += week.revenue * k;
@@ -73,6 +79,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     lines.handling += week.costs.handling * k;
     lines.navigation += week.costs.navigation * k;
     lines.distribution += week.costs.distribution * k;
+    lines.service += week.costs.service * k;
     const stats: RouteStats = (dayOf(airline.id).routes[route.id] ??= { flights: 0, seats: 0, pax: 0, revenue: 0, directCosts: 0 });
     stats.flights += week.flights;
     stats.seats += week.seats;
@@ -81,6 +88,12 @@ function bookDay(state: GameState, world: EngineWorld): void {
     stats.rpk = (stats.rpk ?? 0) + week.pax * route.distanceKm;
     stats.blockHours = (stats.blockHours ?? 0) + week.blockHours;
     stats.revenue += week.revenue * k;
+    for (const [cls, c] of Object.entries(week.byClass) as [CabinClass, ClassResult][]) {
+      const sc = ((stats.classes ??= {})[cls] ??= { seats: 0, pax: 0, revenue: 0 });
+      sc.seats += c.seats;
+      sc.pax += c.pax;
+      sc.revenue += c.revenue * k;
+    }
     stats.directCosts += totalCosts(week.costs) * k;
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) + (week.revenue - totalCosts(week.costs)) * k;
   }
@@ -94,9 +107,12 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!airline || !hub) continue;
     const k = usdTo(state.fx, airline.currency);
     const day = dayOf(airline.id);
-    const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, hub.country) * k;
+    const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, hub.country, aircraft.cabin) * k;
     day.lines.crew += crew;
     day.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
+    // Refits were paid in cash; the accounts write them off day by day.
+    const dep = aircraft.cabinDepreciation;
+    if (dep && dep.until >= state.time) day.lines.depreciation += dep.perDay;
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) - crew;
   }
 
@@ -151,4 +167,5 @@ function closeWeek(state: GameState): void {
     }
     fin.week = newPeriod(state.time);
   }
+  for (const rep of Object.values(state.reputation)) closeReputationWeek(rep, state.time - 7 * MINUTES_PER_DAY);
 }

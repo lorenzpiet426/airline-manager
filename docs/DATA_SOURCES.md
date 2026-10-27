@@ -120,6 +120,38 @@ Flightradar24…), so competitors' timetables are **generated**.
 - **Check**: with the new model the best plans from VIE (A320neo, 20 destinations) make about the same as before
   (July ≈ 21 % vs 24 %, April 18 % vs 21 %, January ≈ 1 % vs 3 %); good departure times can now beat bad ones.
 
+## Cabins, seat pitch and reputation (Phase 2, 2026-10-28)
+All values here are **modelled** (rough industry figures from trade-press reporting and manufacturers' typical layouts);
+no dataset is copied. Code: `src/engine/cabins.ts`, `src/engine/reputation.ts`.
+- **Cabin geometry:** economy seats per row by type (e.g. A320 3-3, A220 2-3, 787/A350 3-3-3, 777/747/A380 3-4-3);
+  usable cabin length = rows of the type's maximum (exit-limit) seating at 29″. A layout fits when rows × pitch
+  (+ 30″ per extra class for galleys/dividers) ≤ that length and seats ≤ the exit limit. Typical layouts reproduce
+  manufacturer seat counts (A320neo single class 30″ ≈ 186; 787-9 three-class ≈ 292 with 28 business).
+- **Seat products** (pitch range, installed price per seat): economy 28–34″ $4k; premium economy 34–42″ $18k;
+  European business (economy seat, middle seat free, movable curtain) 29–34″; recliner 36–62″ $35k; angled flat
+  55–66″ $120k; full flat 42–80″ $250k (staggered seats nest, so the pitch is shorter than the bed); first suite 78–90″ $600k.
+- **Refits:** new seats + $150 per moved seat + engineering ($40k narrow-body / $150k wide-body); hangar time
+  2–4 days for re-spacing, otherwise 4 + seats/40 days (wide-bodies 10 + seats/25), max 45. Paid in cash, written off
+  over 6 years or until the lease ends (P&L line "Depreciation"). Free while the aircraft is still being delivered.
+- **Demand by class:** share of travellers wanting each class (business travellers: J 15 % short-haul → 40 %
+  long-haul, W 5 → 20 %, F 0 → 3 %; leisure: J 2 → 5 %, W 3 → 11 %); class market fares relative to the route's
+  average fare: Y 1.0 → 0.8, W ≈ 1.4–1.8 × Y, J 2.6 × Y (Europe) → 4.5 × Y (long-haul), F 4 → 8 × Y.
+  Travellers take the best class a flight offers; flying one class lower is acceptable on short flights (×0.85)
+  but not long-haul (×0.6). Seat scores (0–100) by product and pitch vs. what passengers expect of the class.
+- **Competitors' cabins** by airline type: network carriers euro-business + economy 30″ (long-haul: flat business,
+  premium economy, economy 31″), low-cost dense 28″, regional single class, charter dense / single class.
+- **Service costs** per passenger (catering, amenities, lounges): Y $2 → $15, W $8 → $30, J $50 → $170, F $105 → $385
+  (short → long-haul). Wide-bodies need one extra cabin crew member per 20 business and per 8 first seats.
+- **Reputation:** every passenger rates the trip vs. expectation (seat, aircraft age, value for money, crowding;
+  60 = as expected). Class ratings move 8 % of the gap each week, the brand 6 % (half-life ≈ 2–3 months). Awareness
+  heads to 0.25 + √(weekly pax / 40,000) (up 5 %/week, down 2 %/week); a new airline starts at 20 %. Appeal in the
+  passenger choice: brand × (1 ± 0.5–0.8 × (reputation − 60)/100) × (0.85 + 0.15 × awareness). Real airlines: network
+  64, low-cost 56, regional 60, charter 56 (modelled — no open ratings data exists).
+- **Balance check** (A320neo from VIE, 14×/week, July, −15 % fares): two-class (euro business) ≈ old model's results
+  (LHR +10 % vs +9 %), single class 30″ a few points lower, dense 28″ lower still (loses business travellers to rivals'
+  business class). Long-haul point-to-point stays loss-making without hub transfer traffic (Phase 7), but premium
+  cabins cut losses by more than half compared with all-economy.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

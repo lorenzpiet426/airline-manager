@@ -19,6 +19,10 @@ import { sendCommand } from '../../game/store';
 import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
+import { CabinBar } from '../fleet/CabinBar';
+import { CabinEditor } from '../fleet/CabinEditor';
+import { cabinText } from '../fleet/cabinText';
+import { inRefit } from '../../engine/schedule';
 
 type Tab = 'fleet' | 'market';
 type Filter = 'all' | AircraftCategory;
@@ -66,6 +70,7 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
   const world = useWorld();
   const engineWorld = useEngineWorld();
   const [open, setOpen] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const code = (id: string) => world?.airportById.get(id)?.iata ?? id;
   const fleet = Object.values(game.aircraft)
     .filter((a) => a.airlineId === airline.id)
@@ -97,7 +102,9 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
                   {type.manufacturer} {type.name}
                 </span>
               </div>
-              {aircraft.status === 'active' ? (
+              {aircraft.status === 'active' && inRefit(aircraft, game.time) ? (
+                <span className="chip chip--caution">{t('fleet.inRefit', { date: formatGameDate(language, toDate(aircraft.refitUntil!), false) })}</span>
+              ) : aircraft.status === 'active' ? (
                 <span className="chip chip--normal">{t('fleet.atAirport', { airport: location?.iata ?? aircraft.locationId })}</span>
               ) : (
                 <span className="chip chip--planned">
@@ -105,9 +112,10 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
                 </span>
               )}
             </div>
+            <CabinBar type={type} cabin={aircraft.cabin} compact />
             <dl className="facts facts--compact">
-              <dt>{t('fleet.seats')}</dt>
-              <dd className="mono">{aircraft.seats}</dd>
+              <dt>{t('fleet.cabin')}</dt>
+              <dd className="mono">{cabinText(aircraft.cabin)}</dd>
               <dt>{t('fleet.built')}</dt>
               <dd className="mono">
                 {aircraft.builtYear} ({t('fleet.age', { count: yearOf(game.time) - aircraft.builtYear })})
@@ -132,14 +140,24 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
                   .join(' · ') || t('fleet.noRoutes')}
               </dd>
             </dl>
-            {engineWorld && pairsOfAircraft(game, aircraft.id).length > 0 && (
-              <>
+            <div className="button-row">
+              <button
+                type="button"
+                className="button button--small"
+                aria-expanded={editing === aircraft.id}
+                disabled={inRefit(aircraft, game.time)}
+                onClick={() => setEditing(editing === aircraft.id ? null : aircraft.id)}
+              >
+                {t('cabin.edit')}
+              </button>
+              {engineWorld && pairsOfAircraft(game, aircraft.id).length > 0 && (
                 <button type="button" className="button button--small" aria-expanded={open === aircraft.id} onClick={() => setOpen(open === aircraft.id ? null : aircraft.id)}>
                   {open === aircraft.id ? t('timeline.hide') : t('timeline.show')}
                 </button>
-                {open === aircraft.id && <AircraftTimeline game={game} world={engineWorld} aircraftId={aircraft.id} code={code} />}
-              </>
-            )}
+              )}
+            </div>
+            {editing === aircraft.id && <CabinEditor game={game} airline={airline} aircraft={aircraft} onDone={() => setEditing(null)} />}
+            {engineWorld && open === aircraft.id && <AircraftTimeline game={game} world={engineWorld} aircraftId={aircraft.id} code={code} />}
           </li>
         );
       })}
@@ -261,13 +279,14 @@ function OfferCard({
           {showLocal && <span className="card__local muted small">≈ {formatMoney(language, rentLocal)}</span>}
         </span>
       </div>
+      <CabinBar type={type} cabin={offer.cabin} compact />
       <dl className="facts facts--compact">
         <dt>{t('fleet.built')}</dt>
         <dd className="mono">
           {offer.builtYear} ({t('fleet.age', { count: age })})
         </dd>
-        <dt>{t('fleet.seats')}</dt>
-        <dd className="mono">{offer.seats}</dd>
+        <dt>{t('fleet.cabin')}</dt>
+        <dd className="mono">{cabinText(offer.cabin)}</dd>
         <dt>{t('fleet.range')}</dt>
         <dd className="mono">{formatNumber(language, type.rangeKm)} km</dd>
         <dt>{t('fleet.takeoff')}</dt>

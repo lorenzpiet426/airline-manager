@@ -1,3 +1,5 @@
+import { getAircraftType } from '../data/aircraft';
+import { economyCabin } from './cabins';
 import { describe, expect, it } from 'vitest';
 import airportsJson from '../data/generated/airports.json';
 import countriesJson from '../data/generated/countries.json';
@@ -29,7 +31,7 @@ function startup(dest: string, frequency: number, fareFactor: number, seed = 1) 
   });
   const airlineId = (founded as { id: string }).id;
   state.aircraft.T1 = {
-    id: 'T1', typeId: 'A20N', airlineId, registration: 'OE-LTA', builtYear: 2020, seats: 180, status: 'active', deliveryAt: state.time, locationId: 'LOWW',
+    id: 'T1', typeId: 'A20N', airlineId, registration: 'OE-LTA', builtYear: 2020, seats: 180, cabin: economyCabin(getAircraftType('A20N'), 180), status: 'active', deliveryAt: state.time, locationId: 'LOWW',
     lease: { lessor: 'AerCap', monthlyRent: { amount: 380_000, currency: 'USD' }, deposit: { amount: 760_000, currency: 'USD' }, startAt: state.time, endAt: state.time + 1e6 },
   };
   const opened = applyCommand(state, world, { type: 'OpenRoute', airlineId, payload: { destinationId: dest, aircraftId: 'T1', frequency, fareFactor } });

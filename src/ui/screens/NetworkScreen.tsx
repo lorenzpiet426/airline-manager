@@ -27,6 +27,7 @@ import { planFor } from '../../engine/operations';
 import { pairsOfRoute, validateSpecs } from '../../engine/schedule';
 import { dayCount } from '../../engine/timetable';
 import {
+  competitorCabin,
   competitorDepartures,
   competitorsOn,
   crewCostPerDayUsd,
@@ -39,7 +40,8 @@ import {
 } from '../../engine/economics';
 import { distanceKm } from '../../engine/geo';
 import { convert, money } from '../../engine/money';
-import type { Airline, GameState, Route } from '../../engine/state';
+import type { Airline, CabinClass, ClassFares, GameState, Route } from '../../engine/state';
+import { CLASSES, classFareRatio, DEFAULT_CLASS_FARES, haul } from '../../engine/cabins';
 import { fromDate, toDate } from '../../engine/time';
 import { sendCommand } from '../../game/store';
 import { formatMoney, formatNumber } from '../../i18n/format';
@@ -213,6 +215,19 @@ function RouteCard({ game, airline, route, onEdit }: { game: GameState; airline:
                 {formatNumber(language, (stats.pax / Math.max(1, stats.seats)) * 100)} % {t('network.lfShort')}
               </span>
             </dd>
+            {stats.classes && Object.keys(stats.classes).length > 1 && (
+              <>
+                <dt>{t('network.classLf')}</dt>
+                <dd className="mono">
+                  {CLASSES.filter((cls) => stats.classes?.[cls])
+                    .map((cls) => {
+                      const c = stats.classes![cls]!;
+                      return `${cls} ${formatNumber(language, (c.pax / Math.max(1, c.seats)) * 100)} %`;
+                    })
+                    .join(' · ')}
+                </dd>
+              </>
+            )}
             <dt>{t('network.lastWeekResult')}</dt>
             <dd className={`mono ${result! >= 0 ? 'text--normal' : 'text--warning'}`}>
               {formatMoney(language, { amount: result!, currency: airline.currency })}
@@ -245,6 +260,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   const [aircraftId, setAircraftId] = useState(route?.aircraftId ?? fleet[0]?.id ?? '');
   const [frequency, setFrequency] = useState(route?.frequency ?? 7);
   const [fareFactor, setFareFactor] = useState(route?.fareFactor ?? 1);
+  const [classFares, setClassFares] = useState<ClassFares>(route?.classFares ?? DEFAULT_CLASS_FARES);
   const [specs, setSpecs] = useState<FlightSpec[]>(() =>
     route ? pairsOfRoute(game, route.id).map((p) => ({ id: p.id, aircraftId: p.aircraftId, dep: p.dep, days: p.days, groundMin: p.groundMin })) : [],
   );
@@ -255,7 +271,13 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   const dest = destinationId ? world?.airportById.get(destinationId) : undefined;
   const aircraft = game.aircraft[aircraftId];
   const draft = useMemo(() => (hub && dest ? (route ?? draftRoute(airline.id, hub, dest)) : null), [hub, dest, route, airline.id]);
-  const settings = detailed ? { aircraftId: specs[0]?.aircraftId ?? '', frequency: 0, fareFactor, flights: specs } : { aircraftId, frequency, fareFactor };
+  const settings = detailed
+    ? { aircraftId: specs[0]?.aircraftId ?? '', frequency: 0, fareFactor, classFares, flights: specs }
+    : { aircraftId, frequency, fareFactor, classFares };
+  // The classes the route's aircraft offer (fares can be set for each of them).
+  const offered = CLASSES.filter((cls) =>
+    (detailed ? specs.map((x) => x.aircraftId) : [aircraftId]).some((id) => game.aircraft[id]?.cabin.some((s) => s.cls === cls)),
+  );
   const problem =
     engineWorld && destinationId ? validateRoute(game, engineWorld, airline.id, destinationId, settings, route?.id) : null;
   const specProblem = detailed && engineWorld && draft ? validateSpecs(game, engineWorld, draft, specs) : null;
@@ -283,7 +305,11 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     const plan = simRoute ? planFor(sim, engineWorld, simRoute, game.time, true) : null;
     if (!simRoute || !plan) return null;
     const date = toDate(game.time);
-    const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, { ai: game.ai });
+    const rep = game.reputation[airline.id];
+    const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, {
+      ai: game.ai,
+      brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
+    });
     const pairs = pairsOfRoute(sim, simRoute.id).filter((p) => sim.aircraft[p.aircraftId]);
     const used = [...new Set(pairs.map((p) => p.aircraftId))].map((id) => game.aircraft[id]!).filter(Boolean);
     const type = aircraft ? getAircraftType(aircraft.typeId) : null;
@@ -296,7 +322,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
       aircraftWeekUsd: used.reduce(
         (sum, a) =>
           sum +
-          crewCostPerDayUsd(engineWorld, getAircraftType(a.typeId), a.seats, hub.country) * 7 +
+          crewCostPerDayUsd(engineWorld, getAircraftType(a.typeId), a.seats, hub.country, a.cabin) * 7 +
           convert(a.lease.monthlyRent, 'USD', game.fx).amount * (12 / 52),
         0,
       ),
@@ -305,7 +331,9 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
       available: type && aircraft ? WEEKLY_AVAILABLE_HOURS[type.category] - aircraftHours(game, aircraft.id, route?.id) : 0,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engineWorld, hub, dest, aircraftId, frequency, fareFactor, specs, game, route?.id, problem, duplicate]);
+  }, [engineWorld, hub, dest, aircraftId, frequency, fareFactor, classFares, specs, game, route?.id, problem, duplicate]);
+  const classMarketFare = (cls: CabinClass) =>
+    forecast ? (forecast.week.byClass[cls]?.marketFareUsd ?? forecast.marketFare * classFareRatio(cls, haul(forecast.market.distanceKm))) : 0;
 
   const maxFrequency = forecast ? Math.max(0, Math.min(MAX_FREQUENCY, Math.floor(forecast.available / forecast.roundTrip))) : MAX_FREQUENCY;
 
@@ -397,25 +425,30 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
               <span className="muted small">{t('network.maxFrequency', { count: maxFrequency })}</span>
             </div>
           )}
-          <label className="field">
-            <span className="field__label">
-              {t('network.fare')}: {t('network.farePercent', { value: signed(fareFactor) })}
-            </span>
-            <input
-              type="range"
-              className="slider"
-              min={FARE_FACTOR_RANGE[0] * 100}
-              max={FARE_FACTOR_RANGE[1] * 100}
-              step={5}
-              value={Math.round(fareFactor * 100)}
-              onChange={(e) => setFareFactor(Number(e.target.value) / 100)}
-            />
-            {forecast && (
-              <span className="muted small">
-                {t('network.fareValue', { fare: fmt(forecast.marketFare * fareFactor), market: fmt(forecast.marketFare) })}
-              </span>
-            )}
-          </label>
+          {(offered.length ? offered : (['Y'] as CabinClass[])).map((cls) => {
+            const value = cls === 'Y' ? fareFactor : classFares[cls];
+            const set = (v: number) => (cls === 'Y' ? setFareFactor(v) : setClassFares((f) => ({ ...f, [cls]: v })));
+            return (
+              <label key={cls} className="field">
+                <span className="field__label">
+                  {offered.length > 1 ? t('network.classFare', { cls: t(`cabin.class.${cls}`) }) : t('network.fare')}:{' '}
+                  {t('network.farePercent', { value: signed(value) })}
+                </span>
+                <input
+                  type="range"
+                  className="slider"
+                  min={FARE_FACTOR_RANGE[0] * 100}
+                  max={FARE_FACTOR_RANGE[1] * 100}
+                  step={5}
+                  value={Math.round(value * 100)}
+                  onChange={(e) => set(Number(e.target.value) / 100)}
+                />
+                {forecast && (
+                  <span className="muted small">{t('network.fareValue', { fare: fmt(classMarketFare(cls) * value), market: fmt(classMarketFare(cls)) })}</span>
+                )}
+              </label>
+            );
+          })}
         </div>
 
         {shown && <p className="notice notice--error">{t(`errors.${shown}`)}</p>}
@@ -461,7 +494,9 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                           {c.name}
                         </a>
                         <span className="mono">{t('network.perWeek', { count: c.weekly })}</span>
-                        <span className="muted small">{t(`airlines.model.${c.model}`)}</span>
+                        <span className="muted small">
+                          {t(`airlines.model.${c.model}`)} · {competitorCabin(c.model, forecast.market.distanceKm > 3250).map((x) => t(`cabin.productName.${x.product}`)).join(' + ')}
+                        </span>
                         <span className={`small mono ${c.fareFactor < 0.95 ? 'text--caution' : 'muted'}`}>
                           {t('network.fareLevel', { value: signed(c.fareFactor) })}
                         </span>
@@ -493,6 +528,18 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                 {formatNumber(language, w.loadFactor * 100)} % {t('network.lfShort')}
               </span>
             </dd>
+            {Object.keys(w.byClass).length > 1 &&
+              CLASSES.filter((cls) => w.byClass[cls]).map((cls) => {
+                const c = w.byClass[cls]!;
+                const lf = c.seats ? c.pax / c.seats : 0;
+                return (
+                  <FactRow
+                    key={cls}
+                    label={`· ${t(`cabin.class.${cls}`)}`}
+                    value={`${formatNumber(language, Math.round(c.pax))} / ${formatNumber(language, c.seats)} · ${formatNumber(language, lf * 100)} % · ${fmt(c.revenue)}`}
+                  />
+                );
+              })}
             <dt>{t('network.revenue')}</dt>
             <dd className="mono">{fmt(w.revenue)}</dd>
             {(Object.keys(w.costs) as (keyof typeof w.costs)[]).map((k) => (

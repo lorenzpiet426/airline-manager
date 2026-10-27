@@ -1,6 +1,9 @@
 // Creating a new game world.
 import { ECB_RATES, FX_DATE } from '../data/currencies';
+import { getAircraftType } from '../data/aircraft';
+import { DEFAULT_CLASS_FARES, economyCabin, standardCabin, totalSeats } from './cabins';
 import { schedule } from './core';
+import { awarenessTarget, newReputation } from './reputation';
 import { refreshMarket } from './market';
 import { newFinance } from './operations';
 import { sumPeriods } from './finance';
@@ -30,6 +33,7 @@ export function createGame(options: NewGameOptions): GameState {
     flights: {},
     finance: {},
     ai: emptyAi(),
+    reputation: {},
     queue: [],
     messages: [],
     ledger: [],
@@ -88,6 +92,34 @@ export function migrate(raw: unknown): GameState | null {
     state.options.scheduling = 'simple';
     state.flights = {};
     state.version = 6;
+  }
+  if (state.version === 6) {
+    // Version 7 (Phase 2 cabins): every aircraft and lease offer gets an all-economy cabin with its seats; routes get
+    // premium fares; the player's airlines get a reputation (awareness from the passengers they already carry); two new
+    // profit-and-loss lines.
+    for (const a of Object.values(state.aircraft)) {
+      a.cabin ??= economyCabin(getAircraftType(a.typeId), a.seats);
+      a.seats = totalSeats(a.cabin);
+    }
+    for (const o of state.market.offers) {
+      o.cabin ??= standardCabin(getAircraftType(o.typeId), 'single');
+      o.seats = totalSeats(o.cabin);
+    }
+    for (const r of Object.values(state.routes)) r.classFares ??= { ...DEFAULT_CLASS_FARES };
+    state.reputation = {};
+    for (const airline of Object.values(state.airlines)) {
+      if (airline.controller !== 'human') continue;
+      const last = state.finance[airline.id]?.history.at(-1);
+      const pax = last ? Object.values(last.routes).reduce((s, r) => s + r.pax, 0) : 0;
+      state.reputation[airline.id] = newReputation(pax > 0 ? awarenessTarget(pax) : undefined);
+    }
+    for (const fin of Object.values(state.finance)) {
+      for (const p of [fin.week, fin.month, ...fin.history, ...fin.months]) {
+        p.lines.service ??= 0;
+        p.lines.depreciation ??= 0;
+      }
+    }
+    state.version = 7;
   }
   if (state.version !== SAVE_VERSION) return null;
   return state;

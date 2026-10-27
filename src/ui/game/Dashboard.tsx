@@ -199,7 +199,7 @@ function Tile({
 }
 
 /** 12 weeks as a thin line in a faint colour, the latest week marked in the accent colour; hover shows the value. */
-function Sparkline({ values, hover, onHover }: { values: (number | null)[]; hover: number | null; onHover: (i: number | null) => void }) {
+export function Sparkline({ values, hover, onHover }: { values: (number | null)[]; hover: number | null; onHover: (i: number | null) => void }) {
   const known = values.filter((v): v is number => v !== null);
   const min = Math.min(...known);
   const max = Math.max(...known);

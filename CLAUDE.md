@@ -260,7 +260,8 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
   (static); 2.1b ✅ AI behaviour by airline type.
 - **2.2 Detailed scheduling:** ✅ own departure times per flight, block times, turnarounds, aircraft rotation timeline,
   time-of-day preferences in passenger choice; competitors get timetables too.
-- then back to **1.5** (save slots, export/import, dashboard), then the rest of Phase 2 (cabin classes, reputation).
+- then back to **1.5** (save slots, export/import, dashboard), then the rest of Phase 2 (cabin classes, reputation) ✅
+  (fictional AI airlines are not needed while real airlines are the AI; they come with Phase 6 "fictional startups").
 
 ### Phase 2 — Competition and passengers
 Fictional AI airlines (enter/leave routes, price wars, order aircraft, go bankrupt), passenger choice
@@ -411,6 +412,9 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-27 | 1.5: **airline standard KPIs** (result, margin, revenue, pax, LF, RASK, CASK, CASK ex fuel, yield, utilisation, best/worst routes) with ▲▼ vs last week and 12-week sparklines | Owner choice |
 | 2026-10-27 | 1.5: export = **compressed `.amsave` file** (gzip JSON with header); the same bytes are stored in IndexedDB | Owner choice; ~16 KB for a short game |
 | 2026-10-27 | Libraries pinned to versions ≥ 2 weeks old: dexie 4.4.6, fflate 0.8.3, fake-indexeddb 6.2.5 (tests) | Avoid freshly published releases (supply-chain safety) |
+| 2026-10-28 | Cabins: **refits cost money and hangar days** (free before delivery); editor with **rows, pitch and seat product** per class; **one fare slider per class** | Owner choice (recommended options) |
+| 2026-10-28 | Reputation "the realistic option" (owner): **per-class ratings from every passenger's experience feed one brand score**, plus **awareness** growing with passengers; real airlines get modelled values by type | Owner choice; how reviews and word of mouth work |
+| 2026-10-28 | European business has a **movable curtain** (unused business rows are sold as economy each flight) | How European network carriers really fly; avoids empty business cabins |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -678,6 +682,33 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Verified in browser: old autosave migrated into a slot, dashboard values, copy saved, export captured in the page
   (16 KB) and re-imported as a new game, delete + continue, phone layout without sideways scrolling, no console errors.
 - **Next:** rest of Phase 2 (cabin classes and seat pitch, reputation) — or what the owner prefers next.
+- Owner confirmed: 1.5 tried.
+
+### 2026-10-28 — Session 9 (Phase 2: cabins, seat pitch, reputation) ✅
+- Owner decisions: refits cost money + days, rows/pitch/seat product editor, fare per class, realistic reputation (§7).
+- **Engine:** `cabins.ts` (classes F/J/W/Y, seat products with pitch ranges and prices, seats per row by type, cabin
+  length, `validateCabin`, typical layouts/presets `standardCabin`, `modelCabin` for real airlines, `refitQuote`, class
+  demand shares, class fare ratios, seat scores, brand appeal, service costs), `reputation.ts` (weekly experience sums,
+  class ratings, brand score, awareness, 2-year history). `routeWeek` now works class by class: travellers wanting a
+  class pick the best class each flight offers (class fit × price × seat × brand × speed), revenue per class, movable
+  curtain for European business, experience per class, service costs. Competitors' cabins and reputations by airline
+  type (modelled); AI airlines fly model cabins; the AI sees the player's cabins, class fares and brand. Command
+  `RefitCabin` (free before delivery; else cash, hangar days with flights cancelled, `refitDone` event, depreciation
+  over 6 years). Routes get `classFares`. New P&L lines `service` and `depreciation`; `RouteStats.classes`. Save
+  version 7 (migration: all-economy cabins with the old seat counts, single-class lease offers, reputation with awareness
+  from last week's passengers). Lease offers come with the previous operator's layout.
+- **UI:** Fleet: cabin bar + layout per aircraft and offer, **cabin editor** (presets, per class: seat product, pitch,
+  rows, passenger rating short/long-haul, fill with economy, cost/days quote, free before delivery), "Refit until" chip;
+  Network planner: fare slider per class, forecast per class, competitors' cabins; route cards: load factor per class;
+  Ops: **Reputation panel** (brand score with trend, awareness, ratings per class with reasons); Finance: new lines.
+- Tests: 95 (layouts fit all types, seat counts, invalid layouts, refit prices/days, flat > recliner, legroom, class
+  fares, curtain, free change before delivery, refit cancels flights + depreciation, reputation up/down, awareness,
+  weekly update, v6 → v7 upgrade).
+- Verified in browser: old save migrated, euro-business preset, refit ordered (5 days, €64k) and finished, class fares
+  and per-class forecast, reputation panel after 3 weeks, phone 375 px without sideways scrolling, no console errors.
+- Known: long-haul point-to-point still loses money (transfer traffic comes in Phase 7); seat weight doesn't change
+  fuel burn yet; lounges are a per-passenger cost (own lounges with Phase 7).
+- **Next:** owner tries cabins; then Phase 3 (cloud sync + real-clock mode) or what the owner prefers.
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.

@@ -6,6 +6,7 @@ import { TailFin } from '../components/TailFin';
 import { SimControls } from '../components/SimControls';
 import { GameClock } from '../components/StatusBar';
 import { Dashboard } from '../game/Dashboard';
+import { ReputationPanel } from '../game/ReputationPanel';
 import { MessageLog } from '../game/MessageLog';
 import { usePlayer } from '../game/usePlayer';
 import { useBooting } from '../../game/store';
@@ -121,6 +122,12 @@ export function OpsScreen() {
         <Panel title={t('dashboard.title')} code="KPI" className="panel--wide">
           <Dashboard game={game} airline={airline} />
         </Panel>
+
+        {game.reputation[airline.id] && (
+          <Panel title={t('reputation.title')} code="REP" className="panel--wide">
+            <ReputationPanel rep={game.reputation[airline.id]!} />
+          </Panel>
+        )}
 
         <Panel title={t('ops.airlineTitle')} code={`${airline.iata} / ${airline.icao}`}>
           <div className="airline-card">

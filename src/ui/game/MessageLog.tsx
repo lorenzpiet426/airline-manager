@@ -51,6 +51,17 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.aiNewRoute', { ...p, count: Number(p.value) });
       case 'aiBankrupt':
         return t('msg.aiBankrupt', { ...p, count: Number(p.routes) });
+      case 'cabinChanged':
+        return t('msg.cabinChanged', p);
+      case 'refitStarted':
+        return t('msg.refitStarted', {
+          ...p,
+          count: Number(p.days),
+          amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }),
+          date: formatGameDate(language, toDate(Number(p.until)), false),
+        });
+      case 'refitDone':
+        return t('msg.refitDone', p);
     }
   };
 

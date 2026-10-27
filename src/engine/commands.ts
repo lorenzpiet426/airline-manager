@@ -5,12 +5,14 @@ import { bookCurrencyFor } from '../data/currencies';
 import { registrationPattern } from '../data/registrations';
 import { book, nextId, postMessage, schedule } from './core';
 import { checkRoute, roundTripHours, WEEKLY_AVAILABLE_HOURS } from './economics';
-import { aircraftHours, autoPlanAircraft, makeDetailed, pairsOfRoute, setRoutePairs, validateSpecs, type FlightSpec, type ScheduleError } from './schedule';
+import { aircraftHours, autoPlanAircraft, inRefit, makeDetailed, pairsOfRoute, setRoutePairs, validateSpecs, type FlightSpec, type ScheduleError } from './schedule';
 import { distanceKm } from './geo';
 import { convert, money, roundNice, type FxRates, type Money } from './money';
 import { newFinance } from './operations';
 import { randomInt } from './rng';
-import type { Controller, GameState, Route } from './state';
+import { cabinCode, DEFAULT_CLASS_FARES, REFIT_DEPRECIATION_YEARS, refitQuote, totalSeats, validateCabin, type CabinError } from './cabins';
+import { newReputation } from './reputation';
+import type { CabinLayout, ClassFares, Controller, GameState, Route } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay, toDate } from './time';
 import type { EngineWorld } from './world';
 
@@ -45,8 +47,10 @@ export interface RouteSettings {
   aircraftId: string;
   /** Round trips per week. */
   frequency: number;
-  /** Fare relative to the market fare, 0.5 … 1.5. */
+  /** Economy fare relative to the market fare, 0.5 … 1.5. */
   fareFactor: number;
+  /** Premium classes' fares relative to their market fares, 0.5 … 1.5 (default: market fare). */
+  classFares?: ClassFares;
   /** Detailed scheduling: the route's complete timetable (aircraftId/frequency are then taken from it). */
   flights?: FlightSpec[];
 }
@@ -76,7 +80,14 @@ export interface SetScheduling {
   payload: { scheduling: 'detailed' };
 }
 
-export type Command = FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling;
+/** Changes an aircraft's cabin: free before delivery, otherwise a refit in the hangar (money and days). */
+export interface RefitCabin {
+  type: 'RefitCabin';
+  airlineId: string;
+  payload: { aircraftId: string; cabin: CabinLayout };
+}
+
+export type Command = FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 export const MAX_FREQUENCY = 84;
@@ -105,6 +116,9 @@ export type CommandError =
   | 'etops'
   | 'aircraftBusy'
   | 'alreadyDetailed'
+  | 'inRefit'
+  | 'cabinUnchanged'
+  | CabinError
   | ScheduleError;
 
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError };
@@ -128,6 +142,8 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
       makeDetailed(state);
       return { ok: true };
+    case 'RefitCabin':
+      return refitCabin(state, command.airlineId, command.payload.aircraftId, command.payload.cabin);
   }
 }
 
@@ -166,6 +182,7 @@ function foundAirline(state: GameState, world: EngineWorld, p: FoundAirline['pay
     foundedAt: state.time,
   };
   state.finance[id] = newFinance(state.time);
+  if (p.controller === 'human') state.reputation[id] = newReputation();
   const capital = book(state, id, 'capital', startingCapital(state.fx, p.capitalEur, currency));
   postMessage(state, {
     airlineId: id,
@@ -198,6 +215,7 @@ function leaseAircraft(state: GameState, world: EngineWorld, airlineId: string, 
     registration,
     builtYear: offer.builtYear,
     seats: offer.seats,
+    cabin: offer.cabin,
     status: 'delivering',
     deliveryAt,
     locationId: airline.hubId,
@@ -235,7 +253,8 @@ export function validateRoute(
   const to = world.airportById.get(destinationId);
   if (!from || !to) return 'airportUnknown';
   if (from.id === to.id) return 'sameAirport';
-  if (!(settings.fareFactor >= FARE_FACTOR_RANGE[0] && settings.fareFactor <= FARE_FACTOR_RANGE[1])) return 'fareInvalid';
+  const fares = [settings.fareFactor, ...Object.values(settings.classFares ?? {})];
+  if (!fares.every((f) => f >= FARE_FACTOR_RANGE[0] && f <= FARE_FACTOR_RANGE[1])) return 'fareInvalid';
   if (state.options.scheduling === 'detailed') {
     const existing = exceptRouteId ? state.routes[exceptRouteId] : undefined;
     const route: Route = existing ?? { ...draftRoute(airlineId, from, to), id: '' };
@@ -263,6 +282,7 @@ export function draftRoute(airlineId: string, from: { id: string; lat: number; l
     aircraftId: '',
     frequency: 0,
     fareFactor: 1,
+    classFares: { ...DEFAULT_CLASS_FARES },
     flightNumber: 0,
     openedAt: 0,
   };
@@ -286,6 +306,7 @@ function openRoute(state: GameState, world: EngineWorld, airlineId: string, p: O
     aircraftId: p.aircraftId,
     frequency: p.frequency,
     fareFactor: p.fareFactor,
+    classFares: { ...DEFAULT_CLASS_FARES, ...p.classFares },
     flightNumber,
     openedAt: state.time,
   };
@@ -307,6 +328,7 @@ function updateRoute(state: GameState, world: EngineWorld, airlineId: string, p:
   const error = validateRoute(state, world, airlineId, route.destinationId, p, route.id);
   if (error) return fail(error);
   route.fareFactor = p.fareFactor;
+  if (p.classFares) route.classFares = { ...route.classFares, ...p.classFares };
   if (state.options.scheduling === 'detailed') {
     setRoutePairs(state, route, p.flights ?? []);
   } else {
@@ -335,6 +357,49 @@ function closeRoute(state: GameState, world: EngineWorld, airlineId: string, rou
     params: { flight: `${airline.iata} ${route.flightNumber}`, to: to?.iata ?? route.destinationId },
   });
   return { ok: true, id: routeId };
+}
+
+function refitCabin(state: GameState, airlineId: string, aircraftId: string, cabin: CabinLayout): CommandResult {
+  const airline = state.airlines[airlineId];
+  const aircraft = state.aircraft[aircraftId];
+  if (!airline) return fail('airlineUnknown');
+  if (!aircraft || aircraft.airlineId !== airlineId) return fail('aircraftUnknown');
+  if (inRefit(aircraft, state.time)) return fail('inRefit');
+  const type = getAircraftType(aircraft.typeId);
+  const error = validateCabin(type, cabin);
+  if (error) return fail(error);
+  const quote = refitQuote(type, aircraft.cabin, cabin);
+  if (quote.costUsd === 0 && quote.days === 0) return fail('cabinUnchanged');
+  const layout = cabin.map((s) => ({ cls: s.cls, product: s.product, pitch: s.pitch, seats: s.seats }));
+
+  // Before delivery the new layout is part of the transition work (repaint, paperwork) the lessor does anyway.
+  if (aircraft.status === 'delivering') {
+    aircraft.cabin = layout;
+    aircraft.seats = totalSeats(layout);
+    postMessage(state, { airlineId, kind: 'cabinChanged', level: 'info', params: { registration: aircraft.registration, cabin: cabinCode(layout) } });
+    return { ok: true, id: aircraft.id };
+  }
+
+  const cost = convert(money(quote.costUsd, 'USD'), airline.currency, state.fx);
+  if (airline.cash.amount < cost.amount) return fail('insufficientCash');
+  book(state, airlineId, 'refit', money(-quote.costUsd, 'USD'), aircraft.id);
+  // The investment is written off over six years (or until the lease ends), together with what is left of older refits.
+  const today = startOfDay(state.time);
+  const left = aircraft.cabinDepreciation && aircraft.cabinDepreciation.until > today ? (aircraft.cabinDepreciation.perDay * (aircraft.cabinDepreciation.until - today)) / MINUTES_PER_DAY : 0;
+  const until = Math.min(aircraft.lease.endAt, today + REFIT_DEPRECIATION_YEARS * 365 * MINUTES_PER_DAY);
+  const days = Math.max(1, (until - today) / MINUTES_PER_DAY);
+  aircraft.cabinDepreciation = { perDay: (cost.amount + left) / days, until };
+  aircraft.cabin = layout;
+  aircraft.seats = totalSeats(layout);
+  aircraft.refitUntil = today + (quote.days + 1) * MINUTES_PER_DAY;
+  schedule(state, { at: aircraft.refitUntil, kind: 'refitDone', aircraftId: aircraft.id });
+  postMessage(state, {
+    airlineId,
+    kind: 'refitStarted',
+    level: 'caution',
+    params: { registration: aircraft.registration, cabin: cabinCode(layout), days: quote.days, amount: cost.amount, currency: airline.currency, until: aircraft.refitUntil },
+  });
+  return { ok: true, id: aircraft.id };
 }
 
 /** A registration that follows the country's pattern and is not used yet in this game. */

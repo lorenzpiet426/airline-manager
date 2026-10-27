@@ -1,6 +1,7 @@
 // The aircraft lease market: lessors offer used aircraft that a startup can lease.
 // Offers appear and expire every month. Rents depend on type and age, like in reality.
 import { AIRCRAFT_TYPES, isFreighter, isInService, type AircraftType } from '../data/aircraft';
+import { standardCabin, stylesFor, totalSeats, type CabinStyle } from './cabins';
 import { nextId } from './core';
 import { money } from './money';
 import { pick, random, randomInt } from './rng';
@@ -46,6 +47,8 @@ function makeOffer(state: GameState, type: AircraftType, now: SimTime): LeaseOff
   const termMonths = age < 5 ? randomInt(state, 8, 12) * 12 : randomInt(state, 3, 8) * 12;
   // Used aircraft need paperwork, a repaint and crew conversion before they fly for you.
   const deliveryDays = wide ? randomInt(state, 45, 110) : randomInt(state, 30, 80);
+  // The layout of the previous operator (a low-cost airline, a network carrier …).
+  const cabin = standardCabin(type, lessorStyle(state, type));
   let expiresAt = startOfNextMonth(now);
   for (let extra = randomInt(state, 0, 2); extra > 0; extra--) expiresAt = startOfNextMonth(expiresAt);
   return {
@@ -53,13 +56,21 @@ function makeOffer(state: GameState, type: AircraftType, now: SimTime): LeaseOff
     typeId: type.id,
     lessor: pick(state, LESSORS, LESSOR_WEIGHTS),
     builtYear,
-    seats: type.seats.typical,
+    seats: totalSeats(cabin),
+    cabin,
     monthlyRent: money(rent, 'USD'),
     deposit: money(rent * depositMonths, 'USD'),
     termMonths,
     deliveryDays,
     expiresAt,
   };
+}
+
+/** Which layout a used aircraft comes with: what its previous operators typically flew. */
+function lessorStyle(state: GameState, type: AircraftType): CabinStyle {
+  const styles = stylesFor(type);
+  const weights = styles.map((s) => ({ dense: 2, single: 3, twoShort: 4, twoLong: 2, threeLong: 5, fourLong: 1 })[s]);
+  return pick(state, styles, weights);
 }
 
 /** Removes expired offers and adds new ones until the market is full again. */

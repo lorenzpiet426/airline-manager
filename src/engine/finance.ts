@@ -1,5 +1,5 @@
 // Accounting periods: adding up profit-and-loss figures from days into weeks, months, quarters and years.
-import { emptyPnl, type PnlLines, type PnlWeek, type RouteStats } from './state';
+import { emptyPnl, type CabinClass, type ClassStats, type PnlLines, type PnlWeek, type RouteStats } from './state';
 import type { SimTime } from './time';
 
 /** A profit-and-loss period (a day, week, month, quarter or year): same shape as a week. */
@@ -20,6 +20,12 @@ export function mergePnl(target: PnlPeriod, src: PnlPeriod): void {
     if (s.ask !== undefined) t.ask = (t.ask ?? 0) + s.ask;
     if (s.rpk !== undefined) t.rpk = (t.rpk ?? 0) + s.rpk;
     if (s.blockHours !== undefined) t.blockHours = (t.blockHours ?? 0) + s.blockHours;
+    for (const [cls, c] of Object.entries(s.classes ?? {}) as [CabinClass, ClassStats][]) {
+      const tc = ((t.classes ??= {})[cls] ??= { seats: 0, pax: 0, revenue: 0 });
+      tc.seats += c.seats;
+      tc.pax += c.pax;
+      tc.revenue += c.revenue;
+    }
   }
 }
 
