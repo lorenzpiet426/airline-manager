@@ -3,6 +3,7 @@
 import { getAircraftType } from '../data/aircraft';
 import { book, postMessage, schedule } from './core';
 import { refreshMarket } from './market';
+import { completeOrder } from './fleet';
 import { money } from './money';
 import { dailyStep } from './operations';
 import type { GameState, ScheduledEvent } from './state';
@@ -48,11 +49,15 @@ function deliver(state: GameState, aircraftId: string): void {
   const aircraft = state.aircraft[aircraftId];
   if (!aircraft || aircraft.status !== 'delivering') return;
   aircraft.status = 'active';
-  // Rent runs from delivery: pay the rest of this month now, full months from the 1st.
-  const daysLeft = (startOfNextMonth(state.time) - state.time) / 1440;
-  const share = Math.min(1, daysLeft / daysInMonth(state.time));
-  const rent = money(-aircraft.lease.monthlyRent.amount * share, aircraft.lease.monthlyRent.currency);
-  book(state, aircraft.airlineId, 'leaseRent', rent, aircraft.id);
+  // A factory order: the balance is paid now and the aircraft is owned.
+  if (aircraft.order) completeOrder(state, aircraft);
+  if (aircraft.lease) {
+    // Rent runs from delivery: pay the rest of this month now, full months from the 1st.
+    const daysLeft = (startOfNextMonth(state.time) - state.time) / 1440;
+    const share = Math.min(1, daysLeft / daysInMonth(state.time));
+    const rent = money(-aircraft.lease.monthlyRent.amount * share, aircraft.lease.monthlyRent.currency);
+    book(state, aircraft.airlineId, 'leaseRent', rent, aircraft.id);
+  }
   postMessage(state, {
     airlineId: aircraft.airlineId,
     kind: 'delivered',
@@ -64,7 +69,7 @@ function deliver(state: GameState, aircraftId: string): void {
 function payMonthlyRents(state: GameState): void {
   const totals = new Map<string, number>();
   for (const aircraft of Object.values(state.aircraft)) {
-    if (aircraft.status !== 'active') continue;
+    if (aircraft.status !== 'active' || !aircraft.lease) continue;
     const paid = book(
       state,
       aircraft.airlineId,

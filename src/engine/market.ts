@@ -5,11 +5,16 @@ import { standardCabin, stylesFor, totalSeats, type CabinStyle } from './cabins'
 import { nextId } from './core';
 import { money } from './money';
 import { pick, random, randomInt } from './rng';
-import type { GameState, LeaseOffer } from './state';
+import type { GameState, LeaseOffer, SaleOffer } from './state';
+import { marketValueUsd } from '../data/factory';
 import { startOfNextMonth, yearOf, type SimTime } from './time';
 
 /** How many offers the market holds after each monthly refresh. */
 export const MARKET_SIZE = 36;
+/** Used aircraft for sale (Phase 4.1). */
+export const SALES_SIZE = 24;
+/** Share of lease offers that are new aircraft from a lessor's own factory orders (arriving in months, not days). */
+const NEW_LEASE_SHARE = 0.15;
 /** Lessors rarely place aircraft older than this with a new airline. */
 const MAX_AGE_YEARS = 20;
 
@@ -38,15 +43,18 @@ function buildYears(type: AircraftType, year: number): [number, number] | null {
 function makeOffer(state: GameState, type: AircraftType, now: SimTime): LeaseOffer {
   const year = yearOf(now);
   const [from, to] = buildYears(type, year)!;
-  const builtYear = randomInt(state, from, to);
-  const age = year - builtYear;
+  // Lessors also place brand-new aircraft from their own factory orders: they arrive in 6–30 months.
+  const fresh = type.built[1] === null && random(state) < NEW_LEASE_SHARE;
+  const freshDays = fresh ? randomInt(state, 180, 900) : 0;
+  const builtYear = fresh ? yearOf(now + freshDays * 1440) : randomInt(state, from, to);
+  const age = Math.max(0, year - builtYear);
   const rent = Math.round((typicalRentUsd(type, age) * (0.92 + random(state) * 0.16)) / 1000) * 1000;
   const wide = type.category === 'widebody';
   // Deposit: usually 2–3 months of rent, held by the lessor until the aircraft is returned.
   const depositMonths = wide ? 3 : 2;
   const termMonths = age < 5 ? randomInt(state, 8, 12) * 12 : randomInt(state, 3, 8) * 12;
   // Used aircraft need paperwork, a repaint and crew conversion before they fly for you.
-  const deliveryDays = wide ? randomInt(state, 45, 110) : randomInt(state, 30, 80);
+  const deliveryDays = fresh ? freshDays : wide ? randomInt(state, 45, 110) : randomInt(state, 30, 80);
   // The layout of the previous operator (a low-cost airline, a network carrier …).
   const cabin = standardCabin(type, lessorStyle(state, type));
   let expiresAt = startOfNextMonth(now);
@@ -73,6 +81,31 @@ function lessorStyle(state: GameState, type: AircraftType): CabinStyle {
   return pick(state, styles, weights);
 }
 
+// Aircraft traders and lessors selling used aircraft (company names used as facts only).
+const SELLERS = [...LESSORS, 'GA Telesis', 'AerSale', 'Willis Lease'];
+
+/** A used aircraft for sale: priced around its market value. */
+function makeSale(state: GameState, type: AircraftType, now: SimTime): SaleOffer {
+  const year = yearOf(now);
+  const [from, to] = buildYears(type, year)!;
+  const builtYear = randomInt(state, Math.max(from, year - 25), to);
+  const value = marketValueUsd(type, year - builtYear, year);
+  const cabin = standardCabin(type, lessorStyle(state, type));
+  let expiresAt = startOfNextMonth(now);
+  for (let extra = randomInt(state, 0, 2); extra > 0; extra--) expiresAt = startOfNextMonth(expiresAt);
+  return {
+    id: nextId(state, 'S'),
+    typeId: type.id,
+    seller: pick(state, SELLERS),
+    builtYear,
+    seats: totalSeats(cabin),
+    cabin,
+    priceUsd: Math.round((value * (0.92 + random(state) * 0.16)) / 10_000) * 10_000,
+    deliveryDays: type.category === 'widebody' ? randomInt(state, 30, 75) : randomInt(state, 20, 60),
+    expiresAt,
+  };
+}
+
 /** Removes expired offers and adds new ones until the market is full again. */
 export function refreshMarket(state: GameState): void {
   const now = state.time;
@@ -85,5 +118,9 @@ export function refreshMarket(state: GameState): void {
   const weights = types.map((t) => Math.sqrt(t.fleetWeight));
   while (state.market.offers.length < MARKET_SIZE) {
     state.market.offers.push(makeOffer(state, pick(state, types, weights), now));
+  }
+  state.market.sales = (state.market.sales ?? []).filter((o) => o.expiresAt > now);
+  while (state.market.sales.length < SALES_SIZE) {
+    state.market.sales.push(makeSale(state, pick(state, types, weights), now));
   }
 }

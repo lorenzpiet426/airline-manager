@@ -23,8 +23,11 @@ import { CabinBar } from '../fleet/CabinBar';
 import { CabinEditor } from '../fleet/CabinEditor';
 import { cabinText } from '../fleet/cabinText';
 import { inRefit } from '../../engine/schedule';
+import { Ownership } from '../fleet/Ownership';
+import { BuyUsed, OrderNew } from '../fleet/BuyAndOrder';
+import { FleetSummary } from '../fleet/FleetSummary';
 
-type Tab = 'fleet' | 'market';
+type Tab = 'fleet' | 'market' | 'buy' | 'order';
 type Filter = 'all' | AircraftCategory;
 
 export function FleetScreen() {
@@ -32,6 +35,8 @@ export function FleetScreen() {
   const { game, airline } = usePlayer();
   const fleetSize = game && airline ? Object.values(game.aircraft).filter((a) => a.airlineId === airline.id).length : 0;
   const [tab, setTab] = useState<Tab>(fleetSize ? 'fleet' : 'market');
+  const world = useWorld();
+  const hubRunway = airline ? world?.airportById.get(airline.hubId)?.longestRunwayM : undefined;
 
   if (!game || !airline) {
     return (
@@ -56,10 +61,20 @@ export function FleetScreen() {
         options={[
           { value: 'fleet', label: t('fleet.tabFleet', { count: fleetSize }) },
           { value: 'market', label: t('fleet.tabMarket', { count: game.market.offers.length }) },
+          { value: 'buy', label: t('fleet.tabBuy', { count: game.market.sales.length }) },
+          { value: 'order', label: t('fleet.tabOrder') },
         ]}
         onChange={setTab}
       />
-      {tab === 'fleet' ? <MyFleet game={game} airline={airline} onMarket={() => setTab('market')} /> : <Market game={game} airline={airline} />}
+      {tab === 'fleet' ? (
+        <MyFleet game={game} airline={airline} onMarket={() => setTab('market')} />
+      ) : tab === 'market' ? (
+        <Market game={game} airline={airline} />
+      ) : tab === 'buy' ? (
+        <BuyUsed game={game} airline={airline} hubRunwayM={hubRunway} />
+      ) : (
+        <OrderNew game={game} airline={airline} />
+      )}
     </div>
   );
 }
@@ -88,6 +103,8 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
   }
 
   return (
+    <>
+    <FleetSummary game={game} airline={airline} />
     <ul className="cards">
       {fleet.map((aircraft) => {
         const type = getAircraftType(aircraft.typeId);
@@ -99,7 +116,7 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
               <div className="card__title">
                 <span className="card__reg mono">{aircraft.registration}</span>
                 <span className="muted">
-                  {type.manufacturer} {type.name}
+                  {type.name.startsWith(type.manufacturer) ? type.name : `${type.manufacturer} ${type.name}`}
                 </span>
               </div>
               {aircraft.status === 'active' && inRefit(aircraft, game.time) ? (
@@ -118,16 +135,9 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
               <dd className="mono">{cabinText(aircraft.cabin)}</dd>
               <dt>{t('fleet.built')}</dt>
               <dd className="mono">
-                {aircraft.builtYear} ({t('fleet.age', { count: yearOf(game.time) - aircraft.builtYear })})
+                {aircraft.builtYear}
+                {aircraft.builtYear <= yearOf(game.time) && ` (${t('fleet.age', { count: yearOf(game.time) - aircraft.builtYear })})`}
               </dd>
-              <dt>{t('fleet.rent')}</dt>
-              <dd className="mono">
-                {formatMoney(language, aircraft.lease.monthlyRent)} {t('fleet.perMonth')}
-              </dd>
-              <dt>{t('fleet.lessor')}</dt>
-              <dd>{aircraft.lease.lessor}</dd>
-              <dt>{t('fleet.leaseEnds')}</dt>
-              <dd className="mono">{formatGameDate(language, toDate(aircraft.lease.endAt), false)}</dd>
               <dt>{t('fleet.hours')}</dt>
               <dd className="mono">
                 {t('fleet.hoursValue', { used: Math.round(aircraftHours(game, aircraft.id)), max: WEEKLY_AVAILABLE_HOURS[type.category] })}
@@ -140,6 +150,7 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
                   .join(' · ') || t('fleet.noRoutes')}
               </dd>
             </dl>
+            <Ownership game={game} airline={airline} aircraft={aircraft} />
             <div className="button-row">
               <button
                 type="button"
@@ -162,6 +173,7 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
         );
       })}
     </ul>
+    </>
   );
 }
 

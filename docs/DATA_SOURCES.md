@@ -152,6 +152,28 @@ no dataset is copied. Code: `src/engine/cabins.ts`, `src/engine/reputation.ts`.
   business class). Long-haul point-to-point stays loss-making without hub transfer traffic (Phase 7), but premium
   cabins cut losses by more than half compared with all-economy.
 
+## Buying, ordering and selling aircraft (Phase 4.1, 2026-10-28)
+All **modelled** from public news reporting; manufacturers' order-and-delivery files are not reused (their terms
+forbid it). Code: `src/data/factory.ts`, `src/engine/fleet.ts`.
+- **New prices:** list price × typical share actually paid (narrow-bodies 50 %, wide-bodies 48 %, regional jets 55 %,
+  turboprops 70 %); 1 % extra discount per additional aircraft in an order, max 8 %.
+- **Backlogs** (years from an order in 2026 to the first free slot): A320neo family 6.5, 737 MAX 5.5, A220 4, A330neo 3,
+  A350 4, 787 / 777-9 5, E-Jets E2/E175 2.5, ATR 2, small turboprops 1–1.5. At most 2 aircraft of a type per month for
+  one airline (wide-bodies 1). Not orderable for a European startup: Superjet, MC-21, Tu-204 (sanctions); C919, C909,
+  MA60 (so far only Chinese customers); types no longer built; freighters (cargo comes in Phase 11).
+- **Payments:** 1 % deposit on signing, 6 × 5 % pre-delivery payments at 24/18/12/9/6/3 months before delivery,
+  69 % on delivery (typical structure reported for Airbus/Boeing contracts).
+- **Market values:** new price × 0.93^age; after production ends a further × 0.96 per year; never below the parts
+  value (6 % of the new price). Selling pays market value − 3 % broker's fee; scrapping pays the parts value.
+- **Accounting:** owned aircraft are written off straight-line to 10 % of the new value over 25 years of life
+  (at least 5 years for old aircraft); the gain/loss against book value on a sale goes to "Aircraft sales". Lost
+  deposits of cancelled orders and early-return fees too.
+- **Leases:** a reminder 90 days before the end; at the end the aircraft goes back and the deposit is refunded.
+  Extensions in the last 24 months at today's market rent for the aircraft's age; early return costs 60 % of the
+  rent still owed. 15 % of lease offers are new aircraft from lessors' own orders (arriving in 6–30 months).
+- **Used aircraft for sale:** 24 offers, refreshed monthly, priced at market value × 0.92–1.08, up to 25 years old,
+  arriving in 20–75 days.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

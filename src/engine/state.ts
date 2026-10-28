@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 /** Real-time with speeds, turn-based weeks, or tied to the real clock (Phase 3: 1 game minute = 1 real minute). */
 export type TimeMode = 'realtime' | 'weekly' | 'realclock';
@@ -44,9 +44,39 @@ export interface Lease {
   deposit: Money;
   startAt: SimTime;
   endAt: SimTime;
+  /** The player was told the lease ends soon. */
+  warned?: boolean;
 }
 
 export type AircraftStatus = 'delivering' | 'active';
+
+/** An aircraft the airline owns (Phase 4.1): bought used or delivered from its own factory order. */
+export interface Ownership {
+  /** What it cost, in the book currency. */
+  price: number;
+  boughtAt: SimTime;
+  /** Written off in a straight line down to this value (book currency) … */
+  residual: number;
+  /** … by this time. */
+  writtenOffAt: SimTime;
+}
+
+/** A payment to the manufacturer for an aircraft on order (USD). */
+export interface OrderPayment {
+  due: SimTime;
+  usd: number;
+  kind: 'deposit' | 'predelivery' | 'balance';
+  /** Paid amount in the book currency (set when paid). */
+  paid?: number;
+}
+
+/** An aircraft ordered new from the factory (Phase 4.1). */
+export interface FactoryOrder {
+  orderedAt: SimTime;
+  /** Agreed price (USD). */
+  priceUsd: number;
+  payments: OrderPayment[];
+}
 
 /** Cabin classes: first, business, premium economy, economy. */
 export type CabinClass = 'F' | 'J' | 'W' | 'Y';
@@ -80,11 +110,30 @@ export interface Aircraft {
   deliveryAt: SimTime;
   /** Where the aircraft is (after delivery: the airline's hub). */
   locationId: string;
-  lease: Lease;
+  /** Leased aircraft (since Phase 4.1 an aircraft is leased, owned or on order). */
+  lease?: Lease;
+  /** Owned aircraft. */
+  owned?: Ownership;
+  /** Ordered from the factory and not delivered yet (becomes `owned` on delivery). */
+  order?: FactoryOrder;
   /** In the hangar for a cabin refit until this time (flights are cancelled). */
   refitUntil?: SimTime;
   /** Refit costs written off day by day (book currency), until `until`. */
   cabinDepreciation?: { perDay: number; until: SimTime };
+}
+
+/** A used aircraft for sale (Phase 4.1). */
+export interface SaleOffer {
+  id: string;
+  typeId: string;
+  seller: string;
+  builtYear: number;
+  seats: number;
+  cabin: CabinLayout;
+  priceUsd: number;
+  /** Days for the inspection, paperwork and repaint until it flies for you. */
+  deliveryDays: number;
+  expiresAt: SimTime;
 }
 
 export interface LeaseOffer {
@@ -157,8 +206,10 @@ export interface PnlLines {
   overhead: number;
   /** Catering, amenities and lounges (Phase 2 cabins). */
   service: number;
-  /** Write-off of investments such as cabin refits. */
+  /** Write-off of investments: owned aircraft and cabin refits. */
   depreciation: number;
+  /** Losses on selling or scrapping aircraft (gains are negative). */
+  disposals: number;
 }
 
 export interface RouteStats {
@@ -281,12 +332,17 @@ export interface GameMessage {
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
-    | 'cabinChanged' | 'refitStarted' | 'refitDone';
+    | 'cabinChanged' | 'refitStarted' | 'refitDone'
+    // Buying and selling (Phase 4.1).
+    | 'ordered' | 'orderPayment' | 'orderCancelled' | 'bought' | 'sold' | 'scrapped' | 'leaseEnding' | 'leaseEnded' | 'leaseExtended'
+    | 'leaseReturned';
   level: 'normal' | 'info' | 'caution' | 'warning';
   params: Record<string, string | number>;
 }
 
-export type LedgerKind = 'capital' | 'leaseDeposit' | 'leaseRent' | 'refit';
+export type LedgerKind =
+  | 'capital' | 'leaseDeposit' | 'leaseRent' | 'refit'
+  | 'orderPayment' | 'purchase' | 'sale' | 'leaseReturnFee' | 'depositBack';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {
@@ -310,7 +366,7 @@ export interface GameState {
   fxDate: string;
   airlines: Record<string, Airline>;
   aircraft: Record<string, Aircraft>;
-  market: { offers: LeaseOffer[] };
+  market: { offers: LeaseOffer[]; sales: SaleOffer[] };
   routes: Record<string, Route>;
   /** The timetable: flight pairs of all routes (Phase 2.2). */
   flights: Record<string, FlightPair>;
@@ -331,9 +387,9 @@ export const MAX_PNL_WEEKS = 104;
 
 export const emptyPnl = (): PnlLines => ({
   revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0, overhead: 0,
-  service: 0, depreciation: 0,
+  service: 0, depreciation: 0, disposals: 0,
 });
 
 export const pnlCosts = (l: PnlLines): number =>
   l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead +
-  (l.service ?? 0) + (l.depreciation ?? 0);
+  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0);

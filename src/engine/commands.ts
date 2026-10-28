@@ -12,6 +12,8 @@ import { newFinance } from './operations';
 import { randomInt } from './rng';
 import { cabinCode, DEFAULT_CLASS_FARES, REFIT_DEPRECIATION_YEARS, refitQuote, totalSeats, validateCabin, type CabinError } from './cabins';
 import { newReputation } from './reputation';
+import { buyAircraft, cancelOrder, disposeAircraft, extendLease, orderAircraft, returnLeased, type FleetError } from './fleet';
+import type { CabinStyle } from './cabins';
 import type { CabinLayout, ClassFares, Controller, GameState, Route } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay, toDate, type SimTime } from './time';
 import type { EngineWorld } from './world';
@@ -98,7 +100,39 @@ export interface SetTimeMode {
   payload: { timeMode: 'realclock'; now: SimTime };
 }
 
-export type Command = SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Fleet ownership (Phase 4.1). */
+export interface OrderAircraft {
+  type: 'OrderAircraft';
+  airlineId: string;
+  payload: { typeId: string; count: number; cabin: CabinStyle };
+}
+export interface CancelOrder {
+  type: 'CancelOrder';
+  airlineId: string;
+  payload: { aircraftId: string };
+}
+export interface BuyAircraft {
+  type: 'BuyAircraft';
+  airlineId: string;
+  payload: { offerId: string };
+}
+export interface SellAircraft {
+  type: 'SellAircraft';
+  airlineId: string;
+  payload: { aircraftId: string; scrap?: boolean };
+}
+export interface ReturnLease {
+  type: 'ReturnLease';
+  airlineId: string;
+  payload: { aircraftId: string };
+}
+export interface ExtendLease {
+  type: 'ExtendLease';
+  airlineId: string;
+  payload: { aircraftId: string; years: number };
+}
+
+export type Command = OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 export const MAX_FREQUENCY = 84;
@@ -131,6 +165,7 @@ export type CommandError =
   | 'inRefit'
   | 'cabinUnchanged'
   | CabinError
+  | FleetError
   | ScheduleError;
 
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError };
@@ -154,6 +189,23 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
       makeDetailed(state);
       return { ok: true };
+    case 'OrderAircraft':
+    case 'BuyAircraft': {
+      const airline = state.airlines[command.airlineId];
+      const country = world.airportById.get(airline?.hubId ?? '')?.country ?? 'XX';
+      const reg = (c: string) => newRegistration(state, c);
+      return command.type === 'OrderAircraft'
+        ? orderAircraft(state, command.airlineId, command.payload, reg, country)
+        : buyAircraft(state, command.airlineId, command.payload.offerId, reg, country);
+    }
+    case 'CancelOrder':
+      return cancelOrder(state, world, command.airlineId, command.payload.aircraftId);
+    case 'SellAircraft':
+      return disposeAircraft(state, world, command.airlineId, command.payload.aircraftId, command.payload.scrap ? 'scrap' : 'sell');
+    case 'ReturnLease':
+      return returnLeased(state, world, command.airlineId, command.payload.aircraftId, true);
+    case 'ExtendLease':
+      return extendLease(state, command.airlineId, command.payload.aircraftId, command.payload.years);
     case 'SetTimeMode':
       if (state.options.timeMode === 'realclock') return fail('alreadyRealClock');
       if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
@@ -404,7 +456,7 @@ function refitCabin(state: GameState, airlineId: string, aircraftId: string, cab
   // The investment is written off over six years (or until the lease ends), together with what is left of older refits.
   const today = startOfDay(state.time);
   const left = aircraft.cabinDepreciation && aircraft.cabinDepreciation.until > today ? (aircraft.cabinDepreciation.perDay * (aircraft.cabinDepreciation.until - today)) / MINUTES_PER_DAY : 0;
-  const until = Math.min(aircraft.lease.endAt, today + REFIT_DEPRECIATION_YEARS * 365 * MINUTES_PER_DAY);
+  const until = Math.min(aircraft.lease?.endAt ?? Infinity, today + REFIT_DEPRECIATION_YEARS * 365 * MINUTES_PER_DAY);
   const days = Math.max(1, (until - today) / MINUTES_PER_DAY);
   aircraft.cabinDepreciation = { perDay: (cost.amount + left) / days, until };
   aircraft.cabin = layout;

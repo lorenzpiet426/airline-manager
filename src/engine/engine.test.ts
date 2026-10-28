@@ -48,7 +48,9 @@ describe('new game', () => {
     for (const offer of state.market.offers) {
       const type = getAircraftType(offer.typeId);
       expect(type.eis).toBeLessThanOrEqual(2026);
-      expect(offer.builtYear).toBeLessThanOrEqual(2025);
+      // Used aircraft are at least a year old; new ones from a lessor's own orders arrive after 6+ months.
+      if (offer.deliveryDays < 180) expect(offer.builtYear).toBeLessThanOrEqual(2025);
+      else expect(offer.builtYear).toBeGreaterThanOrEqual(2026);
       expect(offer.builtYear).toBeGreaterThanOrEqual(type.built[0]);
       if (type.built[1] !== null) expect(offer.builtYear).toBeLessThanOrEqual(type.built[1]);
     }

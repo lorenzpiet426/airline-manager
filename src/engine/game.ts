@@ -30,7 +30,7 @@ export function createGame(options: NewGameOptions): GameState {
     fxDate: FX_DATE,
     airlines: {},
     aircraft: {},
-    market: { offers: [] },
+    market: { offers: [], sales: [] },
     routes: {},
     flights: {},
     finance: {},
@@ -122,6 +122,15 @@ export function migrate(raw: unknown): GameState | null {
       }
     }
     state.version = 7;
+  }
+  if (state.version === 7) {
+    // Version 8 (Phase 4.1): used aircraft for sale, a new P&L line for aircraft sales; leases end (checked daily).
+    state.market.sales = [];
+    refreshMarket(state);
+    for (const fin of Object.values(state.finance)) {
+      for (const p of [fin.week, fin.month, ...fin.history, ...fin.months]) p.lines.disposals ??= 0;
+    }
+    state.version = 8;
   }
   if (state.version !== SAVE_VERSION) return null;
   return state;

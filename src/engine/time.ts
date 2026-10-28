@@ -68,3 +68,12 @@ export function utcOffsetMin(timeZone: string, time: SimTime): number {
 
 /** Day of the week, 0 = Monday … 6 = Sunday. */
 export const weekdayOf = (time: SimTime): number => (Math.floor(time / MINUTES_PER_DAY) + 6) % 7;
+
+/** The same day and time `months` calendar months later (or earlier); a missing day becomes the month's last day. */
+export function addMonths(time: SimTime, months: number): SimTime {
+  const d = toDate(time);
+  const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + months, 1, d.getUTCHours(), d.getUTCMinutes()));
+  const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(d.getUTCDate(), last));
+  return fromDate(target);
+}

@@ -13,3 +13,4 @@ tools/raw/
 *.log
 .vscode/
 .idea/
+*.tsbuildinfo

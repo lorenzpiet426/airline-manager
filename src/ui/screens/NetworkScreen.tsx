@@ -24,6 +24,7 @@ import {
   type FlightSpec,
 } from '../../engine/commands';
 import { planFor } from '../../engine/operations';
+import { dailyDepreciation } from '../../engine/fleet';
 import { pairsOfRoute, validateSpecs } from '../../engine/schedule';
 import { dayCount } from '../../engine/timetable';
 import {
@@ -323,7 +324,11 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
         (sum, a) =>
           sum +
           crewCostPerDayUsd(engineWorld, getAircraftType(a.typeId), a.seats, hub.country, a.cabin) * 7 +
-          convert(a.lease.monthlyRent, 'USD', game.fx).amount * (12 / 52),
+          (a.lease
+            ? convert(a.lease.monthlyRent, 'USD', game.fx).amount * (12 / 52)
+            : a.owned
+              ? convert(money(dailyDepreciation(a.owned, game.time) * 7, airline.currency), 'USD', game.fx).amount
+              : 0),
         0,
       ),
       registrations: used.map((a) => a.registration).join(', '),

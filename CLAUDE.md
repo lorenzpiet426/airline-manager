@@ -273,6 +273,9 @@ Free account login, save slots synced across devices, time mode 3 with offline c
 ### Phase 4 — Fleet depth
 Full aircraft database (all manufacturers, historical types), order books and delivery slots, used market,
 buy/sell/scrap, ageing and depreciation, A/B/C/D checks with downtime, technical failures, hangars, livery designer.
+Split (2026-10-28): **4.1** ✅ buy used, order new, sell/scrap, lease ends/extensions; **4.2** maintenance checks
+(planned by the game, movable by the player) + technical failures + ageing costs; **4.3** livery designer;
+**4.4** historical types (together with Phase 5).
 
 ### Phase 5 — History and world events
 Historical start years (1970s/1990s/2000s), aircraft EIS/retirement dates, event timeline (oil crises,
@@ -419,6 +422,11 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-28 | Real clock for **new games and existing ones (one-way switch)**; a game behind today catches up to today, a game ahead keeps its date (offset) and runs at real speed | Owner choice; engine never reads the clock itself (commands carry `now`) |
 | 2026-10-28 | Real clock: **the world keeps running while the app is closed**, full catch-up + "While you were away" report; no automatic decisions until managers (Phase 8) | Owner choice |
 | 2026-10-28 | firebase pinned to **13.0.0** (13.1.0 was < 2 weeks old); loaded as a separate chunk only when a Firebase project is configured | Supply-chain rule; keeps the game fast without sync |
+| 2026-10-28 | Phase 4 split into 4.1 buy/order/sell → 4.2 maintenance checks → 4.3 livery → 4.4 historical types | Owner choice |
+| 2026-10-28 | 4.1: **realistic factory backlogs** (A320neo ≈ 6.5 years, 787 ≈ 5, ATR ≈ 2), max 2 deliveries/month per type (wide-bodies 1); Superjet/MC-21 blocked (sanctions), C919/ARJ21/MA60 China only | Owner choice; modelled from news, manufacturers' O&D files may not be reused |
+| 2026-10-28 | 4.1: **real payment schedule, cash only**: 1 % deposit, 6 × 5 % pre-delivery payments in the last 24 months, 69 % on delivery; cancelling loses what was paid. Loans come in Phase 10 | Owner choice |
+| 2026-10-28 | 4.1: new price ≈ 50 % of list; value −7 %/year (−4 %/year more once out of production), floor = parts value 6 %; straight-line depreciation over 25 years to 10 % (min. 5 years); sell at market −3 %, scrap at parts value | Common appraisal/accounting rules of thumb |
+| 2026-10-28 | 4.1: leases end automatically (reminder 90 days before, deposit back); extension in the last 24 months at today's market rent; early return = 60 % of remaining rent | Usual lease practice, simple to follow |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -741,6 +749,24 @@ education", forbid making the data available to others (§3 iii) and require a w
   Firestore read → 403 (rules work), Google provider enabled. Sign-in itself needs the owner (can't be done by Claude).
 - **Next:** owner signs in on computer and phone, checks that a game appears on both and that a conflict offers the
   choice; then Phase 4 (fleet depth) or what the owner prefers.
+### 2026-10-28 — Session 11 (Phase 4.1: buy, order, sell) ✅
+- Owner decisions (all recommended): buy/order/sell first, realistic backlogs, real payment schedule (cash), maintenance
+  checks planned by the game but movable (4.2) (§7).
+- `src/data/factory.ts` (backlog years, blocked types, price shares, payment plan, depreciation constants),
+  `src/engine/fleet.ts` (orders with delivery slots and staged payments, buy used, sell/scrap, lease end/extend/early
+  return, daily fleet step, book value/depreciation, removing an aircraft clears its flights). Aircraft are now
+  `lease` / `owned` / `order`. Market: 24 used aircraft for sale + 15 % brand-new lessor aircraft (6–30 months).
+  New P&L line `disposals` (gains/losses on sales, lost deposits, early-return fees); depreciation of owned aircraft.
+  Save version 8 (migration adds the sales market + line).
+- UI: Fleet tabs My fleet / Lease market / Buy used / Order new, `FleetSummary` line, `Ownership` facts + actions with
+  confirm, new ops messages. Fixes after the browser check: missing payment-plan text, small types default to an
+  all-economy cabin when ordered, "ATR ATR 72" title, no age for aircraft not built yet.
+- Tests: 113. Verified in browser: bought a used ATR 42, ordered 2 ATR 72-600 (deliveries Oct 2028), cancelled one,
+  phone 375 px without sideways scrolling, no console errors.
+- Known: owning looks much cheaper than leasing in the P&L (no interest on the cash until loans in Phase 10);
+  lessor cabins on small types sometimes have a business section (from Phase 2 `lessorStyle`).
+- **Next:** 4.2 maintenance checks (A/C/D with downtime, planned by the game, movable), technical failures, maintenance
+  costs rising with age.
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.

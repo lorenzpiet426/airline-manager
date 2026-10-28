@@ -10,6 +10,7 @@ import { mergePnl, newPeriod, type PnlPeriod } from './finance';
 import type { FxRates } from './money';
 import { MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type CabinClass, type GameState, type Route, type RouteStats } from './state';
 import { addExperience, closeReputationWeek } from './reputation';
+import { dailyDepreciation, dailyFleetStep } from './fleet';
 import { daysInMonth, MINUTES_PER_DAY, startOfMonth, startOfWeek, toDate, weekdayOf, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
@@ -45,6 +46,8 @@ const usdTo = (fx: FxRates, currency: string) => (fx[currency] ?? 1) / (fx.USD ?
 /** Called at 00:00 UTC every day: books the day that just ended, and closes the week on Mondays. */
 export function dailyStep(state: GameState, world: EngineWorld): void {
   bookDay(state, world);
+  // Payments to manufacturers, lease reminders and leases that end.
+  dailyFleetStep(state, world);
   // The real airlines review their networks (a share of them each day) and react to the player.
   aiDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) closeWeek(state);
@@ -98,6 +101,12 @@ function bookDay(state: GameState, world: EngineWorld): void {
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) + (week.revenue - totalCosts(week.costs)) * k;
   }
 
+  // Owned aircraft are written off day by day (also while being delivered or refitted).
+  for (const aircraft of Object.values(state.aircraft)) {
+    if (!aircraft.owned || !state.airlines[aircraft.airlineId]) continue;
+    dayOf(aircraft.airlineId).lines.depreciation += dailyDepreciation(aircraft.owned, state.time - 1);
+  }
+
   // Aircraft costs that don't depend on flying: crews are paid, the lease rent accrues
   // (the cash for the rent goes out on the 1st of the month, see advance.ts).
   for (const aircraft of Object.values(state.aircraft)) {
@@ -109,7 +118,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const day = dayOf(airline.id);
     const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, hub.country, aircraft.cabin) * k;
     day.lines.crew += crew;
-    day.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
+    if (aircraft.lease) day.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
     // Refits were paid in cash; the accounts write them off day by day.
     const dep = aircraft.cabinDepreciation;
     if (dep && dep.until >= state.time) day.lines.depreciation += dep.perDay;

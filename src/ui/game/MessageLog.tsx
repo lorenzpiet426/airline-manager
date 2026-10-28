@@ -12,6 +12,8 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
   const shown = messages.slice(-limit).reverse();
   if (!shown.length) return <p className="muted">{t('ops.noMessages')}</p>;
 
+  const money = (p: GameMessage['params']) => formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) });
+  const date = (v: string | number | undefined) => formatGameDate(language, toDate(Number(v)), false);
   const text = (m: GameMessage) => {
     const p = m.params;
     switch (m.kind) {
@@ -62,6 +64,25 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         });
       case 'refitDone':
         return t('msg.refitDone', p);
+      case 'ordered':
+        return t('msg.ordered', { ...p, count: Number(p.count), amount: money(p), first: date(p.first), last: date(p.last) });
+      case 'orderPayment':
+        return t('msg.orderPayment', { amount: money(p) });
+      case 'orderCancelled':
+        return t('msg.orderCancelled', { ...p, amount: money(p) });
+      case 'bought':
+        return t('msg.bought', { ...p, amount: money(p), date: date(p.deliveryAt) });
+      case 'sold':
+      case 'scrapped':
+        return t(`msg.${m.kind}`, { ...p, amount: money(p) });
+      case 'leaseEnding':
+        return t('msg.leaseEnding', { ...p, date: date(p.endAt) });
+      case 'leaseEnded':
+        return t('msg.leaseEnded', { ...p, count: Number(p.routes) });
+      case 'leaseReturned':
+        return t('msg.leaseReturned', { ...p, count: Number(p.routes), amount: money(p) });
+      case 'leaseExtended':
+        return t('msg.leaseExtended', { ...p, amount: money(p), date: date(p.endAt) });
     }
   };
 
