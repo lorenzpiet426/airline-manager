@@ -3,4 +3,11 @@
 // null = cloud sync is not set up in this build.
 import type { FirebaseOptions } from 'firebase/app';
 
-export const FIREBASE_CONFIG: FirebaseOptions | null = null;
+export const FIREBASE_CONFIG: FirebaseOptions | null = {
+  apiKey: 'AIzaSyCszod1fFbvIX71B4WgrWOIUNxvfRNz-Sw',
+  authDomain: 'airline-manager-a45e8.firebaseapp.com',
+  projectId: 'airline-manager-a45e8',
+  storageBucket: 'airline-manager-a45e8.firebasestorage.app',
+  messagingSenderId: '1089697314852',
+  appId: '1:1089697314852:web:113a712b9a2a66ee8680b1',
+};

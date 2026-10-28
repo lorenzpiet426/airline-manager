@@ -267,7 +267,7 @@ Found a startup at a hub of your choice (VIE default), year 2026, Realistic mode
 Fictional AI airlines (enter/leave routes, price wars, order aircraft, go bankrupt), passenger choice
 between airlines (price, frequency, quality, reputation), cabin classes and seat pitch, reputation basics, seasonality.
 
-### Phase 3 — Cloud sync and real-clock mode
+### Phase 3 — Cloud sync and real-clock mode ✅ (2026-10-28)
 Free account login, save slots synced across devices, time mode 3 with offline catch-up and "While you were away" report.
 
 ### Phase 4 — Fleet depth
@@ -317,8 +317,7 @@ Server-authoritative shared world running the same engine (free tier to be resea
 ## 5. Things the owner will need to do (when the time comes)
 - ~~Before Phase 1.1: install Node.js~~ — done by Claude into `~/.local/node` (2026-10-27).
 - ~~Phase 1.1: create a free GitHub account~~ — done (lorenzpiet426), 2026-10-27.
-- **Phase 3 (now):** create a free **Firebase** project with a Google account (no credit card; stay on the Spark plan) and send
-  Claude the web app config (steps given 2026-10-28).
+- ~~Phase 3: create a free Firebase project~~ — done (airline-manager-a45e8), 2026-10-28. Never upgrade to Blaze.
 
 ## 5b. Phase 2.1 data brief from the owner (2026-10-27, final version) — real airlines
 **General rules**
@@ -716,7 +715,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 - **Next:** owner tries cabins; then Phase 3 (cloud sync + real-clock mode) or what the owner prefers.
 - Owner confirmed: cabins tried.
 
-### 2026-10-28 — Session 10 (Phase 3: cloud sync + real-clock mode) — real clock ✅, cloud sync waiting for the Firebase project
+### 2026-10-28 — Session 10 (Phase 3: cloud sync + real-clock mode) ✅ (sync live; owner's device test pending)
 - Owner decisions: Google sign-in, automatic sync with safe conflicts, real clock for new + existing games, world keeps
   running with a report (§7).
 - **Real clock:** time mode `realclock` (`GameOptions.clockOffset`), new games start now (`NewGameOptions.startTime`),
@@ -737,8 +736,11 @@ education", forbid making the data available to others (§3 iii) and require a w
   overwritten; real-clock start, switch behind/ahead, away report = accounts).
 - Verified in browser: test game switched to the real clock, 132 days caught up in seconds with report, LIVE sign,
   game time = real UTC, no console errors.
-- **Owner to do:** create the Firebase project (steps in the chat of this session; rules in `firestore.rules`) and send
-  the web config → paste into `firebaseConfig.ts`, test sign-in/sync live on phone + computer.
+- Owner created Firebase project **airline-manager-a45e8** (Spark, Firestore europe-west3, Google sign-in, rules from
+  `firestore.rules`); web config is in `firebaseConfig.ts` (public by design). Checked from outside: unauthenticated
+  Firestore read → 403 (rules work), Google provider enabled. Sign-in itself needs the owner (can't be done by Claude).
+- **Next:** owner signs in on computer and phone, checks that a game appears on both and that a conflict offers the
+  choice; then Phase 4 (fleet depth) or what the owner prefers.
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.
