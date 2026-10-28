@@ -228,6 +228,26 @@ All values in `src/data/maintenance.ts` are **modelled** (typed in by hand, noth
   Soviet types have no market price: values are modelled equivalents.
 - Today's types keep their prices as 2025 dollars (`PRICE_YEAR`).
 
+## World events and economy (Phase 5.1, 2026-10-28)
+All **modelled** (`src/engine/worldEvents.ts`); no new dataset. Before `REAL_DATA_END` (24 Oct 2026, after the last EIA
+fuel week and the ECB rates) the game uses the real data only and invents no events.
+- **Traffic growth** 3 %/year (IATA/ICAO long-term forecasts of ~3–4 %); competitors' capacity grows alike.
+- **Jet fuel** after the real data: log mean reversion to $2.40/gal (2026 dollars, +2.5 %/year inflation), half-life ≈ 8
+  months, volatility ≈ 35 %/year (typical of jet fuel since 2000); fuel shocks raise the target by 40–90 % for 2–8 months.
+  Fares follow fuel by 35 % (unchanged from Phase 1.4).
+- **Exchange rates** move monthly: EUR/USD ≈ 7.5 %/year volatility with mean reversion; USD pegs (HKD, AED, SAR, QAR…) and
+  EUR pegs (DKK…) hold; higher volatility and drift for TRY, ARS, BRL, ZAR, INR (their long-run depreciation).
+- **Event rates** (per year): world recession 0.05 (−10…−18 % demand, business ×1.4), continental recession 0.2 in total;
+  fuel shock 0.1; disease outbreak 0.05 (−10…−30 %, international ×2); severe pandemic 0.012 (−75…−92 % international,
+  18–36 months; COVID-19 cut world traffic ~60–66 % in 2020); Icelandic ash 0.06 (2–8 days, UK/Ireland + random
+  north-western Europe; 2010: ~100,000 flights cancelled in 6 days), Etna 0.4, Agung/Bali 0.25, Andes 0.05; airspace
+  closure 0.04 (from countries with closures in the 2010s–2020s, neutral wording); ATC strikes France 4, Italy 1.5, Greece,
+  Belgium 0.5, Spain 0.3 (30–60 % of flights, 1–2 days); German airport strikes 1.5; London 0.5; Helsinki 0.5; winter
+  storms 3 per winter in Europe, North America and North-East Asia; hurricanes 2 (Aug–Oct, Caribbean/Gulf); typhoons 3
+  (Jul–Oct, East Asia). Rates are rounded from news archives of the last 20 years.
+- **Passenger care** for cancelled flights under EU 261 Art. 9 (meals, hotels: €40 / €120 per passenger); no
+  compensation for extraordinary circumstances (weather, ATC strikes, volcanic ash, security; Art. 5(3)).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

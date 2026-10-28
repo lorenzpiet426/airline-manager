@@ -194,7 +194,11 @@
     "liveryChanged_one": "New livery saved. {{count}} aircraft keeps the old one until it is repainted.",
     "liveryChanged_other": "New livery saved. {{count}} aircraft keep the old one until they are repainted.",
     "repaintStarted": "{{registration}} is in the paint hangar until {{date}} ({{days}} days, {{amount}}).",
-    "repaintDone": "{{registration}} now wears your new livery."
+    "repaintDone": "{{registration}} now wears your new livery.",
+    "worldEvent": "{{what}}: {{where}} (until {{date}}).",
+    "eventAffects": "{{what}} affects your network: {{where}}, until {{date}}. Flights there may be cancelled.",
+    "eventCancellations_one": "Yesterday {{count}} flight was cancelled ({{why}}): {{pax}} passengers looked after (meals, hotels) for {{amount}}. No compensation is due: extraordinary circumstances.",
+    "eventCancellations_other": "Yesterday {{count}} flights were cancelled ({{why}}): {{pax}} passengers looked after (meals, hotels) for {{amount}}. No compensation is due: extraordinary circumstances."
   },
   "newGame": {
     "title": "Found your airline",
@@ -1041,5 +1045,47 @@
     "freighterLater": "A freighter: cargo flights come in a later phase.",
     "historical": "Historical type: it becomes available with historical start years (Phase 5), in the years it really flew.",
     "source": "Specs are rounded manufacturer and encyclopedic figures, typed in by hand; retirement years are approximate."
+  },
+  "world": {
+    "title": "World situation",
+    "fuel": "Jet fuel (USD per gallon)",
+    "fuelHint": "Spot price, last 52 weeks. Real prices until 23 Oct 2026, then simulated: it swings like the real market and drifts back to its long-run level; fuel shocks push it up. Fares follow fuel a little.",
+    "eurUsd": "Euro in US dollars",
+    "perUsd": "{{currency}} per US dollar",
+    "fxHint": "Rate of {{date}}. Leases and fuel are paid in dollars, your books are in your own currency: exchange rates change your costs.",
+    "demand": "Demand in {{region}} (business / leisure)",
+    "demandHint": "Recessions hit business travel hardest; pandemics hit international travel hardest.",
+    "normal": "normal",
+    "growth": "Traffic growth since 2026",
+    "growthHint": "Air travel grows about 3 % a year in the long run; your competitors grow their capacity with it.",
+    "now": "Happening now",
+    "realPeriod": "Until {{date}} the game follows the real world's data; from then on the world is simulated and events happen at real-world frequencies. The real events of the past come with Phase 5.2.",
+    "quiet": "Nothing unusual right now.",
+    "worldwide": "worldwide",
+    "closureLine": "{{share}} % of flights cancelled · until {{until}}",
+    "gradualLine": "now {{now}} % · until {{until}} ({{days}} days)",
+    "continent": {
+      "EU": "Europe",
+      "NA": "North America",
+      "SA": "South America",
+      "AS": "Asia",
+      "AF": "Africa",
+      "OC": "Oceania",
+      "AN": "Antarctica"
+    },
+    "kind": {
+      "recession": "Recession",
+      "fuelShock": "Oil price shock",
+      "pandemic": "Disease outbreak",
+      "pandemicSevere": "Pandemic",
+      "volcano": "Volcanic ash ({{label}})",
+      "airspace": "Airspace closed (security situation)",
+      "atcStrike": "Air traffic control strike",
+      "airportStrike": "Airport strike",
+      "winterStorm": "Winter storm",
+      "hurricane": "Hurricane",
+      "typhoon": "Typhoon"
+    },
+    "recent": "Last three months"
   }
 }

@@ -2636,3 +2636,48 @@ a.button {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* ─── World situation (5.1) ──────────────────────────────────────────────── */
+
+.world-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.world-panel__title {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.world-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.world-events__item {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--amber);
+  background: var(--bg-raised);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.world-events__item--closure {
+  border-left-color: var(--red);
+}
+
+.world-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}

@@ -1,5 +1,7 @@
 // Daily operations and accounting: every day at 00:00 UTC each route earns its ticket revenue and
 // pays its costs, crews are paid and lease costs accrue. Monday closes last week's profit-and-loss report.
+import { bookClosures } from './closures';
+import { conditionsOf, worldDailyStep } from './worldEvents';
 import { getAircraftType } from '../data/aircraft';
 import { aiDailyStep } from './ai';
 import { postMessage } from './core';
@@ -51,6 +53,9 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   dailyFleetStep(state, world);
   // Flight hours, checks, maintenance reserves, hangars and today's technical failures.
   maintenanceDailyStep(state, world);
+  // Flights cancelled yesterday by closures and strikes (care for passengers), then today's fuel price and new events.
+  bookClosures(state, world);
+  worldDailyStep(state, world);
   // The real airlines review their networks (a share of them each day) and react to the player.
   aiDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) closeWeek(state);
@@ -74,7 +79,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!plan || !from || !to || !airline) continue;
     const rep = state.reputation[airline.id];
     const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
-    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true });
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: conditionsOf(state, world, state.time - 1) });
     if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
     const lines = dayOf(airline.id).lines;

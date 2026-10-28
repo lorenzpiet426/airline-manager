@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 /** Real-time with speeds, turn-based weeks, or tied to the real clock (Phase 3: 1 game minute = 1 real minute). */
 export type TimeMode = 'realtime' | 'weekly' | 'realclock';
@@ -406,6 +406,42 @@ export interface AiState {
 
 export const emptyAi = (): AiState => ({ routes: {}, added: {}, airlines: {} });
 
+export type WorldEventKind =
+  | 'recession' | 'fuelShock' | 'pandemic' | 'pandemicSevere'
+  | 'volcano' | 'airspace' | 'atcStrike' | 'airportStrike' | 'winterStorm' | 'hurricane' | 'typhoon';
+
+/** Something happening in the world (Phase 5.1): where, from when until when, and how strong. */
+export interface WorldEvent {
+  id: string;
+  kind: WorldEventKind;
+  start: SimTime;
+  end: SimTime;
+  /** Economy and health events: the continents hit (all = worldwide). */
+  continents?: string[];
+  /** Closures: whole countries … */
+  countries?: string[];
+  /** … or single airports. */
+  airports?: string[];
+  /** Strength 0–1: the demand drop at its worst, the fuel price rise, or the share of flights cancelled. */
+  depth: number;
+  /** A name for the news (e.g. the volcano). */
+  label?: string;
+}
+
+/** The simulated world after the real data ends (Phase 5.1). */
+export interface WorldState {
+  /** Jet fuel spot price (USD per gallon). */
+  fuel: number;
+  /** Weekly fuel prices, oldest first (ten years). */
+  fuelHistory: [SimTime, number][];
+  /** Exchange rates against the US dollar when the simulation started (currencies drift back towards them). */
+  fxBase: Record<string, number>;
+  /** US dollars per euro at each month start, oldest first. */
+  fxHistory: [SimTime, number][];
+  /** Events running now and those of the last two years. */
+  events: WorldEvent[];
+}
+
 /** Things that will happen at a fixed time. Processed in time order by advance(). */
 export type ScheduledEvent =
   | { at: SimTime; seq: number; kind: 'monthStart' }
@@ -434,7 +470,9 @@ export interface GameMessage {
     // Maintenance (Phase 4.2).
     | 'checkPlanned' | 'checkMoved' | 'checkStarted' | 'checkDone' | 'aCheckGrounded' | 'failure' | 'hangarOrdered' | 'hangarReady'
     // Liveries (Phase 4.3).
-    | 'liveryChanged' | 'repaintStarted' | 'repaintDone';
+    | 'liveryChanged' | 'repaintStarted' | 'repaintDone'
+    // World events (Phase 5.1).
+    | 'worldEvent' | 'eventAffects' | 'eventCancellations';
   level: 'normal' | 'info' | 'caution' | 'warning';
   params: Record<string, string | number>;
 }
@@ -473,6 +511,8 @@ export interface GameState {
   finance: Record<string, AirlineFinance>;
   /** Changes made by the real airlines' AI (2.1b). */
   ai: AiState;
+  /** Economy, fuel, exchange rates and events after the real data ends (Phase 5.1). */
+  world: WorldState;
   /** Own maintenance hangars (Phase 4.2). */
   hangars: Record<string, Hangar>;
   /** Reputation of the player's airlines (real airlines use a value by airline type). */

@@ -1,5 +1,6 @@
 // Moves the world forward in time. All three time modes use this one function:
 // real-time calls it in small steps, turn-based mode a week at a time, real-clock mode catches up.
+import { worldMonthlyStep } from './worldEvents';
 import { paintOnDelivery, repaintDone } from './livery';
 import { getAircraftType } from '../data/aircraft';
 import { book, postMessage, schedule } from './core';
@@ -29,6 +30,7 @@ function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): vo
       schedule(state, { at: state.time + MINUTES_PER_DAY, kind: 'dayStart' });
       break;
     case 'monthStart':
+      worldMonthlyStep(state);
       payMonthlyRents(state);
       refreshMarket(state);
       schedule(state, { at: startOfNextMonth(state.time), kind: 'monthStart' });

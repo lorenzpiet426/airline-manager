@@ -8,6 +8,8 @@ import { SimControls } from '../components/SimControls';
 import { GameClock } from '../components/StatusBar';
 import { Dashboard } from '../game/Dashboard';
 import { ReputationPanel } from '../game/ReputationPanel';
+import { WorldPanel } from '../game/WorldPanel';
+import { useEngineWorld } from '../game/useEngineWorld';
 import { AwayReportPanel } from '../game/AwayReport';
 import { MessageLog } from '../game/MessageLog';
 import { usePlayer } from '../game/usePlayer';
@@ -45,6 +47,7 @@ export function OpsScreen() {
   const booting = useBooting();
   const { game, airline } = usePlayer();
   const world = useWorld();
+  const engineWorld = useEngineWorld();
 
   // Status lines use cockpit (ECAM) colours: green = normal, amber = caution, cyan = info.
   const checks: { label: string; value: string; level: Level }[] = [
@@ -126,6 +129,12 @@ export function OpsScreen() {
         <Panel title={t('dashboard.title')} code="KPI" className="panel--wide">
           <Dashboard game={game} airline={airline} />
         </Panel>
+
+        {engineWorld && game.world && (
+          <Panel title={t('world.title')} code="WX" className="panel--wide">
+            <WorldPanel game={game} airline={airline} world={engineWorld} />
+          </Panel>
+        )}
 
         {game.reputation[airline.id] && (
           <Panel title={t('reputation.title')} code="REP" className="panel--wide">

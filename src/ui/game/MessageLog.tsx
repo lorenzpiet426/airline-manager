@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { GameMessage } from '../../engine/state';
 import { toDate } from '../../engine/time';
 import type { World } from '../../data/world';
-import { formatGameDate, formatMoney, formatZulu } from '../../i18n/format';
+import { countryName, formatGameDate, formatMoney, formatZulu } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 
 /** The ops message log (like ACARS messages in a cockpit), newest first. */
@@ -14,6 +14,14 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
 
   const money = (p: GameMessage['params']) => formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) });
   const date = (v: string | number | undefined) => formatGameDate(language, toDate(Number(v)), false);
+  // Where a world event happens: airports by code, countries and continents by name.
+  const placeNames = (area: string, where: string) =>
+    area === 'world'
+      ? t('world.worldwide')
+      : where
+          .split(',')
+          .map((x) => (area === 'continents' ? t(`world.continent.${x}`) : area === 'countries' ? countryName(language, x, world?.countries[x]?.name ?? x) : x))
+          .join(', ');
   const text = (m: GameMessage) => {
     const p = m.params;
     switch (m.kind) {
@@ -114,6 +122,22 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.repaintStarted', { ...p, date: date(p.until), amount: money(p) });
       case 'repaintDone':
         return t('msg.repaintDone', p);
+      // World events (Phase 5.1)
+      case 'worldEvent':
+      case 'eventAffects':
+        return t(m.kind === 'worldEvent' ? 'msg.worldEvent' : 'msg.eventAffects', {
+          what: t(`world.kind.${p.event}`, { label: p.label }),
+          where: placeNames(String(p.area), String(p.where)),
+          date: date(p.until),
+          depth: p.depth,
+        });
+      case 'eventCancellations':
+        return t('msg.eventCancellations', {
+          count: Number(p.flights),
+          pax: p.pax,
+          amount: money(p),
+          why: String(p.events).split(',').map((k) => t(`world.kind.${k}`, { label: '' })).join(', '),
+        });
       case 'hangarReady': {
         const airport = world?.airportById.get(String(p.airport));
         return t('msg.hangarReady', { size: t(`maint.size.${p.size}`), airport: airport?.iata ?? p.airport });

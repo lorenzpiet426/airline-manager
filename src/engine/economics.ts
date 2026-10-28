@@ -4,7 +4,8 @@
 // Calibration notes and sources: docs/DATA_SOURCES.md ("Economics model").
 import { CHECK_SHARE } from '../data/maintenance';
 import { getAircraftType, TURNAROUND_MIN, type AircraftCategory, type AircraftType } from '../data/aircraft';
-import { fuelUsdPerKg, jetFuelSpot } from '../data/fuel';
+import { fuelUsdPerKg, INTO_PLANE_USD_PER_GAL, jetFuelSpot, KG_PER_GALLON } from '../data/fuel';
+import type { Conditions } from './worldEvents';
 import type { Airport } from '../data/types';
 import { distanceKm, greatCirclePoints } from './geo';
 import type { BusinessModel, SourceTag } from './realAirlines';
@@ -291,10 +292,10 @@ export function competitorsOn(
 const FARE_FUEL_REFERENCE = 2.2;
 
 /** Average one-way fare in USD on this market (all passengers, economy and business mixed). */
-export function marketFareUsd(world: EngineWorld, a: Airport, b: Airport, date: Date): number {
+export function marketFareUsd(world: EngineWorld, a: Airport, b: Airport, date: Date, fuelSpot = jetFuelSpot(date)): number {
   const km = Math.max(distanceKm(a, b), 50);
   const meanWealth = (wealth(world, a) + wealth(world, b)) / 2;
-  const fuelIndex = 1 + 0.35 * (jetFuelSpot(date) / FARE_FUEL_REFERENCE - 1);
+  const fuelIndex = 1 + 0.35 * (fuelSpot / FARE_FUEL_REFERENCE - 1);
   return (55 + 0.13 * km ** 0.92) * Math.min(1.25, Math.max(0.6, meanWealth ** 0.25)) * fuelIndex;
 }
 
@@ -474,6 +475,8 @@ export interface RouteContext {
   brand?: Brand;
   /** The player's aircraft pay their airframe checks separately (Phase 4.2): hourly maintenance without them. */
   checksSeparate?: boolean;
+  /** The world's state (Phase 5.1): fuel price, traffic growth, recessions and pandemics. Default: the real 2026 data. */
+  conditions?: Conditions;
 }
 
 /** Cruise speed assumed for other airlines' jets when generating their timetables. */
@@ -579,7 +582,9 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   const m = market(world, from, to);
   const time = fromDate(date);
   const t = haul(m.distanceKm);
-  const average = marketFareUsd(world, from, to, date);
+  const cond = ctx.conditions;
+  // In bad times airlines discount: fares follow demand a little (a 20 % drop in leisure demand ≈ 6 % lower fares).
+  const average = marketFareUsd(world, from, to, date, cond?.fuelSpot) * (cond ? cond.demand(from, to, 'leisure') ** 0.3 : 1);
   const marketFare = (cls: CabinClass) => average * classFareRatio(cls, t);
   const myFactor = (cls: CabinClass) => fareFactorOf(cls, plan.fareFactor, plan.classFares);
   const biz = m.businessShare;
@@ -620,11 +625,13 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
       for (const c of competitors) {
         const cabin = competitorCabin(c.model, longHaul);
         const brand = { reputation: MODEL_REPUTATION[c.model], awareness: 1 };
-        for (const d of competitorDepartures(world, c.airlineId, A, B, c.weekly, time)) others.push({ ...d, fare: () => c.fareFactor, speed: 1, group: c.airlineId, cabin, brand });
+        // Competitors' capacity grows with the market over the years.
+        const weekly = c.weekly * (cond?.trend ?? 1);
+        for (const d of competitorDepartures(world, c.airlineId, A, B, weekly, time)) others.push({ ...d, fare: () => c.fareFactor, speed: 1, group: c.airlineId, cabin, brand });
       }
     } else {
       const cabin = competitorCabin('legacy', longHaul);
-      for (const d of competitorDepartures(world, 'incumbent', A, B, m.incumbentFlights, time)) {
+      for (const d of competitorDepartures(world, 'incumbent', A, B, m.incumbentFlights * (cond?.trend ?? 1), time)) {
         others.push({ ...d, fare: () => 1, speed: 1, group: 'incumbent', cabin, brand: NEUTRAL_BRAND });
       }
     }
@@ -681,7 +688,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
             shares = dayShares(options, segment, longHaul, m.connectingFlights / 7, 1);
             cache.set(key, shares);
           }
-          const travellers = (m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation;
+          const world5 = cond ? cond.trend * cond.demand(A, B, segment) : 1;
+          const travellers = (m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation * world5;
           today.forEach((k, n) => {
             demand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;
           });
@@ -692,7 +700,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
 
   // Passengers, revenue and costs flight by flight.
   const costs: RouteCosts = { fuel: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, service: 0 };
-  const fuelPrice = fuelUsdPerKg(date);
+  const fuelPrice = cond ? (cond.fuelSpot + INTO_PLANE_USD_PER_GAL) / KG_PER_GALLON : fuelUsdPerKg(date);
   const nav = new Map<string, number>();
   const byClass: Partial<Record<CabinClass, ClassResult>> = {};
   const experience: Partial<Record<CabinClass, ExperienceSums>> = {};

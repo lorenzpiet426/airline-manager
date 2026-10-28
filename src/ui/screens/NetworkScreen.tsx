@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { conditionsOf } from '../../engine/worldEvents';
 import { Segmented } from '../components/Segmented';
 import { DeparturesBoard } from '../network/DeparturesBoard';
 import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
@@ -311,6 +312,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
       ai: game.ai,
       brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
       checksSeparate: true,
+      conditions: conditionsOf(game, engineWorld),
     });
     const pairs = pairsOfRoute(sim, simRoute.id).filter((p) => sim.aircraft[p.aircraftId]);
     const used = [...new Set(pairs.map((p) => p.aircraftId))].map((id) => game.aircraft[id]!).filter(Boolean);

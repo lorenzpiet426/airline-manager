@@ -6,6 +6,7 @@
 //   regional / charter – react little.
 // Our economics model is an approximation, so the AI judges *changes* against the real starting point: a real
 // route is only given up when it has become clearly worse than in reality (e.g. because of you) and loses money.
+import { conditionsOf } from './worldEvents';
 import { getAircraftType, isFreighter, type AircraftType } from '../data/aircraft';
 import type { Airport } from '../data/types';
 import { postMessage } from './core';
@@ -150,7 +151,9 @@ function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A:
     B,
     { type: ac.type, seats: totalSeats(cabin), cabin, frequency: weekly, fareFactor: fare, classFares: { W: fare, J: fare, F: fare }, ageYears: 10, rampUp: 1 },
     date,
-    { ai: withChanges ? state.ai : undefined, exclude: airline.id, extra, brand: { reputation: MODEL_REPUTATION[airline.model], awareness: 1 } },
+    // Both sums (today and the real starting point) see the same world (fuel, recessions, pandemics), so an AI airline
+    // compares like with like and only reacts to the competition.
+    { ai: withChanges ? state.ai : undefined, exclude: airline.id, extra, brand: { reputation: MODEL_REPUTATION[airline.model], awareness: 1 }, conditions: conditionsOf(state, world) },
   );
   const ownPerBlockHour =
     (crewCostPerDayUsd(world, ac.type, ac.seats, airline.country ?? 'US') * 7 + (typicalRentUsd(ac.type, 10) * 12) / 52) /

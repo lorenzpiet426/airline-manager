@@ -1,4 +1,5 @@
 // Creating a new game world.
+import { newWorldState } from './worldEvents';
 import { defaultLivery } from './livery';
 import { ensureMaint } from './maintenance';
 import { ECB_RATES, FX_DATE } from '../data/currencies';
@@ -39,6 +40,7 @@ export function createGame(options: NewGameOptions): GameState {
     ai: emptyAi(),
     reputation: {},
     hangars: {},
+    world: newWorldState(ECB_RATES),
     queue: [],
     messages: [],
     ledger: [],
@@ -150,6 +152,11 @@ export function migrate(raw: unknown): GameState | null {
     for (const airline of Object.values(state.airlines)) airline.liveries ??= [defaultLivery(airline.colors, airline.name, airline.iata)];
     for (const a of Object.values(state.aircraft)) if (a.status === 'active') a.paint ??= 0;
     state.version = 10;
+  }
+  if (state.version === 10) {
+    // Version 11 (Phase 5.1): the simulated world (economy, fuel, exchange rates, events) after the real data ends.
+    state.world = newWorldState(state.fx);
+    state.version = 11;
   }
   if (state.version !== SAVE_VERSION) return null;
   return state;

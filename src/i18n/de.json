@@ -194,7 +194,11 @@
     "liveryChanged_one": "Neue Lackierung gespeichert. {{count}} Flugzeug behält die alte, bis es neu lackiert wird.",
     "liveryChanged_other": "Neue Lackierung gespeichert. {{count}} Flugzeuge behalten die alte, bis sie neu lackiert werden.",
     "repaintStarted": "{{registration}} ist bis {{date}} in der Lackierhalle ({{days}} Tage, {{amount}}).",
-    "repaintDone": "{{registration}} trägt jetzt deine neue Lackierung."
+    "repaintDone": "{{registration}} trägt jetzt deine neue Lackierung.",
+    "worldEvent": "{{what}}: {{where}} (bis {{date}}).",
+    "eventAffects": "{{what}} betrifft dein Streckennetz: {{where}}, bis {{date}}. Flüge dorthin können ausfallen.",
+    "eventCancellations_one": "Gestern fiel {{count}} Flug aus ({{why}}): {{pax}} Passagiere versorgt (Essen, Hotels) für {{amount}}. Keine Entschädigung fällig: außergewöhnliche Umstände.",
+    "eventCancellations_other": "Gestern fielen {{count}} Flüge aus ({{why}}): {{pax}} Passagiere versorgt (Essen, Hotels) für {{amount}}. Keine Entschädigung fällig: außergewöhnliche Umstände."
   },
   "newGame": {
     "title": "Gründe deine Airline",
@@ -1041,5 +1045,47 @@
     "freighterLater": "Ein Frachter: Frachtflüge kommen in einer späteren Phase.",
     "historical": "Historischer Typ: verfügbar mit historischen Startjahren (Phase 5), in den Jahren, in denen er wirklich flog.",
     "source": "Gerundete Hersteller- und Lexikonwerte, von Hand eingetragen; Ausmusterungsjahre sind ungefähr."
+  },
+  "world": {
+    "title": "Weltlage",
+    "fuel": "Kerosin (US-Dollar pro Gallone)",
+    "fuelHint": "Spotpreis, letzte 52 Wochen. Echte Preise bis 23.10.2026, danach simuliert: er schwankt wie der echte Markt und kehrt zu seinem langfristigen Niveau zurück; Ölpreisschocks treiben ihn nach oben. Ticketpreise folgen dem Kerosin ein wenig.",
+    "eurUsd": "Euro in US-Dollar",
+    "perUsd": "{{currency}} pro US-Dollar",
+    "fxHint": "Kurs vom {{date}}. Leasing und Kerosin werden in Dollar bezahlt, deine Bücher in deiner Währung: Wechselkurse verändern deine Kosten.",
+    "demand": "Nachfrage in {{region}} (Geschäft / Freizeit)",
+    "demandHint": "Rezessionen treffen Geschäftsreisen am stärksten, Pandemien internationale Reisen.",
+    "normal": "normal",
+    "growth": "Verkehrswachstum seit 2026",
+    "growthHint": "Der Luftverkehr wächst langfristig um etwa 3 % pro Jahr; deine Konkurrenten wachsen mit.",
+    "now": "Aktuell",
+    "realPeriod": "Bis {{date}} folgt das Spiel den Daten der echten Welt; danach wird die Welt simuliert und Ereignisse treten so oft auf wie in Wirklichkeit. Die echten Ereignisse der Vergangenheit kommen mit Phase 5.2.",
+    "quiet": "Gerade nichts Besonderes.",
+    "worldwide": "weltweit",
+    "closureLine": "{{share}} % der Flüge gestrichen · bis {{until}}",
+    "gradualLine": "jetzt {{now}} % · bis {{until}} ({{days}} Tage)",
+    "continent": {
+      "EU": "Europa",
+      "NA": "Nordamerika",
+      "SA": "Südamerika",
+      "AS": "Asien",
+      "AF": "Afrika",
+      "OC": "Ozeanien",
+      "AN": "Antarktis"
+    },
+    "kind": {
+      "recession": "Rezession",
+      "fuelShock": "Ölpreisschock",
+      "pandemic": "Krankheitsausbruch",
+      "pandemicSevere": "Pandemie",
+      "volcano": "Vulkanasche ({{label}})",
+      "airspace": "Luftraum gesperrt (Sicherheitslage)",
+      "atcStrike": "Fluglotsenstreik",
+      "airportStrike": "Flughafenstreik",
+      "winterStorm": "Wintersturm",
+      "hurricane": "Hurrikan",
+      "typhoon": "Taifun"
+    },
+    "recent": "Letzte drei Monate"
   }
 }

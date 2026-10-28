@@ -2,6 +2,7 @@
 // departure time on certain weekdays, a ground time at the destination, and the return flight. In Simple scheduling
 // the game plans the pairs itself from the weekly frequency; in Detailed scheduling the player sets every pair.
 // Times are hub local time, like published timetables; the airports' time zones turn them into UTC.
+import { closureCancelsPair } from './closures';
 import { getAircraftType, TURNAROUND_MIN } from '../data/aircraft';
 import type { Airport } from '../data/types';
 import { nextId } from './core';
@@ -98,7 +99,13 @@ export function plannedFlights(state: GameState, world: EngineWorld, route: Rout
   const result: PlannedFlight[] = [];
   for (const pair of pairsOfRoute(state, route.id)) {
     const aircraft = state.aircraft[pair.aircraftId];
-    if (!aircraft || (!includeDelivering && (aircraft.status !== 'active' || grounded(aircraft, time) || aogCancels(world, route, pair, aircraft, time)))) continue;
+    if (
+      !aircraft ||
+      (!includeDelivering &&
+        (aircraft.status !== 'active' || grounded(aircraft, time) || aogCancels(world, route, pair, aircraft, time) || closureCancelsPair(state, world, route, pair, time)))
+    ) {
+      continue;
+    }
     result.push(...specFlights(world, route, aircraft, yearOf(time) - aircraft.builtYear, pair, time));
   }
   return result;

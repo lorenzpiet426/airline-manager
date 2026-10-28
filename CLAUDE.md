@@ -280,6 +280,9 @@ Split (2026-10-28): **4.1** ✅ buy used, order new, sell/scrap, lease ends/exte
 ### Phase 5 — History and world events
 Historical start years (1970s/1990s/2000s), aircraft EIS/retirement dates, event timeline (oil crises,
 9/11, 2008, COVID, airspace closures, volcanic ash), economy cycles, fuel prices, currencies.
+Split (2026-10-28): **5.1** ✅ world events + economy in today's games (random at real frequencies after Oct 2026);
+**5.2** historical data (fuel prices, exchange rates and old currencies, GDP/population by year, real event timeline
+1970–2025); **5.3** historical start years (modelled incumbents until Phase 6; books in schilling etc. until 1999).
 
 ### Phase 6 — Real airlines and the Austrian Airlines takeover
 Real airlines as AI with real fleets/networks per era and recognizable colors; **detailed Austrian Airlines
@@ -438,6 +441,11 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-28 | 4.4: **historical database + aircraft encyclopedia** now; historical start years stay in Phase 5 | Owner choice; a 1970s start needs the 1970s world (airlines, fuel, demand) to be realistic |
 | 2026-10-28 | 4.4: coverage = **jet age and the 1950s propliners** (DC-3 … Constellation, Viscount, Britannia, Electra) | Owner choice ("Also propliners") |
 | 2026-10-28 | 4.4: historical prices in **then-year dollars** + BLS CPI table (`priceYear` on the type; undated = 2025 dollars) | Owner choice |
+| 2026-10-28 | Phase 5 order: **5.1 world events first**, then 5.2 historical data, then 5.3 historical start years | Owner choice; each step playable |
+| 2026-10-28 | Historical games before Phase 6: **modelled incumbents** ("established carriers") instead of real airlines | Owner choice; no wrong names or networks |
+| 2026-10-28 | After the real data ends: **realistic random events** at real-world frequencies (recessions, fuel shocks, pandemics, ash, airspace closures, strikes, storms) | Owner choice |
+| 2026-10-28 | Historical books in the **real old currency** (ATS, DEM, FRF…), switching to the euro on 1 Jan 1999 at the fixed rates | Owner choice (for 5.2/5.3) |
+| 2026-10-28 | 5.1: the past stays real (no invented events before 24 Oct 2026); AI airlines see the same conditions in both their sums (no capacity cuts in crises yet) | Avoids AI mass exits; crisis capacity cuts later |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -828,6 +836,25 @@ education", forbid making the data available to others (§3 iii) and require a w
   (orderable / used market only / freighter later / historical → Phase 5). BLS credited on Data sources.
 - Tests: 132. Verified in browser (desktop + phone 375 px, no new console errors).
 - **Next:** Phase 5 (history and world events: historical start years using these types) — or what the owner prefers.
+
+### 2026-10-28 — Session 15 (Phase 5.1: world events and economy) ✅
+- Owner decisions: events first, modelled incumbents for history, realistic random future, old currencies (§7).
+- Engine `src/engine/worldEvents.ts`: `state.world` (fuel, fuel history, FX base + EUR/USD history, events; save v11),
+  `REAL_DATA_END` = 24 Oct 2026; daily fuel random walk with mean reversion + fuel shocks; monthly FX walk with pegs;
+  11 event kinds with yearly rates/seasons (`SPAWNS`), `intensity` (gradual events rise, hold, recover), `conditionsOf`
+  (fuel, 3 %/yr traffic trend, demand per segment/continent), `closureAt`/`closureCancels` (stable share of flights).
+  `closures.ts`: pairs touching a closed airport don't fly (`plannedFlights`), daily care costs (P&L "disruption") +
+  message. `routeWeek` takes `ctx.conditions` (fuel, demand, fares follow demand^0.3, competitors' capacity × trend);
+  player booking, AI evaluations and the route planner forecast use them.
+- UI: Ops **World situation** panel (`WorldPanel`: jet fuel with 52-week sparkline, euro/USD or book currency per USD,
+  demand in the hub's continent, traffic growth, events now with where/until/strength, last three months), world news +
+  player messages ("affects your network", "yesterday N flights cancelled … care … no compensation").
+- Tests: 139 (no events before the real data end, 20-year rates/fuel/FX ranges and pegs, determinism, recession cuts
+  business most, closure cancels + care costs, traffic trend, v10 → v11). 45 simulated years checked by hand: fuel
+  $2–4.7, EUR/USD 0.91–1.22, ~7 ATC strikes, ~9 winter storms, a recession every 5–7 years.
+- Verified in browser (turn-based test game to May 2027: strikes, storms, airport strike in the panel; phone; no console errors).
+- **Next:** 5.2 historical data (fuel prices since 1990 and earlier, exchange rates + old European currencies, GDP and
+  population by year, real event timeline 1970–2025).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
