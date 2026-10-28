@@ -16,7 +16,8 @@
     "airlines": "Airlines",
     "sources": "Datenquellen",
     "saves": "Spielstände",
-    "livery": "Lackierung"
+    "livery": "Lackierung",
+    "aircraft": "Flugzeuge"
   },
   "status": {
     "sim": "SIM",
@@ -578,7 +579,8 @@
       "austrocontrol": "Einzelne Flugzeuge österreichischer Airlines, inklusive Betreiber.",
       "iaa": "Einzelne Flugzeuge irischer Airlines (Ryanair, Aer Lingus).",
       "manufacturers": "Flugzeugleistung: Sitze, Reichweite, Startstrecke, Gewicht.",
-      "plex": "Die Schriftarten des Spiels."
+      "plex": "Die Schriftarten des Spiels.",
+      "bls": "US-Verbraucherpreise seit 1913, um historische Flugzeugpreise im Geld jedes Jahres zu zeigen."
     }
   },
   "timetable": {
@@ -988,5 +990,56 @@
     "design": "Lackierungs-Designer",
     "repaintAsk": "Jetzt für {{price}} neu lackieren? Das Flugzeug ist {{days}} Tage außer Dienst; seine Flüge fallen so lange aus.",
     "repaint": "Lackieren"
+  },
+  "types": {
+    "title": "Flugzeug-Lexikon",
+    "intro": "Jeder Flugzeugtyp im Spiel, von der DC-3 bis zu den neuesten Jets: wann er gebaut wurde und flog, seine Daten und sein Preis. Historische Typen werden mit historischen Startjahren fliegbar (Phase 5); Typen, die heute noch fliegen, können auf dem Leasing- und Gebrauchtmarkt auftauchen.",
+    "search": "Typ, Hersteller oder Code suchen",
+    "status": "Status",
+    "statusOpt": {
+      "all": "Alle",
+      "flying": "Fliegt noch",
+      "retired": "Ausgemustert"
+    },
+    "decade": "In Dienst gestellt",
+    "allDecades": "Jedes Jahrzehnt",
+    "decadeOpt": "{{decade}}er",
+    "freighters": "Frachter zeigen",
+    "count_one": "{{count}} Typ",
+    "count_other": "{{count}} Typen",
+    "legend": "Zeitleiste 1930–2035: dicker Balken (cyan) = Baujahre; dünne Linie = Jahre im Passagierdienst (grün, solange er fliegt, grau nach der Ausmusterung); Magenta = das Jahr deines Spiels.",
+    "timelineLabel": "Im Passagierdienst {{from}}–{{to}}, gebaut {{builtFrom}}–{{builtTo}}",
+    "today": "heute",
+    "piston": "Kolbenmotor-Propellerflugzeug",
+    "freighter": "Frachter",
+    "back": "Alle Flugzeuge",
+    "future": "Noch nicht im Dienst",
+    "timeline": "Zeitleiste",
+    "specs": "Technische Daten",
+    "manufacturer": "Hersteller",
+    "engines": "Triebwerke",
+    "firstService": "Erster Linieneinsatz",
+    "built": "Gebaut",
+    "lastPassengers": "Letzte Passagierflüge",
+    "stillFlying": "fliegt noch",
+    "seats": "Sitze",
+    "seatsValue": "{{typical}} üblich, bis zu {{max}}",
+    "payload": "{{t}} t Fracht",
+    "cruise": "Reisegeschwindigkeit",
+    "mtow": "Höchstes Abfluggewicht",
+    "etops": "Über Wasser (ETOPS)",
+    "etopsMulti": "drei oder vier Triebwerke: keine Grenze",
+    "etopsMin": "bis {{min}} Minuten von einem Flughafen",
+    "etopsNone": "nicht zugelassen (bleibt in Flughafennähe)",
+    "fuel": "Treibstoff pro Blockstunde",
+    "priceThen": "{{price}} (in Dollar von {{year}})",
+    "priceNow": "Derselbe Preis in Dollar von {{year}}",
+    "priceNote": "Listenpreise sind im Geld ihrer Zeit angegeben und mit dem US-Verbraucherpreisindex umgerechnet (BLS, gemeinfrei). Airlines zahlten nach Rabatten meist viel weniger.",
+    "inGame": "In deinem Spiel",
+    "orderable": "Kann neu beim Hersteller bestellt werden (Flotte → Neu bestellen).",
+    "marketOnly": "Wird nicht mehr gebaut, fliegt aber noch: gebrauchte Flugzeuge können auf dem Leasing- und Gebrauchtmarkt auftauchen.",
+    "freighterLater": "Ein Frachter: Frachtflüge kommen in einer späteren Phase.",
+    "historical": "Historischer Typ: verfügbar mit historischen Startjahren (Phase 5), in den Jahren, in denen er wirklich flog.",
+    "source": "Gerundete Hersteller- und Lexikonwerte, von Hand eingetragen; Ausmusterungsjahre sind ungefähr."
   }
 }

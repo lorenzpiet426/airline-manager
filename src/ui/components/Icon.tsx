@@ -1,5 +1,5 @@
 // Small line icons drawn for this game (24×24 grid, colour follows the text colour).
-export type IconName = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'chevron';
+export type IconName = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'chevron' | 'types';
 
 const PATHS: Record<IconName, string[]> = {
   // Radar scope
@@ -31,6 +31,8 @@ const PATHS: Record<IconName, string[]> = {
   // Gear
   settings: ['M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z', 'M12 2.5v3', 'M12 18.5v3', 'M2.5 12h3', 'M18.5 12h3', 'M5.3 5.3l2.1 2.1', 'M16.6 16.6l2.1 2.1', 'M5.3 18.7l2.1-2.1', 'M16.6 7.4l2.1-2.1'],
   more: ['M5 12h.01', 'M12 12h.01', 'M19 12h.01'],
+  // Airliner seen from the side: the aircraft encyclopedia
+  types: ['M2.5 14.5c0-1.2 1-2 2.5-2h11l3.5-5.5h1.5l-1 5.5h.5a1 1 0 0 1 0 2.5H5c-1.5 0-2.5-.3-2.5-.5z', 'M9 14.5l2.5 4h2l-1-4'],
   chevron: ['M9 6l6 6-6 6'],
 };
 

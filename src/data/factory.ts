@@ -1,7 +1,7 @@
 // Buying aircraft (Phase 4.1): what an airline pays the manufacturer, how long the queue for new aircraft is, and which
 // types a new European airline can order at all. All values are modelled from public news reporting (2025–2026):
 // manufacturers' own order-and-delivery files may not be reused (docs/DATA_SOURCES.md), so nothing here is copied.
-import type { AircraftCategory, AircraftType } from './aircraft';
+import { listPriceUsd, type AircraftCategory, type AircraftType } from './aircraft';
 
 /**
  * Years from ordering until the first free delivery slot, for orders placed in 2026. Airbus and Boeing narrow-bodies
@@ -21,7 +21,7 @@ const BACKLOG_YEARS: Record<string, number> = {
 
 /** Types still built that a new European airline can't order (reason shown in the game). */
 const NOT_FOR_YOU: Record<string, 'sanctions' | 'chinaOnly'> = {
-  SU95: 'sanctions', MC21: 'sanctions', T204: 'sanctions',
+  SU95: 'sanctions', MC21: 'sanctions', T204: 'sanctions', IL96: 'sanctions',
   C919: 'chinaOnly', AJ27: 'chinaOnly', MA60: 'chinaOnly',
 };
 
@@ -52,7 +52,7 @@ export function backlogYears(type: AircraftType): number {
 /** Price of a new aircraft (USD): list price × typical discount, 1 % more per extra aircraft in the order, up to 8 %. */
 export function newPriceUsd(type: AircraftType, count = 1): number {
   const bulk = Math.min(0.08, 0.01 * Math.max(0, count - 1));
-  return Math.round(type.listPriceUsdM * 1e6 * PRICE_SHARE[type.category] * (1 - bulk) / 10_000) * 10_000;
+  return Math.round(listPriceUsd(type) * PRICE_SHARE[type.category] * (1 - bulk) / 10_000) * 10_000;
 }
 
 /**

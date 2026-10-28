@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AIRCRAFT_TYPES } from './aircraft';
+import { AIRCRAFT_TYPES, getAircraftType, isInService, listPriceUsd } from './aircraft';
+import { usdInYear } from './inflation';
 import { bookCurrencyFor, ECB_RATES } from './currencies';
 import { REGISTRATION_PATTERNS } from './registrations';
 
@@ -52,5 +53,30 @@ describe('currencies and registrations', () => {
     for (const [country, pattern] of Object.entries(REGISTRATION_PATTERNS)) {
       expect(pattern, country).toMatch(/^[A-Z0-9-]*[?#%][?#%A-Z0-9]*$/);
     }
+  });
+});
+
+describe('historical aircraft (Phase 4.4)', () => {
+  it('covers the jet age and the propliners, with service dates in order', () => {
+    const byId = Object.fromEntries(AIRCRAFT_TYPES.map((t) => [t.id, t]));
+    for (const id of ['DC3', 'CONI', 'VISC', 'B701', 'B703', 'DC85', 'S210', 'B721', 'B722', 'DC93', 'B741', 'DC10', 'L101', 'CONC', 'A30B', 'T154', 'MD11']) {
+      expect(byId[id], id).toBeDefined();
+    }
+    for (const t of AIRCRAFT_TYPES) if (t.retired !== null) expect(t.retired, t.id).toBeGreaterThan(t.eis);
+    expect(isInService(byId.CONC!, 1990)).toBe(true);
+    expect(isInService(byId.CONC!, 2026)).toBe(false);
+    // In 1970 there were plenty of types to choose from.
+    expect(AIRCRAFT_TYPES.filter((t) => !t.payloadT && isInService(t, 1970)).length).toBeGreaterThan(20);
+  });
+
+  it('stores prices in the money of their time and converts them with the CPI', () => {
+    // A 707 for $5.5M in 1958 is about $60M in 2025 dollars.
+    const b707 = listPriceUsd(getAircraftType('B701'));
+    expect(b707).toBeGreaterThan(50e6);
+    expect(b707).toBeLessThan(65e6);
+    expect(usdInYear(100, 1970, 1970)).toBe(100);
+    expect(usdInYear(100, 1970, 2025)).toBeGreaterThan(800);
+    // Undated prices (today's types) are 2025 dollars.
+    expect(listPriceUsd(getAircraftType('A20N'))).toBeCloseTo(110.6e6, -3);
   });
 });

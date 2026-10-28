@@ -5,6 +5,9 @@
 // 2025 market levels from public trade-press reporting. Sources and caveats: docs/DATA_SOURCES.md.
 // Fuel burn and maintenance costs are added in Phase 1.4 (from OpenAP and BTS Form 41).
 
+import { HISTORICAL_TYPES } from './aircraftHistorical';
+import { usdInYear } from './inflation';
+
 export type AircraftCategory = 'turboprop' | 'regional' | 'narrowbody' | 'widebody';
 
 export interface AircraftType {
@@ -30,8 +33,12 @@ export interface AircraftType {
   takeoffM: number;
   /** Maximum ETOPS diversion time in minutes (0 = not approved; 420 = three or four engines, no practical limit). */
   etopsMin: number;
-  /** Last published list price in millions of USD (airlines pay far less after discounts). */
+  /** Last published list price in millions of USD (airlines pay far less after discounts), in `priceYear` dollars. */
   listPriceUsdM: number;
+  /** Year whose dollars the list price and lease rate are in (historical types, Phase 4.4); missing = 2025. */
+  priceYear?: number;
+  /** Piston-engined propliners (shown in the encyclopedia; the category stays "turboprop" = propeller aircraft). */
+  propulsion?: 'piston';
   /** Typical monthly lease rate (thousand USD) for an aircraft of the given age, 2025 market. */
   lease: { ageYears: number; usdK: number };
   /** Rough size of the world fleet: how often the type shows up on the lease market. */
@@ -55,7 +62,7 @@ export const TURNAROUND_MIN: Record<AircraftCategory, number> = {
   widebody: 90,
 };
 
-export const AIRCRAFT_TYPES: AircraftType[] = [
+const CURRENT_TYPES: AircraftType[] = [
   // ── Turboprops ──────────────────────────────────────────────────────────────
   {
     id: 'AT46', icao: 'AT46', manufacturer: 'ATR', name: 'ATR 42-600', category: 'turboprop',
@@ -790,6 +797,16 @@ export const AIRCRAFT_TYPES: AircraftType[] = [
     fuelKgPerHour: 650, maintUsdPerBlockHour: 340, payloadT: 8.6,
   },
 ];
+
+/** Every type: today's types and the historical ones (Phase 4.4). */
+export const AIRCRAFT_TYPES: AircraftType[] = [...CURRENT_TYPES, ...HISTORICAL_TYPES];
+
+/** The year the database's undated prices are in. */
+export const PRICE_YEAR = 2025;
+
+/** List price (USD) in the dollars of `year`, from the price in its own year's dollars (BLS CPI). */
+export const listPriceUsd = (type: AircraftType, year = PRICE_YEAR): number =>
+  usdInYear(type.listPriceUsdM * 1e6, type.priceYear ?? PRICE_YEAR, year);
 
 export const aircraftTypeById: ReadonlyMap<string, AircraftType> = new Map(AIRCRAFT_TYPES.map((t) => [t.id, t]));
 

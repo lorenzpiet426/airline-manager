@@ -15,15 +15,33 @@ interface Shape {
   nose: number;
   engines: 'wing' | 'rear' | 'prop' | 'noseProp';
   quad: boolean;
+  /** Third engine in the tail (DC-10, MD-11, TriStar). */
+  tailEngine: boolean;
   tTail: boolean;
+  /** No horizontal tail (Concorde's delta wing). */
+  delta: boolean;
   highWing: boolean;
   deck: 'single' | 'hump' | 'double';
 }
 
-const REAR = new Set(['CRJ2', 'CRJ7', 'CRJ9', 'CRJX', 'E145', 'E135', 'F100', 'AJ27', 'B712', 'MD82']);
-const QUAD = new Set(['A343', 'A346', 'A388', 'B744', 'B748', 'RJ1H']);
-const T_TAIL = new Set([...REAR, 'RJ1H', 'AT45', 'AT46', 'AT75', 'AT76', 'DH8A', 'DH8B', 'DH8C', 'DH8D', 'E120', 'B190', 'BE20', 'D328']);
-const LOW_WING_PROPS = new Set(['SF34', 'SB20', 'E120', 'JS41', 'JS32', 'B190', 'SW4', 'BE20', 'C402']);
+const REAR = new Set([
+  'CRJ1', 'CRJ2', 'CRJ7', 'CRJ9', 'CRJX', 'E145', 'E135', 'F100', 'F70', 'F28', 'AJ27', 'B712', 'MD82', 'MD87', 'MD90',
+  'DC93', 'DC95', 'BA11', 'T134', 'S210', 'IL62', 'VC10', 'B721', 'B722', 'TRID', 'T154', 'YK40', 'YK42',
+]);
+const QUAD = new Set([
+  'A342', 'A343', 'A345', 'A346', 'A388', 'B741', 'B742', 'B743', 'B744', 'B748', 'B74S', 'RJ1H', 'B462', 'B701', 'B703',
+  'B720', 'DC85', 'DC86', 'COMT', 'IL86', 'IL96', 'CONC', 'IL62', 'VC10', 'DC4', 'DC6', 'DC7', 'CONI', 'VISC', 'BRIT', 'L188',
+  'IL18', 'DHC7',
+]);
+const TAIL_ENGINE = new Set(['DC10', 'MD11', 'L101']);
+const T_TAIL = new Set([
+  ...[...REAR].filter((id) => id !== 'S210'), 'RJ1H', 'B462', 'AT43', 'AT45', 'AT46', 'AT72', 'AT75', 'AT76', 'DH8A', 'DH8B',
+  'DH8C', 'DH8D', 'DHC7', 'E120', 'B190', 'BE20', 'D328', 'J328',
+]);
+const LOW_WING_PROPS = new Set([
+  'SF34', 'SB20', 'E120', 'JS41', 'JS32', 'B190', 'SW4', 'BE20', 'C402', 'DC3', 'DC4', 'DC6', 'DC7', 'CONI', 'CVLP', 'CVLT',
+  'VISC', 'BRIT', 'L188', 'IL18', 'A748', 'E110',
+]);
 const NOSE_PROP = new Set(['C208', 'PC12']);
 /** Fuselage height for types much shorter or longer than their category's typical one. */
 const HEIGHT: Record<string, number> = {
@@ -31,6 +49,9 @@ const HEIGHT: Record<string, number> = {
   A321: 74, A21N: 74, 'A21N-XLR': 74, B739: 74, B3XM: 72, B752: 66, B753: 60, MD82: 66,
   B78X: 66, A346: 58, B77W: 62, B779: 60, B773: 62, A35K: 66, B764: 66, A388: 104, B744: 72, B748: 66,
   CRJ9: 66, CRJX: 62, E195: 70, E295: 68, E145: 66, DH8D: 66, AT76: 72,
+  DC3: 90, B731: 96, DC93: 72, MD87: 80, F28: 86, YK40: 100, CONC: 40, B701: 64, B703: 60, DC86: 50, DC85: 60, VC10: 62,
+  IL62: 60, B721: 76, B722: 66, T154: 64, A342: 64, A345: 54, B762: 76, IL86: 70, B74S: 86, COMT: 64, S210: 74, BA11: 80,
+  CONI: 70, DC7: 66, B720: 70, MD90: 64, T134: 76,
 };
 
 export function shapeOf(type: AircraftType): Shape {
@@ -42,9 +63,11 @@ export function shapeOf(type: AircraftType): Shape {
     nose: prop ? 70 : type.category === 'regional' ? 55 : 40,
     engines: NOSE_PROP.has(id) ? 'noseProp' : prop ? 'prop' : REAR.has(id) ? 'rear' : 'wing',
     quad: QUAD.has(id),
+    tailEngine: TAIL_ENGINE.has(id),
     tTail: T_TAIL.has(id),
+    delta: id === 'CONC',
     highWing: (prop && !LOW_WING_PROPS.has(id) && !NOSE_PROP.has(id)) || id === 'RJ1H',
-    deck: id === 'B744' || id === 'B748' ? 'hump' : id === 'A388' ? 'double' : 'single',
+    deck: ['B741', 'B742', 'B743', 'B744', 'B748', 'B74S'].includes(id) ? 'hump' : id === 'A388' ? 'double' : 'single',
   };
 }
 
@@ -79,7 +102,8 @@ export function geometry(s: Shape) {
     `M ${n} ${CY + 0.12 * h} ${upper} L 760 ${top} C 830 ${top} 880 ${top + 0.08 * h} 928 ${top + 0.26 * h} ` +
     `L 932 ${top + 0.4 * h} C 880 ${top + 0.52 * h} 800 ${bot} 700 ${bot} L ${n + 1.2 * h} ${bot} ` +
     `C ${n + 0.4 * h} ${bot} ${n} ${CY + 0.38 * h} ${n} ${CY + 0.12 * h} Z`;
-  const tipY = 22;
+  // The fin is about 1.7 fuselage heights tall (slim fuselages like Concorde's get a smaller fin).
+  const tipY = Math.max(22, top - 1.75 * h);
   const tail = `M 690 ${top + 4} L 828 ${tipY} L 892 ${tipY} L 926 ${top + 0.3 * h} Z`;
   const tailBox = { x: 690, y: tipY, w: 240, hgt: top + 4 - tipY };
   // The logo sits in the middle of the fin, between its leading and trailing edges at that height.
@@ -90,7 +114,7 @@ export function geometry(s: Shape) {
   const stab = s.tTail
     ? `M 800 ${tipY + 4} L 958 ${tipY - 6} L 966 ${tipY + 6} L 806 ${tipY + 14} Z`
     : `M 790 ${CY - 0.12 * h} L 958 ${CY - 0.32 * h} L 968 ${CY - 0.22 * h} L 812 ${CY - 0.02 * h} Z`;
-  return { top, bot, h, n, hump, fuselage, tail, tailBox, logo, stab };
+  return { top, bot, h, n, hump, fuselage, tail, tailBox, logo, stab, tipY };
 }
 
 type Geo = ReturnType<typeof geometry>;
@@ -101,13 +125,16 @@ function Engines({ s, g, color }: { s: Shape; g: Geo; color: string }) {
     return <rect x={g.n - 8} y={CY - 0.45 * h} width={6} height={0.9 * h} rx={3} fill={DARK} opacity={0.45} />;
   }
   if (s.engines === 'prop') {
-    const y = s.highWing ? top - 0.05 * h : CY + 0.1 * h;
-    return (
-      <g>
-        <rect x={330} y={y - 0.16 * h} width={150} height={0.34 * h} rx={0.15 * h} fill={color} stroke={DARK} strokeOpacity={0.35} strokeWidth={2} />
-        <rect x={318} y={y - 0.6 * h} width={7} height={1.2 * h} rx={3.5} fill={DARK} opacity={0.4} />
+    // High wing: nacelles hang under the wing on top; low wing: they sit at the wing, low on the fuselage.
+    const y = s.highWing ? top - 0.05 * h : CY + 0.3 * h;
+    const nacelle = (x: number, dy: number, k: number) => (
+      <g key={x}>
+        <rect x={x} y={y + dy - 0.16 * h * k} width={150 * k} height={0.34 * h * k} rx={0.15 * h * k} fill={color} stroke={DARK} strokeOpacity={0.35} strokeWidth={2} />
+        <rect x={x - 12} y={y + dy - 0.6 * h * k} width={7} height={1.2 * h * k} rx={3.5} fill={DARK} opacity={0.4} />
       </g>
     );
+    // The outer engines of a four-engine aircraft are further away: a bit higher and smaller.
+    return <g>{s.quad ? [nacelle(410, -0.08 * h, 0.8), nacelle(290, 0, 1)] : nacelle(330, 0, 1)}</g>;
   }
   if (s.engines === 'rear') {
     return (
@@ -123,10 +150,23 @@ function Engines({ s, g, color }: { s: Shape; g: Geo; color: string }) {
       <rect x={x} y={y + 0.05 * h * k} width={0.14 * w} height={0.4 * h * k} rx={6} fill={DARK} opacity={0.6} />
     </g>
   );
-  return <g>{s.quad ? [pod(410, bot - 0.12 * h, 130, 0.85), pod(300, bot - 0.02 * h, 150, 1)] : [pod(330, bot - 0.08 * h, 160, 1)]}</g>;
+  return (
+    <g>
+      {s.delta
+        ? [pod(690, bot - 0.1 * h, 150, 0.8), pod(640, bot, 150, 0.8)]
+        : s.quad
+          ? [pod(410, bot - 0.12 * h, 130, 0.85), pod(300, bot - 0.02 * h, 150, 1)]
+          : [pod(330, bot - 0.08 * h, 160, 1)]}
+      {s.tailEngine && <rect x={730} y={top - 0.42 * h} width={170} height={0.42 * h} rx={0.18 * h} fill={color} stroke={DARK} strokeOpacity={0.35} strokeWidth={2} />}
+    </g>
+  );
 }
 
 function Wing({ s, g }: { s: Shape; g: Geo }) {
+  if (s.delta) {
+    const y = g.bot;
+    return <path d={`M 300 ${y - 2} L 860 ${y - 8} L 905 ${y + 2} L 330 ${y + 8} Z`} fill={DARK} opacity={0.35} />;
+  }
   if (s.engines === 'noseProp' || s.highWing) {
     const y = g.top + 2;
     return <path d={`M 290 ${y} L 610 ${y - 8} L 660 ${y + 2} L 310 ${y + 12} Z`} fill={DARK} opacity={0.35} />;
@@ -341,7 +381,7 @@ export function AircraftSide({ livery: l, typeId, crop, className, title, svgRef
   const g = geometry(s);
   const engines = slotColor(l, l.engines);
   const base = l.base === 'p' ? l.colors[0] : l.base === 'metal' ? `url(#${id}m)` : BASE[l.base];
-  const viewBox = crop === 'tail' ? `676 6 280 ${g.top + 14 - 6}` : `0 0 ${FRAME.width} ${FRAME.height}`;
+  const viewBox = crop === 'tail' ? `676 ${g.tipY - 16} 280 ${g.top + 30 - g.tipY}` : `0 0 ${FRAME.width} ${FRAME.height}`;
   return (
     <svg ref={svgRef} viewBox={viewBox} className={className} role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true} {...pointer}>
       <defs>
@@ -361,7 +401,7 @@ export function AircraftSide({ livery: l, typeId, crop, className, title, svgRef
           <stop offset="1" stopColor="#8d96a1" />
         </linearGradient>
       </defs>
-      <path d={g.stab} fill={slotColor(l, l.tail === 'disc' ? 'w' : 'p')} stroke={DARK} strokeOpacity={0.35} strokeWidth={2} />
+      {!s.delta && <path d={g.stab} fill={slotColor(l, l.tail === 'disc' ? 'w' : 'p')} stroke={DARK} strokeOpacity={0.35} strokeWidth={2} />}
       <path d={g.tail} fill={l.colors[0]} />
       <g clipPath={`url(#${id}t)`}>
         <TailPaint l={l} g={g} gradientId={`${id}g`} />

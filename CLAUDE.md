@@ -275,7 +275,7 @@ Full aircraft database (all manufacturers, historical types), order books and de
 buy/sell/scrap, ageing and depreciation, A/B/C/D checks with downtime, technical failures, hangars, livery designer.
 Split (2026-10-28): **4.1** ✅ buy used, order new, sell/scrap, lease ends/extensions; **4.2** ✅ maintenance checks
 (planned by the game, movable by the player) + technical failures + ageing costs + own hangars + lease reserves; **4.3** ✅ livery designer;
-**4.4** historical types (together with Phase 5).
+**4.4** ✅ historical types (database + encyclopedia; flyable with Phase 5 start years). Phase 4 complete.
 
 ### Phase 5 — History and world events
 Historical start years (1970s/1990s/2000s), aircraft EIS/retirement dates, event timeline (oil crises,
@@ -435,6 +435,9 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-28 | 4.3: livery = **whole aircraft side view**, **patterns + colours plus free drawing** (strokes in a shared 1000×320 frame, clipped to the aircraft), logo = **symbol library, letters or uploaded picture** | Owner choice ("Patterns + colours, but also free draw"; logo "Both") |
 | 2026-10-28 | 4.3: **realistic repaint**: new aircraft come in the new livery, the fleet keeps the old one until repainted (cash + days, or with the next C/D-check without extra days) | Owner choice |
 | 2026-10-28 | 4.3: liveries stored per airline as a list (aircraft point to the one they wear); unused old ones set to null; default tail = solid colour | Small saves; white letters on a white sweep were invisible |
+| 2026-10-28 | 4.4: **historical database + aircraft encyclopedia** now; historical start years stay in Phase 5 | Owner choice; a 1970s start needs the 1970s world (airlines, fuel, demand) to be realistic |
+| 2026-10-28 | 4.4: coverage = **jet age and the 1950s propliners** (DC-3 … Constellation, Viscount, Britannia, Electra) | Owner choice ("Also propliners") |
+| 2026-10-28 | 4.4: historical prices in **then-year dollars** + BLS CPI table (`priceYear` on the type; undated = 2025 dollars) | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -808,6 +811,23 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Tests: 130. Verified in browser: shapes (737, ATR 72, CRJ900, 787-9, 747-8, A380), chevron + cheatline + swallow
   logo + drawing saved, fleet shows old livery, repaint now → "Paint shop until", phone 375 px without sideways scrolling.
 - **Next:** 4.4 historical aircraft types (with Phase 5), or what the owner prefers.
+
+### 2026-10-28 — Session 14 (Phase 4.4: historical aircraft + encyclopedia) ✅ — Phase 4 complete
+- Owner decisions: database + encyclopedia now (historical starts in Phase 5), jet age + propliners, then-year prices (§7).
+- Data: `tools/download-cpi.ts` + `build-cpi.ts` (`npm run data:cpi`) → `src/data/generated/cpi.json` (BLS CPI-U 1913–2026);
+  `src/data/inflation.ts` (`cpiOf`, `usdInYear`); `src/data/aircraftHistorical.ts` (62 types: DC-3 … A340-500, incl.
+  Comet, 707, DC-8, Caravelle, 727, Trident, VC10, One-Eleven, DC-9, Tu-134/154, Il-18/62/86/96, Yak-40/42, 747 classics,
+  DC-10, TriStar, Concorde, A300B4, MD-11 passenger, 737 Classic, MD-87/90, F28/F70, BAe 146, propliners). `AircraftType`
+  gets `priceYear` and `propulsion: 'piston'`; `listPriceUsd(type, year)`; `newPriceUsd` and lease rents convert from
+  `priceYear` (today's types unchanged); Il-96 blocked (sanctions). 165 types in total (155 without freighters).
+- Side views: rear-engine and three-engine T-tails (727, Trident, Tu-154…), DC-10/MD-11/TriStar tail engine, 747 classic
+  humps, four-engine propliners (outer engines smaller), Concorde (delta, no tailplane), fin height now scales with the fuselage.
+- UI: **Aircraft** screen (`#/aircraft`, rail + More on phone, new icon): search, category, still flying/retired, decade,
+  freighters; rows with a 1930–2035 timeline (built = cyan bar, service = line, game year = magenta); detail page
+  (`?id=`) with side view in your livery, chips, large timeline, specs, then-year price + today's dollars, "in your game"
+  (orderable / used market only / freighter later / historical → Phase 5). BLS credited on Data sources.
+- Tests: 132. Verified in browser (desktop + phone 375 px, no new console errors).
+- **Next:** Phase 5 (history and world events: historical start years using these types) — or what the owner prefers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

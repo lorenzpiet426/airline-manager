@@ -16,7 +16,8 @@
     "airlines": "Airlines",
     "sources": "Data sources",
     "saves": "Saves",
-    "livery": "Livery"
+    "livery": "Livery",
+    "aircraft": "Aircraft"
   },
   "status": {
     "sim": "SIM",
@@ -578,7 +579,8 @@
       "austrocontrol": "Individual aircraft of Austrian airlines, including the operator.",
       "iaa": "Individual aircraft of Irish airlines (Ryanair, Aer Lingus).",
       "manufacturers": "Aircraft performance: seats, range, take-off distance, weight.",
-      "plex": "The game's typefaces."
+      "plex": "The game's typefaces.",
+      "bls": "US consumer prices since 1913, to show historical aircraft prices in the money of any year."
     }
   },
   "timetable": {
@@ -988,5 +990,56 @@
     "design": "Livery designer",
     "repaintAsk": "Repaint now for {{price}}? The aircraft is out of service for {{days}} days; its flights are cancelled meanwhile.",
     "repaint": "Repaint"
+  },
+  "types": {
+    "title": "Aircraft encyclopedia",
+    "intro": "Every aircraft type in the game, from the DC-3 to the newest jets: when it was built and flown, its specs and its price. Historical types become flyable with historical start years (Phase 5); types still flying today can show up on the lease and used markets.",
+    "search": "Search type, maker or code",
+    "status": "Status",
+    "statusOpt": {
+      "all": "All",
+      "flying": "Still flying",
+      "retired": "Retired"
+    },
+    "decade": "Entered service",
+    "allDecades": "Any decade",
+    "decadeOpt": "{{decade}}s",
+    "freighters": "Show freighters",
+    "count_one": "{{count}} type",
+    "count_other": "{{count}} types",
+    "legend": "Timeline 1930–2035: thick cyan bar = years it was built; thin line = years in passenger service (green while still flying, grey once retired); magenta = your game's year.",
+    "timelineLabel": "In passenger service {{from}}–{{to}}, built {{builtFrom}}–{{builtTo}}",
+    "today": "today",
+    "piston": "Piston propliner",
+    "freighter": "freighter",
+    "back": "All aircraft",
+    "future": "Not in service yet",
+    "timeline": "Timeline",
+    "specs": "Specifications",
+    "manufacturer": "Manufacturer",
+    "engines": "Engines",
+    "firstService": "First airline service",
+    "built": "Built",
+    "lastPassengers": "Last passenger flights",
+    "stillFlying": "still flying",
+    "seats": "Seats",
+    "seatsValue": "{{typical}} typical, up to {{max}}",
+    "payload": "{{t}} t of cargo",
+    "cruise": "Cruise speed",
+    "mtow": "Maximum take-off weight",
+    "etops": "Over water (ETOPS)",
+    "etopsMulti": "three or four engines: no limit",
+    "etopsMin": "up to {{min}} minutes from an airport",
+    "etopsNone": "not approved (stays near airports)",
+    "fuel": "Fuel per block hour",
+    "priceThen": "{{price}} (in {{year}} dollars)",
+    "priceNow": "Same price in {{year}} dollars",
+    "priceNote": "List prices are in the money of their time, converted with the US consumer price index (BLS, public domain). Airlines usually paid much less after discounts.",
+    "inGame": "In your game",
+    "orderable": "Can be ordered new from the factory (Fleet → Order new).",
+    "marketOnly": "No longer built, but still flying: used aircraft can show up on the lease and used markets.",
+    "freighterLater": "A freighter: cargo flights come in a later phase.",
+    "historical": "Historical type: it becomes available with historical start years (Phase 5), in the years it really flew.",
+    "source": "Specs are rounded manufacturer and encyclopedic figures, typed in by hand; retirement years are approximate."
   }
 }

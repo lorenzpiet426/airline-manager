@@ -1,6 +1,7 @@
 // The aircraft lease market: lessors offer used aircraft that a startup can lease.
 // Offers appear and expire every month. Rents depend on type and age, like in reality.
-import { AIRCRAFT_TYPES, isFreighter, isInService, type AircraftType } from '../data/aircraft';
+import { AIRCRAFT_TYPES, isFreighter, isInService, PRICE_YEAR, type AircraftType } from '../data/aircraft';
+import { usdInYear } from '../data/inflation';
 import { standardCabin, stylesFor, totalSeats, type CabinStyle } from './cabins';
 import { nextId } from './core';
 import { money } from './money';
@@ -30,7 +31,9 @@ const ageFactor = (age: number) => Math.max(0.3, 1 - 0.04 * age);
 
 /** Typical monthly rent in USD for an aircraft of this type and age. */
 export function typicalRentUsd(type: AircraftType, age: number): number {
-  return (type.lease.usdK * 1000 * ageFactor(age)) / ageFactor(type.lease.ageYears);
+  // Historical types store their rate in the money of their time.
+  const usd = usdInYear(type.lease.usdK * 1000, type.priceYear ?? PRICE_YEAR, PRICE_YEAR);
+  return (usd * ageFactor(age)) / ageFactor(type.lease.ageYears);
 }
 
 /** Build years a used aircraft of this type could have in `year` (at least one year old). */

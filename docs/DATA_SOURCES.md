@@ -214,6 +214,20 @@ All values in `src/data/maintenance.ts` are **modelled** (typed in by hand, noth
   Repainting during a C/D-check needs no extra days.
 - Real airlines keep their approximated colours (no logos), as decided in §5b.
 
+## Historical aircraft and prices (Phase 4.4, 2026-10-28)
+- **US consumer price index (CPI-U, series CUUR0000SA0)** — US Bureau of Labor Statistics, **public domain** (US
+  government work). Downloaded 2026-10-28 with the public API v1 (`npm run data:cpi` → `tools/download-cpi.ts`,
+  `tools/build-cpi.ts`) → `src/data/generated/cpi.json`: annual averages 1913–2026 (2026 = January–September,
+  marked partial; October 2025 was never published because of the US government shutdown, so 2025 averages 11 months).
+  Used by `src/data/inflation.ts` to convert prices between years.
+- **Historical aircraft types** (`src/data/aircraftHistorical.ts`, 62 types from the DC-3 to the A340-500): rounded
+  specs (seats, range, speed, MTOW, take-off run, engines, service and production years) typed in by hand from
+  manufacturers' published figures and encyclopedic sources (facts, not copied tables); **retirement years from passenger
+  service are approximate**. List prices and lease rates are stored in the money of `priceYear` (prices reported at the
+  time, e.g. 707-120 ≈ $5.5M in 1958); fuel burn and maintenance per block hour are modelled in 2025 dollars.
+  Soviet types have no market price: values are modelled equivalents.
+- Today's types keep their prices as 2025 dollars (`PRICE_YEAR`).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

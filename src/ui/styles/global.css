@@ -2551,3 +2551,88 @@ a.button {
   align-items: center;
   gap: 8px;
 }
+
+/* ─── Aircraft encyclopedia (4.4) ────────────────────────────────────────── */
+
+.types__filters {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.type-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.type-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 40%);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.type-row:hover {
+  background: var(--bg-raised);
+}
+
+.type-row__name {
+  display: grid;
+  min-width: 0;
+}
+
+.type-row__name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.type-timeline {
+  display: block;
+  width: 100%;
+  height: 12px;
+}
+
+.type-timeline--large {
+  height: 28px;
+}
+
+.type-timeline__grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.type-timeline__service {
+  stroke: var(--green);
+  stroke-width: 2;
+}
+
+.type-timeline__service--retired {
+  stroke: var(--text-faint);
+}
+
+.type-timeline__built {
+  fill: var(--cyan);
+}
+
+.type-timeline__now {
+  stroke: var(--magenta);
+  stroke-width: 1.5;
+}
+
+.type-detail {
+  display: grid;
+  gap: 16px;
+  max-width: 900px;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
