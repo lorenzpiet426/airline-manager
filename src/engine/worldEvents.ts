@@ -1,14 +1,17 @@
 // The world around the airlines (Phase 5.1): the economy, the jet fuel price and exchange rates after the real data
 // ends, and events that happen at their real-world frequencies — recessions, fuel shocks, pandemics, volcanic ash,
 // airspace closures, air traffic control and airport strikes, winter storms, hurricanes and typhoons. Until the real data
-// ends (October 2026) the world follows the real fuel prices and has no invented events; the real event timeline of
-// the past comes in Phase 5.2. All randomness uses the game's seeded generator, so a save always plays out the same.
+// ends (October 2026) the world follows the real fuel prices and the real event timeline since 1970 (Phase 5.2,
+// data/history.ts); only small random events (storms, short strikes) are added there. Air travel before 2024 follows the
+// economy data (data/economyHistory.ts). All randomness uses the game's seeded generator, so a save always plays out the same.
+import { demandIndex, worldDemandIndex } from '../data/economyHistory';
 import { jetFuelSpot } from '../data/fuel';
+import { HISTORIC_EVENTS } from '../data/history';
 import type { Airport } from '../data/types';
 import { postMessage } from './core';
 import { random } from './rng';
 import type { GameState, WorldEvent, WorldEventKind, WorldState } from './state';
-import { MINUTES_PER_DAY, simTime, startOfDay, toDate, type SimTime } from './time';
+import { fromDate, MINUTES_PER_DAY, simTime, startOfDay, toDate, type SimTime } from './time';
 import { seedOf } from './timetable';
 import type { EngineWorld } from './world';
 
@@ -56,6 +59,9 @@ interface Spawn {
   kind: WorldEventKind;
   /** Events per year (or per season for weather). */
   perYear: number;
+  /** Small events nobody records one by one: they also happen at random in the real past (from `since`). */
+  small?: boolean;
+  since?: number;
   /** Months it can start in (default: all). */
   months?: number[];
   make: (state: GameState, world: EngineWorld) => Omit<WorldEvent, 'id' | 'kind' | 'start'> | null;
@@ -103,7 +109,7 @@ const SPAWNS: Spawn[] = [
       return { end: 0, days: between(s, 2, 8), countries: ['IS', 'GB', 'IE', ...extra.filter((c) => c !== 'GB' && c !== 'IE')], depth: 0.9, label: pickOne(s, ['Katla', 'Hekla', 'Grímsvötn', 'Bárðarbunga']) };
     },
   },
-  { kind: 'volcano', perYear: 0.4, make: (s) => ({ end: 0, days: between(s, 1, 2.5), airports: ['LICC', 'LICJ'], depth: 1, label: 'Etna' }) },
+  { kind: 'volcano', perYear: 0.4, small: true, make: (s) => ({ end: 0, days: between(s, 1, 2.5), airports: ['LICC', 'LICJ'], depth: 1, label: 'Etna' }) },
   { kind: 'volcano', perYear: 0.25, make: (s) => ({ end: 0, days: between(s, 2, 5), airports: ['WADD', 'WADL'], depth: 1, label: 'Agung' }) },
   { kind: 'volcano', perYear: 0.05, make: (s) => ({ end: 0, days: between(s, 5, 20), countries: ['AR', 'UY'], depth: 0.6, label: 'Puyehue' }) },
   // Airspace closed for security reasons (one country, weeks to years).
@@ -111,33 +117,37 @@ const SPAWNS: Spawn[] = [
     kind: 'airspace',
     perYear: 0.04,
     make: (s) => {
-      const closed = new Set(s.world.events.filter((e) => e.kind === 'airspace' && e.end > s.time).flatMap((e) => e.countries ?? []));
+      const closed = new Set(eventsOf(s).filter((e) => e.kind === 'airspace' && e.start <= s.time && e.end > s.time).flatMap((e) => e.countries ?? []));
       const options = AIRSPACE_RISK.filter((c) => !closed.has(c));
       return options.length ? { end: 0, days: between(s, 30, 900), countries: [pickOne(s, options)], depth: 1 } : null;
     },
   },
   // Strikes: French air traffic control strikes are the most frequent in Europe.
-  { kind: 'atcStrike', perYear: 4, make: strike('FR', [0.3, 0.6], [1, 2]) },
-  { kind: 'atcStrike', perYear: 1.5, make: strike('IT', [0.3, 0.5], [1, 1]) },
-  { kind: 'atcStrike', perYear: 0.5, make: strike('GR', [0.4, 0.8], [1, 1]) },
-  { kind: 'atcStrike', perYear: 0.5, make: strike('BE', [0.5, 0.9], [1, 1]) },
-  { kind: 'atcStrike', perYear: 0.3, make: strike('ES', [0.2, 0.4], [1, 2]) },
+  { kind: 'atcStrike', perYear: 4, small: true, make: strike('FR', [0.3, 0.6], [1, 2]) },
+  { kind: 'atcStrike', perYear: 1.5, small: true, make: strike('IT', [0.3, 0.5], [1, 1]) },
+  { kind: 'atcStrike', perYear: 0.5, small: true, make: strike('GR', [0.4, 0.8], [1, 1]) },
+  { kind: 'atcStrike', perYear: 0.5, small: true, make: strike('BE', [0.5, 0.9], [1, 1]) },
+  { kind: 'atcStrike', perYear: 0.3, small: true, make: strike('ES', [0.2, 0.4], [1, 2]) },
   {
     kind: 'airportStrike',
     perYear: 1.5,
+    // German warning strikes at many airports on one day are a 2010s–2020s pattern.
+    small: true,
+    since: 2012,
     make: (s) => {
       const all = ['EDDF', 'EDDM', 'EDDH', 'EDDL', 'EDDB', 'EDDS', 'EDDK', 'EDDV'];
       // Frankfurt is always part of it; the others join at random.
       return { end: 0, days: 1, airports: ['EDDF', ...all.slice(1).filter(() => random(s) < 0.5)], depth: between(s, 0.7, 0.95) };
     },
   },
-  { kind: 'airportStrike', perYear: 0.5, make: (s) => ({ end: 0, days: 1, airports: [pickOne(s, ['EGLL', 'EGKK', 'EGCC'])], depth: between(s, 0.2, 0.4) }) },
-  { kind: 'airportStrike', perYear: 0.5, make: (s) => ({ end: 0, days: 1, airports: ['EFHK'], depth: between(s, 0.6, 0.9) }) },
+  { kind: 'airportStrike', perYear: 0.5, small: true, make: (s) => ({ end: 0, days: 1, airports: [pickOne(s, ['EGLL', 'EGKK', 'EGCC'])], depth: between(s, 0.2, 0.4) }) },
+  { kind: 'airportStrike', perYear: 0.5, small: true, make: (s) => ({ end: 0, days: 1, airports: ['EFHK'], depth: between(s, 0.6, 0.9) }) },
   // Weather: winter storms in the northern winter, hurricanes and typhoons in their seasons.
   ...(['EU', 'NA', 'AS'] as const).map(
     (region): Spawn => ({
       kind: 'winterStorm',
       perYear: 3,
+      small: true,
       months: [12, 1, 2],
       make: (s, w) => {
         const continent = (a: Airport) => w.countries[a.country]?.continent;
@@ -152,6 +162,7 @@ const SPAWNS: Spawn[] = [
   {
     kind: 'hurricane',
     perYear: 2,
+    small: true,
     months: [8, 9, 10],
     make: (s, w) => {
       const airports = airportsAround(w, s, (a) => a.lat > 15 && a.lat < 32 && a.lon > -100 && a.lon < -60, 300, 6);
@@ -161,6 +172,7 @@ const SPAWNS: Spawn[] = [
   {
     kind: 'typhoon',
     perYear: 3,
+    small: true,
     months: [7, 8, 9, 10],
     make: (s, w) => {
       const airports = airportsAround(w, s, (a) => a.lat > 10 && a.lat < 35 && a.lon > 110 && a.lon < 145, 250, 5);
@@ -169,16 +181,79 @@ const SPAWNS: Spawn[] = [
   },
 ];
 
-/** Kinds whose effect builds up and fades (economy, health); the others simply close airports while they last. */
-const GRADUAL: ReadonlySet<WorldEventKind> = new Set(['recession', 'fuelShock', 'pandemic', 'pandemicSevere']);
-export const CLOSING: ReadonlySet<WorldEventKind> = new Set(['volcano', 'airspace', 'atcStrike', 'airportStrike', 'winterStorm', 'hurricane', 'typhoon']);
+/** Kinds whose effect builds up and fades (economy, health, crises); the others simply close airports while they last. */
+const GRADUAL: ReadonlySet<WorldEventKind> = new Set(['recession', 'fuelShock', 'pandemic', 'pandemicSevere', 'crisis']);
+export const CLOSING: ReadonlySet<WorldEventKind> = new Set([
+  'volcano', 'airspace', 'atcStrike', 'airportStrike', 'winterStorm', 'hurricane', 'typhoon', 'flightBan', 'disruption',
+]);
 
-/** How strong an event is at `time` (0–1): gradual events rise over the first fifth, hold, then recover. */
+/**
+ * How strong an event is at `time` (0–1): its own profile if it has one; otherwise gradual events rise over the first
+ * fifth, hold, then recover, and closures are full strength while they last.
+ */
 export function intensity(e: WorldEvent, time: SimTime): number {
   if (time < e.start || time >= e.end) return 0;
+  if (e.profile?.length) {
+    const p = e.profile;
+    if (time <= p[0]![0]) return p[0]![1];
+    for (let k = 1; k < p.length; k++) {
+      const [t1, v1] = p[k]!;
+      if (time <= t1) {
+        const [t0, v0] = p[k - 1]!;
+        return t1 === t0 ? v1 : v0 + ((v1 - v0) * (time - t0)) / (t1 - t0);
+      }
+    }
+    return p.at(-1)![1];
+  }
   if (!GRADUAL.has(e.kind)) return 1;
   const x = (time - e.start) / (e.end - e.start);
   return x < 0.2 ? x / 0.2 : x < 0.5 ? 1 : 1 - (x - 0.5) / 0.5;
+}
+
+// ─── The real history ──────────────────────────────────────────────────────────
+
+const dayOf = (iso: string): SimTime => fromDate(new Date(`${iso}T00:00:00Z`));
+let historicCache: { seed: number; events: WorldEvent[] } | null = null;
+
+/**
+ * The real events as world events of this game. Events still going on when the real data ends get an end date of
+ * their own per game (3 months to 3 years later), because nobody knows when they will really end.
+ */
+export function historicEvents(seed: number): WorldEvent[] {
+  if (historicCache?.seed === seed) return historicCache.events;
+  const events = HISTORIC_EVENTS.map((h): WorldEvent => {
+    const start = dayOf(h.start);
+    const openEnd = REAL_DATA_END + Math.round(90 + ((seedOf(`${h.id}|${seed}`) % 1000) / 1000) * 1000) * DAY;
+    const end = h.end ? dayOf(h.end) + DAY : openEnd;
+    return {
+      id: `H-${h.id}`,
+      kind: h.kind,
+      start,
+      end,
+      depth: h.depth,
+      historic: h.id,
+      ...(h.continents && { continents: h.continents }),
+      ...(h.countries && { countries: h.countries }),
+      ...(h.airports && { airports: h.airports }),
+      ...(h.pairWith && { pairWith: h.pairWith }),
+      ...(h.local && { local: true }),
+      ...(!h.end && { openEnded: true }),
+      ...(h.label && { label: h.label }),
+      ...(h.profile && { profile: [...h.profile.map(([d, v]): [SimTime, number] => [dayOf(d), v]), ...(h.end ? [] : [[end, h.profile.at(-1)![1]] as [SimTime, number]])] }),
+    };
+  });
+  historicCache = { seed, events };
+  return events;
+}
+
+/** All events of a game: the real ones and the simulated ones. */
+export function eventsOf(state: GameState): WorldEvent[] {
+  return state.world ? [...historicEvents(state.seed), ...state.world.events] : historicEvents(state.seed);
+}
+
+/** Is an airport inside an event's area? */
+function inArea(e: WorldEvent, a: Airport, world: EngineWorld): boolean {
+  return (e.airports ?? []).includes(a.id) || (e.countries ?? []).includes(a.country) || (e.continents ?? []).includes(world.countries[a.country]?.continent ?? '');
 }
 
 // ─── Conditions: what the economics model needs ────────────────────────────────
@@ -186,34 +261,45 @@ export function intensity(e: WorldEvent, time: SimTime): number {
 export interface Conditions {
   /** Jet fuel spot price (USD per gallon). */
   fuelSpot: number;
-  /** Long-term traffic growth since the real data (demand and the competitors' capacity grow alike). */
+  /** Air travel worldwide compared with the real data (before: the economy history; after: long-term growth). */
   trend: number;
+  /** The same for travel between two airports (before 2024 each country's economy history counts). */
+  growth: (a: Airport, b: Airport) => number;
   /** Demand multiplier for travellers between two airports (recessions, pandemics). */
   demand: (a: Airport, b: Airport, segment: 'business' | 'leisure') => number;
 }
 
-const NEUTRAL: Conditions = { fuelSpot: 0, trend: 1, demand: () => 1 };
+/** Calendar year as a fraction (e.g. 1985.5 = 1 July 1985). */
+const fractionalYear = (time: SimTime) => {
+  const d = toDate(time);
+  return d.getUTCFullYear() + (d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 1)) / (365.25 * 86_400_000);
+};
 
 /** The world's conditions at `time` (the real fuel price until the real data ends, then the simulated one). */
 export function conditionsOf(state: GameState, world: EngineWorld, time = state.time): Conditions {
   const w = state.world;
-  if (!w) return { ...NEUTRAL, fuelSpot: jetFuelSpot(toDate(time)) };
-  const active = w.events.filter((e) => GRADUAL.has(e.kind) && e.start <= time && e.end > time && e.kind !== 'fuelShock');
+  const active = eventsOf(state).filter((e) => GRADUAL.has(e.kind) && e.start <= time && e.end > time && e.kind !== 'fuelShock');
+  const after = (1 + TRAFFIC_GROWTH) ** Math.max(0, (time - REAL_DATA_END) / YEAR);
+  const year = fractionalYear(time);
+  const past = year < 2025;
   return {
-    fuelSpot: time < REAL_DATA_END ? jetFuelSpot(toDate(time)) : w.fuel,
-    trend: (1 + TRAFFIC_GROWTH) ** Math.max(0, (time - REAL_DATA_END) / YEAR),
+    fuelSpot: time < REAL_DATA_END || !w ? jetFuelSpot(toDate(time)) : w.fuel,
+    trend: past ? worldDemandIndex(year) : after,
+    growth: past ? (a, b) => Math.sqrt(demandIndex(a.country, year) * demandIndex(b.country, year)) : () => after,
     demand: active.length
       ? (a, b, segment) => {
           let f = 1;
           const international = a.country !== b.country;
-          const ca = world.countries[a.country]?.continent ?? '';
-          const cb = world.countries[b.country]?.continent ?? '';
           for (const e of active) {
             const i = intensity(e, time) * e.depth;
-            const where = ((e.continents ?? []).includes(ca) ? 0.5 : 0) + ((e.continents ?? []).includes(cb) ? 0.5 : 0);
+            const where = (inArea(e, a, world) ? 0.5 : 0) + (inArea(e, b, world) ? 0.5 : 0);
+            // Random outbreaks and pandemics spread everywhere; everything else stays where it happens.
+            const spreads = !e.local && (e.kind === 'pandemic' || e.kind === 'pandemicSevere');
+            if (!where && !spreads) continue;
             if (e.kind === 'recession') f *= 1 - i * where * (segment === 'business' ? 1.4 : 0.8);
-            else if (e.kind === 'pandemic') f *= 1 - i * Math.max(0.5, where) * (international ? 1 : 0.5);
-            else if (e.kind === 'pandemicSevere') f *= 1 - i * (international ? 1 : 0.6);
+            else if (e.kind === 'pandemic') f *= 1 - i * (e.local ? where : Math.max(0.5, where)) * (international ? 1 : 0.5);
+            else if (e.kind === 'pandemicSevere') f *= 1 - i * (e.local ? where : 1) * (international ? 1 : 0.75);
+            else if (e.kind === 'crisis') f *= 1 - i * where * (international ? 1 : 0.6);
           }
           return Math.max(0.03, f);
         }
@@ -221,18 +307,29 @@ export function conditionsOf(state: GameState, world: EngineWorld, time = state.
   };
 }
 
-/** Share of flights cancelled at an airport at `time` (0–1) by closures and strikes, and the events causing it. */
-export function closureAt(state: GameState, airport: Airport | undefined, time: SimTime): { share: number; events: WorldEvent[] } {
-  const events = (state.world?.events ?? []).filter(
-    (e) => CLOSING.has(e.kind) && e.start <= time && e.end > time && airport && ((e.airports ?? []).includes(airport.id) || (e.countries ?? []).includes(airport.country)),
+/**
+ * Share of flights cancelled at an airport at `time` (0–1) by closures and strikes, and the events causing it. Flight
+ * bans only count for flights to/from their `pairWith` countries (`other` = the airport at the other end).
+ */
+export function closureAt(state: GameState, airport: Airport | undefined, time: SimTime, other?: Airport): { share: number; events: WorldEvent[] } {
+  if (!airport) return { share: 0, events: [] };
+  const events = eventsOf(state).filter(
+    (e) =>
+      CLOSING.has(e.kind) &&
+      e.start <= time &&
+      e.end > time &&
+      ((e.airports ?? []).includes(airport.id) || (e.countries ?? []).includes(airport.country)) &&
+      (!e.pairWith || (other !== undefined && e.pairWith.includes(other.country))),
   );
-  return { share: events.reduce((m, e) => Math.max(m, e.depth), 0), events };
+  return { share: events.reduce((m, e) => Math.max(m, e.depth * intensity(e, time)), 0), events };
 }
 
 /** Is a flight leaving at `dep` from `a` to `b` cancelled? Partial closures cancel a stable share of flights. */
 export function closureCancels(state: GameState, world: EngineWorld, fromId: string, toId: string, dep: SimTime, key: string): WorldEvent | null {
-  for (const id of [fromId, toId]) {
-    const c = closureAt(state, world.airportById.get(id), dep);
+  const from = world.airportById.get(fromId);
+  const to = world.airportById.get(toId);
+  for (const [here, there] of [[from, to], [to, from]] as const) {
+    const c = closureAt(state, here, dep, there);
     if (c.share > 0 && (c.share >= 1 || (seedOf(`${key}|${startOfDay(dep)}`) % 1000) / 1000 < c.share)) return c.events[0]!;
   }
   return null;
@@ -243,10 +340,17 @@ export function closureCancels(state: GameState, world: EngineWorld, fromId: str
 /** Daily: the fuel price moves, events start and end. Called at 00:00 UTC. */
 export function worldDailyStep(state: GameState, world: EngineWorld): void {
   const w = state.world;
-  if (!w || state.time < REAL_DATA_END) return;
+  if (!w) return;
+  // Real events starting today are in the news.
+  for (const e of historicEvents(state.seed)) if (e.start <= state.time && e.start > state.time - DAY && e.kind !== 'milestone') announce(state, world, e);
+  if (state.time < REAL_DATA_END) {
+    spawnEvents(state, world, true);
+    w.events = w.events.filter((e) => e.end > state.time - 2 * YEAR);
+    return;
+  }
   // Fuel: drifts back to its long-run level (higher during fuel shocks) with daily noise.
   const years = (state.time - REAL_DATA_END) / YEAR;
-  const shock = w.events.filter((e) => e.kind === 'fuelShock').reduce((m, e) => m * (1 + e.depth * intensity(e, state.time)), 1);
+  const shock = eventsOf(state).filter((e) => e.kind === 'fuelShock').reduce((m, e) => m * (1 + e.depth * intensity(e, state.time)), 1);
   const target = FUEL_LONG_RUN * (1 + FUEL_INFLATION) ** years * shock;
   const noise = (random(state) + random(state) + random(state) - 1.5) * 2; // ≈ normal, σ ≈ 1
   w.fuel = Math.exp(Math.log(w.fuel) + FUEL_REVERSION * (Math.log(target) - Math.log(w.fuel)) + FUEL_VOLATILITY * noise);
@@ -255,9 +359,18 @@ export function worldDailyStep(state: GameState, world: EngineWorld): void {
     if (w.fuelHistory.length > 520) w.fuelHistory.splice(0, w.fuelHistory.length - 520);
   }
 
-  // New events (each kind at its yearly rate, in its season).
-  const month = toDate(state.time).getUTCMonth() + 1;
+  spawnEvents(state, world, false);
+  // Events over for more than two years are forgotten.
+  w.events = w.events.filter((e) => e.end > state.time - 2 * YEAR);
+}
+
+/** New random events (each kind at its yearly rate, in its season); in the real past only the small kinds. */
+function spawnEvents(state: GameState, world: EngineWorld, smallOnly: boolean): void {
+  const w = state.world!;
+  const date = toDate(state.time);
+  const month = date.getUTCMonth() + 1;
   for (const spawn of SPAWNS) {
+    if (smallOnly && (!spawn.small || (spawn.since ?? 0) > date.getUTCFullYear())) continue;
     const perDay = spawn.months ? spawn.perYear / (spawn.months.length * 30.4) : spawn.perYear / 365.25;
     if ((spawn.months && !spawn.months.includes(month)) || random(state) >= perDay) continue;
     const made = spawn.make(state, world) as (Omit<WorldEvent, 'id' | 'kind' | 'start'> & { days?: number }) | null;
@@ -269,8 +382,6 @@ export function worldDailyStep(state: GameState, world: EngineWorld): void {
     w.events.push(event);
     announce(state, world, event);
   }
-  // Events over for more than two years are forgotten.
-  w.events = w.events.filter((e) => e.end > state.time - 2 * YEAR);
 }
 
 /** Monthly: floating currencies move against the US dollar; the dollar moves against the euro. */
@@ -301,13 +412,18 @@ export function worldMonthlyStep(state: GameState): void {
 function announce(state: GameState, world: EngineWorld, e: WorldEvent): void {
   const area = e.airports?.length ? 'airports' : e.countries?.length ? 'countries' : e.continents?.length === CONTINENTS.length ? 'world' : 'continents';
   const where = e.airports?.length ? e.airports.map((id) => world.airportById.get(id)?.iata ?? id).join(',') : (e.countries ?? e.continents ?? []).join(',');
-  const params = { event: e.kind, area, where, until: e.end, label: e.label ?? '', depth: Math.round(e.depth * 100) };
+  const params = { event: e.kind, area, where, until: e.end, label: e.label ?? '', depth: Math.round(e.depth * 100), historic: e.historic ?? '', open: e.openEnded ? 1 : 0 };
   postMessage(state, { airlineId: null, kind: 'worldEvent', level: e.kind === 'pandemicSevere' || e.kind === 'airspace' ? 'warning' : 'info', params });
   if (!CLOSING.has(e.kind)) return;
   for (const airline of Object.values(state.airlines)) {
     if (airline.controller !== 'human') continue;
     const touched = Object.values(state.routes).some(
-      (r) => r.airlineId === airline.id && [r.originId, r.destinationId].some((id) => closureAt(state, world.airportById.get(id), e.start).events.includes(e)),
+      (r) =>
+        r.airlineId === airline.id &&
+        [
+          [r.originId, r.destinationId],
+          [r.destinationId, r.originId],
+        ].some(([id, other]) => closureAt(state, world.airportById.get(id!), e.start, world.airportById.get(other!)).events.includes(e)),
     );
     if (touched) postMessage(state, { airlineId: airline.id, kind: 'eventAffects', level: 'caution', params });
   }

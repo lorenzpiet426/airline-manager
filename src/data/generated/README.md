@@ -13,6 +13,10 @@ reusing them.
 | `networks.json` | Routes: English Wikipedia airport articles; weekly flights: Eurostat totals split by the game | **CC BY-SA 4.0** — attribution: Wikipedia contributors, Eurostat |
 | `registers.json` | FAA (public domain), Transport Canada CCAR, Austro Control, Irish Aviation Authority registers | Sources: FAA, Transport Canada, Austro Control, IAA (non-commercial reuse with attribution) |
 | `airline-details.json` | English Wikipedia airline articles (infobox, categories, fleet tables) | **CC BY-SA 4.0** — attribution: Wikipedia contributors |
+| `cpi.json` | US BLS CPI-U (public domain) | public domain |
+| `fuel-history.json` | US EIA petroleum price history (public domain) | public domain |
+| `fx-history.json` | Federal Reserve H.10 (public domain), World Bank PA.NUS.FCRF (CC BY 4.0) | CC BY 4.0 — attribution: World Bank, Federal Reserve |
+| `economy-history.json` | World Bank WDI population, GDP per person, air passengers (CC BY 4.0) | CC BY 4.0 — attribution: World Bank |
 
 "CC BY-SA 4.0" (share-alike) means anyone may reuse and change these files, but must credit the source and publish
 their changed versions under the same licence. https://creativecommons.org/licenses/by-sa/4.0/

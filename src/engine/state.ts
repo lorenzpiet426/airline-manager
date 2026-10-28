@@ -408,7 +408,9 @@ export const emptyAi = (): AiState => ({ routes: {}, added: {}, airlines: {} });
 
 export type WorldEventKind =
   | 'recession' | 'fuelShock' | 'pandemic' | 'pandemicSevere'
-  | 'volcano' | 'airspace' | 'atcStrike' | 'airportStrike' | 'winterStorm' | 'hurricane' | 'typhoon';
+  | 'volcano' | 'airspace' | 'atcStrike' | 'airportStrike' | 'winterStorm' | 'hurricane' | 'typhoon'
+  // Real history (Phase 5.2): travellers staying away, flight bans between countries, other airport closures, milestones.
+  | 'crisis' | 'flightBan' | 'disruption' | 'milestone';
 
 /** Something happening in the world (Phase 5.1): where, from when until when, and how strong. */
 export interface WorldEvent {
@@ -426,6 +428,16 @@ export interface WorldEvent {
   depth: number;
   /** A name for the news (e.g. the volcano). */
   label?: string;
+  /** Real events (Phase 5.2): the id in the history data (its name and text are translated under `hist.<id>`). */
+  historic?: string;
+  /** Strength over time as [time, 0–1] points instead of the standard shape. */
+  profile?: [SimTime, number][];
+  /** Flight bans: only flights to/from these countries. */
+  pairWith?: string[];
+  /** Demand effect only inside the area (no global spill-over). */
+  local?: boolean;
+  /** Still going on when the real data ends: its end date in this game is not shown to the player. */
+  openEnded?: boolean;
 }
 
 /** The simulated world after the real data ends (Phase 5.1). */

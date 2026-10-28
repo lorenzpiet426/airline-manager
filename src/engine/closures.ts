@@ -14,14 +14,12 @@ import type { EngineWorld } from './world';
 
 /** Is this pair cancelled on the day of `time` by a closure or strike? */
 export function closureCancelsPair(state: GameState, world: EngineWorld, route: Route, pair: FlightPair, time: SimTime): boolean {
-  if (!state.world?.events.length) return false;
   const dep = pairDepartureUtc(world, route, pair, startOfDay(time));
   return dep !== null && closureCancels(state, world, route.originId, route.destinationId, dep, pair.id) !== null;
 }
 
 /** 00:00 UTC: the player's flights of yesterday that closures cancelled → care for the passengers, one message. */
 export function bookClosures(state: GameState, world: EngineWorld): void {
-  if (!state.world?.events.length) return;
   const day = state.time - MINUTES_PER_DAY;
   for (const airline of Object.values(state.airlines)) {
     if (airline.controller !== 'human') continue;

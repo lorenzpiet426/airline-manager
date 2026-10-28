@@ -17,7 +17,8 @@
     "sources": "Data sources",
     "saves": "Saves",
     "livery": "Livery",
-    "aircraft": "Aircraft"
+    "aircraft": "Aircraft",
+    "history": "History"
   },
   "status": {
     "sim": "SIM",
@@ -92,7 +93,8 @@
   },
   "common": {
     "close": "Close",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "loading": "Loading…"
   },
   "map": {
     "loading": "Loading world data…",
@@ -570,13 +572,13 @@
     "use": {
       "ourairports": "All airports with scheduled flights: position, runways, size.",
       "geonames": "City populations (catchment and market size) and time zones.",
-      "worldbank": "Wealth (GDP per person) and tourism per country.",
+      "worldbank": "Wealth (GDP per person) and tourism per country. Since Phase 5.2 also population, GDP per person, exchange rates and air passengers carried since 1960, for demand in the past.",
       "naturalearth": "Coastlines and borders of the map.",
       "openfreemap": "Fonts for the airport codes on the map.",
-      "wikipedia": "Which airline flies where (airport articles), airline business models, hubs, bases, fleets and seat layouts (airline articles).",
+      "wikipedia": "Which airline flies where (airport articles), airline business models, hubs, bases, fleets and seat layouts (airline articles). The real event timeline since 1970 links each event to the article its facts come from.",
       "wikidata": "Airline names, codes, countries, alliances and parent companies; links between articles and airports.",
       "eurostat": "Real passenger numbers, seats and flights per route in Europe (summer 2024), used for demand and for the airlines' weekly flights.",
-      "eia": "The real jet fuel price, week by week in 2026.",
+      "eia": "The real jet fuel price, week by week in 2026. Monthly history since 1974 (estimated from crude oil before mid-1975).",
       "ecb": "Exchange rates between currencies.",
       "faa": "Individual aircraft (registration, type, year) of US airlines.",
       "tc": "Individual aircraft of Canadian airlines.",
@@ -584,7 +586,8 @@
       "iaa": "Individual aircraft of Irish airlines (Ryanair, Aer Lingus).",
       "manufacturers": "Aircraft performance: seats, range, take-off distance, weight.",
       "plex": "The game's typefaces.",
-      "bls": "US consumer prices since 1913, to show historical aircraft prices in the money of any year."
+      "bls": "US consumer prices since 1913, to show historical aircraft prices in the money of any year.",
+      "fed": "Daily exchange rates since 1971 (incl. the Austrian schilling and the other old euro currencies), for the History screen and historical start years."
     }
   },
   "timetable": {
@@ -1059,7 +1062,7 @@
     "growth": "Traffic growth since 2026",
     "growthHint": "Air travel grows about 3 % a year in the long run; your competitors grow their capacity with it.",
     "now": "Happening now",
-    "realPeriod": "Until {{date}} the game follows the real world's data; from then on the world is simulated and events happen at real-world frequencies. The real events of the past come with Phase 5.2.",
+    "realPeriod": "Until {{date}} the game follows the real world: real fuel prices, exchange rates and real events (see History); only small things like storms and short strikes are added at random. After that the world is simulated.",
     "quiet": "Nothing unusual right now.",
     "worldwide": "worldwide",
     "closureLine": "{{share}} % of flights cancelled · until {{until}}",
@@ -1084,8 +1087,697 @@
       "airportStrike": "Airport strike",
       "winterStorm": "Winter storm",
       "hurricane": "Hurricane",
-      "typhoon": "Typhoon"
+      "typhoon": "Typhoon",
+      "crisis": "Crisis: travellers stay away",
+      "flightBan": "Flight ban",
+      "disruption": "Airport disruption",
+      "milestone": "Milestone"
     },
-    "recent": "Last three months"
+    "recent": "Last three months",
+    "openLine": "now {{share}} % · no end in sight",
+    "openEnd": "no end in sight",
+    "openClosureLine": "{{share}} % of flights cancelled · no end in sight"
+  },
+  "history": {
+    "title": "World history",
+    "intro": "The real world since 1970 as the game knows it: jet fuel prices, exchange rates, air travel and the real events that shook the airlines. Games that start in the past (coming in step 5.3) live through all of it; until the real data ends in October 2026 these events also happen in today's games.",
+    "charts": "Charts",
+    "chart": {
+      "fuel": "Jet fuel",
+      "fx": "Exchange rates",
+      "traffic": "Air travel"
+    },
+    "chartHint": "Line chart from {{from}} to {{to}}. Move over it to read single values.",
+    "money": "Money",
+    "moneyThen": "Money of the time",
+    "moneyToday": "In 2025 dollars",
+    "fuelLabel": "Jet fuel price per US gallon since 1970",
+    "fuelSeries": "Jet fuel (USD/gal)",
+    "fuelNote": "US EIA: Gulf Coast spot price from April 1990; before that the refiners' wholesale price (from July 1975, scaled to the spot level) and, until mid-1975, estimated from crude oil prices. \"In 2025 dollars\" removes inflation (US consumer prices).",
+    "currency": "Currency",
+    "fxLabel": "{{currency}} per US dollar since 1970",
+    "fxSeries": "{{currency}} per US dollar",
+    "fxLegacy": "{{currency}} was replaced by the euro on {{date}} at {{rate}} per euro; after that its line follows the euro.",
+    "fxNote": "Monthly averages of the Federal Reserve's daily rates where it publishes the currency, otherwise World Bank yearly averages. Currencies that were later re-based (Turkish lira, Polish złoty, Brazilian real …) are shown in today's units.",
+    "trafficLabel": "Passengers carried by the world's airlines per year since 1970",
+    "trafficReal": "Real (World Bank)",
+    "trafficModel": "Game model (before events)",
+    "millions": "{{value}} M",
+    "trafficNote": "The game's demand follows each country's population and wealth (World Bank) plus the long-term trend to cheaper flying. Dips such as 1991, 2001, 2009 and 2020 come from the events below. Jumps in the real line (e.g. 2010) are changes in how the statistics were counted.",
+    "timeline": "Timeline of real events",
+    "eventCount": "{{count}} events",
+    "filter": "Show",
+    "filterOpt": {
+      "all": "All",
+      "crises": "Economy & crises",
+      "closures": "Closures",
+      "milestones": "Milestones"
+    },
+    "timelineNote": "Strengths are estimates (modelled). Each event links to the Wikipedia article its facts come from. Events still going on in October 2026 end at a different, unknown date in every game.",
+    "ongoing": "ongoing",
+    "source": "Source: Wikipedia – {{title}}",
+    "effectFuel": "shown in the real fuel price",
+    "effectClosure": "up to {{share}} % of flights cancelled",
+    "effectDemand": "demand down up to {{share}} %",
+    "banLine": "{{where}} ↔ {{with}}",
+    "countries": "{{count}} countries",
+    "more": "+{{count}} more",
+    "currencyName": {
+      "ATS": "Austrian schilling",
+      "BEF": "Belgian franc",
+      "DEM": "Deutsche Mark",
+      "ESP": "Spanish peseta",
+      "FIM": "Finnish markka",
+      "FRF": "French franc",
+      "IEP": "Irish pound",
+      "ITL": "Italian lira",
+      "LUF": "Luxembourg franc",
+      "NLG": "Dutch guilder",
+      "PTE": "Portuguese escudo",
+      "GRD": "Greek drachma",
+      "SIT": "Slovenian tolar",
+      "CYP": "Cypriot pound",
+      "MTL": "Maltese lira",
+      "SKK": "Slovak koruna",
+      "EEK": "Estonian kroon",
+      "LVL": "Latvian lats",
+      "LTL": "Lithuanian litas",
+      "HRK": "Croatian kuna",
+      "BGN": "Bulgarian lev"
+    }
+  },
+  "hist": {
+    "jumbo1970": {
+      "name": "The jumbo jet enters service",
+      "text": "Pan Am flies the first Boeing 747 from New York to London: twice as many seats, much lower cost per seat."
+    },
+    "brettonWoods1971": {
+      "name": "End of fixed exchange rates",
+      "text": "The US ends the dollar's convertibility into gold; within two years the major currencies float freely."
+    },
+    "yomKippur1973": {
+      "name": "Yom Kippur War",
+      "text": "War between Israel, Egypt and Syria closes the airspace of the three countries."
+    },
+    "oil1973": {
+      "name": "First oil crisis",
+      "text": "The Arab oil embargo quadruples the oil price; jet fuel goes from about 12 to over 30 US cents a gallon."
+    },
+    "recession1974": {
+      "name": "Recession after the oil crisis",
+      "text": "The world economy shrinks; airlines cut flights and fares rise."
+    },
+    "concorde1976": {
+      "name": "Concorde enters service",
+      "text": "British Airways and Air France start supersonic flights."
+    },
+    "skytrain1977": {
+      "name": "Laker Skytrain",
+      "text": "Laker Airways sells walk-on London–New York tickets at a fraction of the usual fare, an early low-cost airline."
+    },
+    "blizzard1978": {
+      "name": "Blizzard of 1978",
+      "text": "A huge snowstorm shuts the airports of New England and New York for days."
+    },
+    "deregulation1978": {
+      "name": "US airline deregulation",
+      "text": "The Airline Deregulation Act lets US airlines choose routes and fares freely: competition, new airlines and lower fares."
+    },
+    "oil1979": {
+      "name": "Second oil crisis",
+      "text": "The Iranian revolution doubles the oil price; jet fuel nearly triples within two years."
+    },
+    "recession1980": {
+      "name": "Early 1980s recession",
+      "text": "High interest rates against inflation push North America and Europe into recession."
+    },
+    "stHelens1980": {
+      "name": "Mount St. Helens",
+      "text": "The eruption covers eastern Washington in ash; Spokane and Yakima airports close."
+    },
+    "iranIraq1980": {
+      "name": "Iran–Iraq War",
+      "text": "Eight years of war restrict flying in both countries."
+    },
+    "patco1981": {
+      "name": "US air traffic controllers' strike",
+      "text": "Over 11,000 striking controllers are fired; the FAA cuts flights at the big airports by about a quarter."
+    },
+    "patcoRebuild1981": {
+      "name": "Rebuilding US air traffic control",
+      "text": "Flow restrictions stay while new controllers are trained."
+    },
+    "falklands1982": {
+      "name": "Falklands War",
+      "text": "Flights to the Falkland Islands stop during the war."
+    },
+    "debtCrisis1982": {
+      "name": "Latin American debt crisis",
+      "text": "Mexico cannot pay its debts; Mexico, Brazil and Argentina fall into a long crisis."
+    },
+    "fear1986": {
+      "name": "Americans stay away from Europe",
+      "text": "After terror attacks and the bombing of Libya many US travellers cancel trips to Europe."
+    },
+    "chernobyl1986": {
+      "name": "Chernobyl disaster",
+      "text": "The nuclear accident frightens travellers in Eastern and Central Europe."
+    },
+    "eu1987": {
+      "name": "First EU aviation package",
+      "text": "Europe starts to open its air transport market: more freedom on fares and capacity."
+    },
+    "tiananmen1989": {
+      "name": "Tiananmen Square",
+      "text": "After the crackdown in Beijing, tourism to China collapses for months."
+    },
+    "redoubt1989": {
+      "name": "Redoubt eruption",
+      "text": "Ash from Mount Redoubt closes Anchorage airport."
+    },
+    "wall1989": {
+      "name": "Fall of the Berlin Wall",
+      "text": "The Iron Curtain opens: Vienna becomes the gateway to Eastern Europe."
+    },
+    "gulf1990": {
+      "name": "Gulf crisis oil shock",
+      "text": "Iraq invades Kuwait; the jet fuel price more than doubles within two months."
+    },
+    "kuwait1990": {
+      "name": "Invasion of Kuwait",
+      "text": "Kuwait's airport is closed until after its liberation."
+    },
+    "iraqSanctions1990": {
+      "name": "Sanctions against Iraq",
+      "text": "UN sanctions stop international flights to Iraq for over a decade."
+    },
+    "recession1990": {
+      "name": "Early 1990s recession",
+      "text": "The US, the UK and other countries fall into recession."
+    },
+    "gulfWar1991": {
+      "name": "Gulf War",
+      "text": "Fear of terrorism: international air travel drops sharply worldwide during the war."
+    },
+    "yugoslavia1991": {
+      "name": "Wars in Yugoslavia",
+      "text": "War closes most airports in Croatia, Bosnia and Serbia."
+    },
+    "bosnia1992": {
+      "name": "Siege of Sarajevo",
+      "text": "Sarajevo has no civil flights until 1996, only the humanitarian airlift."
+    },
+    "pinatubo1991": {
+      "name": "Pinatubo eruption",
+      "text": "One of the largest eruptions of the century closes Manila and Clark airports."
+    },
+    "panAm1991": {
+      "name": "Pan Am stops flying",
+      "text": "The most famous US airline goes out of business after 64 years."
+    },
+    "ussr1991": {
+      "name": "End of the Soviet Union",
+      "text": "Fifteen new countries; Aeroflot is split into many airlines."
+    },
+    "andrew1992": {
+      "name": "Hurricane Andrew",
+      "text": "Andrew devastates South Florida; Miami's airports close."
+    },
+    "spurr1992": {
+      "name": "Spurr eruption",
+      "text": "Ash from Mount Spurr closes Anchorage airport."
+    },
+    "blackWednesday1992": {
+      "name": "Black Wednesday",
+      "text": "The pound and the lira leave the European exchange rate mechanism."
+    },
+    "eu1993": {
+      "name": "EU single aviation market",
+      "text": "Any EU airline may fly between EU countries and set its own fares."
+    },
+    "tequila1994": {
+      "name": "Mexican peso crisis",
+      "text": "The peso loses half its value; Mexico falls into a deep recession."
+    },
+    "austriaEu1995": {
+      "name": "Austria joins the EU",
+      "text": "Austria, Finland and Sweden become EU members."
+    },
+    "schengen1995": {
+      "name": "Schengen area",
+      "text": "Passport checks between the first Schengen countries end."
+    },
+    "cabotage1997": {
+      "name": "Full EU cabotage",
+      "text": "EU airlines may also fly domestic routes in other EU countries."
+    },
+    "asia1997": {
+      "name": "Asian financial crisis",
+      "text": "Currencies of Thailand, Indonesia, Korea and others crash; travel from Asia falls."
+    },
+    "hongKong1997": {
+      "name": "Hong Kong handover",
+      "text": "Hong Kong returns to China."
+    },
+    "chekLapKok1998": {
+      "name": "New Hong Kong airport",
+      "text": "Chek Lap Kok replaces Kai Tak and its famous approach over the city."
+    },
+    "russia1998": {
+      "name": "Russian financial crisis",
+      "text": "The rouble collapses and Russia defaults."
+    },
+    "euro1999": {
+      "name": "The euro is born",
+      "text": "Eleven countries fix their exchange rates: 1 euro = 13.7603 Austrian schillings."
+    },
+    "kosovo1999": {
+      "name": "Kosovo War",
+      "text": "NATO air strikes close the airspace of Yugoslavia for 11 weeks."
+    },
+    "starAlliance2000": {
+      "name": "Austrian joins Star Alliance",
+      "text": "The Austrian Airlines Group becomes a Star Alliance member."
+    },
+    "dotcom2001": {
+      "name": "Dot-com recession",
+      "text": "The internet bubble bursts; business travel in the US drops."
+    },
+    "turkey2001": {
+      "name": "Turkish financial crisis",
+      "text": "The lira loses half its value."
+    },
+    "sept11Closure": {
+      "name": "September 11",
+      "text": "After the attacks in the US, the airspace of the US and Canada is closed for days."
+    },
+    "sept11": {
+      "name": "Fear of flying after 9/11",
+      "text": "US air travel falls by about a fifth; airlines go bankrupt or need help."
+    },
+    "sept11World": {
+      "name": "Worldwide drop after 9/11",
+      "text": "Air travel falls worldwide, especially long-haul."
+    },
+    "swissair2001": {
+      "name": "Swissair grounding",
+      "text": "Swissair runs out of money; its whole fleet stays on the ground."
+    },
+    "sabena2001": {
+      "name": "Sabena bankrupt",
+      "text": "Belgium's national airline goes out of business."
+    },
+    "argentina2001": {
+      "name": "Argentine crisis",
+      "text": "Argentina defaults and the peso is devalued."
+    },
+    "euroCash2002": {
+      "name": "Euro notes and coins",
+      "text": "Euro cash replaces the schilling and the other old currencies."
+    },
+    "bali2002": {
+      "name": "Bali bombings",
+      "text": "Terror attacks on tourists keep visitors away from Indonesia."
+    },
+    "iraq2003": {
+      "name": "Iraq War",
+      "text": "The invasion of Iraq makes people avoid international travel for some weeks."
+    },
+    "sars2003": {
+      "name": "SARS",
+      "text": "The new lung disease almost empties flights to Hong Kong, China and Singapore."
+    },
+    "sarsAsia2003": {
+      "name": "SARS in Asia",
+      "text": "Travel throughout Asia falls during the outbreak."
+    },
+    "concordeEnd2003": {
+      "name": "Concorde's last flight",
+      "text": "British Airways and Air France retire the Concorde."
+    },
+    "tsunami2004": {
+      "name": "Indian Ocean tsunami",
+      "text": "The tsunami devastates coasts; tourists stay away from Thailand, Sri Lanka and the Maldives."
+    },
+    "katrina2005": {
+      "name": "Hurricane Katrina",
+      "text": "New Orleans is flooded; its airport has no airline flights for two weeks."
+    },
+    "wilma2005": {
+      "name": "Hurricane Wilma",
+      "text": "Wilma hits Cancún and Cozumel."
+    },
+    "liquids2006": {
+      "name": "Liquids plot",
+      "text": "A foiled bomb plot brings strict security and mass cancellations at London's airports; liquid limits follow."
+    },
+    "a380_2007": {
+      "name": "First A380 flight",
+      "text": "Singapore Airlines flies the first Airbus A380 from Singapore to Sydney."
+    },
+    "openSkies2008": {
+      "name": "EU–US Open Skies",
+      "text": "Any EU or US airline may fly between any EU and US cities."
+    },
+    "fuel2008": {
+      "name": "Oil price record",
+      "text": "Oil reaches 147 dollars a barrel; jet fuel almost 4 dollars a gallon."
+    },
+    "recession2008": {
+      "name": "Global financial crisis",
+      "text": "After Lehman Brothers collapses the world falls into recession; business travel drops sharply."
+    },
+    "iceland2008": {
+      "name": "Icelandic banking collapse",
+      "text": "Iceland's banks fail and the króna crashes."
+    },
+    "bangkok2008": {
+      "name": "Bangkok airports occupied",
+      "text": "Protesters occupy both Bangkok airports for over a week."
+    },
+    "redoubt2009": {
+      "name": "Redoubt eruption",
+      "text": "Ash closes Anchorage airport again."
+    },
+    "h1n1_2009": {
+      "name": "Swine flu",
+      "text": "The new flu starts in Mexico; travel to Mexico collapses for weeks."
+    },
+    "austrianLufthansa2009": {
+      "name": "Lufthansa takes over Austrian",
+      "text": "Austrian Airlines becomes part of the Lufthansa Group."
+    },
+    "eyjafjallajokull2010": {
+      "name": "Eyjafjallajökull ash cloud",
+      "text": "The ash cloud from Iceland closes most of European airspace for six days: about 100,000 flights cancelled."
+    },
+    "euroCrisis2010": {
+      "name": "European debt crisis",
+      "text": "Greece, Portugal, Ireland, Spain, Italy and Cyprus fall into a long crisis."
+    },
+    "merapi2010": {
+      "name": "Merapi eruption",
+      "text": "Ash closes Yogyakarta and Solo airports."
+    },
+    "spainAtc2010": {
+      "name": "Spanish controllers' walkout",
+      "text": "Air traffic controllers walk out; Spain's airspace is closed for a day and a half."
+    },
+    "snow2010": {
+      "name": "December 2010 snow",
+      "text": "Heavy snow paralyses Heathrow for days just before Christmas, and other big airports too."
+    },
+    "arabSpring2011": {
+      "name": "Arab Spring",
+      "text": "Revolutions in Egypt and Tunisia; tourists stay away."
+    },
+    "libya2011": {
+      "name": "Libyan civil war",
+      "text": "A no-fly zone closes Libyan airspace."
+    },
+    "tohoku2011": {
+      "name": "Japan earthquake and tsunami",
+      "text": "The earthquake and the Fukushima disaster keep visitors away from Japan."
+    },
+    "sendai2011": {
+      "name": "Sendai airport flooded",
+      "text": "The tsunami floods Sendai airport; it reopens a month later."
+    },
+    "grimsvotn2011": {
+      "name": "Grímsvötn ash",
+      "text": "Ash closes Iceland and Scottish airports for a few days."
+    },
+    "puyehue2011": {
+      "name": "Puyehue ash",
+      "text": "Ash from Chile closes Buenos Aires and Bariloche airports again and again."
+    },
+    "puyehueOceania2011": {
+      "name": "Puyehue ash over Australia",
+      "text": "The ash cloud circles the globe and grounds flights in Australia and New Zealand."
+    },
+    "bangkokFlood2011": {
+      "name": "Bangkok floods",
+      "text": "Don Mueang airport is flooded for months."
+    },
+    "ets2012": {
+      "name": "Aviation joins the EU ETS",
+      "text": "Airlines must buy CO2 allowances for flights within Europe."
+    },
+    "vieCheckIn3_2012": {
+      "name": "Vienna Check-in 3",
+      "text": "Vienna airport opens its new terminal (Skylink), now Terminal 3."
+    },
+    "syria2012": {
+      "name": "Syrian civil war",
+      "text": "Western airlines stop flying to Syria and avoid its airspace."
+    },
+    "sandy2012": {
+      "name": "Hurricane Sandy",
+      "text": "New York's airports close for days."
+    },
+    "egypt2013": {
+      "name": "Unrest in Egypt",
+      "text": "After the coup many countries warn against travel to Egypt."
+    },
+    "kelud2014": {
+      "name": "Kelud eruption",
+      "text": "Ash closes seven airports on Java."
+    },
+    "donbas2014": {
+      "name": "War in eastern Ukraine",
+      "text": "Donetsk and Luhansk airports are destroyed in the fighting."
+    },
+    "libya2014": {
+      "name": "Second Libyan civil war",
+      "text": "Tripoli airport is destroyed; only a few airlines still fly to Libya."
+    },
+    "ebola2014": {
+      "name": "Ebola in West Africa",
+      "text": "Airlines stop flying to Liberia, Sierra Leone and Guinea."
+    },
+    "russia2014": {
+      "name": "Rouble crisis",
+      "text": "Sanctions and the oil price fall halve the rouble; Russians travel much less abroad."
+    },
+    "brazil2015": {
+      "name": "Brazilian recession",
+      "text": "Brazil's worst recession in decades."
+    },
+    "yemen2015": {
+      "name": "War in Yemen",
+      "text": "Yemen's airspace is closed to normal air traffic."
+    },
+    "mers2015": {
+      "name": "MERS in South Korea",
+      "text": "An outbreak keeps visitors away from Korea."
+    },
+    "sousse2015": {
+      "name": "Sousse attack",
+      "text": "After the attack on a beach hotel the UK advises against travel to Tunisia for two years."
+    },
+    "raung2015": {
+      "name": "Raung ash",
+      "text": "Ash closes Bali airport for days."
+    },
+    "sinaiUk2015": {
+      "name": "UK flights to Sharm el-Sheikh stopped",
+      "text": "After a bomb downs a Russian airliner, the UK suspends flights to Sharm el-Sheikh for four years."
+    },
+    "sinaiRussia2015": {
+      "name": "Russian flights to Egypt's resorts stopped",
+      "text": "Russia suspends flights to Sharm el-Sheikh and Hurghada until 2021."
+    },
+    "cairoRussia2015": {
+      "name": "Russian flights to Cairo stopped",
+      "text": "Flights between Russia and Cairo resume in 2018."
+    },
+    "paris2015": {
+      "name": "Paris attacks",
+      "text": "Terror attacks in Paris make some travellers avoid France."
+    },
+    "blizzard2016": {
+      "name": "Blizzard of 2016",
+      "text": "A blizzard closes the airports from Washington to New York."
+    },
+    "turkey2016": {
+      "name": "Turkey's difficult year",
+      "text": "Attacks and a coup attempt; tourism to Turkey falls by about a third."
+    },
+    "brussels2016": {
+      "name": "Brussels airport attack",
+      "text": "After the bombing in the departure hall the airport stays closed for 12 days."
+    },
+    "qatarBlockade2017": {
+      "name": "Qatar blockade",
+      "text": "Saudi Arabia, the UAE, Bahrain and Egypt cut all flights to Qatar until 2021."
+    },
+    "harvey2017": {
+      "name": "Hurricane Harvey",
+      "text": "Floods close Houston's airports."
+    },
+    "irmaSxm2017": {
+      "name": "Irma destroys St. Maarten airport",
+      "text": "Hurricane Irma wrecks Princess Juliana airport; it reopens a month later."
+    },
+    "irma2017": {
+      "name": "Hurricane Irma in Florida",
+      "text": "Florida's airports close as Irma passes."
+    },
+    "maria2017": {
+      "name": "Hurricane Maria",
+      "text": "Puerto Rico is devastated; San Juan airport works with few flights for weeks."
+    },
+    "airBerlin2017": {
+      "name": "Air Berlin's last flight",
+      "text": "Germany's second-largest airline stops flying after insolvency."
+    },
+    "agung2017": {
+      "name": "Agung eruption",
+      "text": "Ash closes Bali and Lombok airports for three days."
+    },
+    "niki2017": {
+      "name": "NIKI insolvent",
+      "text": "Air Berlin's Austrian subsidiary NIKI files for insolvency; Niki Lauda buys it back as Laudamotion."
+    },
+    "beastFromTheEast2018": {
+      "name": "Beast from the East",
+      "text": "A cold wave with heavy snow closes Dublin and Scottish airports."
+    },
+    "turkey2018": {
+      "name": "Turkish currency crisis",
+      "text": "The lira crashes; Turks travel less abroad."
+    },
+    "jebi2018": {
+      "name": "Typhoon Jebi",
+      "text": "Kansai airport is flooded and cut off from the mainland."
+    },
+    "mangkhut2018": {
+      "name": "Typhoon Mangkhut",
+      "text": "Hong Kong and Macau airports stop flights."
+    },
+    "gatwickDrone2018": {
+      "name": "Gatwick drones",
+      "text": "Drone sightings close Gatwick for 33 hours before Christmas."
+    },
+    "pakistan2019": {
+      "name": "Pakistan closes its airspace",
+      "text": "After clashes with India, Pakistan's airspace is closed for months."
+    },
+    "max2019": {
+      "name": "737 MAX grounded",
+      "text": "After two crashes the Boeing 737 MAX is grounded worldwide until late 2020."
+    },
+    "istanbul2019": {
+      "name": "Istanbul's new airport",
+      "text": "Overnight, Atatürk airport's flights move to the new Istanbul Airport."
+    },
+    "hongKong2019": {
+      "name": "Hong Kong airport protests",
+      "text": "Protests in the terminal stop departures for two days."
+    },
+    "hongKongProtests2019": {
+      "name": "Hong Kong protests",
+      "text": "Months of protests keep visitors away."
+    },
+    "thomasCook2019": {
+      "name": "Thomas Cook collapses",
+      "text": "The world's oldest travel company goes bust; 150,000 holidaymakers are flown home."
+    },
+    "hagibis2019": {
+      "name": "Typhoon Hagibis",
+      "text": "Tokyo's airports cancel almost all flights."
+    },
+    "covidChina2020": {
+      "name": "COVID-19 in China",
+      "text": "Wuhan is locked down; China closes its borders almost completely until 2023."
+    },
+    "covid2020": {
+      "name": "COVID-19 pandemic",
+      "text": "Borders close worldwide; in April 2020 air travel falls by over 90 %. Recovery takes three years."
+    },
+    "ber2020": {
+      "name": "Berlin Brandenburg opens",
+      "text": "Nine years late, Berlin's new airport opens."
+    },
+    "belarus2021": {
+      "name": "EU bans flights to Belarus",
+      "text": "After Belarus forces down a Ryanair jet, the EU bans flights between the EU and Belarus."
+    },
+    "afghanistan2021": {
+      "name": "Fall of Kabul",
+      "text": "After the Taliban take power only a few airlines still fly to Afghanistan."
+    },
+    "ita2021": {
+      "name": "ITA replaces Alitalia",
+      "text": "Alitalia stops flying; ITA Airways takes over."
+    },
+    "ukraine2022": {
+      "name": "Russian invasion of Ukraine",
+      "text": "Ukraine's airspace is closed to civil flights; Moldova's too at first."
+    },
+    "russiaBan2022": {
+      "name": "No flights between Russia and the West",
+      "text": "The EU, UK, US, Canada and others close their airspace to Russian airlines; Russia does the same."
+    },
+    "fuel2022": {
+      "name": "Energy crisis 2022",
+      "text": "The war drives jet fuel to record prices."
+    },
+    "sudan2023": {
+      "name": "War in Sudan",
+      "text": "Fighting closes Khartoum airport and Sudan's airspace."
+    },
+    "natsFailure2023": {
+      "name": "UK air traffic control failure",
+      "text": "A software fault at NATS cancels over 1,500 flights in one day."
+    },
+    "israel2023": {
+      "name": "Gaza war",
+      "text": "Most foreign airlines stop flying to Tel Aviv for months."
+    },
+    "iranIsrael2024": {
+      "name": "Iranian strikes on Israel",
+      "text": "Israel, Jordan, Iraq, Iran and Lebanon close their airspace overnight."
+    },
+    "heathrowFire2025": {
+      "name": "Heathrow power cut",
+      "text": "A fire at an electrical substation closes Heathrow for a day."
+    },
+    "twelveDayWar2025": {
+      "name": "Twelve-Day War",
+      "text": "War between Israel and Iran closes the airspace of Iran, Iraq, Israel and Jordan."
+    },
+    "gulf2025": {
+      "name": "Gulf airspace closed",
+      "text": "After Iran's strike on a US base, Qatar, Bahrain and Kuwait close their airspace for hours."
+    },
+    "bulgariaEuro2026": {
+      "name": "Bulgaria adopts the euro",
+      "text": "The lev is replaced at 1.95583 per euro."
+    },
+    "iranWar2026": {
+      "name": "Iran war",
+      "text": "US and Israeli strikes on Iran and Iranian attacks on Gulf states close airspace around the Gulf until the ceasefire of 8 April."
+    },
+    "iranWarIran2026": {
+      "name": "Iran's airspace closed",
+      "text": "Flights to Iran resume step by step from July 2026."
+    },
+    "iranWarQatar2026": {
+      "name": "Qatar's airspace closed",
+      "text": "Qatar closes its airspace; from 7 March only Qatar Airways flies, foreign airlines return from 21 April."
+    },
+    "iranWarGulf2026": {
+      "name": "Gulf flights disrupted",
+      "text": "Missile and drone attacks disrupt many flights in the Emirates, Oman and Saudi Arabia (share of cancellations estimated)."
+    },
+    "iranWarFuel2026": {
+      "name": "Iran war oil shock",
+      "text": "Jet fuel nearly doubles within weeks and stays high."
+    },
+    "iranWarDemand2026": {
+      "name": "Travellers avoid the Middle East",
+      "text": "Demand for travel to the Gulf region falls sharply (estimated)."
+    }
   }
 }

@@ -626,12 +626,12 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         const cabin = competitorCabin(c.model, longHaul);
         const brand = { reputation: MODEL_REPUTATION[c.model], awareness: 1 };
         // Competitors' capacity grows with the market over the years.
-        const weekly = c.weekly * (cond?.trend ?? 1);
+        const weekly = c.weekly * (cond?.growth(A, B) ?? 1);
         for (const d of competitorDepartures(world, c.airlineId, A, B, weekly, time)) others.push({ ...d, fare: () => c.fareFactor, speed: 1, group: c.airlineId, cabin, brand });
       }
     } else {
       const cabin = competitorCabin('legacy', longHaul);
-      for (const d of competitorDepartures(world, 'incumbent', A, B, m.incumbentFlights * (cond?.trend ?? 1), time)) {
+      for (const d of competitorDepartures(world, 'incumbent', A, B, m.incumbentFlights * (cond?.growth(A, B) ?? 1), time)) {
         others.push({ ...d, fare: () => 1, speed: 1, group: 'incumbent', cabin, brand: NEUTRAL_BRAND });
       }
     }
@@ -688,7 +688,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
             shares = dayShares(options, segment, longHaul, m.connectingFlights / 7, 1);
             cache.set(key, shares);
           }
-          const world5 = cond ? cond.trend * cond.demand(A, B, segment) : 1;
+          const world5 = cond ? cond.growth(A, B) * cond.demand(A, B, segment) : 1;
           const travellers = (m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation * world5;
           today.forEach((k, n) => {
             demand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;

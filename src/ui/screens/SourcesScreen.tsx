@@ -15,6 +15,7 @@ const SOURCES: { key: string; name: string; licence: string; url: string }[] = [
   { key: 'eurostat', name: 'Eurostat — air passenger transport (avia_par)', licence: 'Eurostat reuse policy', url: 'https://ec.europa.eu/eurostat' },
   { key: 'eia', name: 'U.S. Energy Information Administration — jet fuel prices', licence: 'Public domain', url: 'https://www.eia.gov/' },
   { key: 'bls', name: 'U.S. Bureau of Labor Statistics — consumer price index (CPI-U)', licence: 'Public domain', url: 'https://www.bls.gov/cpi/' },
+  { key: 'fed', name: 'Federal Reserve Board — H.10 foreign exchange rates', licence: 'Public domain', url: 'https://www.federalreserve.gov/releases/h10/hist/' },
   { key: 'ecb', name: 'European Central Bank — euro reference rates', licence: 'Reuse with attribution', url: 'https://www.ecb.europa.eu/' },
   { key: 'faa', name: 'FAA Aircraft Registry', licence: 'Public domain', url: 'https://registry.faa.gov/' },
   { key: 'tc', name: 'Transport Canada — Canadian Civil Aircraft Register', licence: 'Non-commercial reuse with attribution', url: 'https://tc.canada.ca/' },

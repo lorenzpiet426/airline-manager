@@ -1,7 +1,8 @@
 // Jet fuel prices: US Gulf Coast kerosene-type jet fuel spot price (US EIA, public domain),
 // weekly, in US dollars per gallon. Series EER_EPJK_PF4_RGC_DPG, downloaded 2026-10-27.
-// The game follows the real prices of 2026 week by week; after the last known week the price stays
-// at the last value (a full price history from 1990 and future scenarios follow in Phase 5).
+// The game follows the real prices of 2026 week by week; before that the monthly history since 1970 (Phase 5.2,
+// `generated/fuel-history.json`); after the real data the price is simulated (engine/worldEvents.ts).
+import fuelHistory from './generated/fuel-history.json';
 
 export const FUEL_SOURCE_DATE = '2026-10-16';
 
@@ -59,9 +60,22 @@ export const KG_PER_GALLON = 3.03;
 
 const SERIES = JET_FUEL_SPOT_USD_PER_GAL.map(([date, price]) => [Date.parse(date), price] as const);
 
-/** Spot price (USD/gal) of the latest week on or before `date`. */
+const HISTORY_START = Date.UTC(Number(fuelHistory.start.slice(0, 4)), Number(fuelHistory.start.slice(5, 7)) - 1, 1);
+const MONTH_MS = 30.436875 * 86_400_000;
+
+/** Monthly history (money of that time), interpolated between the middles of the months. */
+function historicSpot(t: number): number {
+  const v = fuelHistory.usdPerGallon;
+  const x = Math.max(0, (t - HISTORY_START) / MONTH_MS - 0.5);
+  const i = Math.min(v.length - 1, Math.floor(x));
+  const next = i + 1 < v.length ? v[i + 1]! : SERIES[0]![1];
+  return v[i]! + (next - v[i]!) * Math.min(1, x - i);
+}
+
+/** Spot price (USD/gal) of the latest week on or before `date` (monthly history before the weekly data). */
 export function jetFuelSpot(date: Date): number {
   const t = date.getTime();
+  if (t < SERIES[0]![0]) return historicSpot(t);
   let price = SERIES[0]![1];
   for (const [at, value] of SERIES) {
     if (at > t) break;

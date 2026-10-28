@@ -39,10 +39,11 @@ function withRoute() {
 }
 
 describe('the simulated world', () => {
-  it('follows the real fuel prices and invents nothing before the real data ends', () => {
+  it('follows the real fuel prices and invents only small events before the real data ends', () => {
     const { state } = startup(simTime(2026, 1, 5));
     advance(state, world, simTime(2026, 9, 1));
-    expect(state.world.events).toHaveLength(0);
+    const small = new Set(['atcStrike', 'airportStrike', 'winterStorm', 'hurricane', 'typhoon', 'volcano']);
+    expect(state.world.events.every((e) => small.has(e.kind) && (e.kind !== 'volcano' || e.label === 'Etna'))).toBe(true);
     expect(conditionsOf(state, world).fuelSpot).toBeCloseTo(conditionsOf(state, world, simTime(2026, 9, 1)).fuelSpot);
     expect(conditionsOf(state, world, simTime(2026, 3, 20)).fuelSpot).toBeGreaterThan(3.5); // the real March 2026 spike
   });

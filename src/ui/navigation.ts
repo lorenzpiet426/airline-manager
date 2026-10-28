@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import type { IconName } from './components/Icon';
 
-export type Route = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'new' | 'livery' | 'aircraft';
+export type Route = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'new' | 'livery' | 'aircraft' | 'history';
 
 export interface NavItem {
   route: Route;
@@ -19,6 +19,7 @@ const NAV: Record<Route, NavItem> = {
   finance: { route: 'finance', icon: 'finance', labelKey: 'nav.finance' },
   airlines: { route: 'airlines', icon: 'airlines', labelKey: 'nav.airlines' },
   aircraft: { route: 'aircraft', icon: 'types', labelKey: 'nav.aircraft' },
+  history: { route: 'history', icon: 'history', labelKey: 'nav.history' },
   saves: { route: 'saves', icon: 'saves', labelKey: 'nav.saves' },
   sources: { route: 'sources', icon: 'sources', labelKey: 'nav.sources' },
   settings: { route: 'settings', icon: 'settings', labelKey: 'nav.settings' },
@@ -30,13 +31,13 @@ const NAV: Record<Route, NavItem> = {
 };
 
 /** Sidebar on computers and tablets. */
-export const DESKTOP_NAV: NavItem[] = [NAV.ops, NAV.map, NAV.network, NAV.fleet, NAV.finance, NAV.airlines, NAV.aircraft];
+export const DESKTOP_NAV: NavItem[] = [NAV.ops, NAV.map, NAV.network, NAV.fleet, NAV.finance, NAV.airlines, NAV.aircraft, NAV.history];
 export const DESKTOP_NAV_BOTTOM: NavItem[] = [NAV.saves, NAV.sources, NAV.settings];
 
 /** Bottom tab bar on phones (max. 5 tabs, thumb-friendly). */
 export const MOBILE_TABS: NavItem[] = [NAV.ops, NAV.map, NAV.network, NAV.fleet, NAV.more];
 /** Entries listed on the phone's "More" screen. */
-export const MOBILE_MORE: NavItem[] = [NAV.finance, NAV.airlines, NAV.aircraft, NAV.saves, NAV.sources, NAV.settings];
+export const MOBILE_MORE: NavItem[] = [NAV.finance, NAV.airlines, NAV.aircraft, NAV.history, NAV.saves, NAV.sources, NAV.settings];
 
 /** Routes reachable from the phone's "More" tab: the tab stays highlighted there. */
 export const MORE_ROUTES: Route[] = ['more', ...MOBILE_MORE.map((item) => item.route)];

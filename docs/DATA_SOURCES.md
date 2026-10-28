@@ -30,11 +30,14 @@ Status: **planned** = chosen but not yet downloaded; **in use** = shipped in the
 | Operating costs | [US DOT BTS Form 41](https://www.transtats.bts.gov/) (Schedule P-5.2) | Public domain | Real costs per aircraft type (crew, maintenance, fuel) for calibration | planned |
 | Navigation charges | EUROCONTROL formula shape (distance/100 × √(MTOW/50 t) × unit rate) with a flat unit rate ($80 Europe, $45 elsewhere) | Public | En-route charges per flight | **in use** (simplified; exact national unit rates in Hardcore, Phase 12) |
 | Airport charges | Simple model: $6 per tonne MTOW per departure + $13 per departing passenger, scaled by airport size and country wealth | Estimates | Landing and passenger fees | **in use** (estimates; real tables e.g. Vienna "Tarifordnung" later) |
-| Jet fuel price | [US EIA](https://www.eia.gov/) US Gulf Coast kerosene-type jet fuel spot price, weekly (series `EER_EPJK_PF4_RGC_DPG`), `src/data/fuel.ts` | Public domain | Fuel price week by week from Dec 2025 to 16 Oct 2026 (+ $0.30/gal into-plane), held after that | **in use** (downloaded 2026-10-27; full history from 1990 in Phase 5) |
-| Exchange rates | [ECB](https://www.ecb.europa.eu/) euro reference rates (`eurofxref-daily.xml`), `src/data/currencies.ts` | Free reuse with attribution | Converting USD leases into the airline's book currency | **in use** (rates of 2026-10-26, fixed for now; history in Phase 5) |
+| Jet fuel price | [US EIA](https://www.eia.gov/) US Gulf Coast kerosene-type jet fuel spot price, weekly (series `EER_EPJK_PF4_RGC_DPG`), `src/data/fuel.ts` | Public domain | Fuel price week by week from Dec 2025 to 16 Oct 2026 (+ $0.30/gal into-plane); simulated after that (Phase 5.1) | **in use** (downloaded 2026-10-27) |
+| Jet fuel history | US EIA monthly history pages (`tools/download-history.ts` → `build-history.ts` → `fuel-history.json`): Gulf Coast spot `EER_EPJK_PF4_RGC_DPG` from 1990-04; refiner wholesale/resale `EMA_EPJK_PWG_NUS_DPG` from 1975-07, × 0.936 (spot/resale ratio 1990–94); before: crude oil first purchase price `F000000__3` (monthly from 1974, yearly before) × 0.0374 (jet/crude ratio Jul 1975–Jun 1976) | Public domain | Fuel price 1970–2025 (money of that time); 1970–mid-1975 **modelled** | **in use** (downloaded 2026-10-28; 1970: $0.12/gal, 1980: $0.81, July 2008: $3.89) |
+| Exchange rates | [ECB](https://www.ecb.europa.eu/) euro reference rates (`eurofxref-daily.xml`), `src/data/currencies.ts` | Free reuse with attribution | Converting USD leases into the airline's book currency | **in use** (rates of 2026-10-26; simulated after the real data, Phase 5.1) |
+| Exchange rate history | [Federal Reserve H.10](https://www.federalreserve.gov/releases/h10/hist/) daily rates since 1971 (31 currencies incl. ATS, DEM, FRF, ITL, NLG, BEF, ESP, PTE, GRD, IEP until the euro), monthly averages; other currencies and gaps from World Bank `PA.NUS.FCRF` yearly averages (interpolated); old euro currencies after the changeover = euro × fixed rate (`src/data/currencyHistory.ts`, Council Regulations); euro before 1999 = DEM ÷ 1.95583 ("synthetic euro"). → `fx-history.json` (units per USD, monthly 1970–2025, 50 currencies) | Public domain / CC BY 4.0 | History screen; book currency in historical games (5.3) | **in use** (downloaded 2026-10-28). Currencies re-based later (TRY 2005, PLN 1995, BRL 1994, ILS 1985, RON 2005, MXN 1993, ISK 1981, BGN 1999) are in today's units; 5.3 converts to the old units. CZK before 1993 = first known value |
+| Economy history | World Bank WDI `SP.POP.TOTL`, `NY.GDP.PCAP.KD` (constant 2015 USD), `IS.AIR.PSGR` 1960–2024 → `economy-history.json` | CC BY 4.0 | Demand index per country and year (see below) | **in use** (downloaded 2026-10-28; 206 countries) |
 | Currencies by country | Hand-made list of which country uses which ECB-listed currency (euro area incl. Bulgaria since 2026) | Facts only | Airline book currency (others keep books in USD) | **in use** |
 | Airline economics | Annual reports: Lufthansa Group (Austrian Airlines segment), Ryanair, Wizz Air; IATA industry outlook | Public reports; facts only | Calibrate CASK, RASK, margins | planned |
-| Historical events | Hand-curated timeline from public sources | Facts only | Crises, regulation changes | planned |
+| Historical events | Hand-curated timeline `src/data/history.ts`: 153 events 1970–2026, each with its English Wikipedia article as source (facts only; our own wording) | Facts (Wikipedia CC BY-SA cited per event) | Closures, flight bans, demand crises, recessions, milestones | **in use** (2026-10-28; strengths modelled) |
 | Austrian Airlines history | Annual reports, historical timetables, encyclopedic sources | Facts only | Takeover scenario fleet/network per year | planned |
 | Map base | [Natural Earth](https://www.naturalearthdata.com/) 1:50m land + land boundary lines (GeoJSON from the natural-earth-vector repository) | Public domain | Coastlines, borders (bundled, works offline) | **in use** (downloaded 2026-10-27) |
 | Map label font | [OpenFreeMap](https://openfreemap.org/) glyph server (Noto Sans, SIL OFL) | free service, no key | Airport code labels on the map (cached for offline use) | **in use** |
@@ -230,7 +233,7 @@ All values in `src/data/maintenance.ts` are **modelled** (typed in by hand, noth
 
 ## World events and economy (Phase 5.1, 2026-10-28)
 All **modelled** (`src/engine/worldEvents.ts`); no new dataset. Before `REAL_DATA_END` (24 Oct 2026, after the last EIA
-fuel week and the ECB rates) the game uses the real data only and invents no events.
+fuel week and the ECB rates) the game uses the real data and real events (Phase 5.2) plus small random ones.
 - **Traffic growth** 3 %/year (IATA/ICAO long-term forecasts of ~3–4 %); competitors' capacity grows alike.
 - **Jet fuel** after the real data: log mean reversion to $2.40/gal (2026 dollars, +2.5 %/year inflation), half-life ≈ 8
   months, volatility ≈ 35 %/year (typical of jet fuel since 2000); fuel shocks raise the target by 40–90 % for 2–8 months.
@@ -248,12 +251,37 @@ fuel week and the ECB rates) the game uses the real data only and invents no eve
 - **Passenger care** for cancelled flights under EU 261 Art. 9 (meals, hotels: €40 / €120 per passenger); no
   compensation for extraordinary circumstances (weather, ATC strikes, volcanic ash, security; Art. 5(3)).
 
+## Real history since 1970 (Phase 5.2, 2026-10-28)
+- **Demand index** per country and year (relative to 2024 = 1): (population ratio) × (GDP per person ratio)^1.10 ×
+  propensity(year). The income elasticity 1.10 is the best fit of country traffic (World Bank passengers carried, by
+  airline registration) in normal years; the **propensity** (cheaper fares, liberalisation, habits) is fitted so the
+  traffic-weighted world model matches the World Bank world total in normal years (local linear fit ±4 years), and is
+  flat from 2019 (crisis years 1974–75, 1980–82, 1991, 2001–03, 2008–09, 2020–24 are bridged so their dips come only
+  from the event timeline). Check: model/real world traffic (2019 = 1) 1970 0.07/0.07 · 1980 0.15/0.14 · 1990 0.24/0.23
+  · 2000 0.37/0.38 · 2010 0.59/0.60. Demand on a route = √(index A × index B); competitors' frequencies scale alike.
+- **Events**: 153 real events (`src/data/history.ts`) with where, when, strength (modelled) and a Wikipedia source;
+  new kinds *crisis* (travellers stay away; international ×1, domestic ×0.6), *flightBan* (only flights to the
+  `pairWith` countries, e.g. Russia ↔ EU/UK/US/Canada since 2022), *disruption* (airport closed by an attack, drone,
+  fire, protest, flood), *milestone* (no effect). Profiles over time for COVID-19 (calibrated: a 40 % international /
+  60 % domestic mix gives 2020 ≈ 0.43, 2021 ≈ 0.52, 2022 ≈ 0.77 of 2019; real 0.40 / 0.51 / 0.72), SARS, 9/11 and
+  others. Recession strengths only add the drop in travel beyond the GDP data (mostly business travel).
+- **Events still going on in October 2026** (Ukraine, Russia ban, Belarus ban, Libya, Yemen, Afghanistan, Sudan, the 2026
+  Iran war oil shock) end at a per-game random date 3 months to 3 years after the real data; the game says "no end in
+  sight". The 2026 Iran war (from 28 Feb 2026: Gulf airspace closures, Qatar's staged reopening on 7 Mar / 21 Apr,
+  ceasefire 8 Apr, Iran flights from 1 Jul) is from news reports; the shares of cancellations in the UAE/Oman/Saudi
+  Arabia and the demand drop are estimates.
+- **Random events in the real past**: only the small kinds nobody records one by one (ATC strikes, airport strikes —
+  German multi-airport strikes from 2012 —, winter storms, hurricanes, typhoons, Etna) at their 5.1 rates.
+- Ukrainian airports are not in today's airport data (no scheduled service since 2022), so Ukrainian closures only matter
+  once historical airports exist (5.3).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH
 npm run data:download   # raw files → tools/raw/ (not in git)
 npm run data:build      # → src/data/generated/*.json (in git)
 npm test                # sanity checks in src/data/world.test.ts
+npm run data:history    # Phase 5.2: EIA fuel, Fed + World Bank exchange rates, World Bank economy → *-history.json
 ```
 
 ## Known simplifications (to improve later)
@@ -278,5 +306,4 @@ npm test                # sanity checks in src/data/world.test.ts
 - **Wikidata airlines**: hubs are often incomplete (e.g. Ryanair only lists Stansted) and business models are mostly
   missing; both come from Wikipedia articles in the next step. A few cargo airlines not tagged as such (Atlas Air,
   Cargolux, Kalitta) remain until airlines without passenger routes are dropped.
-- **Exchange rates** are fixed at the ECB rates of 2026-10-26 for the whole game until Phase 5.
 - **Book currency:** only currencies the ECB publishes are used; airlines in other countries keep books in USD.

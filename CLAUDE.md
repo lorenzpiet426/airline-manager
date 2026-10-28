@@ -281,8 +281,8 @@ Split (2026-10-28): **4.1** ✅ buy used, order new, sell/scrap, lease ends/exte
 Historical start years (1970s/1990s/2000s), aircraft EIS/retirement dates, event timeline (oil crises,
 9/11, 2008, COVID, airspace closures, volcanic ash), economy cycles, fuel prices, currencies.
 Split (2026-10-28): **5.1** ✅ world events + economy in today's games (random at real frequencies after Oct 2026);
-**5.2** historical data (fuel prices, exchange rates and old currencies, GDP/population by year, real event timeline
-1970–2025); **5.3** historical start years (modelled incumbents until Phase 6; books in schilling etc. until 1999).
+**5.2** ✅ historical data (fuel prices, exchange rates and old currencies, GDP/population by year, real event timeline
+1970–2026, History screen); **5.3** historical start years (modelled incumbents until Phase 6; books in schilling etc. until 1999).
 
 ### Phase 6 — Real airlines and the Austrian Airlines takeover
 Real airlines as AI with real fleets/networks per era and recognizable colors; **detailed Austrian Airlines
@@ -446,6 +446,8 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-28 | After the real data ends: **realistic random events** at real-world frequencies (recessions, fuel shocks, pandemics, ash, airspace closures, strikes, storms) | Owner choice |
 | 2026-10-28 | Historical books in the **real old currency** (ATS, DEM, FRF…), switching to the euro on 1 Jan 1999 at the fixed rates | Owner choice (for 5.2/5.3) |
 | 2026-10-28 | 5.1: the past stays real (no invented events before 24 Oct 2026); AI airlines see the same conditions in both their sums (no capacity cuts in crises yet) | Avoids AI mass exits; crisis capacity cuts later |
+| 2026-10-28 | 5.2: real history **from 1970**, **big + regional events** (153), **real big events + random small ones** in the past, a **History screen** to see it before 5.3 | Owner choice (all recommended) |
+| 2026-10-28 | 5.2: real events also apply to today's games before 24 Oct 2026 (e.g. the 2026 Iran war); events still going on then end at a per-game random date, shown as "no end in sight" | Realism; nobody knows when wars end |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -855,6 +857,35 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Verified in browser (turn-based test game to May 2027: strikes, storms, airport strike in the panel; phone; no console errors).
 - **Next:** 5.2 historical data (fuel prices since 1990 and earlier, exchange rates + old European currencies, GDP and
   population by year, real event timeline 1970–2025).
+- Owner confirmed: 5.1 tried.
+
+### 2026-10-28 — Session 16 (Phase 5.2: historical data) ✅
+- Owner decisions: from 1970, big + regional events, real big + random small, History screen (§7).
+- Pipeline `npm run data:history` (`tools/download-history.ts` + `build-history.ts`): EIA monthly jet fuel since 1970
+  (spot from 1990, refiner resale from 1975 scaled, crude-based before) → `fuel-history.json`; Federal Reserve H.10
+  daily rates (two page layouts) + World Bank yearly → `fx-history.json` (50 currencies, units/USD monthly 1970–2025,
+  legacy euro currencies, synthetic euro from DEM); World Bank population/GDP/passengers → `economy-history.json`
+  (demand index per country, elasticity 1.10, propensity fitted to world totals: 1970 0.07 of 2019 like reality).
+- Data: `src/data/currencyHistory.ts` (21 old euro currencies, fixed rates, changeover dates), `fxHistory.ts` (lazy;
+  `perUsdAt`, `currencyAt`), `economyHistory.ts` (`demandIndex`, `worldDemandIndex`), `fuel.ts` reads the monthly history
+  before the 2026 weekly data, `history.ts`: **153 real events 1970–2026** with Wikipedia sources (incl. the 2026 Iran
+  war found by web search); texts EN/DE in i18n `hist.<id>`.
+- Engine (no save change): new kinds crisis / flightBan (`pairWith`) / disruption / milestone; event `profile`, `local`,
+  `openEnded`; `historicEvents(seed)` + `eventsOf(state)` merge real and simulated events (open-ended ones get a per-game
+  end); `conditionsOf` adds `growth(a, b)` (economy history before 2025) used for demand and competitors' capacity;
+  demand effects by country or continent; flight bans per pair; real events announced in the news on their day; random
+  small events (strikes, storms, Etna; German strikes from 2012) also before the real data end.
+- UI: **History** screen (`#/history`, rail + More): charts (jet fuel then/2025 dollars, any currency per USD incl.
+  schilling, world passengers real vs model) with hover readout; timeline with filters (kind, decade), where, strength,
+  source link. World panel lists real events, open-ended ones say "no end in sight"; messages use the event's name.
+- Tests: 149 (timeline consistency, 2010 ash cloud cancels VIE–LHR, flight bans by pair, open ends per seed, 9/11 and
+  SARS demand, COVID calibration vs world totals, fuel history and seam, schilling = euro × 13.7603, currency by date,
+  demand index growth).
+- Verified in browser (desktop + phone 375 px, charts, timeline, Ops panel in a 2027 game, no console errors).
+- Known / for 5.3: Ukrainian (and other closed) airports are missing from today's airport data; re-based currencies
+  (TRY, PLN, BRL…) are in today's units; costs other than fuel are still in 2025 dollars; fares in the past need their
+  historic level; the into-plane fuel fee is in 2026 dollars.
+- **Next:** 5.3 historical start years (modelled incumbents, books in schilling etc., historical airports and prices).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

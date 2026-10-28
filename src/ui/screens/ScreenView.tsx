@@ -12,6 +12,7 @@ import { SourcesScreen } from './SourcesScreen';
 import { SavesScreen } from './SavesScreen';
 import { LiveryScreen } from './LiveryScreen';
 import { AircraftScreen } from './AircraftScreen';
+import { HistoryScreen } from './HistoryScreen';
 
 // The map code is big (MapLibre), so it is only downloaded when the map is first opened.
 const MapScreen = lazy(() => import('./MapScreen'));
@@ -43,6 +44,8 @@ export function ScreenView({ route, isWide }: { route: Route; isWide: boolean })
       return <LiveryScreen />;
     case 'aircraft':
       return <AircraftScreen />;
+    case 'history':
+      return <HistoryScreen />;
     case 'sources':
       return <SourcesScreen />;
     case 'settings':

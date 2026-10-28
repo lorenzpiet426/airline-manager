@@ -126,9 +126,9 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
       case 'worldEvent':
       case 'eventAffects':
         return t(m.kind === 'worldEvent' ? 'msg.worldEvent' : 'msg.eventAffects', {
-          what: t(`world.kind.${p.event}`, { label: p.label }),
+          what: p.historic ? t(`hist.${p.historic}.name`) : t(`world.kind.${p.event}`, { label: p.label }),
           where: placeNames(String(p.area), String(p.where)),
-          date: date(p.until),
+          date: Number(p.open) ? t('world.openEnd') : date(p.until),
           depth: p.depth,
         });
       case 'eventCancellations':
