@@ -83,6 +83,34 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.leaseReturned', { ...p, count: Number(p.routes), amount: money(p) });
       case 'leaseExtended':
         return t('msg.leaseExtended', { ...p, amount: money(p), date: date(p.endAt) });
+      // Maintenance (Phase 4.2)
+      case 'checkPlanned':
+        return t('msg.checkPlanned', { ...p, check: t(`maint.check.${p.check}`), date: date(p.start), due: date(p.due) });
+      case 'checkMoved':
+        return t('msg.checkMoved', { ...p, check: t(`maint.check.${p.check}`), date: date(p.start) });
+      case 'checkStarted':
+        return t(Number(p.reserves) > 0 ? 'msg.checkStartedReserves' : 'msg.checkStarted', {
+          ...p,
+          check: t(`maint.check.${p.check}`),
+          where: t(`maint.where.${p.where}`),
+          date: date(p.until),
+          amount: money(p),
+          reserves: formatMoney(language, { amount: Number(p.reserves), currency: String(p.currency) }),
+        });
+      case 'checkDone':
+        return t('msg.checkDone', { ...p, check: t(`maint.check.${p.check}`) });
+      case 'aCheckGrounded':
+        return t('msg.aCheckGrounded', p);
+      case 'failure':
+        return t('msg.failure', { ...p, count: Number(p.flights), date: `${date(p.until)} ${formatZulu(toDate(Number(p.until)))}`, amount: money(p) });
+      case 'hangarOrdered': {
+        const airport = world?.airportById.get(String(p.airport));
+        return t('msg.hangarOrdered', { ...p, size: t(`maint.size.${p.size}`), airport: airport?.iata ?? p.airport, date: date(p.readyAt), amount: money(p) });
+      }
+      case 'hangarReady': {
+        const airport = world?.airportById.get(String(p.airport));
+        return t('msg.hangarReady', { size: t(`maint.size.${p.size}`), airport: airport?.iata ?? p.airport });
+      }
     }
   };
 

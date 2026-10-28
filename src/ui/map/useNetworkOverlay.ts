@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { grounded } from '../../engine/schedule';
 import type { Feature, LineString, Point } from 'geojson';
 import { airborne, weeklyLegs } from '../../engine/flights';
 import { greatCirclePoints } from '../../engine/geo';
@@ -50,7 +51,10 @@ export function useNetworkOverlay(game: GameState | null, world: EngineWorld | n
     const planes: Feature<Point>[] = [];
     for (const legs of network.legs) {
       const aircraft = legs[0] && game.aircraft[legs[0].aircraftId];
-      if (!aircraft || aircraft.status !== 'active') continue;
+      if (!aircraft || aircraft.status !== 'active' || grounded(aircraft, game.time)) continue;
+      // Grounded by a technical failure: it stays where it is.
+      const aog = aircraft.maint?.aog;
+      if (aog && game.time >= aog.from && game.time < aog.until) continue;
       const flight = airborne(legs, world, game.time);
       if (!flight) continue;
       planes.push({

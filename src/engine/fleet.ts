@@ -20,6 +20,7 @@ import { standardCabin, totalSeats, type CabinStyle } from './cabins';
 import { book, nextId, postMessage, schedule } from './core';
 import { convert, money } from './money';
 import { typicalRentUsd } from './market';
+import { initialMaint } from './maintenance';
 import { autoPlanAircraft, pairsOfAircraft } from './schedule';
 import type { Aircraft, GameState, Ownership, PnlLines } from './state';
 import { addMonths, MINUTES_PER_DAY, simTime, startOfDay, yearOf, type SimTime } from './time';
@@ -107,7 +108,8 @@ export type FleetError =
   | 'insufficientCash'
   | 'aircraftUnknown'
   | 'airlineUnknown'
-  | 'inRefit';
+  | 'inRefit'
+  | 'inCheck';
 
 type Result = { ok: true; id?: string } | { ok: false; error: FleetError };
 const fail = (error: FleetError): Result => ({ ok: false, error });
@@ -237,6 +239,8 @@ export function buyAircraft(state: GameState, airlineId: string, offerId: string
     deliveryAt,
     locationId: airline.hubId,
     owned: newOwnership(state, offer, paid, airline.currency),
+    // Its checks are where the seller's records say (the sale offer shows the next one).
+    maint: initialMaint(offer.id, getAircraftType(offer.typeId), offer.builtYear, deliveryAt, 'used'),
   };
   schedule(state, { at: deliveryAt, kind: 'delivery', aircraftId: id });
   postMessage(state, {
@@ -256,6 +260,7 @@ export function disposeAircraft(state: GameState, world: EngineWorld, airlineId:
   if (!a.owned) return fail('notOwned');
   if (a.status !== 'active') return fail('notDelivered');
   if ((a.refitUntil ?? 0) > state.time) return fail('inRefit');
+  if ((a.maint?.inCheck?.until ?? 0) > state.time) return fail('inCheck');
   const type = getAircraftType(a.typeId);
   const usd = how === 'sell' ? Math.round(aircraftMarketValueUsd(a, state.time) * 0.97) : partsValueUsd(type);
   const got = book(state, airlineId, 'sale', money(usd, 'USD'), a.id).amount;

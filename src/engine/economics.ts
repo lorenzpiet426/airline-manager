@@ -2,6 +2,7 @@
 // what they pay, how long the flight takes and what it costs to operate. All amounts in US dollars;
 // they are converted into the airline's book currency when booked.
 // Calibration notes and sources: docs/DATA_SOURCES.md ("Economics model").
+import { CHECK_SHARE } from '../data/maintenance';
 import { getAircraftType, TURNAROUND_MIN, type AircraftCategory, type AircraftType } from '../data/aircraft';
 import { fuelUsdPerKg, jetFuelSpot } from '../data/fuel';
 import type { Airport } from '../data/types';
@@ -471,6 +472,8 @@ export interface RouteContext {
   days?: number;
   /** The calculated airline's reputation and awareness (default: neutral and well known). */
   brand?: Brand;
+  /** The player's aircraft pay their airframe checks separately (Phase 4.2): hourly maintenance without them. */
+  checksSeparate?: boolean;
 }
 
 /** Cruise speed assumed for other airlines' jets when generating their timetables. */
@@ -748,7 +751,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     const h = info[i]!.blockMin / 60;
     const mtowT = f.type.mtowKg / 1000;
     costs.fuel += f.type.fuelKgPerHour * (h + 0.15) * n * fuelPrice;
-    costs.maintenance += f.type.maintUsdPerBlockHour * (1 + 0.01 * f.ageYears) * h * n;
+    costs.maintenance += f.type.maintUsdPerBlockHour * (1 + 0.01 * f.ageYears) * (ctx.checksSeparate ? 1 - CHECK_SHARE : 1) * h * n;
     // Landing fee per tonne of MTOW at the arrival airport, passenger fee at the departure airport.
     costs.airport += (6 * mtowT * n * airportFactor(world, B)) + 13 * result.pax * airportFactor(world, A);
     costs.handling += (250 + 7 * f.seats) * wageFactor(world, B.country) * n + result.pax * (1.5 + 0.0025 * m.distanceKm);

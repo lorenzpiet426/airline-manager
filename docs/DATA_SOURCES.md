@@ -174,6 +174,34 @@ forbid it). Code: `src/data/factory.ts`, `src/engine/fleet.ts`.
 - **Used aircraft for sale:** 24 offers, refreshed monthly, priced at market value × 0.92–1.08, up to 25 years old,
   arriving in 20–75 days.
 
+## Maintenance checks, failures and hangars (Phase 4.2, 2026-10-28)
+All values in `src/data/maintenance.ts` are **modelled** (typed in by hand, nothing copied or downloaded):
+- **Check programme** (modern practice, B-checks merged into A-checks): A-check every 500 (turboprop) / 750 (jets) /
+  1,000 (wide-body) flight hours or 90–120 days, overnight (6–12 h); C-check every 24 months (turboprop, regional) or
+  36 months (narrow/wide-body) or 5,000–12,000 flight hours, 6–14 days; heavy "D" structural check every 10–12 years,
+  21–45 days. Based on the intervals manufacturers publish in their maintenance planning documents (e.g. A320 family
+  750 FH A-check, 36-month/7,500 FH C-check, 6/12-year structural checks; 787/A350 12-year heavy checks) as widely
+  reported in the MRO trade press.
+- **Prices** (MRO, European, mid-life aircraft): A-check $6k–40k, C-check $180k–1.2M, D-check $0.6–4.5M by category,
+  scaled by MTOW^0.6 and +2/2.5/4 % per year of age; hangar days +1.5 %/year. Calibrated so that checks are about
+  **20 % of the BTS Form 41 hourly maintenance cost** (`CHECK_SHARE`): the player's hourly maintenance is lowered by that
+  share, and checks are paid one by one (test `maintenance.test.ts`). AI airlines keep the full hourly cost.
+- **Accounting:** A-checks are an expense of the day; C/D-checks are capitalised and written off until the same check is
+  due again (IFRS practice for heavy maintenance), at most until a lease ends.
+- **Maintenance reserves** (leases): per flight hour = expected C- and D-check cost over a typical aircraft's flying
+  (A320neo ≈ $90/FH ≈ $20k a month, in the range of published lease terms). The lessor pays heavy checks from them; a
+  new lease starts with the lessor's contribution for the D-cycle used before. Unused reserves stay with the lessor.
+- **Short notice:** an MRO slot booked < 30 days ahead costs +25 % (modelled).
+- **Own hangar:** narrow-body (2 bays) $25M, wide-body (2 bays) $60M, 18 months to build, running $6k/$11k a day,
+  checks there cost 55 % of the MRO price, written off over 30 years (modelled from public airport/MRO hangar project
+  costs in the news).
+- **Technical failures:** 0.08 % of departures for a mid-life aircraft (≈ 99.9 % technical dispatch reliability for
+  cancellations), +5 % per year of age over 8 years, up to +75 % close to the next C-check, ×1.6 in a type's first three
+  years. Duration: 65 % 3–10 h, 30 % 18–40 h, 5 % 3–5 days. Repair $6k–50k per day of grounding.
+- **Passenger rights:** EU Regulation 261/2004 (EU law, free to use): €250/€400/€600 by distance for cancelled flights
+  leaving the EU/EEA/CH/UK or flown by an airline from there; technical problems are no extraordinary circumstance
+  (CJEU C-549/07 Wallentin-Hermann, 2008). Modelled: 50 % of passengers claim; care €40 (short) / €120 (overnight).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

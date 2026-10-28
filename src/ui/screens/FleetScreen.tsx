@@ -13,7 +13,7 @@ import { WEEKLY_AVAILABLE_HOURS } from '../../engine/economics';
 import { useWorld } from '../../data/world';
 import type { CommandError } from '../../engine/commands';
 import { convert } from '../../engine/money';
-import type { Airline, GameState, LeaseOffer } from '../../engine/state';
+import type { Aircraft, Airline, GameState, LeaseOffer } from '../../engine/state';
 import { MINUTES_PER_DAY, startOfDay, toDate, yearOf } from '../../engine/time';
 import { sendCommand } from '../../game/store';
 import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
@@ -22,13 +22,18 @@ import { hrefFor } from '../navigation';
 import { CabinBar } from '../fleet/CabinBar';
 import { CabinEditor } from '../fleet/CabinEditor';
 import { cabinText } from '../fleet/cabinText';
-import { inRefit } from '../../engine/schedule';
+import { grounded, inRefit } from '../../engine/schedule';
+import { CheckFacts, MaintenanceChip, MaintenanceTab } from '../fleet/Maintenance';
 import { Ownership } from '../fleet/Ownership';
 import { BuyUsed, OrderNew } from '../fleet/BuyAndOrder';
 import { FleetSummary } from '../fleet/FleetSummary';
 
-type Tab = 'fleet' | 'market' | 'buy' | 'order';
+type Tab = 'fleet' | 'maint' | 'market' | 'buy' | 'order';
 type Filter = 'all' | AircraftCategory;
+
+/** In a check or grounded by a failure right now (the card shows a maintenance chip instead of the location). */
+const maintenanceChip = (game: GameState, a: Aircraft) =>
+  ((a.maint?.inCheck?.until ?? 0) > game.time) || (!!a.maint?.aog && game.time >= a.maint.aog.from && game.time < a.maint.aog.until);
 
 export function FleetScreen() {
   const { t } = useTranslation();
@@ -60,6 +65,7 @@ export function FleetScreen() {
         value={tab}
         options={[
           { value: 'fleet', label: t('fleet.tabFleet', { count: fleetSize }) },
+          { value: 'maint', label: t('fleet.tabMaint') },
           { value: 'market', label: t('fleet.tabMarket', { count: game.market.offers.length }) },
           { value: 'buy', label: t('fleet.tabBuy', { count: game.market.sales.length }) },
           { value: 'order', label: t('fleet.tabOrder') },
@@ -68,6 +74,8 @@ export function FleetScreen() {
       />
       {tab === 'fleet' ? (
         <MyFleet game={game} airline={airline} onMarket={() => setTab('market')} />
+      ) : tab === 'maint' ? (
+        <MaintenanceTab game={game} airline={airline} />
       ) : tab === 'market' ? (
         <Market game={game} airline={airline} />
       ) : tab === 'buy' ? (
@@ -119,7 +127,9 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
                   {type.name.startsWith(type.manufacturer) ? type.name : `${type.manufacturer} ${type.name}`}
                 </span>
               </div>
-              {aircraft.status === 'active' && inRefit(aircraft, game.time) ? (
+              {aircraft.status === 'active' && maintenanceChip(game, aircraft) ? (
+                <MaintenanceChip game={game} aircraft={aircraft} />
+              ) : aircraft.status === 'active' && inRefit(aircraft, game.time) ? (
                 <span className="chip chip--caution">{t('fleet.inRefit', { date: formatGameDate(language, toDate(aircraft.refitUntil!), false) })}</span>
               ) : aircraft.status === 'active' ? (
                 <span className="chip chip--normal">{t('fleet.atAirport', { airport: location?.iata ?? aircraft.locationId })}</span>
@@ -151,12 +161,13 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
               </dd>
             </dl>
             <Ownership game={game} airline={airline} aircraft={aircraft} />
+            <CheckFacts game={game} airline={airline} aircraft={aircraft} />
             <div className="button-row">
               <button
                 type="button"
                 className="button button--small"
                 aria-expanded={editing === aircraft.id}
-                disabled={inRefit(aircraft, game.time)}
+                disabled={grounded(aircraft, game.time)}
                 onClick={() => setEditing(editing === aircraft.id ? null : aircraft.id)}
               >
                 {t('cabin.edit')}

@@ -178,7 +178,17 @@
     "leaseEnded_other": "The lease of {{type}} {{registration}} ended: the aircraft is back with {{lessor}}, the deposit was paid back. Its flights on {{count}} routes stop.",
     "leaseReturned_one": "{{type}} {{registration}} returned early to {{lessor}} (fee {{amount}}). Its flights on {{count}} route stop.",
     "leaseReturned_other": "{{type}} {{registration}} returned early to {{lessor}} (fee {{amount}}). Its flights on {{count}} routes stop.",
-    "leaseExtended": "Lease of {{registration}} extended until {{date}}; new rent {{amount}} per month."
+    "leaseExtended": "Lease of {{registration}} extended until {{date}}; new rent {{amount}} per month.",
+    "checkPlanned": "{{check}} for {{registration}} planned from {{date}} (due by {{due}}).",
+    "checkMoved": "{{registration}} flies more than planned: its {{check}} moves to {{date}}.",
+    "checkStarted": "{{registration}} in the hangar for its {{check}} ({{where}}) until {{date}}: {{days}} days, {{amount}} paid.",
+    "checkStartedReserves": "{{registration}} in the hangar for its {{check}} ({{where}}) until {{date}}: {{days}} days; the lessor pays {{reserves}} from the reserves, you pay {{amount}}.",
+    "checkDone": "{{registration}} finished its {{check}} and is back in service.",
+    "aCheckGrounded": "{{registration}} never spends {{hours}} hours at the hub at night: it stays on the ground a day for its A-check.",
+    "failure_one": "Technical problem on {{registration}}: grounded for about {{hours}} hours (until {{date}}). {{count}} flight cancelled, {{pax}} passengers affected; repair and compensation {{amount}}.",
+    "failure_other": "Technical problem on {{registration}}: grounded for about {{hours}} hours (until {{date}}). {{count}} flights cancelled, {{pax}} passengers affected; repair and compensation {{amount}}.",
+    "hangarOrdered": "Construction of a {{size}} at {{airport}} started: {{amount}} paid, ready on {{date}}.",
+    "hangarReady": "Your {{size}} at {{airport}} is ready: checks there from now on."
   },
   "newGame": {
     "title": "Found your airline",
@@ -267,7 +277,12 @@
     "notOnOrder": "This aircraft isn't on order.",
     "notDelivered": "The aircraft hasn't been delivered yet.",
     "yearsInvalid": "Choose 1 to 6 years.",
-    "extendTooEarly": "A lease can be extended in its last 2 years."
+    "extendTooEarly": "A lease can be extended in its last 2 years.",
+    "dateInvalid": "Choose a day from tomorrow until the day the check is due.",
+    "noCheckDue": "No check to plan.",
+    "inCheck": "The aircraft is in the hangar for a check.",
+    "notActive": "The aircraft isn't in service yet.",
+    "hangarExists": "A hangar of this size is already being built."
   },
   "fleet": {
     "title": "Fleet",
@@ -371,7 +386,12 @@
     "orderedNotice_other": "{{count}} {{type}} ordered.",
     "summary": "{{leased}} leased · {{owned}} owned · {{ordered}} on order",
     "summaryValue": "owned aircraft worth {{value}}",
-    "summaryOwed": "still to pay on orders {{owed}}"
+    "summaryOwed": "still to pay on orders {{owed}}",
+    "tabMaint": "Maintenance",
+    "inCheck": "{{check}}-check until {{date}}",
+    "aog": "AOG until {{date}}",
+    "nextHeavy": "Next heavy check",
+    "nextHeavyValue": "{{check}}-check due in {{months}} months"
   },
   "network": {
     "title": "Network",
@@ -445,7 +465,8 @@
       "overhead": "Overheads (office, IT, marketing, insurance)",
       "service": "In-flight service & lounges",
       "depreciation": "Depreciation (owned aircraft, cabin refits)",
-      "disposals": "Aircraft sales, scrapping & lost deposits"
+      "disposals": "Aircraft sales, scrapping & lost deposits",
+      "disruption": "Passenger compensation & care (cancelled flights)"
     },
     "result": "Result",
     "margin": "Margin",
@@ -628,7 +649,7 @@
     "importFailed": "This file is not a save from this game (or it is damaged).",
     "loadFailed": "This save could not be opened.",
     "failed": "Something went wrong while saving or reading.",
-    "exportNote": "Export creates a small compressed “.amsave” file. To continue on another device, send it there (e.g. by e-mail or cloud drive) and use “Import file”. Cloud sync comes in Phase 3.",
+    "exportNote": "Export creates a small compressed “.amsave” file. To continue on another device, send it there (e.g. by e-mail or cloud drive) and use “Import file”. With cloud sync (above) this happens by itself.",
     "storage": "Storage used by the game: {{used}} MB of about {{quota}} MB.",
     "persisted": "The browser keeps these saves permanently.",
     "notPersisted": "The browser may delete them if space runs low: export a backup now and then (installing the app helps)."
@@ -735,7 +756,8 @@
     "value": "Price",
     "crowd": "Crowding",
     "noRatings": "No ratings yet: they come in with your first passengers.",
-    "note": "Last week's passengers: points compared with what they expect of the class. Seat = seat product and pitch; aircraft = age (new is nicer); price = value for money; crowding = very full cabins. Punctuality and service join in Phase 9."
+    "note": "Last week's passengers: points compared with what they expect of the class. Seat = seat product and pitch; aircraft = age (new is nicer); price = value for money; crowding = very full cabins; cancellations = passengers whose flight was cancelled. Punctuality and service join in Phase 9.",
+    "disruption": "Cancellations"
   },
   "away": {
     "title": "While you were away",
@@ -779,5 +801,59 @@
     "slotSynced": "☁ in the cloud",
     "slotPending": "☁ waiting to sync",
     "slotLocal": "only on this device"
+  },
+  "maint": {
+    "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",
+    "check": {
+      "A": "A-check",
+      "C": "C-check",
+      "D": "D-check"
+    },
+    "flightHours": "Flight hours",
+    "nextA": "Next A-check",
+    "nextAValue": "in {{hours}} flight hours",
+    "aDue": "due now",
+    "heavy": "Next {{check}}",
+    "planned": "from {{date}} · {{days}} days · {{price}} ({{where}})",
+    "dueBy": "due by {{date}}",
+    "notPlanned": "due by {{date}} (not planned yet)",
+    "where": {
+      "mro": "MRO",
+      "hangar": "own hangar"
+    },
+    "reserves": "Maintenance reserves",
+    "reservesValue": "{{amount}} with the lessor ({{rate}} per flight hour)",
+    "move": "Move check",
+    "startOn": "Start on",
+    "moveAsk": "{{check}} from {{date}}: {{days}} days in the hangar, {{price}} at {{where}}. The aircraft's flights are cancelled while it is in the hangar.",
+    "shortNotice": "Less than 30 days' notice: the MRO charges 25 % extra.",
+    "fromReserves": "The lessor pays {{amount}} of it from the reserves.",
+    "movedNotice": "Check moved.",
+    "hangarTitle": "Own hangar",
+    "hangarIntro": "Most young airlines pay a maintenance company (MRO) per check. Your own hangar at the hub makes every check about 45 % cheaper and always has a bay free, but it costs a lot to build and to run (mechanics, tools, energy): it pays off with a big fleet.",
+    "size": {
+      "narrow": "Narrow-body hangar",
+      "wide": "Wide-body hangar"
+    },
+    "sizeHint": {
+      "narrow": "2 bays for turboprops, regional and narrow-body jets",
+      "wide": "2 bays for any aircraft, wide-bodies included"
+    },
+    "hangarFacts": "Building {{price}} (30 % now, the rest when it is ready in 18 months); running costs {{running}} a day.",
+    "build": "Build",
+    "buildAsk": "Build a {{size}} at {{airport}} for {{price}}? {{now}} is paid now, the rest when it is ready on {{date}}.",
+    "builtNotice": "Construction started.",
+    "hangarReady": "{{size}} at {{airport}} · in use",
+    "hangarBuilding": "{{size}} at {{airport}} · ready on {{date}}",
+    "planTitle": "Check plan",
+    "colAircraft": "Aircraft",
+    "colNext": "Next check",
+    "colWhen": "When",
+    "colCost": "Cost",
+    "inCheckNow": "in the hangar until {{date}}",
+    "noFleet": "No aircraft in service yet.",
+    "costNote": "Costs: A-checks are an expense of the day; C- and D-checks are written off until the same check is due again. Leased aircraft pay reserves to the lessor every flight hour, and the lessor pays the heavy checks from them. Technical failures happen more often on old aircraft and close to a check: flights are cancelled, passengers get compensation (EU 261) and rate you badly.",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days"
   }
 }

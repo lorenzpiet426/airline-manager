@@ -14,6 +14,7 @@ import { useSettings } from '../../settings/settings';
 import { Segmented } from '../components/Segmented';
 import { CabinBar } from './CabinBar';
 import { cabinText } from './cabinText';
+import { SaleCheckFact } from './Maintenance';
 
 type Filter = 'all' | AircraftCategory;
 const FILTERS: Filter[] = ['all', 'turboprop', 'regional', 'narrowbody', 'widebody'];
@@ -89,6 +90,7 @@ function SaleCard({
         <dd className={`mono ${hubRunwayM !== undefined && hubRunwayM < type.takeoffM ? 'text--caution' : ''}`}>{formatNumber(language, type.takeoffM)} m</dd>
         <dt>{t('fleet.delivery')}</dt>
         <dd className="mono">{formatGameDate(language, delivery, false)}</dd>
+        <SaleCheckFact game={game} offer={offer} />
         <dt>{t('fleet.seller')}</dt>
         <dd>{offer.seller}</dd>
       </dl>

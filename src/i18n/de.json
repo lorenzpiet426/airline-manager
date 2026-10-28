@@ -178,7 +178,17 @@
     "leaseEnded_other": "Das Leasing von {{type}} {{registration}} ist zu Ende: Das Flugzeug ist zurück bei {{lessor}}, die Kaution wurde zurückgezahlt. Seine Flüge auf {{count}} Strecken enden.",
     "leaseReturned_one": "{{type}} {{registration}} früher an {{lessor}} zurückgegeben (Gebühr {{amount}}). Seine Flüge auf {{count}} Strecke enden.",
     "leaseReturned_other": "{{type}} {{registration}} früher an {{lessor}} zurückgegeben (Gebühr {{amount}}). Seine Flüge auf {{count}} Strecken enden.",
-    "leaseExtended": "Leasing von {{registration}} bis {{date}} verlängert; neue Miete {{amount}} pro Monat."
+    "leaseExtended": "Leasing von {{registration}} bis {{date}} verlängert; neue Miete {{amount}} pro Monat.",
+    "checkPlanned": "{{check}} für {{registration}} ab {{date}} geplant (fällig bis {{due}}).",
+    "checkMoved": "{{registration}} fliegt mehr als geplant: sein {{check}} wird auf {{date}} vorgezogen.",
+    "checkStarted": "{{registration}} für den {{check}} im Hangar ({{where}}) bis {{date}}: {{days}} Tage, {{amount}} bezahlt.",
+    "checkStartedReserves": "{{registration}} für den {{check}} im Hangar ({{where}}) bis {{date}}: {{days}} Tage; der Leasinggeber zahlt {{reserves}} aus den Rücklagen, du zahlst {{amount}}.",
+    "checkDone": "{{registration}} hat seinen {{check}} beendet und ist wieder im Dienst.",
+    "aCheckGrounded": "{{registration}} steht nachts nie {{hours}} Stunden am Drehkreuz: für den A-Check bleibt es einen Tag am Boden.",
+    "failure_one": "Technisches Problem bei {{registration}}: etwa {{hours}} Stunden am Boden (bis {{date}}). {{count}} Flug gestrichen, {{pax}} Passagiere betroffen; Reparatur und Entschädigung {{amount}}.",
+    "failure_other": "Technisches Problem bei {{registration}}: etwa {{hours}} Stunden am Boden (bis {{date}}). {{count}} Flüge gestrichen, {{pax}} Passagiere betroffen; Reparatur und Entschädigung {{amount}}.",
+    "hangarOrdered": "Bau eines {{size}} in {{airport}} begonnen: {{amount}} bezahlt, fertig am {{date}}.",
+    "hangarReady": "Dein {{size}} in {{airport}} ist fertig: Checks finden ab jetzt dort statt."
   },
   "newGame": {
     "title": "Gründe deine Airline",
@@ -267,7 +277,12 @@
     "notOnOrder": "Dieses Flugzeug ist nicht bestellt.",
     "notDelivered": "Das Flugzeug ist noch nicht ausgeliefert.",
     "yearsInvalid": "Wähle 1 bis 6 Jahre.",
-    "extendTooEarly": "Ein Leasing kann in seinen letzten 2 Jahren verlängert werden."
+    "extendTooEarly": "Ein Leasing kann in seinen letzten 2 Jahren verlängert werden.",
+    "dateInvalid": "Wähle einen Tag ab morgen bis zur Fälligkeit des Checks.",
+    "noCheckDue": "Kein Check zu planen.",
+    "inCheck": "Das Flugzeug ist für einen Check im Hangar.",
+    "notActive": "Das Flugzeug ist noch nicht im Dienst.",
+    "hangarExists": "Ein Hangar dieser Größe wird schon gebaut."
   },
   "fleet": {
     "title": "Flotte",
@@ -371,7 +386,12 @@
     "orderedNotice_other": "{{count}} {{type}} bestellt.",
     "summary": "{{leased}} geleast · {{owned}} im Eigentum · {{ordered}} bestellt",
     "summaryValue": "eigene Flugzeuge wert {{value}}",
-    "summaryOwed": "für Bestellungen noch zu zahlen {{owed}}"
+    "summaryOwed": "für Bestellungen noch zu zahlen {{owed}}",
+    "tabMaint": "Wartung",
+    "inCheck": "{{check}}-Check bis {{date}}",
+    "aog": "AOG bis {{date}}",
+    "nextHeavy": "Nächster großer Check",
+    "nextHeavyValue": "{{check}}-Check fällig in {{months}} Monaten"
   },
   "network": {
     "title": "Netz",
@@ -445,7 +465,8 @@
       "overhead": "Gemeinkosten (Zentrale, IT, Marketing, Versicherung)",
       "service": "Bordservice & Lounges",
       "depreciation": "Abschreibungen (eigene Flugzeuge, Kabinenumbauten)",
-      "disposals": "Flugzeugverkäufe, Verschrottung & verlorene Anzahlungen"
+      "disposals": "Flugzeugverkäufe, Verschrottung & verlorene Anzahlungen",
+      "disruption": "Entschädigung & Betreuung von Passagieren (gestrichene Flüge)"
     },
     "result": "Ergebnis",
     "margin": "Marge",
@@ -628,7 +649,7 @@
     "importFailed": "Diese Datei ist kein Spielstand dieses Spiels (oder sie ist beschädigt).",
     "loadFailed": "Dieser Spielstand konnte nicht geöffnet werden.",
     "failed": "Beim Speichern oder Lesen ist etwas schiefgegangen.",
-    "exportNote": "Exportieren erstellt eine kleine, komprimierte „.amsave“-Datei. Um auf einem anderen Gerät weiterzuspielen, schick sie dorthin (z. B. per E-Mail oder Cloud-Speicher) und nutze „Datei importieren“. Cloud-Synchronisation kommt in Phase 3.",
+    "exportNote": "Exportieren erstellt eine kleine, komprimierte „.amsave“-Datei. Um auf einem anderen Gerät weiterzuspielen, schick sie dorthin (z. B. per E-Mail oder Cloud-Speicher) und nutze „Datei importieren“. Mit der Cloud-Synchronisation (oben) passiert das von selbst.",
     "storage": "Speicherplatz des Spiels: {{used}} MB von etwa {{quota}} MB.",
     "persisted": "Der Browser behält diese Spielstände dauerhaft.",
     "notPersisted": "Der Browser könnte sie bei Platzmangel löschen: Exportiere ab und zu eine Sicherung (die App zu installieren hilft)."
@@ -735,7 +756,8 @@
     "value": "Preis",
     "crowd": "Enge",
     "noRatings": "Noch keine Bewertungen: Sie kommen mit deinen ersten Passagieren.",
-    "note": "Passagiere der letzten Woche: Punkte im Vergleich zu dem, was sie von der Klasse erwarten. Sitz = Sitzprodukt und Sitzabstand; Flugzeug = Alter (neu ist schöner); Preis = Preis-Leistung; Enge = sehr volle Kabinen. Pünktlichkeit und Service kommen in Phase 9 dazu."
+    "note": "Passagiere der letzten Woche: Punkte im Vergleich zu dem, was sie von der Klasse erwarten. Sitz = Sitzprodukt und Sitzabstand; Flugzeug = Alter (neu ist schöner); Preis = Preis-Leistung; Enge = sehr volle Kabinen; Ausfälle = Passagiere, deren Flug gestrichen wurde. Pünktlichkeit und Service kommen in Phase 9 dazu.",
+    "disruption": "Ausfälle"
   },
   "away": {
     "title": "Während du weg warst",
@@ -779,5 +801,59 @@
     "slotSynced": "☁ in der Cloud",
     "slotPending": "☁ wartet auf Sync",
     "slotLocal": "nur auf diesem Gerät"
+  },
+  "maint": {
+    "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",
+    "check": {
+      "A": "A-Check",
+      "C": "C-Check",
+      "D": "D-Check"
+    },
+    "flightHours": "Flugstunden",
+    "nextA": "Nächster A-Check",
+    "nextAValue": "in {{hours}} Flugstunden",
+    "aDue": "jetzt fällig",
+    "heavy": "Nächster {{check}}",
+    "planned": "ab {{date}} · {{days}} Tage · {{price}} ({{where}})",
+    "dueBy": "fällig bis {{date}}",
+    "notPlanned": "fällig bis {{date}} (noch nicht geplant)",
+    "where": {
+      "mro": "MRO",
+      "hangar": "eigener Hangar"
+    },
+    "reserves": "Wartungsrücklagen",
+    "reservesValue": "{{amount}} beim Leasinggeber ({{rate}} pro Flugstunde)",
+    "move": "Check verschieben",
+    "startOn": "Beginn am",
+    "moveAsk": "{{check}} ab {{date}}: {{days}} Tage im Hangar, {{price}} ({{where}}). Die Flüge des Flugzeugs fallen aus, solange es im Hangar steht.",
+    "shortNotice": "Weniger als 30 Tage Vorlauf: der Wartungsbetrieb verlangt 25 % Aufschlag.",
+    "fromReserves": "Davon zahlt der Leasinggeber {{amount}} aus den Rücklagen.",
+    "movedNotice": "Check verschoben.",
+    "hangarTitle": "Eigener Hangar",
+    "hangarIntro": "Die meisten jungen Airlines bezahlen einen Wartungsbetrieb (MRO) pro Check. Ein eigener Hangar am Drehkreuz macht jeden Check etwa 45 % billiger und hat immer einen Platz frei, kostet aber viel im Bau und im Betrieb (Mechaniker, Werkzeug, Energie): er lohnt sich erst mit einer großen Flotte.",
+    "size": {
+      "narrow": "Hangar für Schmalrumpfflugzeuge",
+      "wide": "Hangar für Großraumflugzeuge"
+    },
+    "sizeHint": {
+      "narrow": "2 Plätze für Turboprops, Regional- und Schmalrumpfjets",
+      "wide": "2 Plätze für alle Flugzeuge, auch Großraumflugzeuge"
+    },
+    "hangarFacts": "Bau {{price}} (30 % jetzt, der Rest bei Fertigstellung in 18 Monaten); Betriebskosten {{running}} pro Tag.",
+    "build": "Bauen",
+    "buildAsk": "{{size}} in {{airport}} für {{price}} bauen? {{now}} wird jetzt bezahlt, der Rest bei Fertigstellung am {{date}}.",
+    "builtNotice": "Bau begonnen.",
+    "hangarReady": "{{size}} in {{airport}} · in Betrieb",
+    "hangarBuilding": "{{size}} in {{airport}} · fertig am {{date}}",
+    "planTitle": "Checkplan",
+    "colAircraft": "Flugzeug",
+    "colNext": "Nächster Check",
+    "colWhen": "Wann",
+    "colCost": "Kosten",
+    "inCheckNow": "im Hangar bis {{date}}",
+    "noFleet": "Noch keine Flugzeuge im Dienst.",
+    "costNote": "Kosten: A-Checks sind Aufwand des Tages; C- und D-Checks werden bis zur nächsten Fälligkeit desselben Checks abgeschrieben. Geleaste Flugzeuge zahlen pro Flugstunde Rücklagen an den Leasinggeber, der daraus die großen Checks bezahlt. Technische Störungen kommen bei alten Flugzeugen und kurz vor einem Check öfter vor: Flüge fallen aus, Passagiere bekommen Entschädigung (EU 261) und bewerten dich schlecht.",
+    "days_one": "{{count}} Tag",
+    "days_other": "{{count}} Tage"
   }
 }

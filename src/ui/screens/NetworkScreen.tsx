@@ -310,6 +310,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, {
       ai: game.ai,
       brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
+      checksSeparate: true,
     });
     const pairs = pairsOfRoute(sim, simRoute.id).filter((p) => sim.aircraft[p.aircraftId]);
     const used = [...new Set(pairs.map((p) => p.aircraftId))].map((id) => game.aircraft[id]!).filter(Boolean);

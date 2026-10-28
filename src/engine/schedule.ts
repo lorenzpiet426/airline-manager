@@ -7,7 +7,7 @@ import type { Airport } from '../data/types';
 import { nextId } from './core';
 import { checkRoute, roundTripHours, WEEKLY_AVAILABLE_HOURS, type PlannedFlight } from './economics';
 import type { Aircraft, FlightPair, GameState, Route } from './state';
-import { MINUTES_PER_WEEK, utcOffsetMin, yearOf, type SimTime } from './time';
+import { MINUTES_PER_WEEK, startOfDay, utcOffsetMin, weekdayOf, yearOf, type SimTime } from './time';
 import { blockMinutes, dayBit, dayCount, DAYS_ALL, hasDay, shiftDays, wrapDay } from './timetable';
 import type { EngineWorld } from './world';
 
@@ -71,6 +71,24 @@ export function pairTimes(world: EngineWorld, typeId: string, route: Route, spec
 /** True while the aircraft is in the hangar for a cabin refit (its flights are cancelled). */
 export const inRefit = (aircraft: Aircraft, time: SimTime): boolean => (aircraft.refitUntil ?? 0) > time;
 
+/** True while the aircraft can't fly at all: in the hangar for a refit or a maintenance check (Phase 4.2). */
+export const grounded = (aircraft: Aircraft, time: SimTime): boolean => inRefit(aircraft, time) || (aircraft.maint?.inCheck?.until ?? 0) > time;
+
+/** UTC departure of a pair's outbound flight on the UTC day starting at `day`, or null if it doesn't fly that day. */
+export function pairDepartureUtc(world: EngineWorld, route: Route, pair: Pick<FlightPair, 'dep' | 'days'>, day: SimTime): SimTime | null {
+  const hub = world.airportById.get(route.originId);
+  if (!hub || !hasDay(pair.days, weekdayOf(day))) return null;
+  return day + pair.dep - utcOffsetMin(hub.tz, day);
+}
+
+/** Is this pair cancelled on the day of `time` because its aircraft is grounded by a technical failure? */
+export function aogCancels(world: EngineWorld, route: Route, pair: FlightPair, aircraft: Aircraft, time: SimTime): boolean {
+  const aog = aircraft.maint?.aog;
+  if (!aog) return false;
+  const dep = pairDepartureUtc(world, route, pair, startOfDay(time));
+  return dep !== null && dep >= aog.from && dep < aog.until;
+}
+
 /**
  * The timetable of a route for the economics model: only aircraft that are flying already (not those still being
  * delivered, unless asked, and not those in a refit).
@@ -79,7 +97,7 @@ export function plannedFlights(state: GameState, world: EngineWorld, route: Rout
   const result: PlannedFlight[] = [];
   for (const pair of pairsOfRoute(state, route.id)) {
     const aircraft = state.aircraft[pair.aircraftId];
-    if (!aircraft || (!includeDelivering && (aircraft.status !== 'active' || inRefit(aircraft, time)))) continue;
+    if (!aircraft || (!includeDelivering && (aircraft.status !== 'active' || grounded(aircraft, time) || aogCancels(world, route, pair, aircraft, time)))) continue;
     result.push(...specFlights(world, route, aircraft, yearOf(time) - aircraft.builtYear, pair, time));
   }
   return result;
@@ -114,7 +132,7 @@ export function aircraftHours(state: GameState, aircraftId: string, exceptRouteI
 }
 
 /** The time an aircraft is busy with a pair, per weekday: [start, end) in hub local minutes of the week. */
-function busyIntervals(world: EngineWorld, typeId: string, route: Route, spec: Pick<FlightSpec, 'dep' | 'days' | 'groundMin'>): [number, number][] {
+export function busyIntervals(world: EngineWorld, typeId: string, route: Route, spec: Pick<FlightSpec, 'dep' | 'days' | 'groundMin'>): [number, number][] {
   const { out, back } = pairBlocks(world, typeId, route);
   // After landing back at the hub the aircraft needs its turnaround before the next departure.
   const span = out + spec.groundMin + back + TURNAROUND_MIN[getAircraftType(typeId).category];

@@ -5,7 +5,7 @@ import { bookCurrencyFor } from '../data/currencies';
 import { registrationPattern } from '../data/registrations';
 import { book, nextId, postMessage, schedule } from './core';
 import { checkRoute, roundTripHours, WEEKLY_AVAILABLE_HOURS } from './economics';
-import { aircraftHours, autoPlanAircraft, inRefit, makeDetailed, pairsOfRoute, setRoutePairs, validateSpecs, type FlightSpec, type ScheduleError } from './schedule';
+import { aircraftHours, autoPlanAircraft, grounded, inRefit, makeDetailed, pairsOfRoute, setRoutePairs, validateSpecs, type FlightSpec, type ScheduleError } from './schedule';
 import { distanceKm } from './geo';
 import { convert, money, roundNice, type FxRates, type Money } from './money';
 import { newFinance } from './operations';
@@ -14,6 +14,8 @@ import { cabinCode, DEFAULT_CLASS_FARES, REFIT_DEPRECIATION_YEARS, refitQuote, t
 import { newReputation } from './reputation';
 import { buyAircraft, cancelOrder, disposeAircraft, extendLease, orderAircraft, returnLeased, type FleetError } from './fleet';
 import type { CabinStyle } from './cabins';
+import type { HangarSize } from '../data/maintenance';
+import { buildHangar, moveCheck, type MaintError } from './maintenance';
 import type { CabinLayout, ClassFares, Controller, GameState, Route } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay, toDate, type SimTime } from './time';
 import type { EngineWorld } from './world';
@@ -132,7 +134,19 @@ export interface ExtendLease {
   payload: { aircraftId: string; years: number };
 }
 
-export type Command = OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Maintenance (Phase 4.2): move the next heavy check, build an own hangar at the hub. */
+export interface MoveCheck {
+  type: 'MoveCheck';
+  airlineId: string;
+  payload: { aircraftId: string; start: SimTime };
+}
+export interface BuildHangar {
+  type: 'BuildHangar';
+  airlineId: string;
+  payload: { size: HangarSize };
+}
+
+export type Command = MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 export const MAX_FREQUENCY = 84;
@@ -166,6 +180,7 @@ export type CommandError =
   | 'cabinUnchanged'
   | CabinError
   | FleetError
+  | MaintError
   | ScheduleError;
 
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError };
@@ -212,6 +227,10 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       state.options.timeMode = 'realclock';
       state.options.clockOffset = Math.max(0, state.time - command.payload.now);
       return { ok: true };
+    case 'MoveCheck':
+      return moveCheck(state, world, command.airlineId, command.payload.aircraftId, command.payload.start);
+    case 'BuildHangar':
+      return buildHangar(state, command.airlineId, command.payload.size);
     case 'RefitCabin':
       return refitCabin(state, command.airlineId, command.payload.aircraftId, command.payload.cabin);
   }
@@ -435,6 +454,7 @@ function refitCabin(state: GameState, airlineId: string, aircraftId: string, cab
   if (!airline) return fail('airlineUnknown');
   if (!aircraft || aircraft.airlineId !== airlineId) return fail('aircraftUnknown');
   if (inRefit(aircraft, state.time)) return fail('inRefit');
+  if (grounded(aircraft, state.time)) return fail('inCheck');
   const type = getAircraftType(aircraft.typeId);
   const error = validateCabin(type, cabin);
   if (error) return fail(error);

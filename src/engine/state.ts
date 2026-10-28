@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 /** Real-time with speeds, turn-based weeks, or tied to the real clock (Phase 3: 1 game minute = 1 real minute). */
 export type TimeMode = 'realtime' | 'weekly' | 'realclock';
@@ -46,9 +46,50 @@ export interface Lease {
   endAt: SimTime;
   /** The player was told the lease ends soon. */
   warned?: boolean;
+  /** Maintenance reserves paid to the lessor per flight hour (USD), for the airframe checks (Phase 4.2). */
+  reserveUsdPerFh?: number;
 }
 
 export type AircraftStatus = 'delivering' | 'active';
+
+/** When a check was last done, and the aircraft's flight hours at that time. */
+export interface CheckRecord {
+  at: SimTime;
+  fh: number;
+}
+
+/** Maintenance of one aircraft (Phase 4.2): flight hours, last checks, the next planned heavy check, downtime. */
+export interface MaintState {
+  /** Flight (block) hours since new. */
+  fh: number;
+  a: CheckRecord;
+  c: CheckRecord;
+  d: CheckRecord;
+  /** The next heavy check, planned by the game (`moved` once the player chose the date). */
+  plan?: { kind: 'C' | 'D'; start: SimTime; bookedAt: SimTime; moved?: boolean };
+  /** In a check until `until` (flights are cancelled). */
+  inCheck?: { kind: 'A' | 'C' | 'D'; until: SimTime; where: 'mro' | 'hangar' };
+  /** Grounded by a technical failure (flights departing in this window are cancelled). */
+  aog?: { from: SimTime; until: SimTime; hours: number };
+  /** Heavy-check costs written off day by day until the next check of the kind (book currency). */
+  amort?: { perDay: number; until: SimTime };
+  /** Leased aircraft: maintenance reserves the lessor holds for this aircraft (USD). */
+  reserves?: number;
+}
+
+/** An airline's own maintenance hangar (Phase 4.2). */
+export interface Hangar {
+  id: string;
+  airlineId: string;
+  airportId: string;
+  size: 'narrow' | 'wide';
+  /** Building cost (book currency), written off over its life from `readyAt`. */
+  price: number;
+  orderedAt: SimTime;
+  readyAt: SimTime;
+  /** Second payment made and in use. */
+  ready?: boolean;
+}
 
 /** An aircraft the airline owns (Phase 4.1): bought used or delivered from its own factory order. */
 export interface Ownership {
@@ -120,6 +161,8 @@ export interface Aircraft {
   refitUntil?: SimTime;
   /** Refit costs written off day by day (book currency), until `until`. */
   cabinDepreciation?: { perDay: number; until: SimTime };
+  /** Checks, failures and reserves (Phase 4.2; set when the aircraft enters service). */
+  maint?: MaintState;
 }
 
 /** A used aircraft for sale (Phase 4.1). */
@@ -210,6 +253,8 @@ export interface PnlLines {
   depreciation: number;
   /** Losses on selling or scrapping aircraft (gains are negative). */
   disposals: number;
+  /** Compensation and care for passengers of cancelled flights (Phase 4.2). */
+  disruption: number;
 }
 
 export interface RouteStats {
@@ -244,6 +289,8 @@ export interface ExperienceSums {
   age: number;
   value: number;
   crowd: number;
+  /** Cancelled flights (Phase 4.2; missing in older weeks). */
+  disruption?: number;
 }
 
 /** What passengers think of an airline (Phase 2): reputation from experience, awareness from being seen. */
@@ -320,7 +367,10 @@ export type ScheduledEvent =
   | { at: SimTime; seq: number; kind: 'monthStart' }
   | { at: SimTime; seq: number; kind: 'dayStart' }
   | { at: SimTime; seq: number; kind: 'delivery'; aircraftId: string }
-  | { at: SimTime; seq: number; kind: 'refitDone'; aircraftId: string };
+  | { at: SimTime; seq: number; kind: 'refitDone'; aircraftId: string }
+  | { at: SimTime; seq: number; kind: 'checkDone'; aircraftId: string }
+  | { at: SimTime; seq: number; kind: 'failure'; aircraftId: string }
+  | { at: SimTime; seq: number; kind: 'hangarReady'; hangarId: string };
 
 /** A line in the ops message log. The screen translates `kind` and fills in `params`. */
 export interface GameMessage {
@@ -335,14 +385,17 @@ export interface GameMessage {
     | 'cabinChanged' | 'refitStarted' | 'refitDone'
     // Buying and selling (Phase 4.1).
     | 'ordered' | 'orderPayment' | 'orderCancelled' | 'bought' | 'sold' | 'scrapped' | 'leaseEnding' | 'leaseEnded' | 'leaseExtended'
-    | 'leaseReturned';
+    | 'leaseReturned'
+    // Maintenance (Phase 4.2).
+    | 'checkPlanned' | 'checkMoved' | 'checkStarted' | 'checkDone' | 'aCheckGrounded' | 'failure' | 'hangarOrdered' | 'hangarReady';
   level: 'normal' | 'info' | 'caution' | 'warning';
   params: Record<string, string | number>;
 }
 
 export type LedgerKind =
   | 'capital' | 'leaseDeposit' | 'leaseRent' | 'refit'
-  | 'orderPayment' | 'purchase' | 'sale' | 'leaseReturnFee' | 'depositBack';
+  | 'orderPayment' | 'purchase' | 'sale' | 'leaseReturnFee' | 'depositBack'
+  | 'check' | 'repair' | 'compensation' | 'hangar';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {
@@ -373,6 +426,8 @@ export interface GameState {
   finance: Record<string, AirlineFinance>;
   /** Changes made by the real airlines' AI (2.1b). */
   ai: AiState;
+  /** Own maintenance hangars (Phase 4.2). */
+  hangars: Record<string, Hangar>;
   /** Reputation of the player's airlines (real airlines use a value by airline type). */
   reputation: Record<string, Reputation>;
   queue: ScheduledEvent[];
@@ -387,9 +442,9 @@ export const MAX_PNL_WEEKS = 104;
 
 export const emptyPnl = (): PnlLines => ({
   revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0, overhead: 0,
-  service: 0, depreciation: 0, disposals: 0,
+  service: 0, depreciation: 0, disposals: 0, disruption: 0,
 });
 
 export const pnlCosts = (l: PnlLines): number =>
   l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead +
-  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0);
+  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0);

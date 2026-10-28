@@ -11,6 +11,7 @@ import type { FxRates } from './money';
 import { MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type CabinClass, type GameState, type Route, type RouteStats } from './state';
 import { addExperience, closeReputationWeek } from './reputation';
 import { dailyDepreciation, dailyFleetStep } from './fleet';
+import { maintenanceDailyStep } from './maintenance';
 import { daysInMonth, MINUTES_PER_DAY, startOfMonth, startOfWeek, toDate, weekdayOf, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
@@ -48,6 +49,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   bookDay(state, world);
   // Payments to manufacturers, lease reminders and leases that end.
   dailyFleetStep(state, world);
+  // Flight hours, checks, maintenance reserves, hangars and today's technical failures.
+  maintenanceDailyStep(state, world);
   // The real airlines review their networks (a share of them each day) and react to the player.
   aiDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) closeWeek(state);
@@ -71,7 +74,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!plan || !from || !to || !airline) continue;
     const rep = state.reputation[airline.id];
     const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
-    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand });
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true });
     if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
     const lines = dayOf(airline.id).lines;

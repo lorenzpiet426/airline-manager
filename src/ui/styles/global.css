@@ -2373,3 +2373,13 @@ a.button {
 .catchup {
   margin-bottom: 12px;
 }
+
+/* ─── Maintenance (4.2) ──────────────────────────────────────────────────── */
+
+.plain-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: grid;
+  gap: 4px;
+}

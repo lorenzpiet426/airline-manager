@@ -4,6 +4,7 @@ import { getAircraftType } from '../data/aircraft';
 import { book, postMessage, schedule } from './core';
 import { refreshMarket } from './market';
 import { completeOrder } from './fleet';
+import { failureStarts, finishCheck, hangarReady } from './maintenance';
 import { money } from './money';
 import { dailyStep } from './operations';
 import type { GameState, ScheduledEvent } from './state';
@@ -42,6 +43,15 @@ function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): vo
       }
       break;
     }
+    case 'checkDone':
+      finishCheck(state, event.aircraftId);
+      break;
+    case 'failure':
+      failureStarts(state, world, event.aircraftId);
+      break;
+    case 'hangarReady':
+      hangarReady(state, event.hangarId);
+      break;
   }
 }
 

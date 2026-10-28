@@ -1,4 +1,5 @@
 // Creating a new game world.
+import { ensureMaint } from './maintenance';
 import { ECB_RATES, FX_DATE } from '../data/currencies';
 import { getAircraftType } from '../data/aircraft';
 import { DEFAULT_CLASS_FARES, economyCabin, standardCabin, totalSeats } from './cabins';
@@ -36,6 +37,7 @@ export function createGame(options: NewGameOptions): GameState {
     finance: {},
     ai: emptyAi(),
     reputation: {},
+    hangars: {},
     queue: [],
     messages: [],
     ledger: [],
@@ -131,6 +133,16 @@ export function migrate(raw: unknown): GameState | null {
       for (const p of [fin.week, fin.month, ...fin.history, ...fin.months]) p.lines.disposals ??= 0;
     }
     state.version = 8;
+  }
+  if (state.version === 8) {
+    // Version 9 (Phase 4.2): maintenance (each aircraft's checks, leases' reserves), own hangars, a P&L line for
+    // compensation of cancelled flights. Aircraft in service get their check history now; the game plans checks daily.
+    state.hangars = {};
+    for (const a of Object.values(state.aircraft)) if (a.status === 'active') ensureMaint(state, a);
+    for (const fin of Object.values(state.finance)) {
+      for (const p of [fin.week, fin.month, ...fin.history, ...fin.months]) p.lines.disruption ??= 0;
+    }
+    state.version = 9;
   }
   if (state.version !== SAVE_VERSION) return null;
   return state;
