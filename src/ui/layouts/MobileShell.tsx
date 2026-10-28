@@ -10,7 +10,7 @@ import { CatchUpBanner } from '../game/AwayReport';
 // where your thumb reaches it. Respects the iPhone notch and home indicator (safe areas).
 export function MobileShell({ route, children }: { route: Route; children: ReactNode }) {
   const { t } = useTranslation();
-  const activeTab: Route = MORE_ROUTES.includes(route) ? 'more' : route;
+  const activeTab: Route = MORE_ROUTES.includes(route) ? 'more' : route === 'livery' ? 'fleet' : route;
   const game = useGame();
 
   return (

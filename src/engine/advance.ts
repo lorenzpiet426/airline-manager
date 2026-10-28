@@ -1,5 +1,6 @@
 // Moves the world forward in time. All three time modes use this one function:
 // real-time calls it in small steps, turn-based mode a week at a time, real-clock mode catches up.
+import { paintOnDelivery, repaintDone } from './livery';
 import { getAircraftType } from '../data/aircraft';
 import { book, postMessage, schedule } from './core';
 import { refreshMarket } from './market';
@@ -52,6 +53,9 @@ function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): vo
     case 'hangarReady':
       hangarReady(state, event.hangarId);
       break;
+    case 'repaintDone':
+      repaintDone(state, event.aircraftId);
+      break;
   }
 }
 
@@ -59,6 +63,7 @@ function deliver(state: GameState, aircraftId: string): void {
   const aircraft = state.aircraft[aircraftId];
   if (!aircraft || aircraft.status !== 'delivering') return;
   aircraft.status = 'active';
+  paintOnDelivery(state, aircraft);
   // A factory order: the balance is paid now and the aircraft is owned.
   if (aircraft.order) completeOrder(state, aircraft);
   if (aircraft.lease) {

@@ -71,8 +71,9 @@ export function pairTimes(world: EngineWorld, typeId: string, route: Route, spec
 /** True while the aircraft is in the hangar for a cabin refit (its flights are cancelled). */
 export const inRefit = (aircraft: Aircraft, time: SimTime): boolean => (aircraft.refitUntil ?? 0) > time;
 
-/** True while the aircraft can't fly at all: in the hangar for a refit or a maintenance check (Phase 4.2). */
-export const grounded = (aircraft: Aircraft, time: SimTime): boolean => inRefit(aircraft, time) || (aircraft.maint?.inCheck?.until ?? 0) > time;
+/** True while the aircraft can't fly at all: in the hangar for a refit, a maintenance check (4.2) or a repaint (4.3). */
+export const grounded = (aircraft: Aircraft, time: SimTime): boolean =>
+  inRefit(aircraft, time) || (aircraft.maint?.inCheck?.until ?? 0) > time || (aircraft.paintUntil ?? 0) > time;
 
 /** UTC departure of a pair's outbound flight on the UTC day starting at `day`, or null if it doesn't fly that day. */
 export function pairDepartureUtc(world: EngineWorld, route: Route, pair: Pick<FlightPair, 'dep' | 'days'>, day: SimTime): SimTime | null {

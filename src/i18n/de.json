@@ -15,7 +15,8 @@
     "new": "Neue Airline",
     "airlines": "Airlines",
     "sources": "Datenquellen",
-    "saves": "Spielstände"
+    "saves": "Spielstände",
+    "livery": "Lackierung"
   },
   "status": {
     "sim": "SIM",
@@ -188,7 +189,11 @@
     "failure_one": "Technisches Problem bei {{registration}}: etwa {{hours}} Stunden am Boden (bis {{date}}). {{count}} Flug gestrichen, {{pax}} Passagiere betroffen; Reparatur und Entschädigung {{amount}}.",
     "failure_other": "Technisches Problem bei {{registration}}: etwa {{hours}} Stunden am Boden (bis {{date}}). {{count}} Flüge gestrichen, {{pax}} Passagiere betroffen; Reparatur und Entschädigung {{amount}}.",
     "hangarOrdered": "Bau eines {{size}} in {{airport}} begonnen: {{amount}} bezahlt, fertig am {{date}}.",
-    "hangarReady": "Dein {{size}} in {{airport}} ist fertig: Checks finden ab jetzt dort statt."
+    "hangarReady": "Dein {{size}} in {{airport}} ist fertig: Checks finden ab jetzt dort statt.",
+    "liveryChanged_one": "Neue Lackierung gespeichert. {{count}} Flugzeug behält die alte, bis es neu lackiert wird.",
+    "liveryChanged_other": "Neue Lackierung gespeichert. {{count}} Flugzeuge behalten die alte, bis sie neu lackiert werden.",
+    "repaintStarted": "{{registration}} ist bis {{date}} in der Lackierhalle ({{days}} Tage, {{amount}}).",
+    "repaintDone": "{{registration}} trägt jetzt deine neue Lackierung."
   },
   "newGame": {
     "title": "Gründe deine Airline",
@@ -282,7 +287,12 @@
     "noCheckDue": "Kein Check zu planen.",
     "inCheck": "Das Flugzeug ist für einen Check im Hangar.",
     "notActive": "Das Flugzeug ist noch nicht im Dienst.",
-    "hangarExists": "Ein Hangar dieser Größe wird schon gebaut."
+    "hangarExists": "Ein Hangar dieser Größe wird schon gebaut.",
+    "liveryInvalid": "Diese Lackierung kann nicht gespeichert werden (unbekannte Einstellung).",
+    "imageTooBig": "Das Bild ist auch verkleinert zu groß. Versuch ein einfacheres Bild.",
+    "drawingTooBig": "Die Zeichnung hat zu viele Striche. Mach ein paar rückgängig.",
+    "alreadyPainted": "Dieses Flugzeug trägt schon deine aktuelle Lackierung.",
+    "inHangar": "Das Flugzeug ist gerade im Hangar."
   },
   "fleet": {
     "title": "Flotte",
@@ -855,5 +865,128 @@
     "costNote": "Kosten: A-Checks sind Aufwand des Tages; C- und D-Checks werden bis zur nächsten Fälligkeit desselben Checks abgeschrieben. Geleaste Flugzeuge zahlen pro Flugstunde Rücklagen an den Leasinggeber, der daraus die großen Checks bezahlt. Technische Störungen kommen bei alten Flugzeugen und kurz vor einem Check öfter vor: Flüge fallen aus, Passagiere bekommen Entschädigung (EU 261) und bewerten dich schlecht.",
     "days_one": "{{count}} Tag",
     "days_other": "{{count}} Tage"
+  },
+  "livery": {
+    "title": "Lackierungs-Designer",
+    "intro": "Gestalte, wie deine Flugzeuge aussehen: Farben, Muster für Rumpf und Leitwerk, ein Logo, der Schriftzug und deine eigene Zeichnung darüber. Neue Flugzeuge kommen in der neuen Lackierung; die schon fliegenden behalten die alte, bis sie neu lackiert werden.",
+    "toFleet": "Zurück zur Flotte",
+    "previewLabel": "Deine Lackierung auf einer {{type}}",
+    "showOn": "Zeigen auf",
+    "save": "Lackierung speichern",
+    "discard": "Änderungen verwerfen",
+    "saveHint_one": "Nach dem Speichern ist das deine Lackierung für neue Flugzeuge. Dein {{count}} Flugzeug im Dienst behält die alte, bis es neu lackiert wird.",
+    "saveHint_other": "Nach dem Speichern ist das deine Lackierung für neue Flugzeuge. Deine {{count}} Flugzeuge im Dienst behalten die alte, bis sie neu lackiert werden.",
+    "savedNotice": "Lackierung gespeichert.",
+    "oldFleet_one": "{{count}} Flugzeug trägt noch eine ältere Lackierung. Neu lackieren kostet etwa {{price}} und {{days}} Tage in der Lackierhalle, oder keine zusätzlichen Tage zusammen mit dem nächsten C- oder D-Check.",
+    "oldFleet_other": "{{count}} Flugzeuge tragen noch eine ältere Lackierung. Neu lackieren kostet etwa {{price}} pro Flugzeug und {{days}} Tage in der Lackierhalle, oder keine zusätzlichen Tage zusammen mit dem nächsten C- oder D-Check.",
+    "allWithCheck": "Alle beim nächsten Check neu lackieren",
+    "allAtCheck_one": "{{count}} Flugzeug wird bei seinem nächsten C- oder D-Check neu lackiert.",
+    "allAtCheck_other": "{{count}} Flugzeuge werden bei ihrem nächsten C- oder D-Check neu lackiert.",
+    "colors": "Farben",
+    "slot": {
+      "p": "Hauptfarbe",
+      "s": "Zweitfarbe",
+      "a": "Akzent",
+      "w": "Weiß",
+      "k": "Dunkelgrau"
+    },
+    "base": "Grundfarbe Rumpf",
+    "baseOpt": {
+      "w": "Weiß",
+      "grey": "Grau",
+      "metal": "Blankes Metall",
+      "p": "Hauptfarbe"
+    },
+    "fuselage": "Rumpf",
+    "fuselageOpt": {
+      "plain": "Schlicht",
+      "cheatline": "Fensterband",
+      "belly": "Farbiger Bauch",
+      "twoTone": "Farbige Oberseite",
+      "sweep": "Heckschwung",
+      "nose": "Farbige Nase",
+      "stripes": "Streifen",
+      "full": "Ganz farbig"
+    },
+    "fuselageColor": "Farbe des Musters",
+    "engines": "Triebwerke",
+    "tail": "Leitwerk",
+    "tailOpt": {
+      "solid": "Einfarbig",
+      "split": "Geteilt",
+      "stripes": "Streifen",
+      "chevron": "Winkel",
+      "band": "Band",
+      "sweep": "Schwung",
+      "disc": "Kreis",
+      "gradient": "Verlauf"
+    },
+    "logo": "Logo am Leitwerk",
+    "logoOpt": {
+      "none": "Keins",
+      "symbol": "Symbol",
+      "letters": "Buchstaben",
+      "image": "Bild"
+    },
+    "symbol": {
+      "bird": "Vogel",
+      "swallow": "Schwalbe",
+      "star": "Stern",
+      "globe": "Globus",
+      "arrow": "Pfeil",
+      "wave": "Wellen",
+      "crown": "Krone",
+      "sun": "Sonne",
+      "leaf": "Blatt",
+      "mountain": "Berg",
+      "diamond": "Raute",
+      "wings": "Flügel"
+    },
+    "logoColor": "Farbe des Logos",
+    "letters": "Buchstaben (bis zu 4)",
+    "font": "Schrift",
+    "fontOpt": {
+      "sans": "Klar",
+      "bold": "Fett",
+      "italic": "Schnell (kursiv)",
+      "serif": "Klassisch (Serifen)",
+      "mono": "Technisch",
+      "wide": "Breit"
+    },
+    "upload": "Bild hochladen",
+    "uploadNote": "Nur ein Bild verwenden, das du selbst gemacht hast oder verwenden darfst (keine echten Airline-Logos). Es wird auf ein kleines Quadrat verkleinert, damit Spielstände klein bleiben.",
+    "imageLoaded": "Dein Bild ist auf dem Leitwerk. Lade ein anderes hoch, um es zu ersetzen.",
+    "titles": "Schriftzug",
+    "titlesOn": "Airline-Namen auf dem Rumpf zeigen",
+    "text": "Text",
+    "size": "Größe",
+    "sizeOpt": {
+      "s": "Klein",
+      "m": "Mittel",
+      "l": "Groß"
+    },
+    "position": "Position",
+    "positionOpt": {
+      "front": "Vorne",
+      "middle": "Mitte"
+    },
+    "titleColor": "Farbe des Schriftzugs",
+    "draw": "Freies Zeichnen",
+    "drawIntro": "Zeichne eigene Linien und Formen auf das Flugzeug: Zeichnen einschalten, dann mit Maus oder Finger auf der Vorschau zeichnen. Alles außerhalb des Flugzeugs wird abgeschnitten. Zeichnungen passen sich der Form des Flugzeugs an.",
+    "penColor": "Stiftfarbe",
+    "penWidth": "Stiftbreite: {{value}}",
+    "drawStart": "Zeichnen starten",
+    "drawStop": "Zeichnen beenden",
+    "undo": "Rückgängig",
+    "clear": "Zeichnung löschen",
+    "drawUsage": "{{strokes}} / {{max}} Striche · {{points}} / {{maxPoints}} Punkte",
+    "oldLivery": "Alte Lackierung",
+    "repaintNow": "Jetzt lackieren ({{price}}, {{days}} Tage)",
+    "repaintAtCheck": "Beim nächsten Check lackieren",
+    "repaintPlanned": "Neulackierung beim nächsten C- oder D-Check geplant.",
+    "inPaint": "Lackierhalle bis {{date}}",
+    "design": "Lackierungs-Designer",
+    "repaintAsk": "Jetzt für {{price}} neu lackieren? Das Flugzeug ist {{days}} Tage außer Dienst; seine Flüge fallen so lange aus.",
+    "repaint": "Lackieren"
   }
 }

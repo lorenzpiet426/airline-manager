@@ -274,7 +274,7 @@ Free account login, save slots synced across devices, time mode 3 with offline c
 Full aircraft database (all manufacturers, historical types), order books and delivery slots, used market,
 buy/sell/scrap, ageing and depreciation, A/B/C/D checks with downtime, technical failures, hangars, livery designer.
 Split (2026-10-28): **4.1** ✅ buy used, order new, sell/scrap, lease ends/extensions; **4.2** ✅ maintenance checks
-(planned by the game, movable by the player) + technical failures + ageing costs + own hangars + lease reserves; **4.3** livery designer;
+(planned by the game, movable by the player) + technical failures + ageing costs + own hangars + lease reserves; **4.3** ✅ livery designer;
 **4.4** historical types (together with Phase 5).
 
 ### Phase 5 — History and world events
@@ -432,6 +432,9 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-28 | 4.2: **realistic technical failures**: AOG hours to days, cancelled flights, EU 261 compensation, reputation hit | Owner choice |
 | 2026-10-28 | 4.2: **maintenance reserves** for leased aircraft (per flight hour; lessor pays heavy checks from them); owned aircraft pay checks themselves | Owner choice |
 | 2026-10-28 | 4.2: checks = 20 % of the old hourly maintenance cost (player's hourly cost lowered by that share); heavy checks capitalised and written off until due again | Keeps the 1.4 calibration; IFRS practice |
+| 2026-10-28 | 4.3: livery = **whole aircraft side view**, **patterns + colours plus free drawing** (strokes in a shared 1000×320 frame, clipped to the aircraft), logo = **symbol library, letters or uploaded picture** | Owner choice ("Patterns + colours, but also free draw"; logo "Both") |
+| 2026-10-28 | 4.3: **realistic repaint**: new aircraft come in the new livery, the fleet keeps the old one until repainted (cash + days, or with the next C/D-check without extra days) | Owner choice |
+| 2026-10-28 | 4.3: liveries stored per airline as a list (aircraft point to the one they wear); unused old ones set to null; default tail = solid colour | Small saves; white letters on a white sweep were invisible |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -789,6 +792,22 @@ education", forbid making the data available to others (§3 iii) and require a w
   Test Air" (local dev browser only): leased 737-800 on VIE–LHR, C-check moved, ran 10 days (lessor paid part from
   reserves), finished and back in service; phone 375 px without sideways scrolling; no console errors.
 - **Next:** 4.3 livery designer (or what the owner prefers).
+
+### 2026-10-28 — Session 13 (Phase 4.3: livery designer) ✅
+- Owner decisions: whole aircraft; patterns + colours **and** free drawing; symbol library + letters **and** picture
+  upload; realistic repaint (§7).
+- Engine `src/engine/livery.ts` (`Livery` in state: 3 colours, base, fuselage style + colour, tail style, engines,
+  logo, titles, strokes; `validateLivery` with size limits; `setLivery`, `repaint` now or `atCheck`, `repaintDone`,
+  `repaintWithCheck` (called when a heavy check starts), `paintOnDelivery`; repaints written off like refits).
+  `Airline.liveries`, `Aircraft.paint/paintUntil/repaintAtCheck`; `grounded` includes the paint shop. Save version 10.
+- UI: `#/livery` designer (`LiveryScreen`: sticky preview on any type, colours/base, 8 fuselage + 8 tail styles with
+  live mini previews, engine colour, logo symbol/letters/picture, titles, freehand drawing with pen colour/width,
+  undo/clear, save, "repaint all with next check"); `AircraftSide` (parametric side views for all 103 types),
+  `AircraftPaint` (fleet cards: aircraft in the livery it wears, "Old livery" + repaint now / with next check),
+  livery tail on fleet card heads and the Ops airline card, "Livery designer" button on Fleet, phone tab stays Fleet.
+- Tests: 130. Verified in browser: shapes (737, ATR 72, CRJ900, 787-9, 747-8, A380), chevron + cheatline + swallow
+  logo + drawing saved, fleet shows old livery, repaint now → "Paint shop until", phone 375 px without sideways scrolling.
+- **Next:** 4.4 historical aircraft types (with Phase 5), or what the owner prefers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

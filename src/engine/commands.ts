@@ -1,5 +1,6 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
+import { defaultLivery, repaint, setLivery, type LiveryError, type RepaintError } from './livery';
 import { getAircraftType } from '../data/aircraft';
 import { bookCurrencyFor } from '../data/currencies';
 import { registrationPattern } from '../data/registrations';
@@ -16,7 +17,7 @@ import { buyAircraft, cancelOrder, disposeAircraft, extendLease, orderAircraft, 
 import type { CabinStyle } from './cabins';
 import type { HangarSize } from '../data/maintenance';
 import { buildHangar, moveCheck, type MaintError } from './maintenance';
-import type { CabinLayout, ClassFares, Controller, GameState, Route } from './state';
+import type { Livery, CabinLayout, ClassFares, Controller, GameState, Route } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay, toDate, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
@@ -134,6 +135,18 @@ export interface ExtendLease {
   payload: { aircraftId: string; years: number };
 }
 
+/** Liveries (Phase 4.3): a new livery for the airline, repainting an aircraft now or with its next heavy check. */
+export interface SetLivery {
+  type: 'SetLivery';
+  airlineId: string;
+  payload: { livery: Livery };
+}
+export interface Repaint {
+  type: 'Repaint';
+  airlineId: string;
+  payload: { aircraftId: string; atCheck: boolean };
+}
+
 /** Maintenance (Phase 4.2): move the next heavy check, build an own hangar at the hub. */
 export interface MoveCheck {
   type: 'MoveCheck';
@@ -146,7 +159,7 @@ export interface BuildHangar {
   payload: { size: HangarSize };
 }
 
-export type Command = MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+export type Command = SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 export const MAX_FREQUENCY = 84;
@@ -181,6 +194,8 @@ export type CommandError =
   | CabinError
   | FleetError
   | MaintError
+  | LiveryError
+  | RepaintError
   | ScheduleError;
 
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError };
@@ -227,6 +242,10 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       state.options.timeMode = 'realclock';
       state.options.clockOffset = Math.max(0, state.time - command.payload.now);
       return { ok: true };
+    case 'SetLivery':
+      return setLivery(state, command.airlineId, command.payload.livery);
+    case 'Repaint':
+      return repaint(state, command.airlineId, command.payload.aircraftId, command.payload.atCheck);
     case 'MoveCheck':
       return moveCheck(state, world, command.airlineId, command.payload.aircraftId, command.payload.start);
     case 'BuildHangar':
@@ -272,6 +291,7 @@ function foundAirline(state: GameState, world: EngineWorld, p: FoundAirline['pay
   };
   state.finance[id] = newFinance(state.time);
   if (p.controller === 'human') state.reputation[id] = newReputation();
+  state.airlines[id]!.liveries = [defaultLivery(state.airlines[id]!.colors, name, p.iata.toUpperCase())];
   const capital = book(state, id, 'capital', startingCapital(state.fx, p.capitalEur, currency));
   postMessage(state, {
     airlineId: id,

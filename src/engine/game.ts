@@ -1,4 +1,5 @@
 // Creating a new game world.
+import { defaultLivery } from './livery';
 import { ensureMaint } from './maintenance';
 import { ECB_RATES, FX_DATE } from '../data/currencies';
 import { getAircraftType } from '../data/aircraft';
@@ -143,6 +144,12 @@ export function migrate(raw: unknown): GameState | null {
       for (const p of [fin.week, fin.month, ...fin.history, ...fin.months]) p.lines.disruption ??= 0;
     }
     state.version = 9;
+  }
+  if (state.version === 9) {
+    // Version 10 (Phase 4.3): every airline gets a livery from its two colours; its aircraft wear it.
+    for (const airline of Object.values(state.airlines)) airline.liveries ??= [defaultLivery(airline.colors, airline.name, airline.iata)];
+    for (const a of Object.values(state.aircraft)) if (a.status === 'active') a.paint ??= 0;
+    state.version = 10;
   }
   if (state.version !== SAVE_VERSION) return null;
   return state;

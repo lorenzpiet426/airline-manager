@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { AircraftSide } from '../livery/AircraftSide';
+import { currentLivery } from '../../engine/livery';
 import { useTranslation } from 'react-i18next';
 import { FlapBoard } from '../components/FlapBoard';
 import { Panel } from '../components/Panel';
-import { TailFin } from '../components/TailFin';
 import { SimControls } from '../components/SimControls';
 import { GameClock } from '../components/StatusBar';
 import { Dashboard } from '../game/Dashboard';
@@ -134,7 +135,9 @@ export function OpsScreen() {
 
         <Panel title={t('ops.airlineTitle')} code={`${airline.iata} / ${airline.icao}`}>
           <div className="airline-card">
-            <TailFin primary={airline.colors.primary} secondary={airline.colors.secondary} code={airline.iata} size={72} />
+            <a href={hrefFor('livery')} className="airline-card__tail" aria-label={t('livery.design')}>
+              <AircraftSide livery={currentLivery(airline)} typeId="A20N" crop="tail" className="fleet-tail" />
+            </a>
             <div className="airline-card__text">
               <span className="airline-card__name">{airline.name}</span>
               <span className="muted">

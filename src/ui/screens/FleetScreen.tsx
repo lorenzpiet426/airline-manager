@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
 import { Segmented } from '../components/Segmented';
 import { AircraftTimeline } from '../components/AircraftTimeline';
-import { TailFin } from '../components/TailFin';
 import { useEngineWorld } from '../game/useEngineWorld';
 import { pairsOfAircraft } from '../../engine/schedule';
 import { usePlayer } from '../game/usePlayer';
@@ -24,6 +23,7 @@ import { CabinEditor } from '../fleet/CabinEditor';
 import { cabinText } from '../fleet/cabinText';
 import { grounded, inRefit } from '../../engine/schedule';
 import { CheckFacts, MaintenanceChip, MaintenanceTab } from '../fleet/Maintenance';
+import { AircraftPaint, AircraftTail } from '../livery/AircraftPaint';
 import { Ownership } from '../fleet/Ownership';
 import { BuyUsed, OrderNew } from '../fleet/BuyAndOrder';
 import { FleetSummary } from '../fleet/FleetSummary';
@@ -33,7 +33,7 @@ type Filter = 'all' | AircraftCategory;
 
 /** In a check or grounded by a failure right now (the card shows a maintenance chip instead of the location). */
 const maintenanceChip = (game: GameState, a: Aircraft) =>
-  ((a.maint?.inCheck?.until ?? 0) > game.time) || (!!a.maint?.aog && game.time >= a.maint.aog.from && game.time < a.maint.aog.until);
+  ((a.maint?.inCheck?.until ?? 0) > game.time) || (a.paintUntil ?? 0) > game.time || (!!a.maint?.aog && game.time >= a.maint.aog.from && game.time < a.maint.aog.until);
 
 export function FleetScreen() {
   const { t } = useTranslation();
@@ -59,7 +59,12 @@ export function FleetScreen() {
 
   return (
     <div className="screen">
-      <h1 className="screen__title">{t('fleet.title')}</h1>
+      <div className="screen__head">
+        <h1 className="screen__title">{t('fleet.title')}</h1>
+        <a href={hrefFor('livery')} className="button button--small">
+          {t('livery.design')}
+        </a>
+      </div>
       <Segmented
         label={t('fleet.title')}
         value={tab}
@@ -120,7 +125,7 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
         return (
           <li key={aircraft.id} className="card">
             <div className="card__head">
-              <TailFin primary={airline.colors.primary} secondary={airline.colors.secondary} size={40} />
+              <AircraftTail airline={airline} aircraft={aircraft} />
               <div className="card__title">
                 <span className="card__reg mono">{aircraft.registration}</span>
                 <span className="muted">
@@ -139,6 +144,7 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
                 </span>
               )}
             </div>
+            <AircraftPaint game={game} airline={airline} aircraft={aircraft} />
             <CabinBar type={type} cabin={aircraft.cabin} compact />
             <dl className="facts facts--compact">
               <dt>{t('fleet.cabin')}</dt>

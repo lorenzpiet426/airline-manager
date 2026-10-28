@@ -15,7 +15,8 @@
     "new": "New airline",
     "airlines": "Airlines",
     "sources": "Data sources",
-    "saves": "Saves"
+    "saves": "Saves",
+    "livery": "Livery"
   },
   "status": {
     "sim": "SIM",
@@ -188,7 +189,11 @@
     "failure_one": "Technical problem on {{registration}}: grounded for about {{hours}} hours (until {{date}}). {{count}} flight cancelled, {{pax}} passengers affected; repair and compensation {{amount}}.",
     "failure_other": "Technical problem on {{registration}}: grounded for about {{hours}} hours (until {{date}}). {{count}} flights cancelled, {{pax}} passengers affected; repair and compensation {{amount}}.",
     "hangarOrdered": "Construction of a {{size}} at {{airport}} started: {{amount}} paid, ready on {{date}}.",
-    "hangarReady": "Your {{size}} at {{airport}} is ready: checks there from now on."
+    "hangarReady": "Your {{size}} at {{airport}} is ready: checks there from now on.",
+    "liveryChanged_one": "New livery saved. {{count}} aircraft keeps the old one until it is repainted.",
+    "liveryChanged_other": "New livery saved. {{count}} aircraft keep the old one until they are repainted.",
+    "repaintStarted": "{{registration}} is in the paint hangar until {{date}} ({{days}} days, {{amount}}).",
+    "repaintDone": "{{registration}} now wears your new livery."
   },
   "newGame": {
     "title": "Found your airline",
@@ -282,7 +287,12 @@
     "noCheckDue": "No check to plan.",
     "inCheck": "The aircraft is in the hangar for a check.",
     "notActive": "The aircraft isn't in service yet.",
-    "hangarExists": "A hangar of this size is already being built."
+    "hangarExists": "A hangar of this size is already being built.",
+    "liveryInvalid": "This livery can't be saved (an unknown setting).",
+    "imageTooBig": "The picture is too big, even after shrinking. Try a simpler picture.",
+    "drawingTooBig": "The drawing has too many lines. Undo some of them.",
+    "alreadyPainted": "This aircraft already wears your current livery.",
+    "inHangar": "The aircraft is in the hangar right now."
   },
   "fleet": {
     "title": "Fleet",
@@ -855,5 +865,128 @@
     "costNote": "Costs: A-checks are an expense of the day; C- and D-checks are written off until the same check is due again. Leased aircraft pay reserves to the lessor every flight hour, and the lessor pays the heavy checks from them. Technical failures happen more often on old aircraft and close to a check: flights are cancelled, passengers get compensation (EU 261) and rate you badly.",
     "days_one": "{{count}} day",
     "days_other": "{{count}} days"
+  },
+  "livery": {
+    "title": "Livery designer",
+    "intro": "Design how your aircraft look: colours, patterns for the fuselage and the tail, a logo, the titles and your own drawing on top. New aircraft arrive in the new livery; the ones already flying keep the old one until they are repainted.",
+    "toFleet": "Back to the fleet",
+    "previewLabel": "Your livery on a {{type}}",
+    "showOn": "Show on",
+    "save": "Save livery",
+    "discard": "Discard changes",
+    "saveHint_one": "Saving makes this your livery for new aircraft. Your {{count}} aircraft in service keeps the old one until it is repainted.",
+    "saveHint_other": "Saving makes this your livery for new aircraft. Your {{count}} aircraft in service keep the old one until they are repainted.",
+    "savedNotice": "Livery saved.",
+    "oldFleet_one": "{{count}} aircraft still wears an older livery. Repainting costs about {{price}} and {{days}} days in the paint hangar, or no extra days together with its next C- or D-check.",
+    "oldFleet_other": "{{count}} aircraft still wear an older livery. Repainting costs about {{price}} each and {{days}} days in the paint hangar, or no extra days together with their next C- or D-check.",
+    "allWithCheck": "Repaint all with their next check",
+    "allAtCheck_one": "{{count}} aircraft will be repainted during its next C- or D-check.",
+    "allAtCheck_other": "{{count}} aircraft will be repainted during their next C- or D-check.",
+    "colors": "Colours",
+    "slot": {
+      "p": "Primary",
+      "s": "Secondary",
+      "a": "Accent",
+      "w": "White",
+      "k": "Dark grey"
+    },
+    "base": "Fuselage base",
+    "baseOpt": {
+      "w": "White",
+      "grey": "Grey",
+      "metal": "Bare metal",
+      "p": "Primary"
+    },
+    "fuselage": "Fuselage",
+    "fuselageOpt": {
+      "plain": "Plain",
+      "cheatline": "Cheatline",
+      "belly": "Coloured belly",
+      "twoTone": "Coloured top",
+      "sweep": "Tail sweep",
+      "nose": "Coloured nose",
+      "stripes": "Stripes",
+      "full": "Fully coloured"
+    },
+    "fuselageColor": "Pattern colour",
+    "engines": "Engines",
+    "tail": "Tail",
+    "tailOpt": {
+      "solid": "Solid",
+      "split": "Split",
+      "stripes": "Stripes",
+      "chevron": "Chevron",
+      "band": "Band",
+      "sweep": "Sweep",
+      "disc": "Disc",
+      "gradient": "Gradient"
+    },
+    "logo": "Logo on the tail",
+    "logoOpt": {
+      "none": "None",
+      "symbol": "Symbol",
+      "letters": "Letters",
+      "image": "Picture"
+    },
+    "symbol": {
+      "bird": "Bird",
+      "swallow": "Swallow",
+      "star": "Star",
+      "globe": "Globe",
+      "arrow": "Arrow",
+      "wave": "Waves",
+      "crown": "Crown",
+      "sun": "Sun",
+      "leaf": "Leaf",
+      "mountain": "Mountain",
+      "diamond": "Diamond",
+      "wings": "Wings"
+    },
+    "logoColor": "Logo colour",
+    "letters": "Letters (up to 4)",
+    "font": "Font",
+    "fontOpt": {
+      "sans": "Clean",
+      "bold": "Bold",
+      "italic": "Fast (italic)",
+      "serif": "Classic (serif)",
+      "mono": "Technical",
+      "wide": "Wide"
+    },
+    "upload": "Upload a picture",
+    "uploadNote": "Only use a picture you made yourself or are allowed to use (no real airline logos). It is shrunk to a small square so saves stay small.",
+    "imageLoaded": "Your picture is on the tail. Upload another one to replace it.",
+    "titles": "Titles",
+    "titlesOn": "Show the airline name on the fuselage",
+    "text": "Text",
+    "size": "Size",
+    "sizeOpt": {
+      "s": "Small",
+      "m": "Medium",
+      "l": "Large"
+    },
+    "position": "Position",
+    "positionOpt": {
+      "front": "Front",
+      "middle": "Middle"
+    },
+    "titleColor": "Title colour",
+    "draw": "Free drawing",
+    "drawIntro": "Draw your own lines and shapes on the aircraft: switch drawing on, then draw on the preview with the mouse or your finger. Everything outside the aircraft is cut off. Drawings stretch with the aircraft shape.",
+    "penColor": "Pen colour",
+    "penWidth": "Pen width: {{value}}",
+    "drawStart": "Start drawing",
+    "drawStop": "Stop drawing",
+    "undo": "Undo",
+    "clear": "Clear drawing",
+    "drawUsage": "{{strokes}} / {{max}} strokes · {{points}} / {{maxPoints}} points",
+    "oldLivery": "Old livery",
+    "repaintNow": "Repaint now ({{price}}, {{days}} days)",
+    "repaintAtCheck": "Repaint with next check",
+    "repaintPlanned": "Repaint planned with the next C- or D-check.",
+    "inPaint": "Paint shop until {{date}}",
+    "design": "Livery designer",
+    "repaintAsk": "Repaint now for {{price}}? The aircraft is out of service for {{days}} days; its flights are cancelled meanwhile.",
+    "repaint": "Repaint"
   }
 }

@@ -2383,3 +2383,171 @@ a.button {
   display: grid;
   gap: 4px;
 }
+
+/* ─── Livery designer (4.3) ──────────────────────────────────────────────── */
+
+.livery {
+  display: grid;
+  gap: 16px;
+}
+
+.livery__preview {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.livery__side {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #8fb3d9 0%, #c9dcef 70%, #9aa7b4 70%, #8a96a3 100%);
+}
+
+.livery__side--draw {
+  cursor: crosshair;
+  touch-action: none;
+  outline: 2px dashed var(--magenta);
+  outline-offset: 2px;
+}
+
+.livery__type {
+  max-width: 280px;
+}
+
+.livery__controls {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  align-items: start;
+}
+
+.livery__controls .panel {
+  display: grid;
+  gap: 12px;
+}
+
+.style-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.style-chip {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.style-chip--on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  color: var(--text);
+}
+
+.style-chip__img {
+  width: 100%;
+  height: auto;
+}
+
+.style-chip__tail {
+  width: 56px;
+  height: 48px;
+}
+
+.symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 8px;
+}
+
+.symbol-chip {
+  display: grid;
+  place-items: center;
+  height: 48px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.symbol-chip svg {
+  width: 100%;
+  height: 100%;
+}
+
+.symbol-chip--on,
+.swatch--on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.input--color {
+  min-height: 44px;
+  padding: 4px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.fleet-side {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}
+
+.screen__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fleet-tail {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.airline-card__tail {
+  display: block;
+  flex: none;
+  width: 72px;
+  height: 72px;
+}
+
+.aircraft-paint {
+  display: grid;
+  gap: 6px;
+}
+
+.aircraft-paint__old {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}

@@ -4,7 +4,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 /** Real-time with speeds, turn-based weeks, or tied to the real clock (Phase 3: 1 game minute = 1 real minute). */
 export type TimeMode = 'realtime' | 'weekly' | 'realclock';
@@ -35,6 +35,44 @@ export interface Airline {
   currency: Currency;
   cash: Money;
   foundedAt: SimTime;
+  /**
+   * The airline's liveries, oldest first (Phase 4.3): the last one is current; aircraft not repainted yet keep an older
+   * one (their `paint`). Old liveries no aircraft wears any more are set to null to keep saves small.
+   */
+  liveries?: (Livery | null)[];
+}
+
+/** Colour of a livery part: one of the three livery colours, white or dark grey. */
+export type PaintSlot = 'p' | 's' | 'a' | 'w' | 'k';
+export type FuselageStyle = 'plain' | 'cheatline' | 'belly' | 'twoTone' | 'sweep' | 'nose' | 'stripes' | 'full';
+export type TailStyle = 'solid' | 'split' | 'stripes' | 'chevron' | 'band' | 'sweep' | 'disc' | 'gradient';
+export type LiveryFont = 'sans' | 'bold' | 'italic' | 'serif' | 'mono' | 'wide';
+
+/** A freehand stroke on the side view (coordinates in the 1000 × 320 drawing frame, x and y in turn). */
+export interface Stroke {
+  color: string;
+  width: number;
+  points: number[];
+}
+
+/** An airline livery (Phase 4.3): patterns and colours for every part, a logo, titles and an optional drawing layer. */
+export interface Livery {
+  /** Primary, secondary and accent colour (#rrggbb). */
+  colors: [string, string, string];
+  /** Colour of the fuselage under the patterns. */
+  base: 'w' | 'grey' | 'metal' | 'p';
+  fuselage: FuselageStyle;
+  fuselageColor: PaintSlot;
+  tail: TailStyle;
+  engines: PaintSlot;
+  logo:
+    | { kind: 'none' }
+    | { kind: 'symbol'; symbol: string; color: PaintSlot }
+    | { kind: 'letters'; text: string; font: LiveryFont; color: PaintSlot }
+    /** An uploaded picture, as a small data: URL (WebP or PNG). */
+    | { kind: 'image'; image: string };
+  titles: { text: string; font: LiveryFont; color: PaintSlot; size: 's' | 'm' | 'l'; position: 'front' | 'middle' } | null;
+  drawing: Stroke[];
 }
 
 export interface Lease {
@@ -163,6 +201,12 @@ export interface Aircraft {
   cabinDepreciation?: { perDay: number; until: SimTime };
   /** Checks, failures and reserves (Phase 4.2; set when the aircraft enters service). */
   maint?: MaintState;
+  /** The airline livery (index into `Airline.liveries`) the aircraft wears (Phase 4.3; set on delivery). */
+  paint?: number;
+  /** In the paint hangar until this time (flights are cancelled). */
+  paintUntil?: SimTime;
+  /** Repaint into the current livery during the next C- or D-check (no extra days). */
+  repaintAtCheck?: boolean;
 }
 
 /** A used aircraft for sale (Phase 4.1). */
@@ -370,7 +414,8 @@ export type ScheduledEvent =
   | { at: SimTime; seq: number; kind: 'refitDone'; aircraftId: string }
   | { at: SimTime; seq: number; kind: 'checkDone'; aircraftId: string }
   | { at: SimTime; seq: number; kind: 'failure'; aircraftId: string }
-  | { at: SimTime; seq: number; kind: 'hangarReady'; hangarId: string };
+  | { at: SimTime; seq: number; kind: 'hangarReady'; hangarId: string }
+  | { at: SimTime; seq: number; kind: 'repaintDone'; aircraftId: string };
 
 /** A line in the ops message log. The screen translates `kind` and fills in `params`. */
 export interface GameMessage {
@@ -387,7 +432,9 @@ export interface GameMessage {
     | 'ordered' | 'orderPayment' | 'orderCancelled' | 'bought' | 'sold' | 'scrapped' | 'leaseEnding' | 'leaseEnded' | 'leaseExtended'
     | 'leaseReturned'
     // Maintenance (Phase 4.2).
-    | 'checkPlanned' | 'checkMoved' | 'checkStarted' | 'checkDone' | 'aCheckGrounded' | 'failure' | 'hangarOrdered' | 'hangarReady';
+    | 'checkPlanned' | 'checkMoved' | 'checkStarted' | 'checkDone' | 'aCheckGrounded' | 'failure' | 'hangarOrdered' | 'hangarReady'
+    // Liveries (Phase 4.3).
+    | 'liveryChanged' | 'repaintStarted' | 'repaintDone';
   level: 'normal' | 'info' | 'caution' | 'warning';
   params: Record<string, string | number>;
 }
@@ -395,7 +442,7 @@ export interface GameMessage {
 export type LedgerKind =
   | 'capital' | 'leaseDeposit' | 'leaseRent' | 'refit'
   | 'orderPayment' | 'purchase' | 'sale' | 'leaseReturnFee' | 'depositBack'
-  | 'check' | 'repair' | 'compensation' | 'hangar';
+  | 'check' | 'repair' | 'compensation' | 'hangar' | 'repaint';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {

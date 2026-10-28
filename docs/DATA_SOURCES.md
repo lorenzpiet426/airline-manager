@@ -202,6 +202,18 @@ All values in `src/data/maintenance.ts` are **modelled** (typed in by hand, noth
   leaving the EU/EEA/CH/UK or flown by an airline from there; technical problems are no extraordinary circumstance
   (CJEU C-549/07 Wallentin-Hermann, 2008). Modelled: 50 % of passengers claim; care €40 (short) / €120 (overnight).
 
+## Liveries (Phase 4.3, 2026-10-28)
+- **Aircraft side views** (`src/ui/livery/AircraftSide.tsx`) are our own parametric SVG drawings: one frame for every
+  type, shaped by a few hand-entered features (fuselage proportion, engines under the wing / at the rear / propellers,
+  T-tail, four engines, 747 hump, A380 double deck). Not traced from photos or drawings.
+- **Logo symbols** (`src/ui/livery/symbols.ts`) are simple original shapes. Players may upload their own picture; the
+  game tells them to use only pictures they made or may use, and shrinks it to ≤ 160 px (WebP/PNG, ≤ 80 KB in the save).
+- **Fonts** for titles: IBM Plex Sans/Mono (SIL OFL, already bundled) and the device's serif font.
+- **Repaint costs** (modelled from MRO trade press): turboprop ≈ $60k / 4 days, regional $100k / 5 days, narrow-body
+  $200k / 7 days, wide-body ≈ $400k / 10 days (larger wide-bodies more); written off over 6 years like a cabin refit.
+  Repainting during a C/D-check needs no extra days.
+- Real airlines keep their approximated colours (no logos), as decided in §5b.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

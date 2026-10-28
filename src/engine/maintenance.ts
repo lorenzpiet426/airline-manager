@@ -4,6 +4,7 @@
 // by an MRO (maintenance company) or in the airline's own hangar. Leased aircraft pay maintenance reserves to the lessor,
 // who pays the heavy checks from them. Technical failures ground aircraft for hours or days: flights are cancelled,
 // passengers are compensated (EU 261) and the reputation suffers.
+import { repaintWithCheck } from './livery';
 import { getAircraftType, type AircraftType } from '../data/aircraft';
 import {
   careEur,
@@ -244,6 +245,8 @@ function startCheck(state: GameState, a: Aircraft, kind: 'A' | HeavyCheck, booke
     m.amort = { perDay: (paid + left) / Math.max(1, (until - today) / DAY), until };
   }
   m.inCheck = { kind, until: startOfDay(state.time) + offer.days * DAY, where: offer.where };
+  // A repaint waiting for this hangar visit is done at the same time.
+  if (kind !== 'A') repaintWithCheck(state, a);
   delete m.plan;
   schedule(state, { at: m.inCheck.until, kind: 'checkDone', aircraftId: a.id });
   if (kind !== 'A') {

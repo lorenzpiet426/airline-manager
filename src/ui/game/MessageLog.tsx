@@ -107,6 +107,13 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         const airport = world?.airportById.get(String(p.airport));
         return t('msg.hangarOrdered', { ...p, size: t(`maint.size.${p.size}`), airport: airport?.iata ?? p.airport, date: date(p.readyAt), amount: money(p) });
       }
+      // Liveries (Phase 4.3)
+      case 'liveryChanged':
+        return t('msg.liveryChanged', { count: Number(p.count) });
+      case 'repaintStarted':
+        return t('msg.repaintStarted', { ...p, date: date(p.until), amount: money(p) });
+      case 'repaintDone':
+        return t('msg.repaintDone', p);
       case 'hangarReady': {
         const airport = world?.airportById.get(String(p.airport));
         return t('msg.hangarReady', { size: t(`maint.size.${p.size}`), airport: airport?.iata ?? p.airport });

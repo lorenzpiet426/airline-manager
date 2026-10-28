@@ -34,6 +34,9 @@ export function MaintenanceChip({ game, aircraft }: { game: GameState; aircraft:
   if (m?.inCheck && m.inCheck.until > game.time) {
     return <span className="chip chip--caution">{t('fleet.inCheck', { check: m.inCheck.kind, date: formatGameDate(language, toDate(m.inCheck.until), false) })}</span>;
   }
+  if ((aircraft.paintUntil ?? 0) > game.time) {
+    return <span className="chip chip--caution">{t('livery.inPaint', { date: formatGameDate(language, toDate(aircraft.paintUntil!), false) })}</span>;
+  }
   if (m?.aog && game.time >= m.aog.from && game.time < m.aog.until) {
     return <span className="chip chip--warning">{t('fleet.aog', { date: formatGameDate(language, toDate(m.aog.until), false) })}</span>;
   }
