@@ -316,6 +316,8 @@ export interface RouteStats {
   rpk?: number;
   /** Block hours flown. */
   blockHours?: number;
+  /** Passengers who changed planes at the hub (Phase 6.1; missing in older periods). */
+  transfer?: number;
   /** Seats, passengers and revenue per cabin class (Phase 2 cabins; missing in older periods). */
   classes?: Partial<Record<CabinClass, ClassStats>>;
 }

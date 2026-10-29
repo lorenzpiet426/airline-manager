@@ -13,6 +13,7 @@ import type { Airport } from '../data/types';
 import { postMessage } from './core';
 import {
   aiRouteKey,
+  capacitySeason,
   competitorsOn,
   crewCostPerDayUsd,
   market,
@@ -21,11 +22,13 @@ import {
   totalCosts,
   WEEKLY_AVAILABLE_HOURS,
   type RouteContext,
+  type RouteCosts,
 } from './economics';
 import { haul, MODEL_REPUTATION, modelCabin, totalSeats } from './cabins';
 import { typicalRentUsd } from './market';
 import { fleetSize, type BusinessModel, type RealAirline } from './realAirlines';
 import { random } from './rng';
+import { networkChanged, realLegTransfers } from './transfers';
 import { plannedFlights } from './schedule';
 import type { AiRouteState, CabinLayout, GameState } from './state';
 import { MINUTES_PER_DAY, toDate, yearOf } from './time';
@@ -130,12 +133,14 @@ function typicalTypeOf(km: number, year: number): AircraftType | null {
 }
 
 /** The aircraft an airline would use: its most common type that can fly the distance. */
-function aircraftFor(airline: RealAirline, km: number, year: number): { type: AircraftType; seats: number } | null {
+export function aircraftFor(airline: RealAirline, km: number, year: number, seatsWanted: number | null = null): { type: AircraftType; seats: number } | null {
+  const seatsOf = (x: { f: (typeof airline.fleet)[number]; type: AircraftType }) => x.f.seats ?? x.type.seats.typical;
   const usable = airline.fleet
     .map((f) => ({ f, type: safeType(f.type) }))
     .filter((x): x is { f: (typeof airline.fleet)[number]; type: AircraftType } => !!x.type && !isFreighter(x.type) && x.type.rangeKm >= km * 1.05)
-    .sort((x, y) => y.f.inService - x.f.inService);
-  if (usable[0]) return { type: usable[0].type, seats: usable[0].f.seats ?? usable[0].type.seats.typical };
+    // The type closest in size to the aircraft measured on the route, else the most common one.
+    .sort((x, y) => (seatsWanted ? Math.abs(Math.log(seatsOf(x) / seatsWanted)) - Math.abs(Math.log(seatsOf(y) / seatsWanted)) : 0) || y.f.inService - x.f.inService);
+  if (usable[0]) return { type: usable[0].type, seats: seatsOf(usable[0]) };
   if (airline.modelled) {
     const type = typicalTypeOf(km, year);
     return type ? { type, seats: type.seats.typical } : null;
@@ -157,15 +162,38 @@ interface Evaluation {
   profit: number;
   revenue: number;
   loadFactor: number;
+  pax: number;
+  seats: number;
+  km: number;
+  flights: number;
+  costs: RouteCosts;
+  /** Crew and aircraft ownership (lease) for the hours flown. */
+  aircraftCosts: number;
 }
 
+/**
+ * How an airline type's costs differ from the network carriers' the cost model is built on (Phase 6.1, calibrated to
+ * Ryanair's and Wizz Air's annual reports): low-cost airlines use cheaper secondary airports and negotiate discounts,
+ * do much of their own handling, fly young aircraft and sell almost only on their own website.
+ */
+const COST_PROFILE: Record<BusinessModel, Partial<Record<keyof RouteCosts, number>>> = {
+  legacy: {},
+  regional: {},
+  charter: { distribution: 0.5, handling: 0.85 },
+  lowcost: { airport: 0.5, handling: 0.6, maintenance: 0.6, distribution: 0.2, service: 0.3 },
+};
+
 /** Weekly result of the airline on a route, including its aircraft costs (crew, lease). */
-function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A: Airport, B: Airport, weekly: number, fare: number, extra: RouteContext['extra'], date: Date, withChanges: boolean): Evaluation | null {
+export function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A: Airport, B: Airport, weekly: number, fare: number, extra: RouteContext['extra'], date: Date, withChanges: boolean): Evaluation | null {
   const km = market(world, A, B).distanceKm;
-  const ac = aircraftFor(airline, km, date.getUTCFullYear());
+  const ac = aircraftFor(airline, km, date.getUTCFullYear(), world.realAirlines?.observedSeatsPerFlight(A.id, B.id) ?? null);
   const conditions = conditionsOf(state, world);
   if (!ac || weekly <= 0) return null;
+  // The frequencies are the summer schedule; quiet months see fewer flights.
+  weekly *= capacitySeason(A, B, date);
   const cabin = airlineCabin(ac.type, airline.model, km, ac.seats);
+  // Network airlines also carry passengers changing planes at their hub (Phase 6.1).
+  const transfer = realLegTransfers(world, airline, A.id, B.id, withChanges ? state.ai : undefined);
   const w = routeWeek(
     world,
     A,
@@ -174,13 +202,15 @@ function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A:
     date,
     // Both sums (today and the real starting point) see the same world (fuel, recessions, pandemics), so an AI airline
     // compares like with like and only reacts to the competition.
-    { ai: withChanges ? state.ai : undefined, exclude: airline.id, extra, brand: { reputation: MODEL_REPUTATION[airline.model], awareness: 1 }, conditions },
+    { ai: withChanges ? state.ai : undefined, exclude: airline.id, extra, brand: { reputation: MODEL_REPUTATION[airline.model], awareness: 1 }, conditions, transfer: [transfer, transfer] },
   );
   const ownPerBlockHour =
     ((crewCostPerDayUsd(world, ac.type, ac.seats, airline.country ?? 'US') * conditions.levels.costs) * 7 + (typicalRentUsd(ac.type, 10, date.getUTCFullYear()) * 12) / 52) /
     (WEEKLY_AVAILABLE_HOURS[ac.type.category] * 0.75);
-  const profit = w.revenue - totalCosts(w.costs) - w.blockHours * ownPerBlockHour;
-  return { margin: profit / Math.max(1, w.revenue), profit, revenue: w.revenue, loadFactor: w.loadFactor };
+  const profile = COST_PROFILE[airline.model];
+  const costs = Object.fromEntries(Object.entries(w.costs).map(([k, v]) => [k, v * (profile[k as keyof RouteCosts] ?? 1)])) as unknown as RouteCosts;
+  const profit = w.revenue - totalCosts(costs) - w.blockHours * ownPerBlockHour;
+  return { margin: profit / Math.max(1, w.revenue), profit, revenue: w.revenue, loadFactor: w.loadFactor, pax: w.pax, seats: w.seats, km, flights: w.flights, costs, aircraftCosts: w.blockHours * ownPerBlockHour };
 }
 
 /** The airline type's usual cabin on this aircraft, with the seat total from its fleet list where known. */
@@ -270,7 +300,11 @@ export function aiDailyStep(state: GameState, world: EngineWorld): void {
   };
   const day = Math.floor(state.time / MINUTES_PER_DAY) % REVIEW_CYCLE_DAYS;
   for (const airline of [...real.byId.values()].sort((x, y) => x.id.localeCompare(y.id))) {
-    if (dayOf(airline.id) === day) reviewAirline(ctx, airline);
+    if (dayOf(airline.id) === day) {
+      reviewAirline(ctx, airline);
+      // Its routes, frequencies or survival may have changed: transfer passengers at its hubs follow (Phase 6.1).
+      networkChanged(state.ai, airline.id);
+    }
   }
   if (toDate(state.time).getUTCDate() === 1) watchPlayerRoutes(ctx);
 }
@@ -479,5 +513,6 @@ function watchPlayerRoutes(ctx: Ctx): void {
     const pair = A.id < B.id ? `${A.id}|${B.id}` : `${B.id}|${A.id}`;
     state.ai.added[pair] = [...new Set([...(state.ai.added[pair] ?? []), entrant.id])];
     message(ctx, 'aiEnter', true, { airline: entrant.name, from: code(ctx, A.id), to: code(ctx, B.id), value: weekly });
+    networkChanged(state.ai, entrant.id);
   }
 }

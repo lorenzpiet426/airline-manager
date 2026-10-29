@@ -8,6 +8,7 @@ import { fuelUsdPerKg, INTO_PLANE_USD_PER_GAL, jetFuelSpot, KG_PER_GALLON } from
 import type { Conditions } from './worldEvents';
 import type { Airport } from '../data/types';
 import { distanceKm, greatCirclePoints } from './geo';
+import { realTransfersOn, type LegTransfers } from './transfers';
 import type { BusinessModel, SourceTag } from './realAirlines';
 import {
   abreast,
@@ -142,6 +143,9 @@ export interface Market {
   connectingFlights: number;
 }
 
+/** Appeal of a one-stop connection compared with a non-stop flight at the same price (Phase 6.1 calibration: with 1,
+ * routes with one daily non-stop lost half their measured travellers to connections). */
+const CONNECTING_PULL = 0.5;
 /** One-stop connections compete more on long routes (a stop costs little extra time) than on short ones. */
 const connectingEquivalent = (km: number) => 2 + 4 * Math.min(1, km / 3000);
 
@@ -150,21 +154,28 @@ const wealth = (world: EngineWorld, a: Airport) =>
 
 const marketPeople = (a: Airport) => Math.max(a.marketPop, a.size === 'large' ? LARGE_AIRPORT_FLOOR : 0) / 1e6;
 
-export function market(world: EngineWorld, a: Airport, b: Airport): Market {
-  const km = Math.max(distanceKm(a, b), 50);
+/** Travellers per year between two airports (both directions) by the gravity model: people, wealth, tourism, distance. */
+export function gravityAnnualPax(world: EngineWorld, a: Airport, b: Airport, km = Math.max(distanceKm(a, b), 50)): number {
   const tourism = ((1 + world.tourismIntensity(a.country)) * (1 + world.tourismIntensity(b.country))) ** TOURISM_EXP;
-  const annualPax =
+  return (
     DEMAND_K *
     (marketPeople(a) * marketPeople(b) * tourism) ** POP_EXP *
     (wealth(world, a) * wealth(world, b)) ** WEALTH_EXP *
     (km / 1000) ** -DISTANCE_EXP /
-    (1 + (GROUND_KM / km) ** GROUND_EXP);
+    (1 + (GROUND_KM / km) ** GROUND_EXP)
+  );
+}
+
+export function market(world: EngineWorld, a: Airport, b: Airport): Market {
+  const km = Math.max(distanceKm(a, b), 50);
+  const annualPax = gravityAnnualPax(world, a, b, km);
   // Where real passenger numbers were measured (Eurostat, summer), they replace the model's estimate: they include
   // package holidays and transfer passengers the model misses. Summer weeks are busier than the yearly average.
   const observed = world.realAirlines?.observedWeeklyPax(a.id, b.id) ?? null;
-  // About a quarter of them change planes at a hub on the way: a point-to-point airline can't win those (until hub
-  // connections arrive in Phase 7), so only the local share counts.
-  const weeklyPax = observed !== null ? (observed * LOCAL_SHARE) / SUMMER_AVERAGE_SEASON : annualPax / 52 / 2;
+  // Some of them change planes at a hub on the way (Phase 6.1): those belong to the hub airlines' networks (see
+  // transfers.ts), so only the local travellers count as this market.
+  const local = observed !== null ? Math.max(observed * MIN_LOCAL_SHARE, observed - realTransfersOn(world, a.id, b.id)) : 0;
+  const weeklyPax = observed !== null ? (local * MEASURED_DEMAND_FACTOR) / SUMMER_AVERAGE_SEASON : annualPax / 52 / 2;
   const businessShare = Math.min(0.4, Math.max(0.1, 0.1 + 0.15 * Math.min(wealth(world, a), wealth(world, b))));
   // Who serves this market today? Typical aircraft size grows with distance; ~80 % of seats filled.
   const typicalSeats = km < 1500 ? 150 : km < 4000 ? 190 : 280;
@@ -186,8 +197,14 @@ export function market(world: EngineWorld, a: Airport, b: Airport): Market {
 // traffic patterns: holidaymakers peak in July/August, business travellers dip in August and at Christmas.
 /** Average season factor of the months April–September (the Eurostat S24 window), to turn summer numbers into a yearly average. */
 const SUMMER_AVERAGE_SEASON = 1.12;
-/** Share of measured route passengers who travel only this route (the rest are hub transfers). */
-const LOCAL_SHARE = 0.75;
+/** At least this share of the measured passengers on a route are local travellers, however big the hubs at its ends. */
+const MIN_LOCAL_SHARE = 0.45;
+/**
+ * Measured passengers are what the airlines carried at their fares and times; the choice model loses some travellers
+ * to price, connections via other hubs and full flights. This brings the totals back to the measured ones when the
+ * real airlines fly their real schedules (Phase 6.1 calibration, see docs/DATA_SOURCES.md).
+ */
+const MEASURED_DEMAND_FACTOR = 1.15;
 const LEISURE_SEASON = [0.75, 0.8, 0.9, 1.0, 1.05, 1.15, 1.3, 1.3, 1.1, 1.0, 0.8, 0.85];
 const BUSINESS_SEASON = [0.95, 1.05, 1.1, 1.05, 1.05, 1.0, 0.85, 0.75, 1.05, 1.1, 1.1, 0.9];
 
@@ -205,10 +222,24 @@ export function seasonFactor(a: Airport, b: Airport, businessShare: number, date
   return businessShare * BUSINESS_SEASON[month]! + (1 - businessShare) * leisure;
 }
 
+/**
+ * Other airlines' flights this month relative to their summer schedule (the frequencies in the data): airlines fly
+ * fewer flights in quiet months, though not as many fewer as passengers (Phase 6.1).
+ */
+export function capacitySeason(a: Airport, b: Airport, date: Date): number {
+  const m = (wealth: number) => Math.min(0.4, Math.max(0.1, 0.1 + 0.15 * wealth));
+  return Math.min(1.15, (seasonFactor(a, b, m(1), date) / SUMMER_AVERAGE_SEASON) ** CAPACITY_SEASON_EXP);
+}
+/** How strongly capacity follows the seasons (1 = as strongly as demand). */
+const CAPACITY_SEASON_EXP = 0.8;
+
+/** Weekly flights of a real route that the official statistics should show but don't (see competitorsOn). */
+const THIN_ROUTE_WEEKLY = 3;
+
 // ─── Real competitors (Phase 2.1a) ───────────────────────────────────────────────
 
 /** Typical fare level of each airline type relative to the market fare. */
-export const MODEL_FARE: Record<BusinessModel, number> = { legacy: 1.05, lowcost: 0.75, regional: 1.0, charter: 0.85 };
+export const MODEL_FARE: Record<BusinessModel, number> = { legacy: 1.05, lowcost: 0.6, regional: 1.0, charter: 0.85 };
 
 export interface Competitor {
   airlineId: string;
@@ -264,9 +295,13 @@ export function competitorsOn(
   const list = [...base, ...added];
   if (!list.length) return [];
   const typicalSeats = m.distanceKm < 1500 ? 150 : m.distanceKm < 4000 ? 190 : 280;
-  const needed = m.weeklyPax / (typicalSeats * 0.8);
+  // Frequencies are the summer schedule, like the official ones (the winter one is smaller, see capacitySeason).
+  const needed = (m.weeklyPax * SUMMER_AVERAGE_SEASON) / (typicalSeats * 0.8);
+  // Routes at airports Eurostat measures that are missing there didn't fly in the measured summer: new routes since,
+  // winter-only routes or outdated lists. They get a thin schedule (Phase 6.1).
+  const unmeasured = real.measuredAt(from.id) || real.measuredAt(to.id);
   const modelled = (seasonal: boolean, charter: boolean) =>
-    Math.max(1, Math.round(((needed / list.length) * (seasonal ? 0.5 : 1) * (charter ? 0.5 : 1)) * 2) / 2);
+    Math.max(1, Math.min(unmeasured ? THIN_ROUTE_WEEKLY : Infinity, Math.round(((needed / list.length) * (seasonal ? 0.5 : 1) * (charter ? 0.5 : 1)) * 2) / 2));
   const result: Competitor[] = [];
   for (const c of list) {
     if (ai?.airlines[c.airline.id]?.status === 'bankrupt') continue;
@@ -426,6 +461,8 @@ export interface RouteWeek {
   season: number;
   pax: number;
   loadFactor: number;
+  /** Of the passengers, those changing planes at the hub (Phase 6.1). */
+  transferPax: number;
   /** Your economy fare (USD). */
   fareUsd: number;
   revenue: number;
@@ -477,6 +514,8 @@ export interface RouteContext {
   checksSeparate?: boolean;
   /** The world's state (Phase 5.1): fuel price, traffic growth, recessions and pandemics. Default: the real 2026 data. */
   conditions?: Conditions;
+  /** Transfer passengers at the calculated airline's hub (Phase 6.1), per direction (0 = from → to). */
+  transfer?: readonly [LegTransfers | null, LegTransfers | null];
 }
 
 /** Cruise speed assumed for other airlines' jets when generating their timetables. */
@@ -575,6 +614,13 @@ function bestClass(
   return best;
 }
 
+/** The cabin's class closest to the one wanted: the same, else the next lower one, else the lowest there is. */
+function nearestClass(cabin: readonly CabinSection[], wanted: CabinClass): CabinClass {
+  const have = cabin.filter((s) => s.seats > 0).map((s) => CLASS_INDEX[s.cls]);
+  const lower = have.filter((x) => x >= CLASS_INDEX[wanted]).sort((x, y) => x - y)[0];
+  return CLASSES[lower ?? Math.max(...have)]!;
+}
+
 const NEUTRAL_BRAND: Brand = { reputation: START_REPUTATION, awareness: 1 };
 
 /** Forecast of one week on a route (both directions), in USD, flight by flight and class by class. */
@@ -613,8 +659,9 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
       speed: Math.min(1, jetBlock / blockHours(f.type, m.distanceKm)) ** 2,
     };
   });
-  // Demand per flight, weekday and class (F, J, W, Y).
+  // Demand per flight, weekday and class (F, J, W, Y), and the part of it that are transfer passengers.
   const demand = timetable.map(() => Array.from({ length: 7 }, () => [0, 0, 0, 0]));
+  const transferDemand = timetable.map(() => Array.from({ length: 7 }, () => [0, 0, 0, 0]));
 
   for (const dir of [0, 1] as const) {
     const A = ends[dir];
@@ -623,6 +670,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     // themselves, month by month, see ai.ts) or, without real airline data, "invisible incumbents" that are assumed to
     // match about half of any price cut right away.
     const competitors = competitorsOn(world, A, B, undefined, ctx.ai)?.filter((c) => c.airlineId !== ctx.exclude) ?? null;
+    const capSeason = capacitySeason(A, B, date);
     const relative = (x: number) => (!competitors && x < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - x) : x);
     type Other = { dep: number; arr: number; weight: number; fare: (cls: CabinClass) => number; speed: number; group: string; days?: number; cabin: CabinLayout; brand: Brand };
     const others: Other[] = [];
@@ -630,8 +678,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
       for (const c of competitors) {
         const cabin = competitorCabin(c.model, longHaul);
         const brand = { reputation: MODEL_REPUTATION[c.model], awareness: 1 };
-        // Competitors' capacity grows with the market over the years.
-        const weekly = c.weekly * (cond?.growth(A, B) ?? 1);
+        // Competitors' capacity grows with the market over the years and follows the seasons.
+        const weekly = c.weekly * (cond?.growth(A, B) ?? 1) * capSeason;
         for (const d of competitorDepartures(world, c.airlineId, A, B, weekly, time)) others.push({ ...d, fare: () => c.fareFactor, speed: 1, group: c.airlineId, cabin, brand });
       }
     } else {
@@ -690,7 +738,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
                 return { dep: o.dep, arr: o.arr, pull: theirs[j]! * o.speed * theirBrand[j]!, weight: o.weight, group: o.group };
               }),
             ];
-            shares = dayShares(options, segment, longHaul, m.connectingFlights / 7, 1);
+            shares = dayShares(options, segment, longHaul, m.connectingFlights / 7, CONNECTING_PULL);
             cache.set(key, shares);
           }
           const world5 = cond ? cond.growth(A, B) * cond.demand(A, B, segment) : 1;
@@ -698,6 +746,30 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
           today.forEach((k, n) => {
             demand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;
           });
+        }
+      }
+    }
+
+    // Transfer passengers connect to the airline's own flights only, spread over the day's flights in this direction.
+    const tr = ctx.transfer?.[dir];
+    if (tr && tr.pax > 0) {
+      const world5 = cond ? cond.growth(A, B) * cond.demand(A, B, 'leisure') : 1;
+      for (let day = 0; day < 7; day++) {
+        if (!hasDay(days, day)) continue;
+        const today = mineIdx.filter((i) => hasDay(timetable[i]!.days, day));
+        if (!today.length) continue;
+        const perFlight = ((tr.pax / 7) * season * plan.rampUp * world5) / today.length;
+        for (const segment of ['business', 'leisure'] as const) {
+          const segShare = segment === 'business' ? biz : 1 - biz;
+          for (const wanted of CLASSES) {
+            const n = perFlight * segShare * classDemandShare(segment, wanted, t);
+            if (n <= 0) continue;
+            for (const i of today) {
+              const cls = nearestClass(timetable[i]!.cabin, wanted);
+              demand[i]![day]![CLASS_INDEX[cls]]! += n;
+              transferDemand[i]![day]![CLASS_INDEX[cls]]! += n;
+            }
+          }
         }
       }
     }
@@ -712,6 +784,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   let flights = 0;
   let seats = 0;
   let pax = 0;
+  let transferPax = 0;
   let revenue = 0;
   let totalDemand = 0;
   let block = 0;
@@ -739,14 +812,18 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         }
         const factor = myFactor(s.cls);
         const fareUsd = marketFare(s.cls) * factor;
+        // Transfer passengers pay their share of the through fare (usually less than a local fare on this leg).
+        const transferShare = d > 0 ? transferDemand[i]![day]![CLASS_INDEX[s.cls]]! / d : 0;
+        const paid = fareUsd * (1 - transferShare + transferShare * (ctx.transfer?.[f.dir]?.yield ?? 1));
         const c = (byClass[s.cls] ??= { seats: 0, pax: 0, demand: 0, revenue: 0, marketFareUsd: marketFare(s.cls), fareUsd });
         c.seats += seatsToday;
         c.pax += p;
         c.demand += d;
-        c.revenue += p * fareUsd;
+        c.revenue += p * paid;
+        transferPax += p * transferShare;
         result.seats += seatsToday;
         result.pax += p;
-        revenue += p * fareUsd;
+        revenue += p * paid;
         totalDemand += d;
         costs.service += p * serviceCostUsd(s.cls, t) * lv.costs;
         // What these passengers will tell others: their seat, the aircraft's age, the price and how full it was.
@@ -785,6 +862,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     demand: totalDemand,
     season,
     pax,
+    transferPax,
     loadFactor: seats > 0 ? pax / seats : 0,
     fareUsd: marketFare('Y') * myFactor('Y'),
     revenue,

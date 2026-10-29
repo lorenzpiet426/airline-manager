@@ -20,6 +20,7 @@ export function mergePnl(target: PnlPeriod, src: PnlPeriod): void {
     if (s.ask !== undefined) t.ask = (t.ask ?? 0) + s.ask;
     if (s.rpk !== undefined) t.rpk = (t.rpk ?? 0) + s.rpk;
     if (s.blockHours !== undefined) t.blockHours = (t.blockHours ?? 0) + s.blockHours;
+    if (s.transfer !== undefined) t.transfer = (t.transfer ?? 0) + s.transfer;
     for (const [cls, c] of Object.entries(s.classes ?? {}) as [CabinClass, ClassStats][]) {
       const tc = ((t.classes ??= {})[cls] ??= { seats: 0, pax: 0, revenue: 0 });
       tc.seats += c.seats;

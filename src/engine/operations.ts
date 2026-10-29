@@ -1,5 +1,6 @@
 // Daily operations and accounting: every day at 00:00 UTC each route earns its ticket revenue and
 // pays its costs, crews are paid and lease costs accrue. Monday closes last week's profit-and-loss report.
+import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
 import { currencyChangeStep } from './books';
@@ -86,7 +87,8 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!plan || !from || !to || !airline) continue;
     const rep = state.reputation[airline.id];
     const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
-    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday });
+    const transfer = routeTransfers(world, state, route);
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer: [transfer, transfer] });
     if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
     const lines = dayOf(airline.id).lines;
@@ -105,6 +107,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     stats.ask = (stats.ask ?? 0) + week.seats * route.distanceKm;
     stats.rpk = (stats.rpk ?? 0) + week.pax * route.distanceKm;
     stats.blockHours = (stats.blockHours ?? 0) + week.blockHours;
+    stats.transfer = (stats.transfer ?? 0) + week.transferPax;
     stats.revenue += week.revenue * k;
     for (const [cls, c] of Object.entries(week.byClass) as [CabinClass, ClassResult][]) {
       const sc = ((stats.classes ??= {})[cls] ??= { seats: 0, pax: 0, revenue: 0 });

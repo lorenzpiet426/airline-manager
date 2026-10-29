@@ -246,6 +246,8 @@ export function fromParts(
   airlines: RealAirline[],
   routesBy: Map<string, RealRoute[]>,
   observedWeeklyPax: RealAirlines['observedWeeklyPax'],
+  observedSeatsPerFlight: RealAirlines['observedSeatsPerFlight'] = () => null,
+  measured: ReadonlySet<string> = new Set(),
 ): RealAirlines {
   const byId = new Map(airlines.map((a) => [a.id, a]));
   const byPair = new Map<string, RealRoute[]>();
@@ -266,6 +268,8 @@ export function fromParts(
     byId,
     routesOf: (id) => routesBy.get(id) ?? [],
     observedWeeklyPax,
+    observedSeatsPerFlight,
+    measuredAt: (airport) => measured.has(airport),
     routesAt: (airport) => byAirport.get(airport) ?? [],
     on(from, to) {
       const [a, b] = from < to ? [from, to] : [to, from];

@@ -288,6 +288,9 @@ Phase 5 complete.
 ### Phase 6 — Real airlines and the Austrian Airlines takeover
 Real airlines as AI with real fleets/networks per era and recognizable colors; **detailed Austrian Airlines
 takeover scenario at VIE** (multiple start years); fictional startups appearing in real-airline mode.
+Split (2026-10-29): **6.1** ✅ calibrate the real airlines to their real numbers + transfer passengers at hubs;
+**6.2** Austrian takeover today (as CEO; Lufthansa Group airlines are partners); **6.3** real airlines in past years
+(real names, hubs, colours, era fleets; modelled routes); **6.4** Austrian in past years + fictional startups.
 
 ### Phase 7 — Hubs and detailed scheduling
 Connecting traffic and O&D flows through hubs, connection waves (timetables themselves come in step 2.2),
@@ -455,6 +458,11 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 5.3: **real airports per year** (12 replaced airports shown as the old one, Tempelhof/Schönefeld closing with routes moving to BER, 104 later airports hidden before opening) | Owner choice |
 | 2026-10-29 | 5.3: prices = 2025 dollars × US CPI ratio; fares additionally × a real fare level (4.2× in 1975 → 1 from 2019), own operating costs × that level^0.8; fuel and maintenance per type unchanged | Keeps realistic margins in every decade (calibration test) |
 | 2026-10-29 | 5.3: game options carry `startYear` (unset for today's games); no save version change; worlds are cached per year/airport change | Old saves unaffected |
+| 2026-10-29 | Phase 6 order: **calibrate first** (6.1), then Austrian takeover today (6.2), real airlines in past years (6.3), Austrian in the past + fictional startups (6.4) | Owner choice; before 6.1 every real airline lost 30–80 % of revenue in the model |
+| 2026-10-29 | Takeover **both ways**: as Austrian's CEO in a scenario (6.2), and buying airlines later with the stock market (Phase 10) | Owner choice |
+| 2026-10-29 | Running Austrian: the **Lufthansa Group airlines are partners** (no attacks, feed, codeshares) | Owner choice (realistic) |
+| 2026-10-29 | Past years: **real airlines that existed then with modelled routes** (real hubs, colours, era fleets) | Owner choice; open data has almost no old route networks |
+| 2026-10-29 | 6.1: transfer passengers at hubs (network airlines + the player), measured route passengers split into local + transfer, smaller winter schedules, route-sized aircraft, thin unmeasured routes ≤ 3/week, low-cost fares 60 % + low-cost cost profile, connections half as attractive | Calibrated to Austrian 2024, Vienna Airport 2024 and Ryanair FY25 (docs/DATA_SOURCES.md) |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -916,6 +924,29 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: modelled networks are today's geography scaled down (not real old networks); one world price level for wages and
   fees; Ukrainian airports missing in all years.
 - **Next:** Phase 6 (real airlines per era + Austrian Airlines takeover) — or what the owner prefers.
+
+### 2026-10-29 — Session 18 (Phase 6.1: real airlines calibrated, transfer passengers) ✅
+- Owner decisions: calibrate first, takeover both ways, Lufthansa Group partners, real airlines with modelled routes in
+  the past (§7). Phase 6 split into 6.1–6.4 (§4).
+- Diagnosis: with real networks the model gave Austrian/Lufthansa/Ryanair/Wizz load factors of 16–34 % and big losses.
+  Passenger totals were already close to reality (Austrian 14.7 m, Ryanair 195 m); capacity and costs were wrong.
+- `src/engine/transfers.ts`: `transferTable` (pairs of a hub's destinations, gravity × detour × non-stop share, shared
+  with competing hubs via `hubsServing`, long-journey boost, prorated yields; caches per pair and per network),
+  `realLegTransfers` (memo per AI state, `networkChanged` bumps an airline's revision after each review/entry),
+  `realTransfersOn` (measured passengers minus real transfers = local market), `routeTransfers`/`playerHubLegs` (player).
+  `routeWeek` takes `ctx.transfer` (demand added to own flights only, paid at the prorated yield) and returns
+  `transferPax`; `RouteStats.transfer` (optional, no save change). `market()` uses measured − transfers (≥ 45 %) × 1.15;
+  `gravityAnnualPax` extracted; `capacitySeason`; thin unmeasured routes ≤ 3/week (`RealAirlines.measuredAt`);
+  `observedSeatsPerFlight` → `aircraftFor(…, seatsWanted)`; `MODEL_FARE.lowcost` 0.6; `COST_PROFILE` per business model in
+  the AI's sums; `CONNECTING_PULL` 0.5; long-haul time windows. `evaluate` exported (with pax/seats/km/flights/costs).
+- UI: planner forecast "Changing planes at your hub" (count + share), route cards show last week's transfer passengers,
+  Data sources lists the annual reports used for calibration (EN/DE).
+- Tests: 165 (new `calibration.test.ts`: Austrian passengers/LF/margin, Ryanair LF/fare/margin, Austrian transfers per
+  flight, no connections for low-cost). AI one-year test ≈ 6.5 s locally (limit 25 s).
+- Result table in `docs/DATA_SOURCES.md`: Austrian margin ≈ +3 % after overheads (real 3.1 %), Ryanair LF 0.83 / +14 %,
+  Lufthansa LF 0.81. Known: Austrian's LF 0.62 (aircraft slightly too large in the model), BA long-haul weak (UK routes
+  not measured), a small startup still loses money.
+- **Next:** 6.2 Austrian takeover today (play as Austrian's CEO with its real fleet, network, finances; LH Group partners).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

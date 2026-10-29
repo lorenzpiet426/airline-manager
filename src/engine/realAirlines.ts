@@ -57,6 +57,10 @@ export interface RealAirlines {
   on(from: string, to: string): { airline: RealAirline; weekly: number | null; seasonal: boolean; charter: boolean }[];
   /** Passengers per week measured on this route in this direction (Eurostat, summer season), or null. */
   observedWeeklyPax(from: string, to: string): number | null;
+  /** True when Eurostat measured this airport's routes (so a route missing there didn't fly in the measured season). */
+  measuredAt(airport: string): boolean;
+  /** Average seats per flight measured on this route in this direction (all airlines, Eurostat), or null. */
+  observedSeatsPerFlight(from: string, to: string): number | null;
   /** All real-world routes touching an airport (any airline). */
   routesAt(airport: string): readonly RealRoute[];
 }
@@ -68,7 +72,7 @@ interface AirlinesJson { airlines: { id: string; name: string; iata: string | nu
 interface NetworksJson { season: string; airlines: { id: string; hubs: string[]; bases: string[]; routes: Omit<RealRoute, 'airline'>[] }[] }
 interface DetailsJson { airlines: { id: string; model: BusinessModel; fleet: FleetLine[] }[] }
 interface RegistersJson { aircraft: Record<string, [string, string, number | null][]> }
-interface EurostatJson { routes: { from: string; to: string; weeklyPax: number }[] }
+interface EurostatJson { routes: { from: string; to: string; weeklyPax: number; weeklySeats?: number; weeklyFlights?: number }[] }
 
 export function buildRealAirlines(
   airlines: AirlinesJson,
@@ -78,6 +82,9 @@ export function buildRealAirlines(
   eurostat?: EurostatJson,
 ): RealAirlines {
   const observed = new Map((eurostat?.routes ?? []).filter((r) => r.weeklyPax > 0).map((r) => [`${r.from}>${r.to}`, r.weeklyPax]));
+  const seatsPerFlight = new Map(
+    (eurostat?.routes ?? []).filter((r) => (r.weeklyFlights ?? 0) > 0 && (r.weeklySeats ?? 0) > 0).map((r) => [`${r.from}>${r.to}`, r.weeklySeats! / r.weeklyFlights!]),
+  );
   const detail = new Map(details.airlines.map((d) => [d.id, d]));
   const byId = new Map<string, RealAirline>();
   const routesBy = new Map<string, RealRoute[]>();
@@ -106,5 +113,5 @@ export function buildRealAirlines(
     });
     routesBy.set(net.id, net.routes.map((r) => ({ ...r, airline: net.id })));
   }
-  return fromParts(networks.season, [...byId.values()], routesBy, (from, to) => observed.get(`${from}>${to}`) ?? null);
+  return fromParts(networks.season, [...byId.values()], routesBy, (from, to) => observed.get(`${from}>${to}`) ?? null, (from, to) => seatsPerFlight.get(`${from}>${to}`) ?? null, new Set((eurostat?.routes ?? []).map((r) => r.from)));
 }

@@ -353,6 +353,73 @@ fuel week and the ECB rates) the game uses the real data and real events (Phase 
 - **EU 261** compensation only from 17 Feb 2005; care for passengers (meals, hotels) always.
 - **Real clock** only for games starting today.
 
+## Real airlines calibrated, transfer passengers (Phase 6.1, 2026-10-29)
+
+**Why:** before 6.1, the real airlines flying their real networks filled only 16–34 % of their seats and lost 30 %
+(summer) to 80 % (winter) of their revenue. Austrian, Lufthansa, Ryanair and Wizz Air all lost money. Causes found:
+
+- Transfer passengers were missing.
+- Every route used the airline's most common aircraft.
+- The summer schedule ran all year.
+- Thin modelled routes got far too many flights.
+- Low-cost cost structures were missing.
+- One-stop connections were too attractive.
+
+**Calibration targets** (facts from published reports, used only to check the totals):
+
+| Airline | Real figure | Source |
+|---|---|---|
+| Austrian Airlines 2024 | 14.6 m passengers, load factor 81.3 %, revenue €2,457 m, adjusted EBIT €76 m (3.1 %) | [Lufthansa Group annual report 2024, Austrian segment](https://report.lufthansagroup.com/2024/annual-report/en/combined-management-report/business-segments/passenger-airlines-business-segment/austrian-airlines/), [Austrian press release](https://www.austrianairlines.ag/en/?p=9126) |
+| Vienna Airport 2024 | 31.7 m passengers, 6.76 m transfer passengers (≈ 46 % of Austrian's passengers, as Austrian carries almost all of them) | [Flughafen Wien traffic results 2024](https://www.viennaairport.com/jart/prj3/va/uploads/data-uploads/IR/2025/PAX_24_Outlook_25_EN.pdf) |
+| Ryanair FY25 (Apr 2024–Mar 2025) | 200 m passengers, load factor 94 %, revenue €13.95 bn, operating costs €12.39 bn (≈ 11 % margin) | [Ryanair FY25 results](https://investor.ryanair.com/wp-content/uploads/2025/05/FY25-Ryanair-Results.pdf) |
+
+**Model changes:**
+
+- **Transfer passengers** (`src/engine/transfers.ts`):
+  - For every pair of destinations of a network airline (`legacy`) at its hub, the gravity-model travellers between them connect there if the detour is small. The detour is free up to 15 % longer than flying direct; nobody connects from 80 % longer.
+  - The share is 50 % of all such travellers when no non-stop flight exists, 8 % when one does.
+  - That share is split with every other hub that connects the same pair, weighted by each hub's detour.
+  - Pairs closer than 300 km don't count (they go by train or car).
+  - Legs flown less than daily connect fewer passengers (× √(weekly/7)).
+  - Long journeys count more (× (km/2000)^1.1, up to × 6): the gravity model was fitted on short routes.
+  - Scaled by 0.07, so Austrian at Vienna carries ≈ 60 transfer passengers per flight. Real: ≈ 118 passengers per flight (Eurostat) × 46 %.
+  - Transfer passengers pay their share of the through fare by distance flown (prorate), usually 65–75 % of a local fare.
+  - They only fly the airline's own flights.
+  - Low-cost and charter airlines sell no connections.
+  - The player connects passengers at their own hub with the same model. A few European routes give only a handful a week; it is the breadth of a network that brings them.
+- **Measured demand:** the passengers Eurostat measured on a route are now split into transfer passengers (those the real hub airlines' networks would carry) and local travellers.
+  - Local travellers are what remains, at least 45 % of the measured passengers.
+  - They are multiplied by 1.15, because the choice model loses some travellers to price, connections and full flights.
+  - Before 6.1 the local part was a flat 75 % of the measured passengers.
+- **One-stop connections via other hubs** appeal half as much as a non-stop flight at the same price. With full appeal, a route with one daily non-stop lost half its travellers.
+- **Long-haul travellers** have wider time windows (business ±3 h, leisure ±6 h): they plan around the few flights there are.
+- **Aircraft size:** an AI airline uses the type in its fleet closest to the average seats per flight Eurostat measured on the route. Before, it always used its most common type.
+- **Winter schedule:** the frequencies in the data are the summer schedule (S24). In other months airlines fly (season ÷ 1.12)^0.8 of them, at most 15 % more in the peak. Frequencies from the demand model are now summer frequencies too.
+- **Thin routes:** a route listed on Wikipedia that touches an airport Eurostat measures, but has no Eurostat flights, didn't fly in summer 2024. It is a newer route, a winter-only route or an outdated entry, and gets at most 3 flights a week (`modelled`). Before, Ryanair and Wizz Air had 30–60 % more flights than in reality.
+- **Low-cost fares and costs:**
+  - Fares are 60 % of the market fare (was 75 %).
+  - Cost profile per business model: low-cost airlines pay 50 % airport fees, 60 % handling and maintenance, 20 % distribution and 30 % in-flight service. They use secondary airports, discounts, their own handling, young fleets and their own website.
+  - Charter airlines pay 50 % distribution and 85 % handling.
+  - This applies to the AI airlines. Business models for the player come in Phase 11.
+
+**Result** (one year of 2025 conditions, real networks, before overheads; `src/engine/calibration.test.ts` keeps it in range):
+
+| Airline | Load factor | Revenue per passenger | Margin | Real |
+|---|---|---|---|---|
+| Austrian | 0.62 | $176 | +6 % (≈ +3 % after overheads) | LF 0.81, EBIT 3.1 %, 14.6 m pax (model 14.1 m) |
+| Lufthansa | 0.81 | $250 | +10 % | LF ≈ 0.82 |
+| British Airways | 0.72 | $217 | 0 % | — (UK routes not in Eurostat, so long-haul frequencies are modelled) |
+| Ryanair | 0.83 | $86 | +14 % | LF 0.94, ≈ 11 %, 200 m pax (model 203 m) |
+| Wizz Air | 0.80 | $85 | +14 % | LF 0.91, $86 revenue per pax |
+| easyJet | 0.88 | $90 | +15 % | LF ≈ 0.90 |
+
+Months follow reality: Austrian loses money in winter (January −1 %) and earns in summer (+9 %). Austrian's load factor
+is too low because the model gives it slightly larger aircraft than it really flies (175 seats per flight vs ≈ 150).
+Its revenue, passengers and margin match.
+
+**Effect on the player:** a Vienna startup does a little better than before, but still loses money with a small
+network (the real airlines now fill their planes as in reality, so a newcomer must win passengers from them).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

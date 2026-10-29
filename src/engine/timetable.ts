@@ -59,6 +59,12 @@ const WINDOW_H: Record<Segment, { window: number; fade: number }> = {
   business: { window: 1, fade: 1.5 },
   leisure: { window: 3, fade: 3 },
 };
+/** Long-haul travellers plan their trip around the few flights there are (Phase 6.1): much wider windows. */
+const WINDOW_LONG_H: Record<Segment, { window: number; fade: number }> = {
+  business: { window: 3, fade: 4 },
+  leisure: { window: 6, fade: 6 },
+};
+const windowOf = (segment: Segment, longHaul: boolean) => (longHaul ? WINDOW_LONG_H : WINDOW_H)[segment];
 
 /** Demand by day of the week (Monday first): business peaks Monday/Thursday/Friday, leisure Friday–Sunday. */
 const WEEKDAY: Record<Segment, number[]> = {
@@ -76,8 +82,8 @@ function arrivalQuality(arrLocal: number, longHaul: boolean): number {
 }
 
 /** How appealing a departure `minutesAway` from the wished time is (1 inside the window). */
-function displacement(segment: Segment, minutesAway: number): number {
-  const { window, fade } = WINDOW_H[segment];
+function displacement(segment: Segment, minutesAway: number, longHaul: boolean): number {
+  const { window, fade } = windowOf(segment, longHaul);
   const h = minutesAway / 60;
   return h <= window ? 1 : Math.max(0.05, Math.exp(-(h - window) / fade));
 }
@@ -109,7 +115,7 @@ export function dayShares(options: readonly DayOption[], segment: Segment, longH
   for (const o of options) groups.set(o.group, (groups.get(o.group) ?? 0) + o.weight);
   const base = options.map((o) => o.pull * o.weight * arrivalQuality(o.arr, longHaul) * Math.max(1, groups.get(o.group)!) ** FREQUENCY_BONUS);
   // A connection is available at any time but counts like a few flights spread evenly over the day.
-  const { window, fade } = WINDOW_H[segment];
+  const { window, fade } = windowOf(segment, longHaul);
   const connecting = connectingPull * connectingPerDay ** (1 + FREQUENCY_BONUS) * ((2 * window + 2 * fade) / 24);
   const shares = options.map(() => 0);
   const u = options.map(() => 0);
@@ -120,7 +126,7 @@ export function dayShares(options: readonly DayOption[], segment: Segment, longH
     let sum = connecting;
     for (let i = 0; i < options.length; i++) {
       const d = Math.abs(options[i]!.dep - wished);
-      u[i] = base[i]! * displacement(segment, Math.min(d, 1440 - d));
+      u[i] = base[i]! * displacement(segment, Math.min(d, 1440 - d), longHaul);
       sum += u[i]!;
     }
     for (let i = 0; i < options.length; i++) shares[i]! += (p * u[i]!) / sum;

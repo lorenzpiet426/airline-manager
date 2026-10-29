@@ -52,6 +52,7 @@ import { sendCommand } from '../../game/store';
 import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
+import { routeTransfers } from '../../engine/transfers';
 
 /** Load factor colours (ECAM logic): green good, amber weak, red poor. */
 export const lfClass = (lf: number) => (lf >= 0.75 ? 'text--normal' : lf >= 0.55 ? 'text--caution' : 'text--warning');
@@ -220,6 +221,14 @@ function RouteCard({ game, airline, route, onEdit }: { game: GameState; airline:
                 {formatNumber(language, (stats.pax / Math.max(1, stats.seats)) * 100)} % {t('network.lfShort')}
               </span>
             </dd>
+            {stats.transfer !== undefined && stats.pax > 0 && (
+              <>
+                <dt>{t('network.transferPax')}</dt>
+                <dd className="mono">
+                  {formatNumber(language, Math.round(stats.transfer))} · {formatNumber(language, (stats.transfer / stats.pax) * 100)} %
+                </dd>
+              </>
+            )}
             {stats.classes && Object.keys(stats.classes).length > 1 && (
               <>
                 <dt>{t('network.classLf')}</dt>
@@ -320,7 +329,10 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     const date = toDate(game.time);
     const rep = game.reputation[airline.id];
     const conditions = conditionsOf(game, engineWorld);
+    // Passengers connecting between your own flights at the hub, with this route as planned (Phase 6.1).
+    const transfer = routeTransfers(engineWorld, sim, simRoute);
     const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, {
+      transfer: [transfer, transfer],
       ai: game.ai,
       brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
       checksSeparate: true,
@@ -552,6 +564,10 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                 {formatNumber(language, w.loadFactor * 100)} % {t('network.lfShort')}
               </span>
             </dd>
+            <FactRow
+              label={`· ${t('network.transferPax')}`}
+              value={`${formatNumber(language, Math.round(w.transferPax))} · ${formatNumber(language, w.pax > 0 ? (w.transferPax / w.pax) * 100 : 0)} %`}
+            />
             {Object.keys(w.byClass).length > 1 &&
               CLASSES.filter((cls) => w.byClass[cls]).map((cls) => {
                 const c = w.byClass[cls]!;

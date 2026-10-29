@@ -44,11 +44,12 @@ const aiMessages = (state: GameState, kind: string) => state.messages.filter((m)
 describe('AI airlines react by type (2.1b)', () => {
   it('a low-cost airline matches and undercuts a price cut', () => {
     expect(competitorsOn(world, ap('LOWW'), ap('LGAV'))!.some((c) => c.airlineId === 'RYR')).toBe(true);
-    const { state } = startup('LGAV', 14, 0.7);
+    // Ryanair's usual fares are 60 % of the market fare: a startup at 55 % is cheaper still.
+    const { state } = startup('LGAV', 14, 0.55);
     advance(state, world, simTime(2026, 2, 5)); // every airline has had one monthly review
     const ryanair = state.ai.routes[aiRouteKey('RYR', 'LOWW', 'LGAV')]!;
-    expect(ryanair.fare).toBeLessThanOrEqual(0.7);
-    expect(ryanair.fare).toBeGreaterThanOrEqual(0.65);
+    expect(ryanair.fare).toBeLessThanOrEqual(0.55);
+    expect(ryanair.fare).toBeGreaterThanOrEqual(0.5);
     expect(aiMessages(state, 'aiFare').some((m) => m.params.airline === 'Ryanair')).toBe(true);
   });
 
@@ -90,8 +91,8 @@ describe('AI airlines react by type (2.1b)', () => {
     expect(bankrupt).toBeLessThan(15);
     expect(Object.values(state.ai.routes).filter((r) => r.added).length).toBeGreaterThan(100); // airlines grow
     expect(JSON.stringify(state).length).toBeLessThan(1_500_000);
-    // ≈ 4.5 s on a laptop; GitHub's small build machine runs other test files at the same time.
-    expect(seconds).toBeLessThan(18);
+    // ≈ 6.5 s on a laptop (transfer passengers since 6.1); GitHub's small build machine runs other test files at the same time.
+    expect(seconds).toBeLessThan(25);
   }, 60_000);
 
   it('is deterministic', () => {
