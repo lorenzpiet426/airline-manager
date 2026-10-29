@@ -90,7 +90,8 @@ describe('AI airlines react by type (2.1b)', () => {
     expect(bankrupt).toBeLessThan(15);
     expect(Object.values(state.ai.routes).filter((r) => r.added).length).toBeGreaterThan(100); // airlines grow
     expect(JSON.stringify(state).length).toBeLessThan(1_500_000);
-    expect(seconds).toBeLessThan(10);
+    // ≈ 4.5 s on a laptop; GitHub's small build machine runs other test files at the same time.
+    expect(seconds).toBeLessThan(18);
   }, 60_000);
 
   it('is deterministic', () => {

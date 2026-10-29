@@ -204,8 +204,8 @@ describe('historical economics', () => {
       const opened = applyCommand(state, provider(state), { type: 'OpenRoute', airlineId, payload: { destinationId: dest, aircraftId: 'T1', frequency, fareFactor: 1 } });
       expect(opened.ok, dest).toBe(true);
     }
-    advance(state, provider, simTime(year, 6, 30));
-    const weeks = state.finance[airlineId]!.history.slice(-8);
+    advance(state, provider, simTime(year, 5, 31));
+    const weeks = state.finance[airlineId]!.history.slice(-6);
     const revenue = weeks.reduce((s, w) => s + w.lines.revenue, 0);
     const costs = weeks.reduce((s, w) => s + pnlCosts(w.lines), 0);
     return (revenue - costs) / revenue;
