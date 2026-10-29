@@ -88,10 +88,13 @@ export const cabinLengthIn = (type: AircraftType): number => Math.ceil(type.seat
 export const rowsOf = (type: AircraftType, s: Pick<CabinSection, 'product' | 'seats'>): number =>
   Math.ceil(s.seats / Math.max(1, abreast(type, s.product)));
 
+/** A divider (bulkhead, galley or closet) behind a class; European business only has a movable curtain. */
+const dividerIn = (s: Pick<CabinSection, 'product'>): number => (s.product === 'euro' ? 0 : CLASS_DIVIDER_IN);
+
 /** Inches the layout takes (rows × pitch, plus dividers between classes). */
 export function usedLengthIn(type: AircraftType, cabin: CabinLayout): number {
   const sections = cabin.filter((s) => s.seats > 0);
-  return sections.reduce((sum, s) => sum + rowsOf(type, s) * s.pitch, 0) + CLASS_DIVIDER_IN * Math.max(0, sections.length - 1);
+  return sections.reduce((sum, s, i) => sum + rowsOf(type, s) * s.pitch + (i < sections.length - 1 ? dividerIn(s) : 0), 0);
 }
 
 export const totalSeats = (cabin: CabinLayout): number => cabin.reduce((sum, s) => sum + s.seats, 0);
@@ -164,10 +167,26 @@ export function standardCabin(type: AircraftType, style: CabinStyle): CabinLayou
 /** Adds as many economy rows at `pitch` as fit behind the premium cabins (within the exit limit). */
 export function fillEconomy(type: AircraftType, front: CabinLayout, pitch: number): CabinLayout {
   const y = economyAbreast(type);
-  const used = usedLengthIn(type, front) + (front.length ? CLASS_DIVIDER_IN : 0);
+  const used = usedLengthIn(type, front) + (front.length ? dividerIn(front[front.length - 1]!) : 0);
   const byLength = Math.floor((cabinLengthIn(type) - used) / pitch) * y;
   const seats = Math.max(0, Math.min(byLength, type.seats.max - totalSeats(front)));
   return seats > 0 ? [...front, { cls: 'Y', product: 'economy', pitch, seats }] : front;
+}
+
+/**
+ * Makes a layout fit the cabin, keeping the premium cabins: economy pitch down to 29", then economy rows dropped
+ * (premium rows only when no economy is left). Real counts include seats blocked in European business, so the
+ * sellable seats come out a little lower.
+ */
+export function fitCabin(type: AircraftType, cabin: CabinLayout): CabinLayout {
+  const fits = (c: CabinLayout) => usedLengthIn(type, c) <= cabinLengthIn(type);
+  if (fits(cabin)) return cabin;
+  const c = cabin.map((s) => (s.cls === 'Y' ? { ...s, pitch: Math.min(s.pitch, 29) } : { ...s }));
+  for (const s of [...c].reverse()) {
+    const row = s.cls === 'Y' ? economyAbreast(type) : abreast(type, s.product);
+    while (!fits(c) && s.seats > row) s.seats -= row;
+  }
+  return c;
 }
 
 /** An all-economy layout with exactly `seats` seats at the most generous pitch that fits (older saves, AI aircraft). */

@@ -16,7 +16,7 @@ export function CabinBar({ type, cabin, compact }: { type: AircraftType; cabin: 
   return (
     <div className={`cabin-bar${compact ? ' cabin-bar--compact' : ''}`} role="img" aria-label={t('cabin.barLabel', { layout: label })}>
       {cabin.map((s, i) => {
-        const inches = rowsOf(type, s) * s.pitch + (i > 0 ? CLASS_DIVIDER_IN : 0);
+        const inches = rowsOf(type, s) * s.pitch + (i > 0 && cabin[i - 1]!.product !== 'euro' ? CLASS_DIVIDER_IN : 0);
         return (
           <span key={s.cls} className={`cabin-bar__part cls-bg--${s.cls}`} style={{ width: `${(inches / scale) * 100}%` }} title={`${t(`cabin.class.${s.cls}`)} · ${s.seats} · ${s.pitch}″`}>
             {!compact && inches / scale > 0.07 && (

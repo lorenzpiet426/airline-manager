@@ -24,7 +24,7 @@ import {
   type RouteContext,
   type RouteCosts,
 } from './economics';
-import { haul, MODEL_REPUTATION, modelCabin, totalSeats } from './cabins';
+import { fitCabin, haul, MODEL_REPUTATION, modelCabin, totalSeats } from './cabins';
 import { typicalRentUsd } from './market';
 import { fleetSize, type BusinessModel, type RealAirline } from './realAirlines';
 import { random } from './rng';
@@ -219,7 +219,7 @@ export function airlineCabin(type: AircraftType, model: RealAirline['model'], km
   const premium = totalSeats(cabin.filter((s) => s.cls !== 'Y'));
   const y = cabin.find((s) => s.cls === 'Y');
   if (!y || seats <= premium || seats > type.seats.max) return cabin;
-  return cabin.map((s) => (s === y ? { ...s, seats: seats - premium } : s));
+  return fitCabin(type, cabin.map((s) => (s === y ? { ...s, seats: seats - premium } : s)));
 }
 
 /** The player's flights on a route, as competitors for the AI. */

@@ -4,7 +4,7 @@ import { defaultLivery } from './livery';
 import { ensureMaint } from './maintenance';
 import { ECB_RATES, FX_DATE } from '../data/currencies';
 import { getAircraftType } from '../data/aircraft';
-import { DEFAULT_CLASS_FARES, economyCabin, standardCabin, totalSeats } from './cabins';
+import { DEFAULT_CLASS_FARES, economyCabin, fitCabin, standardCabin, totalSeats } from './cabins';
 import { schedule } from './core';
 import { awarenessTarget, newReputation } from './reputation';
 import { refreshMarket } from './market';
@@ -170,5 +170,13 @@ export function migrate(raw: unknown): GameState | null {
     state.version = 11;
   }
   if (state.version !== SAVE_VERSION) return null;
+  // Repair (6.2 fix): taken-over aircraft got their real seat counts in cabins too long for the aircraft.
+  for (const a of Object.values(state.aircraft)) {
+    const fitted = fitCabin(getAircraftType(a.typeId), a.cabin);
+    if (fitted !== a.cabin) {
+      a.cabin = fitted;
+      a.seats = totalSeats(fitted);
+    }
+  }
   return state;
 }

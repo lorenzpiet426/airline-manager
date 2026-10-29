@@ -11,10 +11,12 @@ import type { Airport, Country } from '../data/types';
 import { advance } from './advance';
 import { applyCommand } from './commands';
 import { aiRouteKey, competitorsOn } from './economics';
-import { createGame } from './game';
+import { createGame, migrate } from './game';
 import { buildRealAirlines } from './realAirlines';
 import { pairsOfRoute, validateSpecs } from './schedule';
 import { simTime } from './time';
+import { validateCabin } from './cabins';
+import { getAircraftType } from '../data/aircraft';
 import { buildEngineWorld } from './world';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
@@ -40,6 +42,10 @@ describe('taking over Austrian Airlines (6.2)', () => {
     expect(fleet.filter((a) => a.status === 'active')).toHaveLength(real.byId.get('AUA')!.registered.length);
     expect(fleet.filter((a) => a.status === 'delivering')).toHaveLength(17);
     expect(fleet.some((a) => a.registration === 'OE-LBI')).toBe(true);
+    // Every cabin fits its aircraft, with about Austrian's real seat counts (Austrian A320: 174 incl. blocked business seats).
+    for (const a of fleet) expect(validateCabin(getAircraftType(a.typeId), a.cabin), `${a.registration} ${a.typeId}`).toBeNull();
+    // Real A320: 174 seats, of which ~10 middle seats are blocked in business → ~164 to sell.
+    expect(fleet.find((a) => a.typeId === 'A320')!.seats).toBeGreaterThan(155);
     // Every active aircraft flies; every route's timetable is valid.
     for (const a of fleet.filter((x) => x.status === 'active')) expect(Object.values(state.flights).some((p) => p.aircraftId === a.id)).toBe(true);
     const routes = Object.values(state.routes);
@@ -51,6 +57,16 @@ describe('taking over Austrian Airlines (6.2)', () => {
     expect(airline.partners).toEqual(expect.arrayContaining(['DLH', 'SWR', 'BEL', 'EWG', 'EDW']));
     // Austrian no longer flies as an AI airline: the player's flights are the supply.
     expect(competitorsOn(world, ap('LOWW'), ap('EGLL'), undefined, state.ai)!.some((c) => c.airlineId === 'AUA')).toBe(false);
+  });
+
+  it('repairs cabins that are too long in saves from before the fix', () => {
+    const { state } = austrian();
+    const a = Object.values(state.aircraft).find((x) => x.typeId === 'A320')!;
+    a.cabin = [{ cls: 'J', product: 'euro', pitch: 31, seats: 20 }, { cls: 'Y', product: 'economy', pitch: 30, seats: 154 }];
+    const loaded = migrate(JSON.parse(JSON.stringify(state)))!;
+    const fixed = loaded.aircraft[a.id]!;
+    expect(validateCabin(getAircraftType('A320'), fixed.cabin)).toBeNull();
+    expect(fixed.seats).toBe(fixed.cabin.reduce((s, c) => s + c.seats, 0));
   });
 
   it('runs realistically: about break-even in the first winter month', () => {

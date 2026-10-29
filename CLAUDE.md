@@ -975,6 +975,10 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: ~2.1 s per simulated month for the large network (fine for turn-based/real time, slower when fast-forwarding);
   some aircraft are lightly used by the generated timetable; Austrian's routes from Innsbruck/Klagenfurt not included
   (hub-only routes until Phase 7); no board/targets yet (Phase 10).
+- **Fix (owner report):** taken-over cabins were too long (real seat counts put into the model cabin without a length
+  check). `fitCabin` (economy pitch down to 29", then economy rows dropped, premium kept) in `airlineCabin`; no divider
+  behind European business (movable curtain); old saves repaired on load (`migrate`). Austrian A320 now J20 Y142
+  (real 174 incl. blocked middle seats). Tests: 169.
 - **Next:** 6.3 real airlines in past years (real names, hubs, colours, era fleets; modelled routes).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
