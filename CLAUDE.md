@@ -289,7 +289,7 @@ Phase 5 complete.
 Real airlines as AI with real fleets/networks per era and recognizable colors; **detailed Austrian Airlines
 takeover scenario at VIE** (multiple start years); fictional startups appearing in real-airline mode.
 Split (2026-10-29): **6.1** ✅ calibrate the real airlines to their real numbers + transfer passengers at hubs;
-**6.2** Austrian takeover today (as CEO; Lufthansa Group airlines are partners); **6.3** real airlines in past years
+**6.2** ✅ Austrian takeover today (as CEO; Lufthansa Group airlines are partners); **6.3** real airlines in past years
 (real names, hubs, colours, era fleets; modelled routes); **6.4** Austrian in past years + fictional startups.
 
 ### Phase 7 — Hubs and detailed scheduling
@@ -462,6 +462,10 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | Takeover **both ways**: as Austrian's CEO in a scenario (6.2), and buying airlines later with the stock market (Phase 10) | Owner choice |
 | 2026-10-29 | Running Austrian: the **Lufthansa Group airlines are partners** (no attacks, feed, codeshares) | Owner choice (realistic) |
 | 2026-10-29 | Past years: **real airlines that existed then with modelled routes** (real hubs, colours, era fleets) | Owner choice; open data has almost no old route networks |
+| 2026-10-29 | 6.2: **Detailed timetable generated** on the real fleet (Simple can't put several aircraft on a route) | Owner choice |
+| 2026-10-29 | 6.2: **money and ownership modelled** (most aircraft owned, A320neo/787 group leases, E195 leases ending 2027–28, 17 A320neo-family group leases coming, €350 m cash) | Owner choice; Austrian's balance sheet sits in the LH Group pool |
+| 2026-10-29 | 6.2: **partners = no attacks + feed** (LH Group by Wikidata parent + LHX + ITA) | Owner choice |
+| 2026-10-29 | 6.2: **takeover starts today** (any time mode); summer-2024 frequencies scaled to the season, holiday-island routes rest in winter | Owner choice |
 | 2026-10-29 | 6.1: transfer passengers at hubs (network airlines + the player), measured route passengers split into local + transfer, smaller winter schedules, route-sized aircraft, thin unmeasured routes ≤ 3/week, low-cost fares 60 % + low-cost cost profile, connections half as attractive | Calibrated to Austrian 2024, Vienna Airport 2024 and Ryanair FY25 (docs/DATA_SOURCES.md) |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
@@ -947,6 +951,31 @@ education", forbid making the data available to others (§3 iii) and require a w
   Lufthansa LF 0.81. Known: Austrian's LF 0.62 (aircraft slightly too large in the model), BA long-haul weak (UK routes
   not measured), a small startup still loses money.
 - **Next:** 6.2 Austrian takeover today (play as Austrian's CEO with its real fleet, network, finances; LH Group partners).
+- Owner confirmed: 6.1 tried.
+
+### 2026-10-29 — Session 19 (Phase 6.2: Austrian Airlines takeover today) ✅
+- Owner decisions (all recommended): Detailed pre-planned timetable, modelled money/ownership, partners = no attacks + feed,
+  start today (§7).
+- `src/data/takeovers.ts` (scenario facts per real airline: cash, build years, leases, incoming group aircraft, partners,
+  livery); `src/engine/takeover.ts` (`takeOver`: airline with `realId` + `partners`, register fleet with cabins/ownership/
+  maintenance, incoming leases, reputation, AI status `player`; network from the hub with season-scaled frequencies,
+  holiday-island routes resting in winter; timetable generator `placeUnit` (widebody/narrowbody, size fit to Eurostat
+  seats, earliest free time, route spacing, weekly hours, overlap-free); established routes/aircraft (no ramp-up)).
+  Command `TakeOverAirline`; worker/store `startNewGame` accept it. `AiAirlineState.status` 'player' (treated as not flying
+  by competitorsOn/transfers/AI); AI ctx `partners` (no price/defence reactions, no entries, no new routes on the player's
+  pairs). Transfers: `transferTable(…, self, feed)` (partner spokes feed, only own legs earn), `routeTransfers` uses
+  `realId` as self, partner feed cached per day. Messages `takenOver`, `takeoverRoutes`.
+- UI: wizard "New game" with Scenario panel (startup / Take over Austrian Airlines), takeover panel (hub, register fleet by
+  type, coming aircraft, routes, cash, partners, notes), scheduling fixed to Detailed, start today; Airlines screen marks the
+  airline you run. German texts use "du" (fixed the "Sie" ones from 6.1 too).
+- Tests: 168 (`takeover.test.ts`: fleet/routes/valid timetable/cash/partners/AUA not an AI competitor; November margin
+  −12…+12 %, > 600k pax, > 25 % transfer; Lufthansa doesn't follow a deep price cut to FRA, no partner entries).
+- Verified in browser: takeover from the wizard (124 routes, 68 + 17 aircraft, €350m), first week €46.3m revenue,
+  218k pax, +0.7 % margin, CASK 8.18 c; Network/Fleet screens; phone 375 px without sideways scrolling; no console errors.
+- Known: ~2.1 s per simulated month for the large network (fine for turn-based/real time, slower when fast-forwarding);
+  some aircraft are lightly used by the generated timetable; Austrian's routes from Innsbruck/Klagenfurt not included
+  (hub-only routes until Phase 7); no board/targets yet (Phase 10).
+- **Next:** 6.3 real airlines in past years (real names, hubs, colours, era fleets; modelled routes).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

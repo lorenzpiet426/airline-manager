@@ -161,7 +161,7 @@ const api = {
   },
 
   /** Creates a new world and founds the player's airline in it. */
-  async newGame(options: NewGameOptions, founding: Extract<Command, { type: 'FoundAirline' }>): Promise<Outcome> {
+  async newGame(options: NewGameOptions, founding: Extract<Command, { type: 'FoundAirline' | 'TakeOverAirline' }>): Promise<Outcome> {
     const world = await loadWorld();
     const next = createGame(options, world({ options: { startYear: options.startYear }, time: options.startTime ?? simTime(options.startYear, 1, 1) } as GameState));
     const result = applyCommand(next, world(next), founding);

@@ -1,5 +1,6 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
+import { takeOver, type TakeoverError } from './takeover';
 import { defaultLivery, repaint, setLivery, type LiveryError, type RepaintError } from './livery';
 import { getAircraftType } from '../data/aircraft';
 import { ECB_RATES } from '../data/currencies';
@@ -43,6 +44,12 @@ export interface FoundAirline {
     capitalEur: number;
     controller: Controller;
   };
+}
+
+/** Takes over a real airline as its CEO (Phase 6.2): its fleet, routes and a planned timetable become the player's. */
+export interface TakeOverAirline {
+  type: 'TakeOverAirline';
+  payload: { realId: string };
 }
 
 export interface LeaseAircraft {
@@ -162,7 +169,7 @@ export interface BuildHangar {
   payload: { size: HangarSize };
 }
 
-export type Command = SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+export type Command = TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -204,7 +211,8 @@ export type CommandError =
   | MaintError
   | LiveryError
   | RepaintError
-  | ScheduleError;
+  | ScheduleError
+  | TakeoverError;
 
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError };
 
@@ -214,6 +222,10 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
   switch (command.type) {
     case 'FoundAirline':
       return foundAirline(state, world, command.payload);
+    case 'TakeOverAirline': {
+      const r = takeOver(state, world, command.payload.realId);
+      return r.ok ? { ok: true, id: r.result.airlineId } : fail(r.error);
+    }
     case 'LeaseAircraft':
       return leaseAircraft(state, world, command.airlineId, command.payload.offerId);
     case 'OpenRoute':

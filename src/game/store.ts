@@ -3,7 +3,7 @@
 // automatically; copies, export and import are in the Saves screen (Phase 1.5).
 import { useSyncExternalStore } from 'react';
 import * as Comlink from 'comlink';
-import type { Command, CommandResult, FoundAirline } from '../engine/commands';
+import type { Command, CommandResult, FoundAirline, TakeOverAirline } from '../engine/commands';
 import type { NewGameOptions } from '../engine/game';
 import type { GameState } from '../engine/state';
 import { MINUTES_PER_DAY, toDate } from '../engine/time';
@@ -283,7 +283,8 @@ export function playerAirlineId(state: GameState): string | null {
   return Object.values(state.airlines).find((a) => a.controller === 'human')?.id ?? null;
 }
 
-export async function startNewGame(options: NewGameOptions, founding: FoundAirline): Promise<CommandResult> {
+/** Starts a new game: a startup (FoundAirline) or a real airline taken over (TakeOverAirline, Phase 6.2). */
+export async function startNewGame(options: NewGameOptions, founding: FoundAirline | TakeOverAirline): Promise<CommandResult> {
   await autosave(true); // keep the game that was open
   const outcome = await getEngine().newGame(options, founding);
   accept(outcome.snapshot);

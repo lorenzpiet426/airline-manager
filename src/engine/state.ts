@@ -43,6 +43,10 @@ export interface Airline {
    * one (their `paint`). Old liveries no aircraft wears any more are set to null to keep saves small.
    */
   liveries?: (Livery | null)[];
+  /** The real airline the player took over (Phase 6.2), e.g. "AUA": it no longer flies as an AI airline. */
+  realId?: string;
+  /** Real airlines of the same group (Phase 6.2): they leave this airline's routes alone and feed it passengers. */
+  partners?: string[];
 }
 
 /** Colour of a livery part: one of the three livery colours, white or dark grey. */
@@ -395,7 +399,8 @@ export interface AiRouteState {
 }
 
 export interface AiAirlineState {
-  status: 'active' | 'bankrupt';
+  /** 'player': taken over by the player (Phase 6.2), flown by them instead of the AI. */
+  status: 'active' | 'bankrupt' | 'player';
   /** Rolling profit margin of the airline's network (−1 … +1). */
   health: number;
   since?: SimTime;
@@ -476,7 +481,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).

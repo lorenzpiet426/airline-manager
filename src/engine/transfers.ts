@@ -127,9 +127,10 @@ function pairData(world: EngineWorld, selfTag: string, E: Airport, D: Airport, d
 }
 
 /** Transfer passengers on every leg of a hub's network (cached per hub and network). */
-export function transferTable(world: EngineWorld, hubId: string, legs: HubLegs, self = ''): Map<string, LegTransfers> {
+export function transferTable(world: EngineWorld, hubId: string, legs: HubLegs, self = '', feed: HubLegs = new Map()): Map<string, LegTransfers> {
   // Only what changes the result goes into the key: legs flown daily or more all connect fully.
-  const key = `${self}@${hubId}|${[...legs].sort((x, y) => (x[0] < y[0] ? -1 : 1)).map(([d, w]) => (w >= FULL_CONNECTIVITY_WEEKLY ? d : `${d}:${Math.round(w * 2)}`)).join(',')}`;
+  const legKey = (m: HubLegs) => [...m].sort((x, y) => (x[0] < y[0] ? -1 : 1)).map(([d, w]) => (w >= FULL_CONNECTIVITY_WEEKLY ? d : `${d}:${Math.round(w * 2)}`)).join(',');
+  const key = `${self}@${hubId}|${legKey(feed)}|${[...legs].sort((x, y) => (x[0] < y[0] ? -1 : 1)).map(([d, w]) => (w >= FULL_CONNECTIVITY_WEEKLY ? d : `${d}:${Math.round(w * 2)}`)).join(',')}`;
   let cache = tables.get(world);
   if (!cache) tables.set(world, (cache = new Map()));
   const hit = cache.get(key);
@@ -137,15 +138,17 @@ export function transferTable(world: EngineWorld, hubId: string, legs: HubLegs, 
 
   const H = world.airportById.get(hubId);
   const ends = [...legs.keys()].map((id) => world.airportById.get(id)).filter((a): a is Airport => !!a && a.id !== hubId);
+  // Partners' spokes (Phase 6.2): their passengers can connect onto this airline's flights (only its legs earn).
+  const feeders = [...feed.keys()].filter((id) => !legs.has(id)).map((id) => world.airportById.get(id)).filter((a): a is Airport => !!a && a.id !== hubId);
   const pax = new Map<string, number>();
   const revenue = new Map<string, number>(); // in units of the leg's market fare
   const index = hubsServing(world);
   const selfTag = `${self}@${hubId}`;
   if (H) {
-    const toHub = new Map(ends.map((e) => [e.id, Math.max(50, distanceKm(e, H))]));
+    const toHub = new Map([...ends, ...feeders].map((e) => [e.id, Math.max(50, distanceKm(e, H))]));
     // The other connecting hubs at each destination, with their distance from it.
     const otherHubs = new Map(
-      ends.map((e) => [
+      [...ends, ...feeders].map((e) => [
         e.id,
         new Map(
           (index.get(e.id) ?? []).flatMap((tag) => {
@@ -172,6 +175,15 @@ export function transferTable(world: EngineWorld, hubId: string, legs: HubLegs, 
           revenue.set(leg, (revenue.get(leg) ?? 0) + (flow * pair.through * (d / (dE + dD))) / legFare.get(leg)!);
         }
       }
+      for (const F of feeders) {
+        const dF = toHub.get(F.id)!;
+        const pair = pairData(world, selfTag, F, E, dF, dE, otherHubs);
+        if (!pair) continue;
+        const mine = pair.detour * connectivity(Math.min(feed.get(F.id)!, legs.get(E.id)!));
+        const flow = (pair.flow * mine) / (mine + pair.others);
+        pax.set(E.id, (pax.get(E.id) ?? 0) + flow);
+        revenue.set(E.id, (revenue.get(E.id) ?? 0) + (flow * pair.through * (dE / (dE + dF))) / legFare.get(E.id)!);
+      }
     }
   }
   const table = new Map<string, LegTransfers>();
@@ -187,7 +199,7 @@ export const connectsAt = (airline: RealAirline, airportId: string) => CONNECTIN
 /** A real airline's legs at one of its hubs as they are in this game (closed routes left out, AI changes included). */
 export function realHubLegs(world: EngineWorld, airline: RealAirline, hubId: string, ai?: AiState): Map<string, number> {
   const legs = new Map<string, number>();
-  if (ai?.airlines[airline.id]?.status === 'bankrupt') return legs;
+  if (ai?.airlines[airline.id] && ai.airlines[airline.id]!.status !== 'active') return legs;
   const key = (x: string, y: string) => (x < y ? `${airline.id}|${x}|${y}` : `${airline.id}|${y}|${x}`);
   for (const r of world.realAirlines?.routesOf(airline.id) ?? []) {
     if (r.a !== hubId && r.b !== hubId) continue;
@@ -260,7 +272,35 @@ export function playerHubLegs(state: GameState, airlineId: string): Map<string, 
   return legs;
 }
 
-/** Transfer passengers between the player's own flights at their hub, on one of their routes (each direction). */
+/** The player's group partners' spokes at a hub (weekly flights per airport), whose passengers connect onto the player. */
+export function partnerFeed(world: EngineWorld, state: GameState, airlineId: string, hubId: string): Map<string, number> {
+  const feed = new Map<string, number>();
+  for (const id of state.airlines[airlineId]?.partners ?? []) {
+    const partner = world.realAirlines?.byId.get(id);
+    if (!partner) continue;
+    for (const [dest, weekly] of realHubLegs(world, partner, hubId, state.ai)) feed.set(dest, (feed.get(dest) ?? 0) + weekly);
+  }
+  return feed;
+}
+
+const feedCache = new WeakMap<GameState, { key: string; feed: Map<string, number> }>();
+/** The partners' feed changes at most once a day (their monthly reviews): worked out once per day and hub. */
+function dailyFeed(world: EngineWorld, state: GameState, airlineId: string, hubId: string): Map<string, number> {
+  const key = `${airlineId}@${hubId}#${Math.floor(state.time / 1440)}`;
+  const hit = feedCache.get(state);
+  if (hit?.key === key) return hit.feed;
+  const feed = partnerFeed(world, state, airlineId, hubId);
+  feedCache.set(state, { key, feed });
+  return feed;
+}
+
+/**
+ * Transfer passengers between the player's own flights at their hub, on one of their routes (each direction), plus
+ * those coming from group partners' flights (Phase 6.2). A taken-over airline doesn't compete with its own real hub.
+ */
 export function routeTransfers(world: EngineWorld, state: GameState, route: Route): LegTransfers | null {
-  return transferTable(world, route.originId, playerHubLegs(state, route.airlineId), route.airlineId).get(route.destinationId) ?? null;
+  const airline = state.airlines[route.airlineId];
+  const self = airline?.realId ?? route.airlineId;
+  const feed = airline?.partners?.length ? dailyFeed(world, state, route.airlineId, route.originId) : undefined;
+  return transferTable(world, route.originId, playerHubLegs(state, route.airlineId), self, feed).get(route.destinationId) ?? null;
 }

@@ -18,6 +18,9 @@ import { countryName, formatGameDate, formatMoney, formatNumber } from '../../i1
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 import { fromDate } from '../../engine/time';
+import { groupPartners, takeoverStart } from '../../engine/takeover';
+import { TAKEOVERS } from '../../data/takeovers';
+import { getAircraftType } from '../../data/aircraft';
 
 /** Colour pairs to start from; any colour can be picked afterwards. */
 const LIVERY_PRESETS: [string, string][] = [
@@ -46,7 +49,12 @@ export function NewGameScreen() {
   const { language } = useSettings();
   const base = useWorld();
   const existingGame = useGame();
-  const [startYear, setStartYear] = useState(REAL_AIRLINES_FROM);
+  // 'startup', or the real airline taken over (Phase 6.2).
+  const [scenario, setScenario] = useState<'startup' | keyof typeof TAKEOVERS>('startup');
+  const takeover = scenario === 'startup' ? null : TAKEOVERS[scenario]!;
+  const [yearChoice, setStartYear] = useState(REAL_AIRLINES_FROM);
+  // A takeover starts today (the real airline's fleet and network of today).
+  const startYear = takeover ? REAL_AIRLINES_FROM : yearChoice;
   const historical = startYear < REAL_AIRLINES_FROM;
   const startDate = new Date(Date.UTC(startYear, 0, 1));
   // The world of the start year: its airports (Kai Tak, Riem …) and exchange rates.
@@ -60,7 +68,9 @@ export function NewGameScreen() {
   const [hubId, setHubId] = useState('LOWW');
   const [capitalEur, setCapitalEur] = useState<number>(CAPITAL_OPTIONS_EUR[1]);
   const [timeMode, setTimeMode] = useState<TimeMode>('realtime');
-  const [scheduling, setScheduling] = useState<Scheduling>('simple');
+  const [schedulingChoice, setScheduling] = useState<Scheduling>('simple');
+  // A taken-over airline flies several aircraft per route: its timetable is Detailed from the start.
+  const scheduling: Scheduling = takeover ? 'detailed' : schedulingChoice;
   const [error, setError] = useState<CommandError | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -72,23 +82,38 @@ export function NewGameScreen() {
   const mode: TimeMode = historical && timeMode === 'realclock' ? 'realtime' : timeMode;
   const { iata, icao } = codesEdited ? codes : suggestCodes(name);
 
+  // The airline to take over, as it is today (fleet from the registers, routes, partners).
+  const real = takeover ? engine?.realAirlines?.byId.get(takeover.realId) : undefined;
+  const fleetByType = new Map<string, number>();
+  for (const [, type] of real?.registered ?? []) fleetByType.set(type, (fleetByType.get(type) ?? 0) + 1);
+  const realHub = real ? world?.airportById.get(real.hubs[0] ?? '') : undefined;
+  const realRoutes = real && engine?.realAirlines ? engine.realAirlines.routesOf(real.id).filter((r) => r.a === realHub?.id || r.b === realHub?.id).length : 0;
+  const partners = takeover && engine ? groupPartners(engine, takeover).map((id) => engine.realAirlines?.byId.get(id)?.name ?? id) : [];
+  const typeName = (id: string) => {
+    try {
+      return getAircraftType(id).name;
+    } catch {
+      return id;
+    }
+  };
+
   const found = async () => {
     setBusy(true);
     setError(null);
+    const options = {
+      seed: crypto.getRandomValues(new Uint32Array(1))[0]!,
+      startYear,
+      // A real-clock game starts now; a takeover today; the others on 1 January.
+      ...(mode === 'realclock' ? { startTime: fromDate(new Date()) } : takeover ? { startTime: takeoverStart(new Date()) } : {}),
+      timeMode: mode,
+      realism: 'realistic' as const,
+      scheduling,
+    };
     const result = await startNewGame(
-      {
-        seed: crypto.getRandomValues(new Uint32Array(1))[0]!,
-        startYear,
-        // A real-clock game starts now; the others on 1 January.
-        ...(mode === 'realclock' ? { startTime: fromDate(new Date()) } : {}),
-        timeMode: mode,
-        realism: 'realistic',
-        scheduling,
-      },
-      {
-        type: 'FoundAirline',
-        payload: { name, iata, icao, primary: colors[0], secondary: colors[1], hubId, capitalEur, controller: 'human' },
-      },
+      options,
+      takeover
+        ? { type: 'TakeOverAirline', payload: { realId: takeover.realId } }
+        : { type: 'FoundAirline', payload: { name, iata, icao, primary: colors[0], secondary: colors[1], hubId, capitalEur, controller: 'human' } },
     );
     setBusy(false);
     if (result.ok) window.location.hash = hrefFor('ops');
@@ -100,7 +125,56 @@ export function NewGameScreen() {
       <h1 className="screen__title">{t('newGame.title')}</h1>
       <p className="muted">{t('newGame.intro')}</p>
 
-      <Panel title={t('newGame.era')} code="1">
+      <Panel title={t('newGame.scenarioTitle')} code="1">
+        <div className="choices" role="radiogroup" aria-label={t('newGame.scenarioTitle')}>
+          <button type="button" role="radio" aria-checked={scenario === 'startup'} className="choice" onClick={() => setScenario('startup')}>
+            <span className="choice__title">{t('newGame.scenarioStartupTitle')}</span>
+            <span className="muted small">{t('newGame.scenarioStartupHint')}</span>
+          </button>
+          {Object.values(TAKEOVERS).map((x) => (
+            <button key={x.realId} type="button" role="radio" aria-checked={scenario === x.realId} className="choice" onClick={() => setScenario(x.realId)}>
+              <span className="choice__title">{t('newGame.takeoverTitle', { name: engine?.realAirlines?.byId.get(x.realId)?.name ?? x.realId })}</span>
+              <span className="muted small">{t('newGame.takeoverHint')}</span>
+            </button>
+          ))}
+        </div>
+      </Panel>
+
+      {takeover ? (
+        <Panel title={real?.name ?? takeover.realId} code="2">
+          {real ? (
+            <>
+              <div className="identity">
+                <TailFin primary={real.colors.primary} secondary={real.colors.secondary} code={real.iata ?? ''} size={96} />
+                <dl className="facts identity__fields">
+                  <dt>{t('newGame.takeoverHub')}</dt>
+                  <dd>{realHub ? `${realHub.iata} · ${realHub.name}` : '—'}</dd>
+                  <dt>{t('newGame.takeoverFleet')}</dt>
+                  <dd>
+                    {t('newGame.takeoverFleetValue', { count: real.registered.length })}{' '}
+                    <span className="muted small">
+                      ({[...fleetByType].map(([type, n]) => `${n} × ${typeName(type)}`).join(', ')})
+                    </span>
+                  </dd>
+                  <dt>{t('newGame.takeoverComing')}</dt>
+                  <dd>{takeover.incoming.map((x) => `${x.count} × ${typeName(x.typeId)}`).join(', ')}</dd>
+                  <dt>{t('newGame.takeoverRoutes')}</dt>
+                  <dd>{t('newGame.takeoverRoutesValue', { count: realRoutes })}</dd>
+                  <dt>{t('newGame.takeoverCash')}</dt>
+                  <dd className="mono">{formatMoney(language, { amount: takeover.cashEur, currency: 'EUR' })}</dd>
+                  <dt>{t('newGame.takeoverPartners')}</dt>
+                  <dd className="small">{partners.join(', ')}</dd>
+                </dl>
+              </div>
+              <p className="muted small">{t('newGame.takeoverNotes')}</p>
+            </>
+          ) : (
+            <p className="muted">{t('map.loading')}</p>
+          )}
+        </Panel>
+      ) : (
+      <>
+      <Panel title={t('newGame.era')} code="2">
         <div className="choices choices--years" role="radiogroup" aria-label={t('newGame.era')}>
           {[...YEAR_PRESETS, REAL_AIRLINES_FROM].map((y) => (
             <button key={y} type="button" role="radio" aria-checked={startYear === y} className="choice" onClick={() => setStartYear(y)}>
@@ -126,7 +200,7 @@ export function NewGameScreen() {
         <p className="muted small">{historical ? t('newGame.historicalHint') : t('newGame.todayHint')}</p>
       </Panel>
 
-      <Panel title={t('newGame.identity')} code="2">
+      <Panel title={t('newGame.identity')} code="3">
         <div className="identity">
           <TailFin primary={colors[0]} secondary={colors[1]} code={iata || '··'} size={96} />
           <div className="identity__fields">
@@ -196,7 +270,7 @@ export function NewGameScreen() {
         </div>
       </Panel>
 
-      <Panel title={t('newGame.hub')} code="3">
+      <Panel title={t('newGame.hub')} code="4">
         {hub ? (
           <div className="hubcard">
             <span className="hubcard__code mono">{hub.iata ?? hub.id}</span>
@@ -217,7 +291,7 @@ export function NewGameScreen() {
         <p className="muted small">{t('newGame.hubHint', { currency: shownCurrency })}</p>
       </Panel>
 
-      <Panel title={t('newGame.capital')} code="4">
+      <Panel title={t('newGame.capital')} code="5">
         <div className="choices" role="radiogroup" aria-label={t('newGame.capital')}>
           {CAPITAL_OPTIONS_EUR.map((eur, i) => (
             <button
@@ -235,8 +309,10 @@ export function NewGameScreen() {
           ))}
         </div>
       </Panel>
+      </>
+      )}
 
-      <Panel title={t('newGame.mode')} code="5">
+      <Panel title={t('newGame.mode')} code={takeover ? '3' : '6'}>
         <span className="field__label">{t('newGame.timeMode')}</span>
         <Segmented
           label={t('newGame.timeMode')}
@@ -251,21 +327,27 @@ export function NewGameScreen() {
         />
         <p className="muted small">{t(`ops.modeHint.${mode}`)}</p>
         <span className="field__label">{t('newGame.scheduling')}</span>
-        <Segmented
-          label={t('newGame.scheduling')}
-          value={scheduling}
-          options={[
-            { value: 'simple', label: t('timetable.modeName.simple') },
-            { value: 'detailed', label: t('timetable.modeName.detailed') },
-          ]}
-          onChange={setScheduling}
-        />
-        <p className="muted small">{t(`timetable.modeHint.${scheduling}`)}</p>
+        {takeover ? (
+          <p className="small">{t('newGame.takeoverScheduling')}</p>
+        ) : (
+          <>
+            <Segmented
+              label={t('newGame.scheduling')}
+              value={scheduling}
+              options={[
+                { value: 'simple', label: t('timetable.modeName.simple') },
+                { value: 'detailed', label: t('timetable.modeName.detailed') },
+              ]}
+              onChange={setScheduling}
+            />
+            <p className="muted small">{t(`timetable.modeHint.${scheduling}`)}</p>
+          </>
+        )}
         <dl className="facts">
           <dt>{t('newGame.scenario')}</dt>
-          <dd>{t('newGame.scenarioStartup')}</dd>
+          <dd>{takeover ? t('newGame.takeoverTitle', { name: real?.name ?? takeover.realId }) : t('newGame.scenarioStartup')}</dd>
           <dt>{t('newGame.startDate')}</dt>
-          <dd>{mode === 'realclock' ? t('newGame.startDateNow') : formatGameDate(language, startDate, false)}</dd>
+          <dd>{mode === 'realclock' ? t('newGame.startDateNow') : formatGameDate(language, takeover ? new Date() : startDate, false)}</dd>
           <dt>{t('newGame.competitors')}</dt>
           <dd>{historical ? t('newGame.competitorsModelled') : t('newGame.competitorsReal')}</dd>
           <dt>{t('newGame.realism')}</dt>
@@ -280,8 +362,8 @@ export function NewGameScreen() {
         <a href={hrefFor('ops')} className="button">
           {t('common.cancel')}
         </a>
-        <button type="button" className="button button--primary" disabled={busy || !hub} onClick={() => void found()}>
-          {t('newGame.found')}
+        <button type="button" className="button button--primary" disabled={busy || (takeover ? !real : !hub)} onClick={() => void found()}>
+          {takeover ? t('newGame.takeoverStart') : t('newGame.found')}
         </button>
       </div>
     </div>

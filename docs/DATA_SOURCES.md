@@ -420,6 +420,50 @@ Its revenue, passengers and margin match.
 **Effect on the player:** a Vienna startup does a little better than before, but still loses money with a small
 network (the real airlines now fill their planes as in reality, so a newcomer must win passengers from them).
 
+## Austrian Airlines takeover (Phase 6.2, 2026-10-29)
+
+**From open data:**
+
+- **Fleet:** the 68 aircraft in the Austro Control register with operator Austrian Airlines AG (registration and type, tag `official`; see "Registers" above).
+- **Seats per type:** Wikipedia fleet table.
+- **Routes from Vienna and weekly flights:** networks.json (Wikipedia destinations, Eurostat S24 totals).
+- **Aircraft size per route:** Eurostat seats per flight.
+- **Colours:** the hand-entered colour pair.
+
+**Modelled** (`src/data/takeovers.ts`), because Austrian doesn't publish these per aircraft:
+
+- **Build years:** spread over each type's delivery years at Austrian (A320 1999–2016, A320neo 2017–2024, A321 1998–2008, 767 1991–2004, 777 1997–2007, 787-9 2018–2023, E195 2008–2012). The register file used has no build years.
+- **Ownership:**
+  - A320ceo, A321 and the widebodies except the 787s are owned, in the books at today's market value.
+  - The A320neos and 787-9s are leased from "Lufthansa Group" (group allocations).
+  - The E195s are leased with leases ending 7–20 months after the start. Austrian retires them by 2028 ([reisetopia](https://reisetopia.de/news/austrian-airlines-erneuert-europaflotte/)).
+- **Coming aircraft:** 11 A320neo + 6 A321neo (Wikipedia fleet table "orders") arrive as group leases, one a month from two months after the start. Reports differ on the exact number (17 or 22, [aerointernational](https://www.aerointernational.de/?p=345720)).
+- **Cash:** €350 m, about 15 % of the 2024 revenue of €2,457 m. Austrian's liquidity sits in the Lufthansa Group pool and its own balance sheet isn't published.
+- **Reputation:** network-airline level (64), with everybody knowing the brand.
+- **Timetable** (real timetables may not be copied):
+  - Each route's summer frequency is scaled to the season (`capacitySeason`).
+  - It is split into daily round trips plus one pair on the remaining days.
+  - Long routes are placed first: widebodies from 4,500 km, or where Eurostat measures more than 230 seats per flight. Long-haul departures leave in the usual banks (Asia 13:30, America 10:45).
+  - Then each route's first, second … flight goes to the aircraft that is free earliest. That aircraft must be closest in size to the measured seats, and the route's own flights are kept at least 2½ hours apart where possible.
+  - Every pair passes the normal timetable checks.
+- **Winter:** Wikipedia's "seasonal" label doesn't say which season, so only seasonal routes to smaller airports in very touristy countries (more than 1.5 tourist arrivals per inhabitant, outside the tropics: Greek islands, Croatian coast …) rest from 25 October to 25 March.
+- **Not taken over:** six Austrian routes that don't start in Vienna (from Innsbruck and Klagenfurt), because all routes start at the hub until Phase 7.
+- **Lufthansa Group partners:**
+  - Partners are every airline with `parent` = "Lufthansa Group" in Wikidata (Lufthansa, SWISS, Brussels, Eurowings, CityLine, Air Dolomiti, Discover, SunExpress), their subsidiaries (Edelweiss), plus Lufthansa City Airlines and ITA Airways.
+  - They never react to the player's prices or timetable, never enter the player's routes and don't open new routes on them.
+  - Their flights into Vienna feed transfer passengers onto the player's flights. In the transfer model their spokes count as connections, and only the player's leg earns.
+
+**Result (first weeks, November 2026):**
+
+| | Model | Real |
+|---|---|---|
+| Revenue | ≈ €46 m a week | ≈ €47 m a week on average over the year |
+| Passengers | ≈ 220,000 a week, ≈ 40 % transfer | ≈ 1 m a month in November |
+| CASK | 8.2 € cents | ≈ 8.3 |
+| Margin after overheads | November ≈ +1 %, December ≈ −2 % (with the high 2026 fuel price) | Q4 ≈ break-even |
+
+`src/engine/takeover.test.ts` keeps it in range.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

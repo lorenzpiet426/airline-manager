@@ -29,6 +29,10 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
     switch (m.kind) {
       case 'founded':
         return t('msg.founded', { name: p.name, hub: p.hub, capital: formatMoney(language, { amount: Number(p.capital), currency: String(p.currency) }) });
+      case 'takenOver':
+        return t('msg.takenOver', p);
+      case 'takeoverRoutes':
+        return t('msg.takeoverRoutes', p);
       case 'leaseSigned':
         return t('msg.leaseSigned', { ...p, date: formatGameDate(language, toDate(Number(p.deliveryAt)), false) });
       case 'delivered': {

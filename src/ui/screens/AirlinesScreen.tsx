@@ -72,6 +72,7 @@ function AirlineList({ real }: { real: RealAirlines }) {
               <span className="airline-row__name">
                 {nameOf(a.name)}
                 {game?.ai.airlines[a.id]?.status === 'bankrupt' && <span className="chip chip--warning"> {t('airlines.statusBankrupt')}</span>}
+                {game?.ai.airlines[a.id]?.status === 'player' && <span className="chip chip--normal"> {t('airlines.statusPlayer')}</span>}
                 <span className="muted small">
                   {' '}
                   {[[a.iata, a.icao].filter(Boolean).join(' / '), a.modelled ? '' : a.country ? countryName(language, a.country, a.country) : '']
@@ -131,6 +132,7 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
       <a href={hrefFor('airlines')} className="muted small">
         ← {t('airlines.back')}
       </a>
+      {status?.status === 'player' && <p className="notice">{t('airlines.playerRuns')}</p>}
       {status?.status === 'bankrupt' && (
         <p className="notice notice--error">{t('airlines.bankrupt', { date: formatGameDate(language, toDate(status.since ?? 0), false) })}</p>
       )}

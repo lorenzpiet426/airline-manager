@@ -304,7 +304,8 @@ export function competitorsOn(
     Math.max(1, Math.min(unmeasured ? THIN_ROUTE_WEEKLY : Infinity, Math.round(((needed / list.length) * (seasonal ? 0.5 : 1) * (charter ? 0.5 : 1)) * 2) / 2));
   const result: Competitor[] = [];
   for (const c of list) {
-    if (ai?.airlines[c.airline.id]?.status === 'bankrupt') continue;
+    // Bankrupt, or taken over by the player (whose own flights are the supply then).
+    if (ai?.airlines[c.airline.id] && ai.airlines[c.airline.id]!.status !== 'active') continue;
     const change = ai?.routes[aiRouteKey(c.airline.id, from.id, to.id)];
     if (change?.closed) continue;
     const weekly = change ? (forward ? change.weeklyAB : change.weeklyBA) : (c.weekly ?? modelled(c.seasonal, c.charter));

@@ -88,7 +88,7 @@ export interface AiRoute {
 /** An airline's routes as they are now in this game: real routes (minus closed ones) plus routes it opened. */
 export function currentRoutes(world: EngineWorld, state: GameState, airline: RealAirline): AiRoute[] {
   const real = world.realAirlines!;
-  if (state.ai.airlines[airline.id]?.status === 'bankrupt') return [];
+  if (state.ai.airlines[airline.id] && state.ai.airlines[airline.id]!.status !== 'active') return [];
   const out: AiRoute[] = [];
   const seen = new Set<string>();
   const pairs = [
@@ -214,7 +214,7 @@ export function evaluate(world: EngineWorld, state: GameState, airline: RealAirl
 }
 
 /** The airline type's usual cabin on this aircraft, with the seat total from its fleet list where known. */
-function airlineCabin(type: AircraftType, model: RealAirline['model'], km: number, seats: number): CabinLayout {
+export function airlineCabin(type: AircraftType, model: RealAirline['model'], km: number, seats: number): CabinLayout {
   const cabin = modelCabin(type, model, haul(km) >= 0.5);
   const premium = totalSeats(cabin.filter((s) => s.cls !== 'Y'));
   const y = cabin.find((s) => s.cls === 'Y');
@@ -257,6 +257,8 @@ interface Ctx {
   playerId: string | null;
   /** Airport pairs the player flies ("A|B"). */
   playerPairs: Set<string>;
+  /** The player's group partners (Phase 6.2): they never attack the player's routes. */
+  partners: Set<string>;
   /** Routes an airline opened during the game: [A, B]. */
   addedBy: (airline: string) => [string, string][];
   news: number;
@@ -284,6 +286,7 @@ export function aiDailyStep(state: GameState, world: EngineWorld): void {
     date: toDate(state.time - 1),
     playerHubs: new Set(player ? [player.hubId] : []),
     playerId: player?.id ?? null,
+    partners: new Set(player?.partners ?? []),
     playerPairs: new Set(
       Object.values(state.routes).map((r) => (r.originId < r.destinationId ? `${r.originId}|${r.destinationId}` : `${r.destinationId}|${r.originId}`)),
     ),
@@ -335,7 +338,7 @@ function weeklyOf(world: EngineWorld, state: GameState, airline: RealAirline, A:
 function reviewAirline(ctx: Ctx, airline: RealAirline): void {
   const { state, world } = ctx;
   const status = (state.ai.airlines[airline.id] ??= { status: 'active', health: 0 });
-  if (status.status === 'bankrupt') return;
+  if (status.status !== 'active') return;
   const b = behaviourOf(airline, ctx.playerHubs);
   const bases = new Set([...airline.hubs, ...airline.bases]);
   let delta = 0; // profit change against the real starting point, on affected routes
@@ -377,7 +380,7 @@ function reviewAirline(ctx: Ctx, airline: RealAirline): void {
     const from = code(ctx, flip ? r.b : r.a);
     const to = code(ctx, flip ? r.a : r.b);
 
-    if (players.length) {
+    if (players.length && !ctx.partners.has(airline.id)) {
       // a) Price: follow the player's cut (low-cost: go just below it).
       const playerFare = Math.min(...players.map((p) => p.fareFactor));
       if (playerFare < fare - 0.01 && b.priceMatch > 0) {
@@ -462,7 +465,11 @@ function openNewRoute(ctx: Ctx, airline: RealAirline): void {
     ...real.routesOf(airline.id).flatMap((r) => [r.a, r.b]),
     ...ctx.addedBy(airline.id).flat(),
   ]);
-  const candidates = [...new Set(real.routesAt(base).map((r) => (r.a === base ? r.b : r.a)))].filter((ap) => !served.has(ap)).slice(0, 25);
+  // Group partners of the player leave the player's routes alone (Phase 6.2).
+  const partner = ctx.partners.has(airline.id);
+  const candidates = [...new Set(real.routesAt(base).map((r) => (r.a === base ? r.b : r.a)))]
+    .filter((ap) => !served.has(ap) && !(partner && ctx.playerPairs.has(base < ap ? `${base}|${ap}` : `${ap}|${base}`)))
+    .slice(0, 25);
   const A = world.airportById.get(base);
   if (!A) return;
   let best: { ap: Airport; pax: number; others: number } | null = null;
@@ -501,7 +508,7 @@ function watchPlayerRoutes(ctx: Ctx): void {
     if (!A || !B) continue;
     const present = new Set((competitorsOn(world, A, B, undefined, state.ai) ?? []).map((c) => c.airlineId));
     const candidates = [...real.byId.values()]
-      .filter((a) => !present.has(a.id) && state.ai.airlines[a.id]?.status !== 'bankrupt')
+      .filter((a) => !present.has(a.id) && (state.ai.airlines[a.id]?.status ?? 'active') === 'active' && !ctx.partners.has(a.id))
       .filter((a) => [...a.hubs, ...a.bases].some((h) => h === A.id || h === B.id))
       .filter((a) => aircraftFor(a, market(world, A, B).distanceKm, yearOf(state.time)))
       .sort((x, y) => behaviourOf(y, ctx.playerHubs).entryChance - behaviourOf(x, ctx.playerHubs).entryChance || x.id.localeCompare(y.id));
