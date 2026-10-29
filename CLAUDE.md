@@ -308,6 +308,9 @@ Split (2026-10-29): **8.1** ✅ pilots and cabin crew (headcounts, hiring, type 
 ### Phase 9 — Revenue and operations detail
 Fare classes, booking curves, dynamic pricing; loyalty program; on-time performance, delays, weather,
 incidents (diversions, technical problems); click-any-flight drill-down.
+Split (2026-10-29): **9.1** ✅ delays and on-time performance (knock-on through rotations, causes, diversions, missed
+connections); **9.2** click any flight for full detail; **9.3** booking classes, booking curves, dynamic pricing;
+**9.4** own loyalty programme with tiers.
 
 ### Phase 10 — Finance and corporate
 Loans, bonds, fuel hedging, currency effects; stock market, IPO, share price, buying competitor shares,
@@ -508,6 +511,10 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 8.3: **judgement by skill** (estimate = true effect + error shrinking with skill); forecast and real effect shown in a track record | Owner choice |
 | 2026-10-29 | 8.3: without a head a department makes no proposals; HR staff keep planning crews (old behaviour); manager randomness from stable hashes (other random events unchanged) | Old games and calibration unchanged |
 | 2026-10-29 | **Cities with several airports**: other airports < 100 km count as competition and share their travellers (weight 0.8 × (1 − km/130), travellers × 0.5); unmeasured routes next to measured ones keep (1 − weight) of their demand | Vienna–Orly showed ≈ 52 % margin without CDG's competitors (owner asked for the fix before Phase 9) |
+| 2026-10-29 | Phase 9 order: **9.1 delays/OTP → 9.2 flight drill-down → 9.3 booking classes + dynamic pricing → 9.4 loyalty** | Owner choice |
+| 2026-10-29 | 9.1: **delays per flight with knock-on through rotations** (airline, ATC, airport, weather causes; buffers; diversions; curfews; missed connections; EU 261 from 3 h for own causes); calibrated to EUROCONTROL CODA 2024 | Owner choice |
+| 2026-10-29 | 9.3 (planned): **booking classes per cabin filled along a booking curve**, dynamic pricing by hand or by the revenue manager; class-fare sliders stay as base level | Owner choice |
+| 2026-10-29 | 9.4 (planned): **own frequent-flyer programme with tiers**; points a liability; alliance partners' programmes count | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1259,6 +1266,25 @@ education", forbid making the data available to others (§3 iii) and require a w
   Calibration within about a point except British Airways (≈ −8 %, see DATA_SOURCES).
 - Verified in browser: Austrian's VIE–CDG forecast lists VIE–ORY (Transavia, 59 %) and VIE–BVA (Ryanair, 44 %).
 - **Next:** Phase 9 (revenue and operations detail).
+
+### 2026-10-29 — Session 30 (Phase 9.1: delays and on-time performance) ✅
+- Owner decisions (all recommended): operations first, knock-on delays, booking classes, own loyalty programme (§7).
+- Data `src/data/delays.ts` (causes, chances, lengths, padding, quick turns, curfew grace, costs, missed connections).
+- Engine `src/engine/delays.ts`: `state.ops` (`OpsState`: today's and yesterday's `OpsFlight`s, aircraft ready times;
+  optional, no save version change), `weatherAt`, `opsDailyStep` (settles yesterday: costs to "disruption", punctuality
+  per route (`RouteStats.opsFlights/onTime/delayMin/diverted/causes`, merged in finance.ts), reputation, diversion
+  messages; plays today aircraft by aircraft with cancellation reasons), `delayOf`, `punctuality`. `kpis.ts` `onTime`.
+  `flights.ts` `airborne(…, adjust)` moves aircraft on the map by today's delays and diversions.
+- UI: Ops **Departures today** board (`DeparturesBoard.tsx`: next / problems / all, local times, status with cause,
+  delays known 2 h ahead, yesterday's on-time share), dashboard tile "On time", map uses delays, message `flightDiverted`;
+  EN/DE.
+- Tests: 215 (`delays.test.ts`: bad-weather days, Austrian punctuality winter/summer vs EUROCONTROL, compensation for own
+  long delays only, stable daily simulation).
+- Verified in browser (Austrian save): board ("Yesterday: 72 % of 308 flights on time"), cancellations with reasons, On
+  time tile 78 %, phone 375 px without sideways scrolling.
+- Known: AI airlines don't have delays; passengers' bookings don't react to a route's own punctuality yet (only via the
+  brand reputation); crews' duty limits on long delays not modelled.
+- **Next:** 9.2 click any flight for full detail (passengers per class, load factor, delay and cause, weather, profit).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

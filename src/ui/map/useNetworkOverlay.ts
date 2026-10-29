@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { grounded } from '../../engine/schedule';
 import type { Feature, LineString, Point } from 'geojson';
-import { airborne, weeklyLegs } from '../../engine/flights';
+import { airborne, weeklyLegs, type LegAdjust } from '../../engine/flights';
 import { greatCirclePoints } from '../../engine/geo';
 import type { GameState } from '../../engine/state';
 import type { EngineWorld } from '../../engine/world';
@@ -46,6 +46,19 @@ export function useNetworkOverlay(game: GameState | null, world: EngineWorld | n
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeKey, world, airlineId]);
 
+  // Today's and yesterday's flights as they really go (delays, diversions, cancellations; Phase 9.1).
+  const ops = game?.ops;
+  const adjust = useMemo<LegAdjust | undefined>(() => {
+    if (!ops) return undefined;
+    const index = new Map([...ops.prev, ...ops.flights].map((f) => [`${f.aircraftId}|${f.flightNumber}|${f.dep}`, f]));
+    return (leg, dep) => {
+      const f = index.get(`${leg.aircraftId}|${leg.flightNumber}|${dep}`);
+      if (!f) return { dep: 0, arr: 0 };
+      if (f.status === 'cancelled') return null;
+      return { dep: f.depDelay, arr: f.arrDelay, ...(f.divertedTo ? { toId: f.divertedTo } : {}) };
+    };
+  }, [ops]);
+
   return useMemo(() => {
     if (!game || !world || !network || !airline) return null;
     const planes: Feature<Point>[] = [];
@@ -55,7 +68,7 @@ export function useNetworkOverlay(game: GameState | null, world: EngineWorld | n
       // Grounded by a technical failure: it stays where it is.
       const aog = aircraft.maint?.aog;
       if (aog && game.time >= aog.from && game.time < aog.until) continue;
-      const flight = airborne(legs, world, game.time);
+      const flight = airborne(legs, world, game.time, adjust);
       if (!flight) continue;
       planes.push({
         type: 'Feature',
@@ -68,5 +81,5 @@ export function useNetworkOverlay(game: GameState | null, world: EngineWorld | n
       planes: { type: 'FeatureCollection', features: planes },
       color: airline.colors.primary,
     };
-  }, [game, world, network, airline]);
+  }, [game, world, network, airline, adjust]);
 }

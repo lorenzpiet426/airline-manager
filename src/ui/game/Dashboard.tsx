@@ -10,7 +10,7 @@ import { hrefFor } from '../navigation';
 
 const TREND_WEEKS = 12;
 
-type Key = 'result' | 'margin' | 'revenue' | 'pax' | 'loadFactor' | 'rask' | 'cask' | 'caskExFuel' | 'yield' | 'utilisation';
+type Key = 'result' | 'margin' | 'revenue' | 'pax' | 'loadFactor' | 'rask' | 'cask' | 'caskExFuel' | 'yield' | 'utilisation' | 'onTime';
 
 /** Which way is good for each figure (costs should go down). */
 const TILES: { key: Key; good: 'up' | 'down' }[] = [
@@ -23,6 +23,7 @@ const TILES: { key: Key; good: 'up' | 'down' }[] = [
   { key: 'caskExFuel', good: 'down' },
   { key: 'yield', good: 'up' },
   { key: 'utilisation', good: 'up' },
+  { key: 'onTime', good: 'up' },
 ];
 
 function value(k: Kpis, key: Key): number | null {
@@ -37,6 +38,7 @@ function format(language: Language, currency: string, key: Key, v: number | null
       return formatMoney(language, { amount: v, currency });
     case 'margin':
     case 'loadFactor':
+    case 'onTime':
       return `${formatNumber(language, v * 100, 1)} %`;
     case 'pax':
       return formatNumber(language, Math.round(v));
@@ -144,7 +146,7 @@ function deltaOf(
   if (Math.abs(diff) < 1e-9) return { text: `± ${t('dashboard.vsLastWeek')}`, level: 'muted' };
   const arrow = diff > 0 ? '▲' : '▼';
   // Percent points for shares, relative change for the rest.
-  const shares = key === 'margin' || key === 'loadFactor';
+  const shares = key === 'margin' || key === 'loadFactor' || key === 'onTime';
   const amount = shares
     ? `${formatNumber(language, Math.abs(diff) * 100, 1)} ${t('dashboard.points')}`
     : key === 'result'

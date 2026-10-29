@@ -112,6 +112,14 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
       case 'managerActions':
       case 'proposalsWaiting':
         return t(`msg.${m.kind}`, { count: Number(p.count) });
+      case 'flightDiverted':
+        return t('msg.flightDiverted', {
+          flight: p.flight,
+          from: world?.airportById.get(String(p.from))?.iata ?? p.from,
+          to: world?.airportById.get(String(p.to))?.iata ?? p.to,
+          alt: world?.airportById.get(String(p.alt))?.iata ?? p.alt,
+          cause: t(`board.cause.${p.cause}`),
+        });
       case 'strikeCancellations':
         return t('msg.strikeCancellations', { count: Number(p.count) });
       case 'gatesRented':

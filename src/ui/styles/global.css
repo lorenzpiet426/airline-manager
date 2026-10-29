@@ -2899,3 +2899,11 @@ a.button {
   stroke-width: 1.5;
   stroke-dasharray: 6 4;
 }
+
+/* ---------- Departures board (Phase 9.1) ---------- */
+.board__table .chip {
+  white-space: normal;
+}
+.board__table td:last-child {
+  min-width: 6rem;
+}

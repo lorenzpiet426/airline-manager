@@ -24,6 +24,8 @@ export interface Kpis {
   blockHours: number | null;
   /** Block hours per aircraft per day. */
   utilisation: number | null;
+  /** Share of flights arriving within 15 minutes (Phase 9.1; null without data). */
+  onTime: number | null;
 }
 
 /**
@@ -36,7 +38,11 @@ export function periodKpis(period: PnlPeriod, routes: Readonly<Record<string, Ro
   let pax = 0;
   let flights = 0;
   let block: number | null = 0;
+  let opsFlights = 0;
+  let onTime = 0;
   for (const [id, s] of Object.entries(period.routes)) {
+    opsFlights += s.opsFlights ?? 0;
+    onTime += s.onTime ?? 0;
     const km = routes[id]?.distanceKm ?? 0;
     ask += s.ask ?? s.seats * km;
     rpk += s.rpk ?? s.pax * km;
@@ -63,5 +69,6 @@ export function periodKpis(period: PnlPeriod, routes: Readonly<Record<string, Ro
     yield: per(revenue, rpk),
     blockHours: block,
     utilisation: block !== null && activeAircraft > 0 && days > 0 ? block / activeAircraft / days : null,
+    onTime: per(onTime, opsFlights),
   };
 }

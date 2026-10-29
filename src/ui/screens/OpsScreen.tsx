@@ -9,6 +9,7 @@ import { GameClock } from '../components/StatusBar';
 import { Dashboard } from '../game/Dashboard';
 import { ReputationPanel } from '../game/ReputationPanel';
 import { WorldPanel } from '../game/WorldPanel';
+import { DeparturesBoard } from '../game/DeparturesBoard';
 import { useEngineWorld } from '../game/useEngineWorld';
 import { AwayReportPanel } from '../game/AwayReport';
 import { MessageLog } from '../game/MessageLog';
@@ -129,6 +130,12 @@ export function OpsScreen() {
         <Panel title={t('dashboard.title')} code="KPI" className="panel--wide">
           <Dashboard game={game} airline={airline} />
         </Panel>
+
+        {engineWorld && (
+          <Panel title={t('board.title')} code="FIDS" className="panel--wide">
+            <DeparturesBoard game={game} world={engineWorld} airline={airline} />
+          </Panel>
+        )}
 
         {engineWorld && game.world && (
           <Panel title={t('world.title')} code="WX" className="panel--wide">

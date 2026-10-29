@@ -763,6 +763,30 @@ already contain, so it looked very profitable (≈ 52 % before crews and leases)
   (Heathrow now competes with Gatwick, Stansted, Luton and City; BA was already weak in the model). A startup's daily
   A320: Vienna–Orly ≈ +4 % and Vienna–CDG ≈ −3 % before crews and leases. A simulated AI year ≈ 20 % slower.
 
+## Delays and punctuality (Phase 9.1, 2026-10-29)
+Owner decisions: operations first in Phase 9, delays carried through each aircraft's rotation (knock-on).
+
+- **Calibration target**: EUROCONTROL CODA, "All-Causes Delays to Air Transport in Europe – Annual 2024" (read
+  2026-10-29): 17.5 minutes average departure delay per flight, 72.4 % of flights arriving within 15 minutes,
+  reactionary (knock-on) delay 46 % of delay minutes (8.0 min per flight), airline causes 4.3 min, en-route ATFM 2.3 min.
+- **Model** (`src/data/delays.ts`, `src/engine/delays.ts`): per flight, causes with a chance and an exponentially
+  distributed length — airline 20 % × 21 min (+12 % with less than 10 minutes' buffer), ATC 10 % × 22 min (Europe; summer
+  × 1.5, winter × 0.8; other regions less), airport congestion 6 % × 16 min (× 1.8 at slot airports), weather (bad days
+  4 % of days, more in northern winter and summer storm season: 35 % × 25–50 min; else 1 % × 12 min). Knock-on: an
+  aircraft leaves no earlier than its late arrival plus 75 % of the minimum turnaround; schedules make up 8 % of block time
+  (at most 20 minutes) in the air. Night bans: 30 minutes' grace for delayed flights (e.g. Zurich, Frankfurt), then a late
+  departure is cancelled and a late arrival diverts (nearest diversion airport within 400 km; passengers by bus, aircraft
+  back next morning); very bad weather diverts a few flights.
+- **Result**: Austrian today 76 % on time and 15.5 min average in January, 73 % and 18 min in July; knock-on 36–38 % of
+  delay minutes, airline 28–33 %, ATC 11–16 %, weather 11–12 %.
+- **Costs**: delay minutes €15 per minute per 150 seats (crew overtime, fuel, maintenance — the tactical order of magnitude
+  in University of Westminster's "European airline delay cost reference values" for EUROCONTROL; planned crew and fuel are
+  already in the normal costs); meals from 2 h; EU 261 compensation (CJEU Sturgeon 2009) from 3 h at arrival when the
+  airline is to blame (own causes, knock-on, curfew), not for weather or ATC (extraordinary), 50 % claim; diversion
+  €90 per passenger; transfer passengers miss connections from 30 minutes late (up to 80 % at 3 h): €110 + compensation.
+  Austrian: delays add ≈ 1.5–2 % of revenue (Lufthansa Group reported irregularity costs of this order in bad years).
+- Random numbers from stable hashes (other random events unchanged); AI airlines' delays are not modelled.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

@@ -5,6 +5,7 @@ import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 import type { Command } from './commands';
 import type { Delegation, Department } from '../data/managers';
+import type { DelayCause } from '../data/delays';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
 export const SAVE_VERSION = 11;
@@ -469,6 +470,42 @@ export interface PnlLines {
   disruption: number;
 }
 
+/** One flight of the day as it really goes (Phase 9.1): scheduled UTC times, delays, what happened. */
+export interface OpsFlight {
+  airlineId: string;
+  routeId: string;
+  pairId: string;
+  dir: 0 | 1;
+  aircraftId: string;
+  flightNumber: number;
+  fromId: string;
+  toId: string;
+  /** Scheduled departure and arrival (UTC). */
+  dep: SimTime;
+  arr: SimTime;
+  /** Minutes late at departure and arrival (arrival can be negative: early). */
+  depDelay: number;
+  arrDelay: number;
+  cause: DelayCause | null;
+  status: 'ok' | 'diverted' | 'cancelled';
+  /** Why it was cancelled (maintenance, technical, closure, crew, strike, curfew). */
+  reason?: string;
+  divertedTo?: string;
+  /** Passengers and transfer passengers expected (last week's average per flight). */
+  pax: number;
+  transfer: number;
+}
+
+export interface OpsState {
+  /** The UTC day of `flights`. */
+  day: SimTime;
+  flights: OpsFlight[];
+  /** The day before (for the screens). */
+  prev: OpsFlight[];
+  /** When each aircraft is ready again after its last flight of the day (delays carried into the next morning). */
+  ready: Record<string, SimTime>;
+}
+
 export interface RouteStats {
   flights: number;
   seats: number;
@@ -485,6 +522,13 @@ export interface RouteStats {
   transfer?: number;
   /** Seats, passengers and revenue per cabin class (Phase 2 cabins; missing in older periods). */
   classes?: Partial<Record<CabinClass, ClassStats>>;
+  /** Punctuality (Phase 9.1): flights operated with a known arrival, of them within 15 minutes, minutes late in all,
+   * diverted flights, delay minutes by cause. */
+  opsFlights?: number;
+  onTime?: number;
+  delayMin?: number;
+  diverted?: number;
+  causes?: Partial<Record<DelayCause, number>>;
 }
 
 export interface ClassStats {
@@ -657,7 +701,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -705,6 +749,8 @@ export interface LedgerEntry {
 }
 
 export interface GameState {
+  /** Today's and yesterday's flights of the player with their delays (Phase 9.1; absent in older games until used). */
+  ops?: OpsState;
   version: number;
   seed: number;
   /** Current state of the random number generator (see rng.ts). */

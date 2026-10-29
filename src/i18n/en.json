@@ -249,7 +249,8 @@
     "managerActions_one": "Your managers made {{count}} decision today (see Management).",
     "managerActions_other": "Your managers made {{count}} decisions today (see Management).",
     "proposalsWaiting_one": "{{count}} new proposal from your managers is waiting for your OK (see Management).",
-    "proposalsWaiting_other": "{{count}} new proposals from your managers are waiting for your OK (see Management)."
+    "proposalsWaiting_other": "{{count}} new proposals from your managers are waiting for your OK (see Management).",
+    "flightDiverted": "Flight {{flight}} {{from}}–{{to}} diverted to {{alt}} ({{cause}}). Passengers continue by bus; the aircraft returns the next morning."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -835,7 +836,8 @@
       "cask": "CASK",
       "caskExFuel": "CASK excl. fuel",
       "yield": "Yield",
-      "utilisation": "Utilisation"
+      "utilisation": "Utilisation",
+      "onTime": "On time"
     },
     "hint": {
       "cash": "Money in the bank. Below zero, the airline is in trouble.",
@@ -848,7 +850,8 @@
       "cask": "Cost per available seat-km (all costs). Earns money when RASK is higher.",
       "caskExFuel": "CASK without fuel: the costs the airline controls itself.",
       "yield": "Revenue per passenger-km: the average price per km flown.",
-      "utilisation": "Block hours per aircraft per day. Short-haul airlines: about 9–12 h."
+      "utilisation": "Block hours per aircraft per day. Short-haul airlines: about 9–12 h.",
+      "onTime": "Share of flights arriving no more than 15 minutes late (Europe 2024: 72 %). Late aircraft make their next flights late too."
     },
     "centsPer": "{{currency}} cents per {{unit}}",
     "vsLastWeek": "vs last week",
@@ -1175,6 +1178,50 @@
       "crewPlan": "Run the crew plan: about {{pilots}} pilots and {{cabin}} cabin crew still to hire or train.",
       "wageOffer": "Offer {{union}} ({{group}}) {{offer}} a year (they ask for {{demand}})."
     }
+  },
+  "board": {
+    "title": "Departures today",
+    "none": "The day's flights appear after the first night of play.",
+    "scheduled": "Scheduled",
+    "onTime": "On time",
+    "delayed": "Delayed · new time {{time}}",
+    "airborne": "In the air · arriving {{time}} ({{delay}})",
+    "landed": "Landed {{time}} ({{delay}})",
+    "diverted": "Diverted to {{airport}}",
+    "cancelled": "Cancelled · {{reason}}",
+    "reason": {
+      "maintenance": "maintenance",
+      "technical": "technical problem",
+      "closure": "airport or airspace closed",
+      "strike": "strike",
+      "crew": "no crew",
+      "curfew": "night curfew",
+      "other": "other"
+    },
+    "cause": {
+      "airline": "airline",
+      "atc": "air traffic control",
+      "airport": "airport congestion",
+      "weather": "weather",
+      "reactionary": "late incoming aircraft",
+      "curfew": "night curfew"
+    },
+    "yesterday_one": "Yesterday: {{percent}} % of {{count}} flight on time (within 15 minutes).",
+    "yesterday_other": "Yesterday: {{percent}} % of {{count}} flights on time (within 15 minutes).",
+    "noYesterday": "Yesterday's punctuality appears after the first full day.",
+    "filter": "Show",
+    "filters": {
+      "next": "Next",
+      "problems": "Problems",
+      "all": "All"
+    },
+    "empty": "No more flights today.",
+    "noProblems": "No delays or disruptions known so far today.",
+    "flight": "Flight",
+    "route": "Route",
+    "std": "Sched.",
+    "status": "Status",
+    "note": "Local times at each airport. Delays are known from two hours before departure. A late aircraft makes its next flights late too unless the timetable has buffer; delays caused by the airline cost EU 261 compensation from three hours at arrival."
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

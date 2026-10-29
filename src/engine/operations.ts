@@ -6,6 +6,7 @@ import { baseRunPerDayUsd, stationOf } from './bases';
 import { crewDailyStep, crewPayPerDayUsd, ensureCrew } from './crews';
 import { ensureLabour, labourDailyStep } from './unions';
 import { ensureMgmt, managersDailyStep } from './managers';
+import { opsDailyStep } from './delays';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -81,6 +82,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   labourDailyStep(state, world);
   // Heads of department review, propose and decide (Phase 8.3).
   managersDailyStep(state, world);
+  // Yesterday's flights settled (delays, diversions, missed connections), today's played through (Phase 9.1).
+  opsDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {
     closeWeek(state);
     recordSlotUse(state, world);

@@ -53,17 +53,26 @@ export interface AirborneFlight {
   progress: number;
 }
 
-/** Which of these legs is in the air at `time`, and where. */
-export function airborne(legs: readonly Leg[], world: EngineWorld, time: SimTime): AirborneFlight | null {
-  const minute = time - startOfWeek(time);
+/** Today's operation of a leg (Phase 9.1): minutes late at departure and arrival, a diversion, or null if cancelled. */
+export type LegAdjust = (leg: Leg, scheduledDep: SimTime) => { dep: number; arr: number; toId?: string } | null;
+
+/** Which of these legs is in the air at `time`, and where (with today's delays when `adjust` is given). */
+export function airborne(legs: readonly Leg[], world: EngineWorld, time: SimTime, adjust?: LegAdjust): AirborneFlight | null {
+  const week = startOfWeek(time);
+  const minute = time - week;
   for (const leg of legs) {
     // A leg can belong to the end of last week's pattern (after Sunday midnight) or this week's.
     for (const m of [minute, minute + MINUTES_PER_WEEK]) {
-      if (m >= leg.dep && m < leg.arr) {
+      const scheduled = week + leg.dep - (m === minute ? 0 : MINUTES_PER_WEEK);
+      const late = adjust ? adjust(leg, scheduled) : { dep: 0, arr: 0 };
+      if (!late) continue;
+      const dep = leg.dep + late.dep;
+      const arr = Math.max(dep + 1, leg.arr + late.arr);
+      if (m >= dep && m < arr) {
         const from = world.airportById.get(leg.fromId);
-        const to = world.airportById.get(leg.toId);
+        const to = world.airportById.get(late.toId ?? leg.toId);
         if (!from || !to) return null;
-        const progress = (m - leg.dep) / (leg.arr - leg.dep);
+        const progress = (m - dep) / (arr - dep);
         const here = intermediatePoint(from, to, progress);
         const ahead = intermediatePoint(from, to, Math.min(1, progress + 0.01));
         return { leg, lat: here.lat, lon: here.lon, heading: bearing(here, ahead), progress };

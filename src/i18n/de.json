@@ -249,7 +249,8 @@
     "managerActions_one": "Deine Manager haben heute {{count}} Entscheidung getroffen (siehe Management).",
     "managerActions_other": "Deine Manager haben heute {{count}} Entscheidungen getroffen (siehe Management).",
     "proposalsWaiting_one": "{{count}} neuer Vorschlag deiner Manager wartet auf dein OK (siehe Management).",
-    "proposalsWaiting_other": "{{count}} neue Vorschläge deiner Manager warten auf dein OK (siehe Management)."
+    "proposalsWaiting_other": "{{count}} neue Vorschläge deiner Manager warten auf dein OK (siehe Management).",
+    "flightDiverted": "Flug {{flight}} {{from}}–{{to}} nach {{alt}} umgeleitet ({{cause}}). Die Passagiere fahren mit dem Bus weiter; das Flugzeug kommt am nächsten Morgen zurück."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -835,7 +836,8 @@
       "cask": "CASK",
       "caskExFuel": "CASK ohne Treibstoff",
       "yield": "Yield",
-      "utilisation": "Auslastung Flotte"
+      "utilisation": "Auslastung Flotte",
+      "onTime": "Pünktlich"
     },
     "hint": {
       "cash": "Geld auf dem Konto. Unter null wird es kritisch.",
@@ -848,7 +850,8 @@
       "cask": "Kosten pro angebotenem Sitzkilometer (alle Kosten). Gewinn, wenn RASK höher ist.",
       "caskExFuel": "CASK ohne Treibstoff: die Kosten, die die Airline selbst steuert.",
       "yield": "Umsatz pro Passagierkilometer: der Durchschnittspreis pro geflogenem km.",
-      "utilisation": "Blockstunden pro Flugzeug und Tag. Kurzstrecken-Airlines: etwa 9–12 h."
+      "utilisation": "Blockstunden pro Flugzeug und Tag. Kurzstrecken-Airlines: etwa 9–12 h.",
+      "onTime": "Anteil der Flüge, die höchstens 15 Minuten zu spät ankommen (Europa 2024: 72 %). Verspätete Flugzeuge verspäten auch ihre nächsten Flüge."
     },
     "centsPer": "{{currency}}-Cent pro {{unit}}",
     "vsLastWeek": "zur Vorwoche",
@@ -1175,6 +1178,50 @@
       "crewPlan": "Crewplan umsetzen: etwa {{pilots}} Piloten und {{cabin}} Flugbegleiter noch einzustellen oder zu schulen.",
       "wageOffer": "{{union}} ({{group}}) {{offer}} pro Jahr anbieten (Forderung: {{demand}})."
     }
+  },
+  "board": {
+    "title": "Abflüge heute",
+    "none": "Die Flüge des Tages erscheinen nach der ersten gespielten Nacht.",
+    "scheduled": "Planmäßig",
+    "onTime": "Pünktlich",
+    "delayed": "Verspätet · neue Zeit {{time}}",
+    "airborne": "In der Luft · Ankunft {{time}} ({{delay}})",
+    "landed": "Gelandet {{time}} ({{delay}})",
+    "diverted": "Umgeleitet nach {{airport}}",
+    "cancelled": "Annulliert · {{reason}}",
+    "reason": {
+      "maintenance": "Wartung",
+      "technical": "technisches Problem",
+      "closure": "Flughafen oder Luftraum gesperrt",
+      "strike": "Streik",
+      "crew": "keine Crew",
+      "curfew": "Nachtflugverbot",
+      "other": "anderes"
+    },
+    "cause": {
+      "airline": "Airline",
+      "atc": "Flugsicherung",
+      "airport": "Flughafenüberlastung",
+      "weather": "Wetter",
+      "reactionary": "verspätetes Flugzeug",
+      "curfew": "Nachtflugverbot"
+    },
+    "yesterday_one": "Gestern: {{percent}} % von {{count}} Flug pünktlich (bis 15 Minuten).",
+    "yesterday_other": "Gestern: {{percent}} % von {{count}} Flügen pünktlich (bis 15 Minuten).",
+    "noYesterday": "Die Pünktlichkeit von gestern erscheint nach dem ersten vollen Tag.",
+    "filter": "Zeigen",
+    "filters": {
+      "next": "Nächste",
+      "problems": "Probleme",
+      "all": "Alle"
+    },
+    "empty": "Heute keine Flüge mehr.",
+    "noProblems": "Bisher heute keine Verspätungen oder Störungen bekannt.",
+    "flight": "Flug",
+    "route": "Strecke",
+    "std": "Plan",
+    "status": "Status",
+    "note": "Ortszeiten am jeweiligen Flughafen. Verspätungen sind ab zwei Stunden vor Abflug bekannt. Ein verspätetes Flugzeug verspätet auch seine nächsten Flüge, wenn der Flugplan keinen Puffer hat; von der Airline verursachte Verspätungen kosten ab drei Stunden bei der Ankunft eine Entschädigung nach EU 261."
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

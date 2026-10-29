@@ -1,4 +1,5 @@
 // Accounting periods: adding up profit-and-loss figures from days into weeks, months, quarters and years.
+import type { DelayCause } from '../data/delays';
 import { emptyPnl, type CabinClass, type ClassStats, type PnlLines, type PnlWeek, type RouteStats } from './state';
 import type { SimTime } from './time';
 
@@ -21,6 +22,11 @@ export function mergePnl(target: PnlPeriod, src: PnlPeriod): void {
     if (s.rpk !== undefined) t.rpk = (t.rpk ?? 0) + s.rpk;
     if (s.blockHours !== undefined) t.blockHours = (t.blockHours ?? 0) + s.blockHours;
     if (s.transfer !== undefined) t.transfer = (t.transfer ?? 0) + s.transfer;
+    if (s.opsFlights !== undefined) t.opsFlights = (t.opsFlights ?? 0) + s.opsFlights;
+    if (s.onTime !== undefined) t.onTime = (t.onTime ?? 0) + s.onTime;
+    if (s.delayMin !== undefined) t.delayMin = (t.delayMin ?? 0) + s.delayMin;
+    if (s.diverted !== undefined) t.diverted = (t.diverted ?? 0) + s.diverted;
+    for (const [cause, min] of Object.entries(s.causes ?? {}) as [DelayCause, number][]) (t.causes ??= {})[cause] = (t.causes[cause] ?? 0) + min;
     for (const [cls, c] of Object.entries(s.classes ?? {}) as [CabinClass, ClassStats][]) {
       const tc = ((t.classes ??= {})[cls] ??= { seats: 0, pax: 0, revenue: 0 });
       tc.seats += c.seats;
