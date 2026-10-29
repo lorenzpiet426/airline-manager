@@ -585,7 +585,9 @@
     "fixedNoteDetailed": "Not included: crew salaries and leases of {{registration}} ({{cost}} per week together), which they share with their other routes, and the airline's overheads. The route uses {{hours}} block hours per week.",
     "classFare": "{{cls}} fare",
     "classLf": "Load factor per class",
-    "regulatedFares": "Regulated route: until {{date}} governments and the IATA tariff fix the fares here, so you can only charge ±10 % around the official fare. No price wars."
+    "regulatedFares": "Regulated route: until {{date}} governments and the IATA tariff fix the fares here, so you can only charge ±10 % around the official fare. No price wars.",
+    "nearbyTitle": "From the same cities' other airports",
+    "nearbyWeight": "counts {{percent}} %"
   },
   "finance": {
     "title": "Finance",

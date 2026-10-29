@@ -507,6 +507,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 8.3: **proposal inbox** for "after my OK" (expires after 2 weeks, waits while away); "advise" = advice only; "decide alone" acts and reports | Owner choice |
 | 2026-10-29 | 8.3: **judgement by skill** (estimate = true effect + error shrinking with skill); forecast and real effect shown in a track record | Owner choice |
 | 2026-10-29 | 8.3: without a head a department makes no proposals; HR staff keep planning crews (old behaviour); manager randomness from stable hashes (other random events unchanged) | Old games and calibration unchanged |
+| 2026-10-29 | **Cities with several airports**: other airports < 100 km count as competition and share their travellers (weight 0.8 × (1 − km/130), travellers × 0.5); unmeasured routes next to measured ones keep (1 − weight) of their demand | Vienna–Orly showed ≈ 52 % margin without CDG's competitors (owner asked for the fix before Phase 9) |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1245,6 +1246,19 @@ education", forbid making the data available to others (§3 iii) and require a w
   network heads only add routes, not frequencies on existing ones; no finance department until Phase 10.
 - **Next:** Phase 9 (revenue and operations detail: fare classes, booking curves, loyalty, delays, incidents) — or what
   the owner prefers. Consider fixing the multi-airport competition first.
+
+### 2026-10-29 — Session 29 (fix: cities with several airports) ✅
+- Owner asked to fix the multi-airport issue found in 8.3 before Phase 9.
+- Engine `economics.ts`: `substitution`, `nearbyAirports` (cached per world), `nearbyPairs`, `nearbyCompetitors`,
+  `nearbyCounted` (closest 3 with weight ≥ 0.15), `nearbyMarket` (quick demand estimate), `measuredNearby`; `routeWeek`
+  adds the other airports' flights to the passengers' choice (weighted) and their travellers to the route's own (×
+  weight × `NEARBY_DEMAND_SHARE` 0.5); `market()` cached per world and reduced for unmeasured routes next to measured
+  ones. First tried separate choice calculations per nearby market: correct but twice as slow, replaced by pooling.
+- UI: route planner lists "From the same cities' other airports" with their weight and flights (EN/DE).
+- Tests: 211 (`cities.test.ts`: nearby airports and weights, Vienna–Orly no longer far better than Vienna–CDG).
+  Calibration within about a point except British Airways (≈ −8 %, see DATA_SOURCES).
+- Verified in browser: Austrian's VIE–CDG forecast lists VIE–ORY (Transavia, 59 %) and VIE–BVA (Ryanair, 44 %).
+- **Next:** Phase 9 (revenue and operations detail).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

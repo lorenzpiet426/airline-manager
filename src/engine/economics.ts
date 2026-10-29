@@ -168,7 +168,19 @@ export function gravityAnnualPax(world: EngineWorld, a: Airport, b: Airport, km 
   );
 }
 
+const marketCache = new WeakMap<EngineWorld, Map<string, Market>>();
+
+/** The market between two airports (depends only on the world's data, so it is kept per world). */
 export function market(world: EngineWorld, a: Airport, b: Airport): Market {
+  let cache = marketCache.get(world);
+  if (!cache) marketCache.set(world, (cache = new Map()));
+  const key = `${a.id}|${b.id}`;
+  let m = cache.get(key);
+  if (!m) cache.set(key, (m = computeMarket(world, a, b)));
+  return m;
+}
+
+function computeMarket(world: EngineWorld, a: Airport, b: Airport): Market {
   const km = Math.max(distanceKm(a, b), 50);
   const annualPax = gravityAnnualPax(world, a, b, km);
   // Where real passenger numbers were measured (Eurostat, summer), they replace the model's estimate: they include
@@ -177,7 +189,10 @@ export function market(world: EngineWorld, a: Airport, b: Airport): Market {
   // Some of them change planes at a hub on the way (Phase 6.1): those belong to the hub airlines' networks (see
   // transfers.ts), so only the local travellers count as this market.
   const local = observed !== null ? Math.max(observed * MIN_LOCAL_SHARE, observed - realTransfersOn(world, a.id, b.id)) : 0;
-  const weeklyPax = observed !== null ? (local * MEASURED_DEMAND_FACTOR) / SUMMER_AVERAGE_SEASON : annualPax / 52 / 2;
+  // Unmeasured routes between cities that are measured from their other airports (Vienna–Orly next to Vienna–CDG):
+  // the measured passengers already include travellers from around this airport, so only part of the estimate is new.
+  const counted = observed === null ? measuredNearby(world, a, b) : 0;
+  const weeklyPax = observed !== null ? (local * MEASURED_DEMAND_FACTOR) / SUMMER_AVERAGE_SEASON : (annualPax / 52 / 2) * Math.max(0.25, 1 - counted);
   const businessShare = Math.min(0.4, Math.max(0.1, 0.1 + 0.15 * Math.min(wealth(world, a), wealth(world, b))));
   // Who serves this market today? Typical aircraft size grows with distance; ~80 % of seats filled.
   const typicalSeats = km < 1500 ? 150 : km < 4000 ? 190 : 280;
@@ -322,6 +337,118 @@ export function competitorsOn(
       seasonal: c.seasonal,
       changed: !!change,
     });
+  }
+  return result;
+}
+
+// ─── Cities with several airports ───────────────────────────────────────────────
+
+/** Airports this close together serve the same city (Paris CDG/Orly, London's five, Milan, Vienna/Bratislava …). */
+export const NEARBY_KM = 100;
+/**
+ * How readily travellers use another airport of the same city instead (0…1): less the further apart they are
+ * (CDG–Orly 35 km ≈ 0.58, Heathrow–Stansted 64 km ≈ 0.41, Vienna–Bratislava 49 km ≈ 0.5).
+ */
+export const substitution = (km: number): number => (km >= NEARBY_KM ? 0 : 0.8 * (1 - km / 130));
+
+/**
+ * Share of the other airports' travellers who would consider this airport at all (calibrated so that Austrian, Ryanair,
+ * Wizz Air and easyJet keep their Phase 6.1 results within about a point; the others stay with their own airport).
+ */
+export const NEARBY_DEMAND_SHARE = 0.5;
+/** At most this many other airport pairs of the same two cities count (the closest ones), each with at least this weight. */
+const MIN_NEARBY_WEIGHT = 0.15;
+const MAX_NEARBY_MARKETS = 3;
+/** How readily a traveller living around airport `home` uses airport `x` (1 if it is the same). */
+const sideWeight = (x: Airport, home: Airport) => (x.id === home.id ? 1 : substitution(distanceKm(x, home)));
+
+const nearbyCache = new WeakMap<EngineWorld, Map<string, { airport: Airport; s: number }[]>>();
+/** Other airports of the same city with how readily travellers switch to them. */
+export function nearbyAirports(world: EngineWorld, a: Airport): { airport: Airport; s: number }[] {
+  let cache = nearbyCache.get(world);
+  if (!cache) nearbyCache.set(world, (cache = new Map()));
+  let list = cache.get(a.id);
+  if (!list) {
+    list = [];
+    for (const b of world.airportById.values()) {
+      if (b.id === a.id || b.size === 'small' || Math.abs(b.lat - a.lat) > 1 || Math.abs(b.lon - a.lon) > 3) continue;
+      const km = distanceKm(a, b);
+      if (km < NEARBY_KM) list.push({ airport: b, s: substitution(km) });
+    }
+    cache.set(a.id, list);
+  }
+  return list;
+}
+
+/** The other airports' routes that count for a route (the closest few with a real weight). */
+export const nearbyCounted = (world: EngineWorld, from: Airport, to: Airport, ai?: AiState) =>
+  nearbyCompetitors(world, from, to, ai).filter((n) => n.s >= MIN_NEARBY_WEIGHT).slice(0, MAX_NEARBY_MARKETS);
+
+/** A typical share of local travellers on a measured route (the rest change planes at a hub; see market()). */
+const TYPICAL_LOCAL_SHARE = 0.75;
+const nearbyMarketCache = new WeakMap<EngineWorld, Map<string, { weeklyPax: number; connectingFlights: number }>>();
+/** The travellers of another airport pair of the same cities: a quicker estimate than market() (no hub transfer tables). */
+function nearbyMarket(world: EngineWorld, a: Airport, b: Airport): { weeklyPax: number; connectingFlights: number } {
+  let cache = nearbyMarketCache.get(world);
+  if (!cache) nearbyMarketCache.set(world, (cache = new Map()));
+  const key = `${a.id}|${b.id}`;
+  let m = cache.get(key);
+  if (!m) {
+    const km = Math.max(distanceKm(a, b), 50);
+    const observed = world.realAirlines?.observedWeeklyPax(a.id, b.id) ?? null;
+    const weeklyPax =
+      observed !== null
+        ? (observed * TYPICAL_LOCAL_SHARE * MEASURED_DEMAND_FACTOR) / SUMMER_AVERAGE_SEASON
+        : (gravityAnnualPax(world, a, b, km) / 52 / 2) * Math.max(0.25, 1 - measuredNearby(world, a, b));
+    cache.set(key, (m = { weeklyPax, connectingFlights: connectingEquivalent(km) }));
+  }
+  return m;
+}
+
+const pairCache = new WeakMap<EngineWorld, Map<string, { from: Airport; to: Airport; s: number }[]>>();
+/** The other airport pairs between the same two cities (weight ≥ 0.05), closest first; kept per world. */
+function nearbyPairs(world: EngineWorld, from: Airport, to: Airport): { from: Airport; to: Airport; s: number }[] {
+  let cache = pairCache.get(world);
+  if (!cache) pairCache.set(world, (cache = new Map()));
+  const key = `${from.id}|${to.id}`;
+  let list = cache.get(key);
+  if (!list) {
+    list = [];
+    const ends = (x: Airport) => [{ airport: x, s: 1 }, ...nearbyAirports(world, x)];
+    for (const a of ends(from)) {
+      for (const b of ends(to)) {
+        if ((a.airport.id === from.id && b.airport.id === to.id) || a.airport.id === b.airport.id) continue;
+        const s = a.s * b.s;
+        if (s >= 0.05) list.push({ from: a.airport, to: b.airport, s });
+      }
+    }
+    list.sort((x, y) => y.s - x.s);
+    cache.set(key, list);
+  }
+  return list;
+}
+
+/** The largest substitution weight of a measured route between the same two cities from other airports (0 = none). */
+function measuredNearby(world: EngineWorld, from: Airport, to: Airport): number {
+  const real = world.realAirlines;
+  if (!real) return 0;
+  return nearbyPairs(world, from, to).find((p) => real.observedWeeklyPax(p.from.id, p.to.id) !== null)?.s ?? 0;
+}
+
+/**
+ * Competitors flying between the same two cities from other airports (e.g. Vienna–Paris CDG for a Vienna–Orly route),
+ * with the weight travellers give them (the product of both ends' substitution).
+ */
+export function nearbyCompetitors(world: EngineWorld, from: Airport, to: Airport, ai?: AiState): { from: Airport; to: Airport; s: number; competitors: Competitor[] }[] {
+  const real = world.realAirlines;
+  if (!real) return [];
+  const result: { from: Airport; to: Airport; s: number; competitors: Competitor[] }[] = [];
+  for (const p of nearbyPairs(world, from, to)) {
+    // Quick check before the full list: anybody in the data or added by the AI on that pair?
+    const key = p.from.id < p.to.id ? `${p.from.id}|${p.to.id}` : `${p.to.id}|${p.from.id}`;
+    if (!real.on(p.from.id, p.to.id).length && !ai?.added[key]?.length) continue;
+    const competitors = competitorsOn(world, p.from, p.to, undefined, ai) ?? [];
+    if (competitors.length) result.push({ ...p, competitors });
   }
   return result;
 }
@@ -696,8 +823,10 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     const competitors = competitorsOn(world, A, B, undefined, ctx.ai)?.filter((c) => c.airlineId !== ctx.exclude) ?? null;
     const capSeason = capacitySeason(A, B, date);
     const relative = (x: number) => (!competitors && x < 1 ? 1 - INCUMBENT_PRICE_MATCH * (1 - x) : x);
-    type Other = { dep: number; arr: number; weight: number; fare: (cls: CabinClass) => number; speed: number; group: string; days?: number; cabin: CabinLayout; brand: Brand };
+    type Other = { dep: number; arr: number; weight: number; fare: (cls: CabinClass) => number; speed: number; group: string; days?: number; cabin: CabinLayout; brand: Brand; pf?: Airport; pt?: Airport };
     const others: Other[] = [];
+    // Cities with several airports: the other airports' routes between the same two cities (see nearbyCompetitors).
+    const near = competitors ? nearbyCounted(world, A, B, ctx.ai) : [];
     if (competitors) {
       for (const c of competitors) {
         const cabin = competitorCabin(c.model, longHaul);
@@ -705,6 +834,18 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         // Competitors' capacity grows with the market over the years and follows the seasons.
         const weekly = c.weekly * (cond?.growth(A, B) ?? 1) * capSeason;
         for (const d of competitorDepartures(world, c.airlineId, A, B, weekly, time)) others.push({ ...d, fare: () => c.fareFactor, speed: 1, group: c.airlineId, cabin, brand });
+      }
+      // Flights between the same cities from their other airports (weighed per market below).
+      for (const n of near) {
+        for (const c of n.competitors) {
+          if (c.airlineId === ctx.exclude) continue;
+          const cabin = competitorCabin(c.model, longHaul);
+          const brand = { reputation: MODEL_REPUTATION[c.model], awareness: 1 };
+          const weekly = c.weekly * (cond?.growth(n.from, n.to) ?? 1) * capacitySeason(n.from, n.to, date);
+          for (const d of competitorDepartures(world, c.airlineId, n.from, n.to, weekly, time)) {
+            others.push({ ...d, fare: () => c.fareFactor, speed: 1, group: `${c.airlineId}@${n.from.id}${n.to.id}`, cabin, brand, pf: n.from, pt: n.to });
+          }
+        }
       }
     } else {
       const cabin = competitorCabin('legacy', longHaul);
@@ -728,6 +869,12 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     const mineIdx = timetable.map((f, i) => (f.dir === dir ? i : -1)).filter((i) => i >= 0);
     if (!mineIdx.length) continue;
 
+    // Travellers living near the same cities' other airports who would use this airport too: they join this route's
+    // travellers, counted by how readily they would come here (Phase 8.3 fix for cities with several airports).
+    const nearbyPax = near.reduce((n, x) => n + x.s * nearbyMarket(world, x.from, x.to).weeklyPax, 0) * NEARBY_DEMAND_SHARE;
+    const M = { m: { weeklyPax: m.weeklyPax + nearbyPax, connectingFlights: m.connectingFlights } };
+    const mineWeight = 1;
+    const otherWeight = others.map((o) => o.weight * (o.pf ? sideWeight(o.pf, A) * sideWeight(o.pt!, B) : 1));
     for (const segment of ['business', 'leisure'] as const) {
       const segShare = segment === 'business' ? biz : 1 - biz;
       // Holidaymakers react much more strongly to price than business travellers; cheaper fares also make more
@@ -748,31 +895,32 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
           if (!hasDay(days, day)) continue;
           const today = mineIdx.map((i, k) => (hasDay(timetable[i]!.days, day) && mine[k] ? k : -1)).filter((k) => k >= 0);
           if (!today.length) continue;
-          const otherIdx = others.map((o, j) => (o.days === undefined || hasDay(o.days, day) ? j : -1)).filter((j) => j >= 0);
+          const otherIdx = others.map((o, j) => ((o.days === undefined || hasDay(o.days, day)) && otherWeight[j]! > 0 ? j : -1)).filter((j) => j >= 0);
           const key = `${today.join(',')}|${otherIdx.length}`;
           let shares = cache.get(key);
           if (!shares) {
             const options: DayOption[] = [
               ...today.map((k) => {
                 const i = mineIdx[k]!;
-                return { dep: timetable[i]!.dep, arr: info[i]!.arr, pull: mine[k]!.appeal * info[i]!.speed * myBrandAppeal, weight: 1, group: 'me' };
+                return { dep: timetable[i]!.dep, arr: info[i]!.arr, pull: mine[k]!.appeal * info[i]!.speed * myBrandAppeal, weight: mineWeight, group: 'me' };
               }),
               ...otherIdx.map((j) => {
                 const o = others[j]!;
-                return { dep: o.dep, arr: o.arr, pull: theirs[j]! * o.speed * theirBrand[j]!, weight: o.weight, group: o.group };
+                return { dep: o.dep, arr: o.arr, pull: theirs[j]! * o.speed * theirBrand[j]!, weight: otherWeight[j]!, group: o.group };
               }),
             ];
-            shares = dayShares(options, segment, longHaul, m.connectingFlights / 7, CONNECTING_PULL);
+            shares = dayShares(options, segment, longHaul, M.m.connectingFlights / 7, CONNECTING_PULL);
             cache.set(key, shares);
           }
           const world5 = cond ? cond.growth(A, B) * cond.demand(A, B, segment) : 1;
-          const travellers = (m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation * world5;
+          const travellers = (M.m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation * world5;
           today.forEach((k, n) => {
             demand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;
           });
         }
       }
     }
+
 
     // Transfer passengers connect to the airline's own flights only: on the flights that really connect (Phase 7.1,
     // the player's saved timetable), otherwise spread over the day's flights in this direction.

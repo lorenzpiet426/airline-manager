@@ -585,7 +585,9 @@
     "fixedNoteDetailed": "Nicht enthalten: Crew-Gehälter und Leasing von {{registration}} (zusammen {{cost}} pro Woche), die sie mit ihren anderen Strecken teilen, und die Gemeinkosten der Airline. Die Strecke braucht {{hours}} Blockstunden pro Woche.",
     "classFare": "Tarif {{cls}}",
     "classLf": "Auslastung je Klasse",
-    "regulatedFares": "Regulierte Strecke: Bis {{date}} legen Regierungen und der IATA-Tarif die Preise hier fest, du kannst nur ±10 % um den offiziellen Tarif verlangen. Keine Preiskriege."
+    "regulatedFares": "Regulierte Strecke: Bis {{date}} legen Regierungen und der IATA-Tarif die Preise hier fest, du kannst nur ±10 % um den offiziellen Tarif verlangen. Keine Preiskriege.",
+    "nearbyTitle": "Von den anderen Flughäfen derselben Städte",
+    "nearbyWeight": "zählt {{percent}} %"
   },
   "finance": {
     "title": "Finanzen",

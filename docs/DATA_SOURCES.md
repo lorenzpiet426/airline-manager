@@ -746,6 +746,23 @@ Owner decisions: all five departments, generated people, a proposal inbox, judge
 - **Help without deciding** (modelled): technical failures × (1.1 − 0.05 × skill), recruits × (0.9 + 0.05 × skill),
   lease-extension rent × (1.04 − 0.02 × skill); without a head: unchanged.
 
+## Cities with several airports (fix after Phase 8.3, 2026-10-29)
+Before, every airport pair was its own market: a route to a city's second airport (Vienna–Paris Orly next to the
+Austrian and Air France flights to CDG) saw no competition and also counted travellers that the measured CDG numbers
+already contain, so it looked very profitable (≈ 52 % before crews and leases).
+
+- **Same city** (modelled): airports (large/medium) less than 100 km apart. How readily travellers use the other one:
+  0.8 × (1 − km/130) — CDG–Orly 35 km ≈ 0.58, Heathrow–Gatwick ≈ 0.55, Heathrow–Stansted ≈ 0.41, Vienna–Bratislava ≈ 0.5.
+- **Competition**: flights between the same two cities from their other airports join the passengers' choice, weighed by
+  the product of both ends' weights (the closest three pairs with weight ≥ 0.15).
+- **Travellers**: those living near the other airports join the route's travellers at their weight × 0.5 (calibrated so
+  that Austrian, Ryanair, Wizz Air and easyJet keep their Phase 6.1 results within about a point); an unmeasured route
+  next to a measured one between the same cities keeps only (1 − weight) of its estimated demand (at least 25 %).
+- **Results** (one model year): Austrian +4.4 → ≈ +3.8 % (before overheads), Ryanair LF 0.84 / +14.4 % → ≈ 0.85 / +15 %,
+  easyJet 0.88 / +15.3 % → ≈ 0.88 / +15.5 %, Wizz Air 0.80 / +14.3 % → ≈ 0.80 / +13.5 %; British Airways −0.5 % → ≈ −8 %
+  (Heathrow now competes with Gatwick, Stansted, Luton and City; BA was already weak in the model). A startup's daily
+  A320: Vienna–Orly ≈ +4 % and Vienna–CDG ≈ −3 % before crews and leases. A simulated AI year ≈ 20 % slower.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

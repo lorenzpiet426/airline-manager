@@ -42,6 +42,7 @@ import {
   crewCostPerDayUsd,
   market,
   marketFareUsd,
+  nearbyCounted,
   roundTripHours,
   routeWeek,
   totalCosts,
@@ -387,6 +388,8 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
       market: market(engineWorld, hub, dest),
       growth: conditions.growth(hub, dest),
       // Competitors' flights grow with the market (historical games: far fewer flights than today).
+      // Flights between the same cities from their other airports (Paris CDG for an Orly route …).
+      nearby: nearbyCounted(engineWorld, hub, dest, game.ai),
       competitors: competitorsOn(engineWorld, hub, dest, undefined, game.ai)?.map((c) => ({ ...c, weekly: Math.max(1, Math.round(c.weekly * conditions.growth(hub, dest))) })) ?? null,
       marketFare: marketFareUsd(engineWorld, hub, dest, date, conditions.fuelSpot / conditions.levels.prices) * conditions.levels.fares,
       week,
@@ -646,6 +649,22 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                 </ul>
               ) : (
                 t('network.noCompetition')
+              )}
+              {forecast.nearby.length > 0 && (
+                <>
+                  <span className="field__label">{t('network.nearbyTitle')}</span>
+                  <ul className="plain-list small">
+                    {forecast.nearby.map((n) => (
+                      <li key={`${n.from.id}${n.to.id}`}>
+                        <span className="mono">
+                          {n.from.iata ?? n.from.id}–{n.to.iata ?? n.to.id}
+                        </span>{' '}
+                        <span className="muted">{t('network.nearbyWeight', { percent: Math.round(n.s * 100) })}</span>:{' '}
+                        {n.competitors.map((c) => `${airlineName(t, language, c.name)} ${t('network.perWeek', { count: Math.round(c.weekly) })}`).join(' · ')}
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
               <span className="muted small">{t('network.plusConnections')}</span>
             </dd>
