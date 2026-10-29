@@ -1,14 +1,18 @@
 // Transfer passengers (Phase 6.1): travellers who change planes at an airline's hub, e.g. Kyiv → Vienna → New York on
-// Austrian. Network airlines fill a large part of their seats with them (Austrian about half). A simple model until the
-// full hub phase (Phase 7, with connection times and waves): for every pair of the airline's destinations at a hub, a
-// share of the travellers between them connect there, if the detour is small enough. Fewer of them do when a non-stop
-// flight exists, and fewer when the airline's flights are rare. Each transfer passenger pays a share of the through
-// fare in proportion to the distance flown on each leg ("prorate").
+// Austrian. Network airlines fill a large part of their seats with them (Austrian about half). For every pair of the
+// airline's destinations at a hub, a share of the travellers between them connect there, if the detour is small enough.
+// Fewer of them do when a non-stop flight exists. Each transfer passenger pays a share of the through fare in proportion
+// to the distance flown on each leg ("prorate"). AI airlines: fewer connect when the airline's flights are rare. The
+// player (Phase 7.1): flight by flight — only where an arrival and a departure at the hub are at least the minimum
+// connecting time apart and not too long, and the passengers sit on exactly those flights.
 import type { Airport } from '../data/types';
 import { gravityAnnualPax, marketFareUsd } from './economics';
 import { distanceKm } from './geo';
 import type { RealAirline } from './realAirlines';
-import type { AiState, GameState, Route } from './state';
+import type { AiState, FlightPair, GameState, Route } from './state';
+import { getAircraftType } from '../data/aircraft';
+import { pairTimes, pairsOfRoute } from './schedule';
+import { hasDay, LONG_HAUL_MIN } from './timetable';
 import type { EngineWorld } from './world';
 
 /** Share of the travellers between two places that fly with a change of planes when no non-stop flight exists
@@ -39,6 +43,8 @@ const CONNECTING_MODELS = new Set<RealAirline['model']>(['legacy']);
 export interface LegTransfers {
   pax: number;
   yield: number;
+  /** Player's flights (Phase 7.1): weekly transfer passengers per flight ("pairId:dir") and weekday of its departure. */
+  perFlight?: Map<string, number[]>;
 }
 
 /** Weekly flights (average of both directions) from a hub to each destination. */
@@ -294,13 +300,240 @@ function dailyFeed(world: EngineWorld, state: GameState, airlineId: string, hubI
   return feed;
 }
 
+// ─── The player's hub, flight by flight (Phase 7.1) ────────────────────────────────
+
 /**
- * Transfer passengers between the player's own flights at their hub, on one of their routes (each direction), plus
- * those coming from group partners' flights (Phase 6.2). A taken-over airline doesn't compete with its own real hub.
+ * Minimum connecting times (minutes) as the airports or their home airlines publish them (read 2026-10-29: Aviation
+ * Week / Austrian Airlines for Vienna, Business Traveller and airline pages for the others). Other airports: a large
+ * one 60 min, a medium one 45 min. Connections with a long-haul flight need LONG_HAUL_EXTRA_MIN more (other terminal
+ * or pier, passport control).
  */
-export function routeTransfers(world: EngineWorld, state: GameState, route: Route): LegTransfers | null {
-  const airline = state.airlines[route.airlineId];
-  const self = airline?.realId ?? route.airlineId;
-  const feed = airline?.partners?.length ? dailyFeed(world, state, route.airlineId, route.originId) : undefined;
-  return transferTable(world, route.originId, playerHubLegs(state, route.airlineId), self, feed).get(route.destinationId) ?? null;
+export const MCT_MIN: Readonly<Record<string, number>> = {
+  LOWW: 25, // Vienna (the shortest of Europe's big hubs)
+  EDDM: 30, // Munich
+  LSZH: 40, // Zurich
+  EHAM: 40, // Amsterdam (short-haul)
+  EDDF: 45, // Frankfurt (Lufthansa: 60 from 2025)
+  EGLL: 60, // London Heathrow (British Airways T5: 60–75)
+  LFPG: 60, // Paris Charles de Gaulle
+};
+const LONG_HAUL_EXTRA_MIN = 10;
+/** Waits up to this suit everybody; longer ones lose travellers (other routings are faster). */
+const GOOD_WAIT_MIN = 150;
+/** No one waits longer than this for a connection (journeys of several thousand km: LONG_WAIT_MIN). */
+const MAX_WAIT_MIN = 420;
+const LONG_WAIT_MIN = 720;
+const LONG_JOURNEY_KM = 4000;
+const WEEK = 7 * 1440;
+
+export const mctAt = (hub: Airport, longHaul: boolean): number =>
+  (MCT_MIN[hub.id] ?? (hub.size === 'large' ? 60 : 45)) + (longHaul ? LONG_HAUL_EXTRA_MIN : 0);
+
+/** How good a connection with this wait is for the travellers (0 = impossible or useless, 1 = good). */
+export function connectionQuality(wait: number, mct: number, journeyKm: number): number {
+  if (wait < mct) return 0;
+  if (wait <= Math.max(GOOD_WAIT_MIN, mct)) return 1;
+  const max = journeyKm >= LONG_JOURNEY_KM ? LONG_WAIT_MIN : MAX_WAIT_MIN;
+  return Math.max(0, 1 - (wait - GOOD_WAIT_MIN) / (max - GOOD_WAIT_MIN));
+}
+
+/** A flight of the player at the hub: its key ("pairId:dir"), the time at the hub (minute of the week, hub local) and
+ * the weekday of its departure (the departure from the destination for flights into the hub). */
+export interface HubFlight {
+  key: string;
+  routeId: string;
+  dest: string;
+  at: number;
+  day: number;
+  longHaul: boolean;
+}
+
+/** The player's departures from and arrivals at the hub, per destination. */
+export function hubFlights(world: EngineWorld, state: GameState, airlineId: string, hubId: string): { out: Map<string, HubFlight[]>; in: Map<string, HubFlight[]> } {
+  const out = new Map<string, HubFlight[]>();
+  const inbound = new Map<string, HubFlight[]>();
+  for (const route of Object.values(state.routes)) {
+    if (route.airlineId !== airlineId || route.originId !== hubId || !world.airportById.has(route.destinationId)) continue;
+    for (const pair of pairsOfRoute(state, route.id) as FlightPair[]) {
+      const aircraft = state.aircraft[pair.aircraftId];
+      if (!aircraft) continue;
+      const t = pairTimes(world, aircraft.typeId, route, pair, state.time);
+      const longHaul = t.outArr - t.outDep > LONG_HAUL_MIN || getAircraftType(aircraft.typeId).category === 'widebody';
+      for (let d = 0; d < 7; d++) {
+        if (!hasDay(pair.days, d)) continue;
+        const dep = d * 1440 + pair.dep;
+        (out.get(route.destinationId) ?? out.set(route.destinationId, []).get(route.destinationId)!).push({ key: `${pair.id}:0`, routeId: route.id, dest: route.destinationId, at: dep % WEEK, day: d, longHaul });
+        const backDay = (((d + Math.floor(t.backDep / 1440)) % 7) + 7) % 7;
+        (inbound.get(route.destinationId) ?? inbound.set(route.destinationId, []).get(route.destinationId)!).push({ key: `${pair.id}:1`, routeId: route.id, dest: route.destinationId, at: (d * 1440 + t.backArr) % WEEK, day: backDay, longHaul });
+      }
+    }
+  }
+  return { out, in: inbound };
+}
+
+/** One connection the player offers (for the screens): passengers per week from an arrival onto a departure. */
+export interface Connection {
+  from: string;
+  to: string;
+  arrival: string;
+  departure: string;
+  wait: number;
+  pax: number;
+}
+
+export interface PlayerConnections {
+  /** Per route: [outbound (hub → destination), inbound (destination → hub)]. */
+  legs: Map<string, [LegTransfers, LegTransfers]>;
+  connections: Connection[];
+  /** Journeys E → D via the hub that have travellers but no workable connection: passengers per week possible. */
+  missed: { from: string; to: string; pax: number }[];
+}
+
+const playerCache = new WeakMap<GameState, { key: string; result: PlayerConnections }>();
+
+/**
+ * Transfer passengers at the player's hub, flight by flight: for every pair of destinations E → D, the travellers who
+ * would connect here (as in transferTable) — but only as far as the player's arrivals from E meet departures to D within
+ * a good connecting time, and they sit on exactly those flights. Partners' passengers (no timetable known) are spread
+ * over the player's flights as before. Cached until the timetable changes (and once per day for the partners).
+ */
+export function playerConnections(world: EngineWorld, state: GameState, airlineId: string, hubId: string): PlayerConnections {
+  const signature = Object.values(state.flights)
+    .filter((p) => p.airlineId === airlineId)
+    .map((p) => `${p.id}${p.dep}${p.days}${p.groundMin}${p.aircraftId}`)
+    .join('');
+  const key = `${airlineId}@${hubId}#${Math.floor(state.time / 1440)}#${signature.length}#${hashOf(signature)}`;
+  const hit = playerCache.get(state);
+  if (hit?.key === key) return hit.result;
+
+  const airline = state.airlines[airlineId];
+  const self = airline?.realId ?? airlineId;
+  const feed = airline?.partners?.length ? dailyFeed(world, state, airlineId, hubId) : new Map<string, number>();
+  const H = world.airportById.get(hubId);
+  const flights = hubFlights(world, state, airlineId, hubId);
+  const dests = [...new Set([...flights.out.keys(), ...flights.in.keys()])].map((id) => world.airportById.get(id)).filter((a): a is Airport => !!a);
+  const feeders = [...feed.keys()].filter((id) => !flights.out.has(id)).map((id) => world.airportById.get(id)).filter((a): a is Airport => !!a && a.id !== hubId);
+  const per = new Map<string, number[]>();
+  const add = (k: string, day: number, n: number) => {
+    const list = per.get(k) ?? per.set(k, [0, 0, 0, 0, 0, 0, 0]).get(k)!;
+    list[day]! += n;
+  };
+  const legPax = new Map<string, [number, number]>();
+  const legRev = new Map<string, [number, number]>();
+  const addLeg = (dest: string, dir: 0 | 1, pax: number, rev: number) => {
+    const p = legPax.get(dest) ?? legPax.set(dest, [0, 0]).get(dest)!;
+    const r = legRev.get(dest) ?? legRev.set(dest, [0, 0]).get(dest)!;
+    p[dir] += pax;
+    r[dir] += rev;
+  };
+  const connections: Connection[] = [];
+  const missed: PlayerConnections['missed'] = [];
+  if (H) {
+    const index = hubsServing(world);
+    const selfTag = `${self}@${hubId}`;
+    const all = [...dests, ...feeders];
+    const toHub = new Map(all.map((e) => [e.id, Math.max(50, distanceKm(e, H))]));
+    const otherHubs = new Map(
+      all.map((e) => [
+        e.id,
+        new Map(
+          (index.get(e.id) ?? []).flatMap((tag) => {
+            const G = tag === selfTag ? undefined : world.airportById.get(tag.slice(tag.indexOf('@') + 1));
+            return G ? [[tag, distanceKm(e, G)] as const] : [];
+          }),
+        ),
+      ]),
+    );
+    const legFare = new Map(dests.map((e) => [e.id, marketFareUsd(world, H, e, fareRef, 2.2)]));
+    for (const E of dests) {
+      const arrivals = flights.in.get(E.id) ?? [];
+      for (const D of dests) {
+        if (D.id === E.id) continue;
+        const departures = flights.out.get(D.id) ?? [];
+        if (!arrivals.length || !departures.length) continue;
+        const pair = pairData(world, selfTag, E, D, toHub.get(E.id)!, toHub.get(D.id)!, otherHubs);
+        if (!pair) continue;
+        const km = distanceKm(E, D);
+        // Each arrival from E with its best departure to D.
+        let total = 0;
+        const best: [HubFlight, HubFlight, number, number][] = [];
+        for (const a of arrivals) {
+          let top: [HubFlight, number, number] | null = null;
+          for (const d of departures) {
+            const wait = (((d.at - a.at) % WEEK) + WEEK) % WEEK;
+            const q = connectionQuality(wait, mctAt(H, a.longHaul || d.longHaul), km);
+            if (q > 0 && (!top || q > top[1] || (q === top[1] && wait < top[2]))) top = [d, q, wait];
+          }
+          if (top) {
+            best.push([a, top[0], top[1], top[2]]);
+            total += top[1];
+          }
+        }
+        if (total <= 0) {
+          missed.push({ from: E.id, to: D.id, pax: (pair.flow * pair.detour) / (pair.detour + pair.others) });
+          continue;
+        }
+        // Good connections on every day of the week connect fully (as daily flights did before).
+        const mine = pair.detour * Math.min(1, total / FULL_CONNECTIVITY_WEEKLY) ** 0.5;
+        const flow = (pair.flow * mine) / (mine + pair.others);
+        const dE = toHub.get(E.id)!;
+        const dD = toHub.get(D.id)!;
+        for (const [a, d, q, wait] of best) {
+          const n = (flow * q) / total;
+          add(a.key, a.day, n);
+          add(d.key, d.day, n);
+          addLeg(E.id, 1, n, (n * pair.through * (dE / (dE + dD))) / legFare.get(E.id)!);
+          addLeg(D.id, 0, n, (n * pair.through * (dD / (dE + dD))) / legFare.get(D.id)!);
+          connections.push({ from: E.id, to: D.id, arrival: a.key, departure: d.key, wait, pax: n });
+        }
+      }
+      // Partners' passengers onto (and off) the player's flights to E: spread over them.
+      for (const F of feeders) {
+        const dF = toHub.get(F.id)!;
+        const dE = toHub.get(E.id)!;
+        const pair = pairData(world, selfTag, F, E, dF, dE, otherHubs);
+        if (!pair) continue;
+        const weeklyE = (flights.out.get(E.id)?.length ?? 0);
+        const mine = pair.detour * connectivity(Math.min(feed.get(F.id)!, weeklyE));
+        const flow = (pair.flow * mine) / (mine + pair.others);
+        const rev = (flow * pair.through * (dE / (dE + dF))) / legFare.get(E.id)!;
+        for (const [dir, list] of [[0, flights.out.get(E.id) ?? []], [1, arrivals]] as const) {
+          if (!list.length) continue;
+          for (const f of list) add(f.key, f.day, flow / list.length);
+          addLeg(E.id, dir, flow, rev);
+        }
+      }
+    }
+  }
+  const legs = new Map<string, [LegTransfers, LegTransfers]>();
+  for (const route of Object.values(state.routes)) {
+    if (route.airlineId !== airlineId || route.originId !== hubId) continue;
+    const p = legPax.get(route.destinationId) ?? [0, 0];
+    const r = legRev.get(route.destinationId) ?? [0, 0];
+    const leg = (dir: 0 | 1): LegTransfers => ({
+      pax: p[dir],
+      yield: p[dir] > 0 ? r[dir] / p[dir] : 0,
+      perFlight: new Map([...per].filter(([k]) => state.flights[k.slice(0, k.lastIndexOf(':'))]?.routeId === route.id && k.endsWith(`:${dir}`))),
+    });
+    legs.set(route.id, [leg(0), leg(1)]);
+  }
+  const result = { legs, connections, missed: missed.sort((x, y) => y.pax - x.pax) };
+  playerCache.set(state, { key, result });
+  return result;
+}
+
+function hashOf(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+/**
+ * Transfer passengers on one of the player's routes, per direction ([hub → destination, destination → hub]): flight by
+ * flight between their own flights at the hub (Phase 7.1), plus those from group partners' flights (Phase 6.2). A
+ * taken-over airline doesn't compete with its own real hub.
+ */
+export function routeTransfers(world: EngineWorld, state: GameState, route: Route): [LegTransfers | null, LegTransfers | null] {
+  const legs = playerConnections(world, state, route.airlineId, route.originId).legs.get(route.id);
+  return legs ? [legs[0], legs[1]] : [null, null];
 }

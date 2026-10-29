@@ -5,6 +5,7 @@ import { faresFreeFrom } from '../../data/eras';
 import { Segmented } from '../components/Segmented';
 import { DeparturesBoard } from '../network/DeparturesBoard';
 import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
+import { ConnectionsView } from '../network/ConnectionsView';
 import { daysText, hhmmText } from '../game/timetableText';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
@@ -71,7 +72,7 @@ export function NetworkScreen() {
   const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const [editing, setEditing] = useState<Editing>(null);
-  const [tab, setTab] = useState<'routes' | 'timetable'>('routes');
+  const [tab, setTab] = useState<'routes' | 'timetable' | 'connections'>('routes');
 
   if (!game || !airline) {
     return (
@@ -130,6 +131,7 @@ export function NetworkScreen() {
               options={[
                 { value: 'routes', label: t('network.routes') },
                 { value: 'timetable', label: t('timetable.board') },
+                { value: 'connections', label: t('connections.tab') },
               ]}
               onChange={setTab}
             />
@@ -149,6 +151,8 @@ export function NetworkScreen() {
             <Panel title={t('timetable.board')} code="FIDS">
               <DeparturesBoard game={game} world={engineWorld} airline={airline} code={code} />
             </Panel>
+          ) : tab === 'connections' && engineWorld ? (
+            <ConnectionsView game={game} world={engineWorld} airline={airline} code={code} />
           ) : routes.length === 0 ? (
             <Panel title={t('network.routes')}>
               <p className="muted">{t('network.empty')}</p>
@@ -332,7 +336,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     // Passengers connecting between your own flights at the hub, with this route as planned (Phase 6.1).
     const transfer = routeTransfers(engineWorld, sim, simRoute);
     const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, {
-      transfer: [transfer, transfer],
+      transfer,
       ai: game.ai,
       brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
       checksSeparate: true,

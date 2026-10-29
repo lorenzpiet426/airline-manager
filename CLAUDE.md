@@ -296,6 +296,8 @@ in past years + fictional startups. Phase 6 complete.
 ### Phase 7 — Hubs and detailed scheduling
 Connecting traffic and O&D flows through hubs, connection waves (timetables themselves come in step 2.2),
 slots (LHR, JFK…), curfews, gates, lounges, bases.
+Split (2026-10-29): **7.1** ✅ connection waves (flight-by-flight connections, minimum connecting times); **7.2** slots +
+night curfews; **7.3** gates + own lounges; **7.4** bases (routes not from the hub).
 
 ### Phase 8 — People
 Pilots and cabin crew, type ratings and training, crew shortages, strikes; hireable managers with skills,
@@ -472,6 +474,11 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 6.3: fleets = **real types per year** from Wikipedia's historical fleet tables, counts modelled; else typical types of the time | Owner choice |
 | 2026-10-29 | 6.3: **real dates**: airlines start/stop flying on their real days, with news; the AI can still bankrupt them earlier | Owner choice |
 | 2026-10-29 | 6.3: in past years every airline's frequency is its share of that time's demand (today's measured frequencies dropped) | Measured 2024 frequencies plus added closed airlines over-supplied busy routes (2005 VIE startup −59 %) |
+| 2026-10-29 | Phase 7 order: **7.1 waves → 7.2 slots + curfews → 7.3 gates + lounges → 7.4 bases** | Owner choice |
+| 2026-10-29 | 7.1: **connections flight by flight** (MCT, waits up to 2½ h good, max 7 h / 12 h long journeys), connecting passengers booked on the connecting flights; Connections view with waves and missed connections | Owner choice |
+| 2026-10-29 | 7.2 (planned): **realistic slots** (IATA Level 3 airports, seasonal allocation with newcomer priority, 80/20 use-it-or-lose-it, slot purchases at Heathrow) | Owner choice |
+| 2026-10-29 | 7.2 (planned): **real night curfews/quotas** hand-entered with sources for the ~100 busiest airports | Owner choice |
+| 2026-10-29 | 7.1: takeover timetables planned in **five waves** with night stops | Without waves the flight-by-flight model cut Austrian's transfers from 40 % to 32 % |
 | 2026-10-29 | 6.4: Austrian takeover in **any start year 1970–2026** | Owner choice |
 | 2026-10-29 | 6.4: Austrian's **fleet per year entered by hand** (Wikipedia EN/DE, counts partly modelled), registrations made up in its real OE-L series, all owned | Owner choice; old registers aren't open data |
 | 2026-10-29 | 6.4: **partners follow history** (Tyrolean 1997, Lauda Air 2001, Qualiflyer 1998–2000, Star Alliance from 2000, Lufthansa Group from Sep 2009; also today: LH Group + Star Alliance) | Owner choice |
@@ -1044,6 +1051,25 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: Austrian's fleet doesn't follow its real future deliveries during the game (the player orders); load factors low;
   only Austrian can be taken over; startups fly typical aircraft and appear only in games with real airlines.
 - **Next:** Phase 7 (hubs: connection waves, slots, curfews, gates, lounges, bases) — or what the owner prefers.
+
+### 2026-10-29 — Session 22 (Phase 7.1: connection waves) ✅
+- Owner decisions (all recommended): Phase 7 split and order, flight-by-flight connections, realistic slots, real
+  curfews (§7).
+- Engine `transfers.ts`: `MCT_MIN` + `mctAt`, `connectionQuality`, `hubFlights` (player's departures/arrivals at the hub
+  per destination, minute of the week, key "pairId:dir"), `playerConnections` (per destination pair: arrivals with their
+  best departure, quality-weighted connectivity, passengers booked per flight and weekday, prorated yields, partners'
+  feed spread, missed connections; cached by timetable signature + day); `routeTransfers` returns [outbound, inbound].
+  `LegTransfers.perFlight`; `PlannedFlight.key` (from `specFlights`); `routeWeek` books transfer demand on the
+  connecting flights. `takeover.ts`: wave candidates, `waveMisfit`, night stops.
+- UI: Network → **Connections** tab (`src/ui/network/ConnectionsView.tsx`): MCT, last week's connecting passengers,
+  connections offered, average wait, wave chart (arrivals above, departures below, per hour), top connecting flights,
+  missed connections. EN/DE texts.
+- Tests: 181 (`connections.test.ts`: MCT and waits, per-flight sums = leg totals, takeover departures in waves).
+- Verified in browser (Austrian today): 37,686 connecting passengers in the first week, waves visible, phone 375 px
+  without sideways scrolling, no console errors.
+- Known: Austrian today ≈ −4.7 % in November (was −0.6 %) and 36 % transfer (real ≈ 46 %); AI airlines still use the
+  frequency model; partners' passengers spread evenly; Simple-mode auto-planning ignores waves.
+- **Next:** 7.2 slots + night curfews.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

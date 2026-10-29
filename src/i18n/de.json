@@ -1870,5 +1870,31 @@
       "C": "{{country}} · Charterfluggesellschaft",
       "L": "{{country}} · Billigfluggesellschaft"
     }
+  },
+  "connections": {
+    "tab": "Umsteigen",
+    "title": "Umsteigen in {{hub}}",
+    "intro": "Passagiere steigen nur um, wo einer deiner Flüge mindestens die Mindestumsteigezeit vor einem deiner Abflüge landet. Bis 2½ Stunden passt das allen; längere Wartezeiten kosten Reisende (keine nach 7 Stunden, 12 auf langen Reisen). Plane deine Flüge in Wellen: gemeinsam weg, gemeinsam kurz vor der nächsten Welle zurück.",
+    "mct": "Mindestumsteigezeit",
+    "mctValue": "{{short}} min (mit Langstreckenflug {{long}} min)",
+    "lastWeek": "Umsteiger letzte Woche",
+    "options": "Angebotene Anschlüsse pro Woche",
+    "wait": "Durchschnittliche Wartezeit",
+    "chartLabel": "Deine Ankünfte und Abflüge am Drehkreuz pro Stunde",
+    "arrivals": "Ankünfte",
+    "departures": "Abflüge",
+    "perDay": "Flüge pro Tag, Ortszeit Drehkreuz",
+    "top": "Flüge mit den meisten Umsteigern",
+    "flight": "Flug",
+    "route": "Strecke",
+    "pax": "Umsteiger/Woche",
+    "partners": "Anschlüsse zu",
+    "topNote": "Geplante Passagiere pro Woche vor Saison und Anlaufphase (der ankommende und der abfliegende Flug zählen sie beide). Passagiere von Partnern sind nicht enthalten.",
+    "missed": "Verpasste Anschlüsse",
+    "missedNote": "Reisen über {{hub}}, für die es Reisende gibt, aber keine deiner Ankünfte trifft rechtzeitig einen Abflug. Ein Flug in einer Welle könnte sie gewinnen.",
+    "journey": "Reise",
+    "possible": "Mögliche Pax/Woche",
+    "none": "Noch keine Anschlüsse: Du brauchst Flüge zu mindestens zwei Zielen.",
+    "noneMissed": "Keine: Jede Reise mit Reisenden hat einen Anschluss."
   }
 }

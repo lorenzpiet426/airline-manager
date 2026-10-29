@@ -21,7 +21,7 @@ import { convert, money } from './money';
 import type { RealAirline } from './realAirlines';
 import { newReputation } from './reputation';
 import { MODEL_REPUTATION } from './cabins';
-import { busyIntervals, freeFlightNumber, pairsOfRoute, setRoutePairs, type FlightSpec } from './schedule';
+import { busyIntervals, freeFlightNumber, pairBlocks, pairsOfRoute, setRoutePairs, type FlightSpec } from './schedule';
 import type { Aircraft, GameState, Route } from './state';
 import { addMonths, MINUTES_PER_DAY, MINUTES_PER_WEEK, simTime, startOfDay, toDate, yearOf, type SimTime } from './time';
 import { DAYS_ALL, hasDay, homeDepartures, isEastbound, seedOf, spreadDays } from './timetable';
@@ -410,6 +410,26 @@ const FIRST_DEP = 6 * 60;
 const LAST_DEP = 21 * 60 + 30;
 /** Flights of one route closer together than this share their passengers: spread them out. */
 const ROUTE_SPACING_MIN = 150;
+/**
+ * Departure waves at the hub (local time; Phase 7.1): a hub airline's flights leave in banks and come back shortly
+ * before the next one, so passengers can change planes (Vienna: about five waves a day). Returns should land between
+ * ARRIVE_BEFORE_WAVE[0] and [1] minutes before a wave.
+ */
+const WAVES = [7 * 60, 10 * 60 + 30, 13 * 60 + 30, 17 * 60, 20 * 60 + 30];
+const ARRIVE_BEFORE_WAVE = [90, 30] as const;
+const range = (from: number, to: number, step: number) => Array.from({ length: Math.max(0, Math.floor((to - from) / step) + 1) }, (_, i) => from + i * step);
+
+/** Minutes a departure is off the nearest wave plus (weighted more: missed connections cost the most) minutes its
+ * return lands outside a wave's arrival window. */
+function waveMisfit(dep: number, arrival: number): number {
+  const depOff = Math.min(...WAVES.map((w) => Math.abs(w - dep)));
+  const arr = ((arrival % 1440) + 1440) % 1440;
+  const arrOff = Math.min(
+    ...[...WAVES, WAVES[0]! + 1440].map((w) => (arr < w - ARRIVE_BEFORE_WAVE[0] ? w - ARRIVE_BEFORE_WAVE[0] - arr : arr > w - ARRIVE_BEFORE_WAVE[1] ? arr - (w - ARRIVE_BEFORE_WAVE[1]) : 0)),
+  );
+  return depOff * 0.5 + Math.min(arrOff, 240) * 2;
+}
+
 /** Share of an aircraft's weekly hours the timetable fills at least, with extra frequencies if needed. */
 const IDLE_FILL_SHARE = 0.6;
 
@@ -552,16 +572,30 @@ function placeUnit(world: EngineWorld, u: Unit, lines: Line[], specs: Map<string
     const ground = TURNAROUND_MIN[type.category];
     // Long-haul: the usual departure bank (Asia in the afternoon, America late morning); short-haul from 06:00.
     const preferred = u.long ? homeDepartures(1, seedOf(u.dest.id), true, isEastbound(hub, u.dest))[0]! : FIRST_DEP;
-    for (let dep = preferred; dep <= LAST_DEP; dep += 5) {
-      const spec: FlightSpec = { aircraftId: line.aircraft.id, dep, days: u.days, groundMin: ground };
+    const { out, back } = pairBlocks(world, type.id, u.route);
+    // Candidates: around each departure wave (Phase 7.1), and the earliest free time from the preferred one.
+    const candidates = [...WAVES.flatMap((w) => [w - 30, w - 20, w - 10, w, w + 10, w + 20, w + 30]), ...range(preferred, LAST_DEP, 5)].filter((d) => d >= FIRST_DEP && d <= LAST_DEP);
+    let earliestTaken = false;
+    // The evening wave's short-haul flights may also stay the night at the destination and come back for the
+    // morning (a night stop), landing before the second wave.
+    const nightStop = (dep: number) => {
+      const groundMin = Math.round((1440 + WAVES[1]! - ARRIVE_BEFORE_WAVE[0] / 2 - (dep + out + back)) / 5) * 5;
+      return !u.long && dep >= WAVES[WAVES.length - 1]! - 20 && groundMin > ground && groundMin < 20 * 60 ? groundMin : null;
+    };
+    const options = candidates.flatMap((dep) => [{ dep, groundMin: ground }, ...(nightStop(dep) ? [{ dep, groundMin: nightStop(dep)! }] : [])]);
+    for (const { dep, groundMin } of options) {
+      const isWave = WAVES.some((w) => Math.abs(w - dep) <= 30);
+      if (!isWave && earliestTaken) break;
+      const spec: FlightSpec = { aircraftId: line.aircraft.id, dep, days: u.days, groundMin };
       const busy = busyIntervals(world, type.id, u.route, spec);
       if (busy.some((a) => line.busy.some((b) => overlaps(a, b)))) continue;
-      // Size fit (log distance to the measured seats), lateness, and spacing from the route's other flights.
+      if (!isWave) earliestTaken = true;
+      // Size fit (log distance to the measured seats), lateness, spacing from the route's other flights, and the hub's
+      // waves: leaving with a departure bank and landing back before the next one, so passengers can connect.
       const fit = seatsWanted ? Math.abs(Math.log(line.aircraft.seats / seatsWanted)) * 300 : 0;
       const gap = own.length ? Math.min(...own.map((o) => Math.min(Math.abs(o.dep - dep), 1440 - Math.abs(o.dep - dep)))) : 1440;
-      const score = fit + (dep - preferred) * 0.5 + Math.max(0, ROUTE_SPACING_MIN - gap) * 3;
+      const score = fit + Math.max(0, dep - preferred) * 0.1 + Math.max(0, ROUTE_SPACING_MIN - gap) * 3 + waveMisfit(dep, dep + out + groundMin + back);
       if (!best || score < best.score) best = { line, spec, score };
-      break; // the earliest free time on this aircraft
     }
   }
   if (!best) return false;

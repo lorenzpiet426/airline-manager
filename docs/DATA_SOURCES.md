@@ -572,6 +572,31 @@ the fewest airlines. They then follow the normal AI (reviews, growth, entering t
 with 1.4 %/month (≈ 40 % in three years), plus 3 %/month while losing money. Check: 13 founded in 2027–2028, 5 failed;
 none in 1975.
 
+## Connections flight by flight (Phase 7.1, 2026-10-29)
+Owner decisions: Phase 7 = 7.1 waves → 7.2 slots + curfews → 7.3 gates + lounges → 7.4 bases; connections flight by
+flight; slots realistic (IATA Level 3, seasons, 80/20, Heathrow slot trading); real curfews for the top airports.
+
+- **Minimum connecting times** (`MCT_MIN` in `src/engine/transfers.ts`, read 2026-10-29; airports and their airlines
+  publish them as facts): Vienna 25 min ([Aviation Week](https://aviationweek.com/vienna-airport), Austrian Airlines),
+  Munich 30, Zurich 40, Amsterdam 40 (short-haul), Frankfurt 45 (Lufthansa 60 from 2025), Heathrow 60 (BA T5 60–75),
+  Paris CDG 60 ([Business Traveller](https://www.businesstraveller.com/news/beating-the-clock/)). Other airports: large
+  60, medium 45. +10 min when a long-haul flight is involved (other pier, passport control).
+- **Connection quality**: 1 from the MCT up to 2½ h wait, falling linearly to 0 at 7 h (journeys ≥ 4,000 km: 12 h).
+- **The player's hub**: for every pair of destinations E → D the travellers who would connect at the hub (gravity ×
+  detour × non-stop share, shared with competing hubs — as in 6.1), but instead of a frequency factor: every arrival
+  from E with its best departure to D; the sum of their qualities over the week replaces the weekly frequency
+  (7 = full). Passengers are booked on exactly those two flights (per weekday), with the prorated fare per leg. Partners'
+  passengers (no timetable known) are spread over the player's flights to that destination. AI airlines keep the
+  frequency model (their timetables are generated).
+- **Takeover timetables** (`takeover.ts`) now plan five departure waves at the hub (07:00, 10:30, 13:30, 17:00, 20:30
+  local), returns landing 30–90 min before the next wave (weighted twice as much as the departure), evening flights
+  may night-stop and return for the morning wave.
+- **Check, Austrian today, November**: before 7.1 (6.4 code) −0.6 % margin, 856k passengers, 40 % transfer; flight by
+  flight without waves −9.8 %, 32 %; with waves and night stops −4.7 %, 814k passengers, 36 % transfer, ≈ 33,000
+  connecting passengers a week, average wait 2 h 40. Real Austrian: ≈ break-even in Q4, ≈ 46 % transfer — the generated
+  timetable is less tightly banked than the real one; players gain by planning waves. Computing a hub of 124 routes
+  takes ≈ 85 ms (cached until the timetable changes, refreshed daily for partners).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

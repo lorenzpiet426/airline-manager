@@ -2853,3 +2853,38 @@ a.button {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Connections view (Phase 7.1): the hub's waves of arrivals (above the line) and departures (below). */
+.waves {
+  margin: 12px 0 0;
+}
+.waves__chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.waves__arr,
+.waves__key--arr {
+  fill: var(--green);
+  background: var(--green);
+}
+.waves__dep,
+.waves__key--dep {
+  fill: var(--cyan);
+  background: var(--cyan);
+}
+.waves__axis {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.waves__tick {
+  fill: var(--text-faint);
+  font: 11px var(--font-mono, monospace);
+}
+.waves__key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: middle;
+}

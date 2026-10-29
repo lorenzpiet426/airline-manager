@@ -1870,5 +1870,31 @@
       "C": "{{country}} · charter airline",
       "L": "{{country}} · low-cost airline"
     }
+  },
+  "connections": {
+    "tab": "Connections",
+    "title": "Changing planes at {{hub}}",
+    "intro": "Passengers only change planes where one of your flights lands at least the minimum connecting time before one of your departures. Up to 2½ hours suits everybody; longer waits lose travellers (none after 7 hours, 12 on long journeys). Plan your flights in waves: leave together, come back together shortly before the next wave.",
+    "mct": "Minimum connecting time",
+    "mctValue": "{{short}} min (with a long-haul flight {{long}} min)",
+    "lastWeek": "Connecting passengers last week",
+    "options": "Connections offered per week",
+    "wait": "Average wait",
+    "chartLabel": "Your arrivals and departures at the hub per hour of the day",
+    "arrivals": "arrivals",
+    "departures": "departures",
+    "perDay": "flights per day, hub local time",
+    "top": "Flights with the most connecting passengers",
+    "flight": "Flight",
+    "route": "Route",
+    "pax": "Connecting pax/week",
+    "partners": "Connects with",
+    "topNote": "Planned passengers per week before season and ramp-up (both the arriving and the departing flight count them). Partners' passengers are not included.",
+    "missed": "Missed connections",
+    "missedNote": "Journeys via {{hub}} that have travellers, but none of your arrivals meets a departure in time. Moving a flight into a wave could win them.",
+    "journey": "Journey",
+    "possible": "Possible pax/week",
+    "none": "No connections yet: you need flights to at least two destinations.",
+    "noneMissed": "None: every journey with travellers has a connection."
   }
 }

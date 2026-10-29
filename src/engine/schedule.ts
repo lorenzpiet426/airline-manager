@@ -117,15 +117,17 @@ export function specFlights(
   route: Route,
   aircraft: Pick<Aircraft, 'typeId' | 'seats' | 'cabin'>,
   ageYears: number,
-  spec: Pick<FlightSpec, 'dep' | 'days' | 'groundMin'>,
+  spec: Pick<FlightSpec, 'dep' | 'days' | 'groundMin'> & { id?: string },
   time: SimTime,
 ): PlannedFlight[] {
   const times = pairTimes(world, aircraft.typeId, route, spec, time);
   const back = wrapDay(times.backDep);
   const common = { type: getAircraftType(aircraft.typeId), seats: aircraft.seats, cabin: aircraft.cabin, ageYears };
+  // Saved flights carry their pair's id (connecting passengers are booked flight by flight, Phase 7.1).
+  const key = (dir: 0 | 1) => (spec.id ? { key: `${spec.id}:${dir}` } : {});
   return [
-    { dir: 0, days: spec.days, dep: spec.dep, ...common },
-    { dir: 1, days: shiftDays(spec.days, back.shift), dep: back.min, ...common },
+    { dir: 0, days: spec.days, dep: spec.dep, ...common, ...key(0) },
+    { dir: 1, days: shiftDays(spec.days, back.shift), dep: back.min, ...common, ...key(1) },
   ];
 }
 

@@ -88,7 +88,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const rep = state.reputation[airline.id];
     const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
     const transfer = routeTransfers(world, state, route);
-    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer: [transfer, transfer] });
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer });
     if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
     const lines = dayOf(airline.id).lines;

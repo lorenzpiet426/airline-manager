@@ -403,6 +403,8 @@ export interface PlannedFlight {
   /** The aircraft's cabin (seats per class, products, pitch). */
   cabin: CabinLayout;
   ageYears: number;
+  /** The saved flight ("pairId:dir"), for connecting passengers booked flight by flight (Phase 7.1). */
+  key?: string;
 }
 
 export interface RoutePlan {
@@ -751,7 +753,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
       }
     }
 
-    // Transfer passengers connect to the airline's own flights only, spread over the day's flights in this direction.
+    // Transfer passengers connect to the airline's own flights only: on the flights that really connect (Phase 7.1,
+    // the player's saved timetable), otherwise spread over the day's flights in this direction.
     const tr = ctx.transfer?.[dir];
     if (tr && tr.pax > 0) {
       const world5 = cond ? cond.growth(A, B) * cond.demand(A, B, 'leisure') : 1;
@@ -759,13 +762,17 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         if (!hasDay(days, day)) continue;
         const today = mineIdx.filter((i) => hasDay(timetable[i]!.days, day));
         if (!today.length) continue;
-        const perFlight = ((tr.pax / 7) * season * plan.rampUp * world5) / today.length;
-        for (const segment of ['business', 'leisure'] as const) {
-          const segShare = segment === 'business' ? biz : 1 - biz;
-          for (const wanted of CLASSES) {
-            const n = perFlight * segShare * classDemandShare(segment, wanted, t);
-            if (n <= 0) continue;
-            for (const i of today) {
+        const even = tr.pax / 7 / today.length;
+        for (const i of today) {
+          const key = timetable[i]!.key;
+          const weekly = tr.perFlight && key ? (tr.perFlight.get(key)?.[day] ?? 0) : even;
+          const perFlight = weekly * season * plan.rampUp * world5;
+          if (perFlight <= 0) continue;
+          for (const segment of ['business', 'leisure'] as const) {
+            const segShare = segment === 'business' ? biz : 1 - biz;
+            for (const wanted of CLASSES) {
+              const n = perFlight * segShare * classDemandShare(segment, wanted, t);
+              if (n <= 0) continue;
               const cls = nearestClass(timetable[i]!.cabin, wanted);
               demand[i]![day]![CLASS_INDEX[cls]]! += n;
               transferDemand[i]![day]![CLASS_INDEX[cls]]! += n;
