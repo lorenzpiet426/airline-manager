@@ -309,7 +309,7 @@ Split (2026-10-29): **8.1** ✅ pilots and cabin crew (headcounts, hiring, type 
 Fare classes, booking curves, dynamic pricing; loyalty program; on-time performance, delays, weather,
 incidents (diversions, technical problems); click-any-flight drill-down.
 Split (2026-10-29): **9.1** ✅ delays and on-time performance (knock-on through rotations, causes, diversions, missed
-connections); **9.2** click any flight for full detail; **9.3** booking classes, booking curves, dynamic pricing;
+connections); **9.2** ✅ click any flight for full detail; **9.3** booking classes, booking curves, dynamic pricing;
 **9.4** own loyalty programme with tiers.
 
 ### Phase 10 — Finance and corporate
@@ -515,6 +515,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 9.1: **delays per flight with knock-on through rotations** (airline, ATC, airport, weather causes; buffers; diversions; curfews; missed connections; EU 261 from 3 h for own causes); calibrated to EUROCONTROL CODA 2024 | Owner choice |
 | 2026-10-29 | 9.3 (planned): **booking classes per cabin filled along a booking curve**, dynamic pricing by hand or by the revenue manager; class-fare sliders stay as base level | Owner choice |
 | 2026-10-29 | 9.4 (planned): **own frequent-flyer programme with tiers**; points a liability; alliance partners' programmes count | Owner choice |
+| 2026-10-29 | 9.2: single flights kept **7 days**; flight pages reachable **everywhere** (departures board, map aircraft, timetable, route cards, fleet cards) | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1285,6 +1286,24 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: AI airlines don't have delays; passengers' bookings don't react to a route's own punctuality yet (only via the
   brand reputation); crews' duty limits on long delays not modelled.
 - **Next:** 9.2 click any flight for full detail (passengers per class, load factor, delay and cause, weather, profit).
+
+### 2026-10-29 — Session 31 (Phase 9.2: click any flight) ✅
+- Owner decisions (recommended): 7 days of single flights, links everywhere (§7).
+- Engine: `routeWeek`'s `FlightResult` now carries revenue, transfer passengers, classes and its own cost lines;
+  `operations.ts` `recordFlightEcon` attaches each day's numbers to the day's `OpsFlight` (matched by real departure time,
+  so returns after midnight work); `OpsFlight.econ` (`FlightEcon`), `.disruption`, `.weather`; `OpsState.history`
+  (7 days, `HISTORY_DAYS`); `flightId`, `knownFlights`, `findFlight`, `flightResult` in `delays.ts`. `flights.ts` legs
+  carry pair + direction and `airborne` the scheduled departure (map links).
+- UI: `#/flight?id=` (`FlightScreen`: route, date, aircraft, scheduled/actual times, delay and cause explained, weather,
+  passengers per class with load factor and revenue, transfer passengers, revenue and cost lines with delay costs, flight
+  result, the aircraft's rotation that day) and `#/flights?route=` / `?aircraft=` (`FlightsScreen`: last 7 days). Links from
+  the Ops departures board, aircraft on the map (click), Network timetable (latest operation), route cards and fleet cards
+  ("Last flights"). Delay causes of future flights stay hidden until 2 h before departure. EN/DE.
+- Tests: 216 (per-flight revenue adds up to the route's week, 7-day history, lookup).
+- Verified in browser (Austrian save): board → flight page, aircraft's flights list → a flown flight (OS 180 LCA–VIE: 80/184
+  passengers, business 79 %, result €5,813 before crews and leases), phone 375 px without sideways page scrolling.
+  Clicking aircraft on the map wasn't tried by hand (the in-app browser pane doesn't draw the map).
+- **Next:** 9.3 booking classes, booking curves and dynamic pricing.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

@@ -13,7 +13,7 @@ import { advance } from './advance';
 import { economyCabin } from './cabins';
 import { applyCommand } from './commands';
 import { createGame } from './game';
-import { opsDailyStep, punctuality, weatherAt } from './delays';
+import { findFlight, flightId, flightResult, knownFlights, opsDailyStep, punctuality, weatherAt } from './delays';
 import { buildRealAirlines } from './realAirlines';
 import { simTime, startOfDay } from './time';
 import { DAYS_ALL } from './timetable';
@@ -110,5 +110,26 @@ describe('delays and punctuality (9.1)', () => {
     const a = run();
     expect(a.length).toBeGreaterThan(0);
     expect(run()).toBe(a);
+  }, 120_000);
+
+  it('single flights (9.2): each one’s passengers and money add up to the route, kept for seven days', () => {
+    const { state, airlineId } = airline();
+    advance(state, world, state.time + 12 * DAY);
+    const flights = knownFlights(state).filter((f) => f.airlineId === airlineId);
+    const oldest = Math.min(...flights.map((f) => f.dep));
+    expect(state.time - oldest).toBeLessThan(9 * DAY);
+    const flown = flights.filter((f) => f.econ);
+    expect(flown.length).toBeGreaterThan(10);
+    // Last full week: the flights' revenue adds up to the route's.
+    const week = state.finance[airlineId]!.history.at(-1)!;
+    const inWeek = flown.filter((f) => f.dep >= week.start && f.dep < week.start + 7 * DAY);
+    const route = Object.values(state.routes)[0]!;
+    const sum = inWeek.filter((f) => f.routeId === route.id).reduce((n, f) => n + f.econ!.revenue, 0);
+    if (inWeek.length >= 10) expect(sum / week.routes[route.id]!.revenue).toBeCloseTo(1, 1);
+    const f = flown.at(-1)!;
+    expect(findFlight(state, flightId(f))).toBe(f);
+    expect(f.econ!.pax).toBeGreaterThan(0);
+    expect(Object.keys(f.econ!.classes).length).toBeGreaterThan(0);
+    expect(flightResult(f)).not.toBeNull();
   }, 120_000);
 });

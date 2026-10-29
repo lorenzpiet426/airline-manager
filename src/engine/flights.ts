@@ -9,6 +9,9 @@ import type { EngineWorld } from './world';
 
 export interface Leg {
   routeId: string;
+  /** The flight pair and direction (0 = out, 1 = back), for links to the flight's page. */
+  pairId: string;
+  dir: 0 | 1;
   aircraftId: string;
   flightNumber: number;
   fromId: string;
@@ -34,10 +37,10 @@ export function weeklyLegs(state: GameState, world: EngineWorld, aircraftId: str
       // Hub local time → UTC; a departure just after local midnight on Monday belongs to the end of the UTC week.
       let dep = day * MINUTES_PER_DAY + pair.dep - offset;
       if (dep < 0) dep += MINUTES_PER_WEEK;
-      const common = { routeId: route.id, aircraftId };
-      legs.push({ ...common, flightNumber: pair.flightNumber, fromId: route.originId, toId: route.destinationId, dep, arr: dep + out });
+      const common = { routeId: route.id, aircraftId, pairId: pair.id };
+      legs.push({ ...common, dir: 0, flightNumber: pair.flightNumber, fromId: route.originId, toId: route.destinationId, dep, arr: dep + out });
       const backDep = dep + out + pair.groundMin;
-      legs.push({ ...common, flightNumber: pair.flightNumber + 1, fromId: route.destinationId, toId: route.originId, dep: backDep, arr: backDep + back });
+      legs.push({ ...common, dir: 1, flightNumber: pair.flightNumber + 1, fromId: route.destinationId, toId: route.originId, dep: backDep, arr: backDep + back });
     }
   }
   return legs.sort((a, b) => a.dep - b.dep);
@@ -51,6 +54,8 @@ export interface AirborneFlight {
   heading: number;
   /** 0 … 1 of the flight completed. */
   progress: number;
+  /** Scheduled departure (UTC) of this operation of the leg. */
+  scheduledDep: SimTime;
 }
 
 /** Today's operation of a leg (Phase 9.1): minutes late at departure and arrival, a diversion, or null if cancelled. */
@@ -75,7 +80,7 @@ export function airborne(legs: readonly Leg[], world: EngineWorld, time: SimTime
         const progress = (m - dep) / (arr - dep);
         const here = intermediatePoint(from, to, progress);
         const ahead = intermediatePoint(from, to, Math.min(1, progress + 0.01));
-        return { leg, lat: here.lat, lon: here.lon, heading: bearing(here, ahead), progress };
+        return { leg, lat: here.lat, lon: here.lon, heading: bearing(here, ahead), progress, scheduledDep: scheduled };
       }
     }
   }

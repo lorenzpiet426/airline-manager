@@ -20,11 +20,12 @@ import { pairsOfRoute, plannedFlights } from './schedule';
 import { dayBit } from './timetable';
 import { mergePnl, newPeriod, type PnlPeriod } from './finance';
 import type { FxRates } from './money';
-import { MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type CabinClass, type GameState, type Route, type RouteStats } from './state';
+import { MAX_PNL_WEEKS, pnlCosts, type AirlineFinance, type CabinClass, type GameState, type OpsFlight, type Route, type RouteStats } from './state';
 import { addExperience, closeReputationWeek } from './reputation';
 import { dailyDepreciation, dailyFleetStep } from './fleet';
 import { maintenanceDailyStep } from './maintenance';
-import { daysInMonth, MINUTES_PER_DAY, startOfMonth, startOfWeek, toDate, weekdayOf, type SimTime } from './time';
+import { daysInMonth, MINUTES_PER_DAY, startOfDay, startOfMonth, startOfWeek, toDate, utcOffsetMin, weekdayOf, type SimTime } from './time';
+import type { Airport } from '../data/types';
 import type { EngineWorld } from './world';
 
 /** New routes start with 60 % of their passengers and reach 100 % after 8 weeks of flying. */
@@ -55,6 +56,27 @@ export function planFor(state: GameState, world: EngineWorld, route: Route, now 
 }
 
 const usdTo = (fx: FxRates, currency: string) => (fx[currency] ?? 1) / (fx.USD ?? 1);
+
+/** Copies each flight's passengers, revenue and costs (book currency) to its record of the day. */
+function recordFlightEcon(ops: Map<string, OpsFlight[]>, week: ReturnType<typeof routeWeek>, k: number, day: SimTime, ends: [Airport, Airport]): void {
+  week.timetable.forEach((f, i) => {
+    const r = week.byFlight[i];
+    if (!r || !r.flights || !f.key) return;
+    // The operation that departed on this day: its UTC departure is the local time minus the airport's offset.
+    const from = ends[f.dir];
+    const expected = startOfDay(day) + f.dep - utcOffsetMin(from.tz, day);
+    const o = (ops.get(f.key) ?? []).find((x) => Math.abs(x.dep - expected) < 6 * 60);
+    if (!o) return;
+    o.econ = {
+      seats: r.seats,
+      pax: r.pax,
+      transfer: r.transferPax,
+      revenue: r.revenue * k,
+      classes: Object.fromEntries(Object.entries(r.classes).map(([c, x]) => [c, { seats: x.seats, pax: x.pax, revenue: x.revenue * k }])),
+      costs: Object.fromEntries(Object.entries(r.costs).map(([c, x]) => [c, x * k])),
+    };
+  });
+}
 
 /** Called at 00:00 UTC every day: books the day that just ended, and closes the week on Mondays. */
 export function dailyStep(state: GameState, world: EngineWorld): void {
@@ -103,6 +125,10 @@ function bookDay(state: GameState, world: EngineWorld): void {
   const dayOf = (airlineId: string) => (days[airlineId] ??= newPeriod(state.time - MINUTES_PER_DAY));
 
   // The flights of the weekday that just ended, with that day's demand (Fridays are busier than Tuesdays).
+  // Yesterday's flights as they went (Phase 9.1), to attach what each one carried and earned.
+  // (Return legs after midnight belong to the day before's list, so both days are searched by departure time.)
+  const opsByKey = new Map<string, OpsFlight[]>();
+  for (const f of [...(state.ops?.prev ?? []), ...(state.ops?.flights ?? [])]) (opsByKey.get(`${f.pairId}:${f.dir}`) ?? opsByKey.set(`${f.pairId}:${f.dir}`, []).get(`${f.pairId}:${f.dir}`)!).push(f);
   const weekday = dayBit(weekdayOf(state.time - 1));
   for (const route of Object.values(state.routes)) {
     const airline = state.airlines[route.airlineId];
@@ -117,6 +143,8 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer, ...(ground ? { ground } : {}) });
     if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
+    // Each flight's own result, for the flight pages (Phase 9.2).
+    if (opsByKey.size) recordFlightEcon(opsByKey, week, k, state.time - 1, [from, to]);
     const lines = dayOf(airline.id).lines;
     lines.revenue += week.revenue * k;
     lines.fuel += week.costs.fuel * k;

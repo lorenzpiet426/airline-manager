@@ -9,6 +9,7 @@ import { NetworkScreen } from './NetworkScreen';
 import { FinanceScreen } from './FinanceScreen';
 import { AirlinesScreen } from './AirlinesScreen';
 import { ManagementScreen } from './ManagementScreen';
+import { FlightScreen, FlightsScreen } from './FlightScreen';
 import { SourcesScreen } from './SourcesScreen';
 import { SavesScreen } from './SavesScreen';
 import { LiveryScreen } from './LiveryScreen';
@@ -41,6 +42,10 @@ export function ScreenView({ route, isWide }: { route: Route; isWide: boolean })
       return <AirlinesScreen />;
     case 'management':
       return <ManagementScreen />;
+    case 'flight':
+      return <FlightScreen />;
+    case 'flights':
+      return <FlightsScreen />;
     case 'saves':
       return <SavesScreen />;
     case 'livery':

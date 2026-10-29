@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import type { IconName } from './components/Icon';
 
-export type Route = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'new' | 'livery' | 'aircraft' | 'history' | 'management';
+export type Route = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'new' | 'livery' | 'aircraft' | 'history' | 'management' | 'flight' | 'flights';
 
 export interface NavItem {
   route: Route;
@@ -29,6 +29,9 @@ const NAV: Record<Route, NavItem> = {
   new: { route: 'new', icon: 'ops', labelKey: 'nav.new' },
   // The livery designer: reached from the Fleet and Ops screens.
   livery: { route: 'livery', icon: 'fleet', labelKey: 'nav.livery' },
+  // One flight and lists of flights (Phase 9.2): reached from the board, map, timetable, routes and aircraft.
+  flight: { route: 'flight', icon: 'ops', labelKey: 'nav.flight' },
+  flights: { route: 'flights', icon: 'ops', labelKey: 'nav.flights' },
 };
 
 /** Sidebar on computers and tablets. */

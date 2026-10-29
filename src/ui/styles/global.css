@@ -2907,3 +2907,12 @@ a.button {
 .board__table td:last-child {
   min-width: 6rem;
 }
+
+/* ---------- Flight pages (Phase 9.2) ---------- */
+.flight-table tr.is-current td {
+  background: var(--panel-header);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.flight-table .chip {
+  white-space: normal;
+}

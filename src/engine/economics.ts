@@ -570,6 +570,11 @@ export interface FlightResult {
   flights: number;
   seats: number;
   pax: number;
+  /** Revenue, transfer passengers, classes and costs of this flight (all its days together; Phase 9.2). */
+  revenue: number;
+  transferPax: number;
+  classes: Partial<Record<CabinClass, { seats: number; pax: number; revenue: number }>>;
+  costs: RouteCosts;
   /** Local arrival time, minutes after the departure day's midnight at the arrival airport. */
   arr: number;
   blockMin: number;
@@ -968,7 +973,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   const byFlight: FlightResult[] = timetable.map((f, i) => {
     const A = ends[f.dir];
     const B = ends[1 - f.dir]!;
-    const result: FlightResult = { flights: 0, seats: 0, pax: 0, arr: info[i]!.arr, blockMin: info[i]!.blockMin };
+    const result: FlightResult = { flights: 0, seats: 0, pax: 0, revenue: 0, transferPax: 0, classes: {}, costs: { ...NO_COSTS }, arr: info[i]!.arr, blockMin: info[i]!.blockMin };
+    const before = { ...costs };
     for (let day = 0; day < 7; day++) {
       if (!hasDay(days, day) || !hasDay(f.days, day)) continue;
       result.flights += 1;
@@ -998,6 +1004,12 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         c.demand += d;
         c.revenue += p * paid;
         transferPax += p * transferShare;
+        result.transferPax += p * transferShare;
+        result.revenue += p * paid;
+        const rc = (result.classes[s.cls] ??= { seats: 0, pax: 0, revenue: 0 });
+        rc.seats += seatsToday;
+        rc.pax += p;
+        rc.revenue += p * paid;
         result.seats += seatsToday;
         result.pax += p;
         revenue += p * paid;
@@ -1028,7 +1040,10 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
       }
     }
     const n = result.flights;
-    if (!n) return result;
+    if (!n) {
+      result.costs.service = costs.service - before.service;
+      return result;
+    }
     const h = info[i]!.blockMin / 60;
     const mtowT = f.type.mtowKg / 1000;
     costs.fuel += f.type.fuelKgPerHour * (h + 0.15) * n * fuelPrice;
@@ -1048,6 +1063,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     seats += result.seats;
     pax += result.pax;
     block += h * n;
+    for (const k of Object.keys(costs) as (keyof RouteCosts)[]) result.costs[k] = costs[k] - before[k];
+    result.costs.distribution = 0.05 * result.revenue;
     return result;
   });
   costs.distribution = 0.05 * revenue;
@@ -1070,6 +1087,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     experience,
   };
 }
+
+const NO_COSTS: RouteCosts = { fuel: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, service: 0 };
 
 export const totalCosts = (c: RouteCosts): number =>
   c.fuel + c.maintenance + c.airport + c.handling + c.navigation + c.distribution + c.service;

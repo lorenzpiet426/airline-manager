@@ -48,7 +48,7 @@ import { money } from './money';
 import { addExperience } from './reputation';
 import { aogCancels, grounded, pairBlocks, pairDepartureUtc, pairsOfAircraft } from './schedule';
 import type { Airline, GameState, OpsFlight, RouteStats } from './state';
-import { startOfDay, toDate, utcOffsetMin, type SimTime } from './time';
+import { MINUTES_PER_DAY, startOfDay, toDate, utcOffsetMin, type SimTime } from './time';
 import { strikeCancelsPair } from './unions';
 import type { EngineWorld } from './world';
 
@@ -74,6 +74,10 @@ export function weatherAt(airport: Airport, day: SimTime): number {
   const p = BAD_WEATHER_DAY * northWinter * summerStorms;
   return r < p ? 0.5 + (0.5 * (p - r)) / p : 0;
 }
+
+/** Single flights are kept this many days (older ones live on in the route and finance statistics). */
+export const HISTORY_DAYS = 7;
+const eurToBook = (state: GameState, currency: string) => (state.fx[currency] ?? 1) / (state.fx.EUR ?? 1);
 
 /** Why a pair doesn't fly on a day (null = it flies). */
 function cancelReason(state: GameState, world: EngineWorld, routeId: string, pairId: string, time: SimTime): string | null {
@@ -149,6 +153,7 @@ function simulateAirline(state: GameState, world: EngineWorld, airline: Airline,
       const tight = prevArr !== null && f.dep - prevArr - turn < TIGHT_BUFFER_MIN;
       const wxFrom = weatherAt(from, day);
       const wxTo = weatherAt(to, day);
+      f.weather = [wxFrom, wxTo];
       const causes: [DelayCause, number][] = [
         ['airline', draw(`${key}|al`, AIRLINE_DELAY.chance + (tight ? TIGHT_EXTRA_CHANCE : 0), AIRLINE_DELAY.mean)],
         ['atc', draw(`${key}|atc`, ATC_DELAY.chance * Math.max(atcFactor(from), atcFactor(to)), ATC_DELAY.mean)],
@@ -205,7 +210,11 @@ export function opsDailyStep(state: GameState, world: EngineWorld): void {
   if (!Object.values(state.airlines).some((a) => a.controller === 'human')) return;
   const day = startOfDay(state.time);
   const ops = (state.ops ??= { day, flights: [], prev: [], ready: {} });
-  if (ops.day < day && ops.flights.length) settleDay(state, world, ops.flights);
+  if (ops.day < day && ops.flights.length) {
+    settleDay(state, world, ops.flights);
+    // Kept seven days for the flight pages (Phase 9.2).
+    ops.history = [...(ops.history ?? []).filter((f) => f.dep >= day - HISTORY_DAYS * MINUTES_PER_DAY), ...ops.flights];
+  }
   ops.prev = ops.day < day ? ops.flights : ops.prev;
   // Carried delays only matter until the next morning.
   for (const [id, t] of Object.entries(ops.ready)) if (t < day) delete ops.ready[id];
@@ -233,6 +242,7 @@ function settleDay(state: GameState, world: EngineWorld, flights: OpsFlight[]): 
     let pax = 0;
     for (const f of list) {
       if (f.status === 'cancelled' && f.reason !== 'curfew') continue;
+      const eurBefore = eur;
       const route = state.routes[f.routeId];
       const a = state.aircraft[f.aircraftId];
       if (!route || !a) continue;
@@ -260,6 +270,7 @@ function settleDay(state: GameState, world: EngineWorld, flights: OpsFlight[]): 
         }
       }
       pax += people;
+      f.disruption = Math.round((eur - eurBefore) * level * eurToBook(state, airline.currency));
       // Punctuality statistics for the route (in the running week and month).
       for (const period of [fin.week, fin.month]) {
         const s: RouteStats = (period.routes[f.routeId] ??= { flights: 0, seats: 0, pax: 0, revenue: 0, directCosts: 0 });
@@ -306,3 +317,29 @@ export function punctuality(stats: Iterable<RouteStats>): { onTime: number; avgD
   return flights ? { onTime: onTime / flights, avgDelay: delay / flights, flights, diverted, causes } : null;
 }
 
+
+// ─── Single flights for the screens (Phase 9.2) ──────────────────────────────────
+
+/** A flight's id in links: pair, direction and scheduled departure. */
+export const flightId = (f: Pick<OpsFlight, 'pairId' | 'dir' | 'dep'>) => `${f.pairId}|${f.dir}|${f.dep}`;
+
+/** The last seven days' flights and today's, oldest first. */
+export function knownFlights(state: GameState): OpsFlight[] {
+  const ops = state.ops;
+  if (!ops) return [];
+  const seen = new Set<string>();
+  const all: OpsFlight[] = [];
+  for (const f of [...(ops.history ?? []), ...ops.prev, ...ops.flights]) {
+    const id = flightId(f);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    all.push(f);
+  }
+  return all.sort((a, b) => a.dep - b.dep);
+}
+
+export const findFlight = (state: GameState, id: string): OpsFlight | undefined => knownFlights(state).find((f) => flightId(f) === id);
+
+/** A flight's result before crews, leases and overheads (book currency), once known. */
+export const flightResult = (f: OpsFlight): number | null =>
+  f.econ ? f.econ.revenue - Object.values(f.econ.costs).reduce((a, b) => a + b, 0) - (f.disruption ?? 0) : null;

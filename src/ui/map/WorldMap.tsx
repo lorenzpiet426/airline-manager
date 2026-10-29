@@ -2,6 +2,7 @@
 // with thousands of airports now and thousands of moving aircraft later.
 // Coastlines and borders come from Natural Earth (public domain) and are bundled with
 // the game, so the map works offline. Only label fonts are fetched from OpenFreeMap (then cached).
+import { hrefFor } from '../navigation';
 import { useEffect, useRef } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import type { GeoJSONSource } from 'maplibre-gl';
@@ -105,6 +106,13 @@ export function WorldMap({ overlay, airports, basemap, selectedId, onSelect, foc
     });
 
     map.on('click', (e) => {
+      // One of your aircraft: open its flight (Phase 9.2). A small box around the finger makes it easy to hit.
+      const box: [[number, number], [number, number]] = [[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]];
+      const plane = map.getLayer('planes') ? map.queryRenderedFeatures(box, { layers: ['planes'] })[0] : undefined;
+      if (plane?.properties?.flight) {
+        window.location.hash = hrefFor('flight', { id: String(plane.properties.flight) });
+        return;
+      }
       const hits = map.queryRenderedFeatures(e.point, { layers: ['airport-hit'] });
       if (!hits.length) return onSelectRef.current(null);
       // Several airports under the finger: prefer the biggest, then the closest.
@@ -114,6 +122,8 @@ export function WorldMap({ overlay, airports, basemap, selectedId, onSelect, foc
       onSelectRef.current(best.f.properties.id as string);
     });
     map.on('mouseenter', 'airport-hit', () => (map.getCanvas().style.cursor = 'pointer'));
+    map.on('mouseenter', 'planes', () => (map.getCanvas().style.cursor = 'pointer'));
+    map.on('mouseleave', 'planes', () => (map.getCanvas().style.cursor = ''));
     map.on('mouseleave', 'airport-hit', () => (map.getCanvas().style.cursor = ''));
 
     // Keep the map sized to its box (e.g. when the sidebar collapses).

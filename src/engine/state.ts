@@ -494,6 +494,22 @@ export interface OpsFlight {
   /** Passengers and transfer passengers expected (last week's average per flight). */
   pax: number;
   transfer: number;
+  /** How bad the weather was at departure and arrival (0 fine … 1 very bad). */
+  weather?: [number, number];
+  /** What the flight really carried and earned (book currency; Phase 9.2), known after the day. */
+  econ?: FlightEcon;
+  /** Its delay costs, care, compensation, diversion and missed connections (book currency), known after the day. */
+  disruption?: number;
+}
+
+export interface FlightEcon {
+  seats: number;
+  pax: number;
+  transfer: number;
+  revenue: number;
+  classes: Partial<Record<CabinClass, ClassStats>>;
+  /** Costs caused by the flight (fuel, maintenance, airport, handling, navigation, distribution, service). */
+  costs: Record<string, number>;
 }
 
 export interface OpsState {
@@ -502,6 +518,8 @@ export interface OpsState {
   flights: OpsFlight[];
   /** The day before (for the screens). */
   prev: OpsFlight[];
+  /** The last seven days' flights, settled (Phase 9.2; newest last). */
+  history?: OpsFlight[];
   /** When each aircraft is ready again after its last flight of the day (delays carried into the next morning). */
   ready: Record<string, SimTime>;
 }

@@ -188,6 +188,11 @@ function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airlin
                   {open === aircraft.id ? t('timeline.hide') : t('timeline.show')}
                 </button>
               )}
+              {pairsOfAircraft(game, aircraft.id).length > 0 && (
+                <a className="button button--small" href={hrefFor('flights', { aircraft: aircraft.id })}>
+                  {t('flight.lastFlights')}
+                </a>
+              )}
             </div>
             {editing === aircraft.id && <CabinEditor game={game} airline={airline} aircraft={aircraft} onDone={() => setEditing(null)} />}
             {engineWorld && open === aircraft.id && <AircraftTimeline game={game} world={engineWorld} aircraftId={aircraft.id} code={code} />}

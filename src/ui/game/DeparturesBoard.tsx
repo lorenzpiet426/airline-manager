@@ -8,6 +8,8 @@ import { formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { Segmented } from '../components/Segmented';
 import { hhmmText } from './timetableText';
+import { flightId } from '../../engine/delays';
+import { hrefFor } from '../navigation';
 
 /** Delays become known this long before departure (until then a flight shows as scheduled). */
 const KNOWN_BEFORE_MIN = 120;
@@ -85,7 +87,9 @@ export function DeparturesBoard({ game, world, airline }: { game: GameState; wor
                 return (
                   <tr key={`${f.pairId}|${f.dir}`}>
                     <td className="mono">
-                      {airline.iata} {f.flightNumber}
+                      <a href={hrefFor('flight', { id: flightId(f) })}>
+                        {airline.iata} {f.flightNumber}
+                      </a>
                     </td>
                     <td className="mono">
                       {code(f.fromId)}–{code(f.toId)}

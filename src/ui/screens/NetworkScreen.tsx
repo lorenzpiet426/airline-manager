@@ -285,9 +285,14 @@ function RouteCard({ game, airline, route, onEdit }: { game: GameState; airline:
           </>
         )}
       </dl>
-      <button type="button" className="button" onClick={onEdit}>
-        {t('network.edit')}
-      </button>
+      <div className="toolbar-row">
+        <button type="button" className="button" onClick={onEdit}>
+          {t('network.edit')}
+        </button>
+        <a className="button" href={hrefFor('flights', { route: route.id })}>
+          {t('flight.lastFlights')}
+        </a>
+      </div>
     </li>
   );
 }

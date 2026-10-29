@@ -1,3 +1,5 @@
+import { flightId, knownFlights } from '../../engine/delays';
+import { hrefFor } from '../navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAircraftType } from '../../data/aircraft';
@@ -18,6 +20,8 @@ interface Row {
   registration: string;
   type: string;
   out: boolean;
+  /** The flight's most recent operation (Phase 9.2), for a link to its page. */
+  last?: string;
 }
 
 /** All of the airline's flights as a departures board (local times), filterable by weekday. */
@@ -28,6 +32,7 @@ export function DeparturesBoard({ game, world, airline, code }: { game: GameStat
   const names = weekdayNames(language);
 
   const rows: Row[] = [];
+  const known = knownFlights(game);
   for (const pair of Object.values(game.flights)) {
     const route = game.routes[pair.routeId];
     const aircraft = game.aircraft[pair.aircraftId];
@@ -35,10 +40,15 @@ export function DeparturesBoard({ game, world, airline, code }: { game: GameStat
     const times = pairTimes(world, aircraft.typeId, route, pair, game.time);
     const back = wrapDay(times.backDep);
     const common = { registration: aircraft.registration, type: getAircraftType(aircraft.typeId).name };
-    rows.push({ ...common, flight: `${airline.iata} ${pair.flightNumber}`, from: route.originId, to: route.destinationId, dep: times.outDep, arr: times.outArr, days: pair.days, out: true });
+    const lastOf = (dir: 0 | 1) => {
+      const f = known.filter((x) => x.pairId === pair.id && x.dir === dir && x.dep <= game.time).at(-1);
+      return f ? flightId(f) : undefined;
+    };
+    rows.push({ ...common, last: lastOf(0), flight: `${airline.iata} ${pair.flightNumber}`, from: route.originId, to: route.destinationId, dep: times.outDep, arr: times.outArr, days: pair.days, out: true });
     rows.push({
       ...common,
       flight: `${airline.iata} ${pair.flightNumber + 1}`,
+      last: lastOf(1),
       from: route.destinationId,
       to: route.originId,
       dep: back.min,
@@ -83,7 +93,7 @@ export function DeparturesBoard({ game, world, airline, code }: { game: GameStat
                 const arr = hhmm(r.arr);
                 return (
                   <tr key={i} className={r.out ? '' : 'board__return'}>
-                    <td className="mono">{r.flight}</td>
+                    <td className="mono">{r.last ? <a href={hrefFor('flight', { id: r.last })}>{r.flight}</a> : r.flight}</td>
                     <td className="mono">{code(r.from)}</td>
                     <td className="mono">{code(r.to)}</td>
                     <td className="num mono board__time">{hhmm(r.dep).time}</td>

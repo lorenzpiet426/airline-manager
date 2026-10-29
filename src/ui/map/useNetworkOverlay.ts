@@ -72,7 +72,7 @@ export function useNetworkOverlay(game: GameState | null, world: EngineWorld | n
       if (!flight) continue;
       planes.push({
         type: 'Feature',
-        properties: { heading: flight.heading, label: `${airline.iata}${flight.leg.flightNumber} ${aircraft.registration}` },
+        properties: { heading: flight.heading, label: `${airline.iata}${flight.leg.flightNumber} ${aircraft.registration}`, flight: `${flight.leg.pairId}|${flight.leg.dir}|${flight.scheduledDep}` },
         geometry: { type: 'Point', coordinates: [flight.lon, flight.lat] },
       });
     }
