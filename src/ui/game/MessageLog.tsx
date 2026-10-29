@@ -73,6 +73,12 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.airportMoved', p);
       case 'baseOpened':
         return t('msg.baseOpened', p);
+      case 'crewReady':
+        return t('msg.crewReady', { ...p, count: Number(p.count) });
+      case 'crewLeft':
+        return t('msg.crewLeft', { count: Number(p.count) });
+      case 'crewCancellations':
+        return t('msg.crewCancellations', { count: Number(p.count) });
       case 'gatesRented':
         return t('msg.gatesRented', p);
       case 'loungeOrdered':

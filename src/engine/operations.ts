@@ -3,6 +3,7 @@
 import { ensureSlots, isSeasonStart, recordSlotUse, seasonChange } from './slots';
 import { ensureHubFacilities, gateRentPerDayUsd, groundContext, loungeRunPerDayUsd } from './hub';
 import { baseRunPerDayUsd, stationOf } from './bases';
+import { crewDailyStep, crewPayPerDayUsd, ensureCrew } from './crews';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -57,6 +58,7 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   // Games from before slots and gates existed (Phases 7.2, 7.3): today's timetable keeps its slots and gates.
   ensureSlots(state, world);
   ensureHubFacilities(state, world);
+  ensureCrew(state, world);
   bookDay(state, world);
   // Historical games: the euro and re-based currencies arrive, closed airports hand over to their successors.
   currencyChangeStep(state);
@@ -70,6 +72,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   worldDailyStep(state, world);
   // The real airlines review their networks (a share of them each day) and react to the player.
   aiDailyStep(state, world);
+  // Crews start or leave, the HR department plans, yesterday's flights without crew are paid for (Phase 8.1).
+  crewDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {
     closeWeek(state);
     recordSlotUse(state, world);
@@ -147,7 +151,8 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!airline || !station) continue;
     const k = usdTo(state.fx, airline.currency);
     const day = dayOf(airline.id);
-    const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, station.country, aircraft.cabin) * k * levels.costs;
+    // Airlines with their own crews (Phase 8.1) pay their staff below; the formula is for the others.
+    const crew = airline.crew ? 0 : crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, station.country, aircraft.cabin) * k * levels.costs;
     day.lines.crew += crew;
     if (aircraft.lease) day.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
     // Refits were paid in cash; the accounts write them off day by day.
@@ -164,6 +169,12 @@ function bookDay(state: GameState, world: EngineWorld): void {
     // Running the bases (Phase 7.4) is part of the overheads.
     const overhead = (overheadPerDayUsd(world, hub.country, active) * levels.costs + baseRunPerDayUsd(airline, state.time - 1)) * usdTo(state.fx, airline.currency);
     dayOf(airline.id).lines.overhead += overhead;
+    // Pilots and cabin crew employed (Phase 8.1), incl. those still in training.
+    if (airline.crew) {
+      const pay = crewPayPerDayUsd(state, world, airline) * levels.costs * usdTo(state.fx, airline.currency);
+      dayOf(airline.id).lines.crew += pay;
+      cashChange[airline.id] = (cashChange[airline.id] ?? 0) - pay;
+    }
     // Gates rented at the hub and own lounges (Phase 7.3).
     const gates = gateRentPerDayUsd(airline, state.time - 1) * usdTo(state.fx, airline.currency);
     const lounges = loungeRunPerDayUsd(airline, state.time - 1) * usdTo(state.fx, airline.currency);

@@ -223,7 +223,13 @@
     "gatesRented": "Rented {{remote}} more remote stands at {{airport}} (now {{total}} gates) for the new timetable.",
     "loungeOrdered": "Your new lounge at {{airport}} ({{seats}} seats) is being built.",
     "loungeReady": "Your lounge at {{airport}} is open.",
-    "baseOpened": "Your new base at {{airport}} is open: station aircraft there under Network → Bases."
+    "baseOpened": "Your new base at {{airport}} is open: station aircraft there under Network → Bases.",
+    "crewReady_one": "{{count}} crew member at {{airport}} finished training and starts flying.",
+    "crewReady_other": "{{count}} crew members at {{airport}} finished training and start flying.",
+    "crewLeft_one": "{{count}} crew member resigned this month. Pay and the job market decide how many leave.",
+    "crewLeft_other": "{{count}} crew members resigned this month. Pay and the job market decide how many leave.",
+    "crewCancellations_one": "Yesterday {{count}} flight was cancelled for want of crew: passengers get care and, under EU 261, compensation.",
+    "crewCancellations_other": "Yesterday {{count}} flights were cancelled for want of crew: passengers get care and, under EU 261, compensation."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -380,7 +386,10 @@
     "baseInUse": "Routes or aircraft are still at this base.",
     "aircraftHasFlights": "This aircraft still has flights planned: remove them first.",
     "originNotBase": "Routes must start at your hub or one of your bases.",
-    "aircraftElsewhere": "This aircraft is stationed at another airport."
+    "aircraftElsewhere": "This aircraft is stationed at another airport.",
+    "crewInvalid": "Check the numbers: whole people, a licence family for pilots, and pay between 80 % and 130 %.",
+    "noCandidates": "The job market doesn't have that many candidates this month. Better pay attracts more; next month there are new ones.",
+    "notEnoughCrew": "You don't have that many people in that group."
   },
   "fleet": {
     "title": "Fleet",
@@ -491,7 +500,8 @@
     "aog": "AOG until {{date}}",
     "nextHeavy": "Next heavy check",
     "nextHeavyValue": "{{check}}-check due in {{months}} months",
-    "airlineLessor": "Another airline (sublease)"
+    "airlineLessor": "Another airline (sublease)",
+    "tabCrew": "Crews"
   },
   "network": {
     "title": "Network",
@@ -926,6 +936,65 @@
     "slotSynced": "☁ in the cloud",
     "slotPending": "☁ waiting to sync",
     "slotLocal": "only on this device"
+  },
+  "crew": {
+    "title": "Crews",
+    "intro": "Every flight needs pilots and cabin crew. A pilot is licensed for one family of aircraft (type rating) and flies about 750 block hours a year (long-haul 800; the EU limit is 900), so each aircraft needs several crews, plus about 10 % reserve for sickness and leave. Flights over 9 hours need a third pilot, over 12 hours a fourth. Cabin crew: one per 50 seats (long-haul one per 35), more in premium cabins. Without enough crew, flights are cancelled.",
+    "pilots": "Pilots",
+    "cabin": "Cabin crew",
+    "inTraining": "Hired or in training",
+    "salaries": "Salaries",
+    "perYear": "{{amount}} a year",
+    "auto": "Automatic crew planning (HR department)",
+    "autoOn": "Every Monday and after each timetable change, HR hires, upgrades and retrains crews for your timetable and the aircraft arriving soon, as far as the job market allows.",
+    "autoOff": "You plan crews yourself. Keep an eye on the shortage warnings below.",
+    "station": "{{code}} · {{kind}}",
+    "noNeed": "No aircraft flying from here yet.",
+    "family": "Licence family",
+    "familyName": "{{name}} family",
+    "captains": "Captains",
+    "firstOfficers": "First officers",
+    "short": "{{percent}} % of flights cancelled",
+    "tableNote": "Have / needed by the timetable; +N = hired or in training. Captains can fill in as first officers, not the other way round.",
+    "pay": "Pay (vs the market)",
+    "payOption": "{{percent}} %",
+    "market": "Job market this month",
+    "quota": "Pilots: {{pilots}} (of them {{captains}} as captains, {{rated}} already type-rated) · cabin crew: {{cabin}}",
+    "actions": "Hire and train",
+    "action": "What",
+    "act": {
+      "hire": "Hire",
+      "upgrade": "Upgrade first officers to captain",
+      "rating": "Type rating for another family",
+      "release": "Let go"
+    },
+    "do": {
+      "hire": "Hire",
+      "upgrade": "Start upgrade training",
+      "rating": "Start type rating",
+      "release": "Let go"
+    },
+    "role": "Position",
+    "roles": {
+      "captain": "Captains",
+      "firstOfficer": "First officers",
+      "cabin": "Cabin crew"
+    },
+    "toFamily": "New family",
+    "fromFamily": "Pilots from",
+    "count": "How many",
+    "quoteHire": "Pilots who already hold this type rating start in {{weeks}} weeks. The others first need a type rating: {{more}} weeks, {{cost}} each.",
+    "quoteHireCabin": "Recruiting and the safety course take {{weeks}} weeks; training costs {{cost}} in total.",
+    "quoteUpgrade": "Command training takes {{weeks}} weeks; the first officers don't fly meanwhile. Cost: {{cost}}.",
+    "quoteRating": "The pilots leave their old family and train for {{weeks}} weeks (ground school, simulator, line training). Cost: {{cost}}.",
+    "quoteRelease": "Severance: about {{months}} months' pay each.",
+    "pipeline": "Coming",
+    "source": {
+      "hire": "new hire",
+      "rating": "type rating",
+      "upgrade": "command upgrade"
+    },
+    "readyOn": "flying from {{date}}"
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

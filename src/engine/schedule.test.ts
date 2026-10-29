@@ -37,6 +37,8 @@ function startup(scheduling: 'simple' | 'detailed') {
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 200_000_000, controller: 'human' },
   });
   const airlineId = (founded as { id: string }).id;
+  // Crews (Phase 8.1) aren't what these tests are about: the first timetable gets its crews, as in games from before 8.1.
+  delete state.airlines[airlineId]!.crew;
   for (const id of ['T1', 'T2']) {
     state.aircraft[id] = {
       id, typeId: 'A20N', airlineId, registration: `OE-L${id}`, builtYear: 2020, seats: 180, cabin: economyCabin(A320, 180), status: 'active', deliveryAt: state.time, locationId: 'LOWW',

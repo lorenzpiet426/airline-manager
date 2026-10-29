@@ -3,6 +3,7 @@
 import { withStartups } from '../engine/startups';
 import { ensureSlots } from '../engine/slots';
 import { ensureHubFacilities } from '../engine/hub';
+import { ensureCrew } from '../engine/crews';
 import * as Comlink from 'comlink';
 import type { Airport, Country } from '../data/types';
 import { advance, type WorldProvider } from '../engine/advance';
@@ -157,6 +158,7 @@ async function loadState(raw: unknown): Promise<EngineSnapshot | null> {
   // Games from before Phase 7.2: the timetable keeps its slots (historic rights).
   ensureSlots(loaded, world(loaded));
   ensureHubFacilities(loaded, world(loaded));
+  ensureCrew(loaded, world(loaded));
   state = loaded;
   return setSpeed(0);
 }

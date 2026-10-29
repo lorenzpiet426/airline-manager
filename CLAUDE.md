@@ -302,6 +302,8 @@ night curfews; **7.3** ✅ gates + own lounges; **7.4** ✅ bases (routes not fr
 ### Phase 8 — People
 Pilots and cabin crew, type ratings and training, crew shortages, strikes; hireable managers with skills,
 salaries, mistakes, and delegation levels.
+Split (2026-10-29): **8.1** ✅ pilots and cabin crew (headcounts, hiring, type ratings, upgrades, shortages);
+**8.2** unions, wage talks and strikes; **8.3** managers with delegation per department.
 
 ### Phase 9 — Revenue and operations detail
 Fare classes, booking curves, dynamic pricing; loyalty program; on-time performance, delays, weather,
@@ -491,6 +493,11 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 6.4: **fictional startups at a realistic rate** (≈ 8/year in free markets, many fail) | Owner choice |
 | 2026-10-29 | 6.4: real fare level 1985–2010 raised (IATA 2016: −61 % since 1995) and own costs follow it fully (was ^0.8) | Austrian's margins per decade went from +27 % … −30 % to +11 % … −7 % |
 | 2026-10-29 | 6.1: transfer passengers at hubs (network airlines + the player), measured route passengers split into local + transfer, smaller winter schedules, route-sized aircraft, thin unmeasured routes ≤ 3/week, low-cost fares 60 % + low-cost cost profile, connections half as attractive | Calibrated to Austrian 2024, Vienna Airport 2024 and Ryanair FY25 (docs/DATA_SOURCES.md) |
+| 2026-10-29 | Phase 8 order: **8.1 crews → 8.2 unions/strikes → 8.3 managers** | Owner choice |
+| 2026-10-29 | 8.1: **real headcounts** per base and licence family from the timetable (750/800 block h a year, +10 % reserve, augmented crews), hiring takes weeks, type ratings ≈ 7 weeks, upgrades; shortages cancel flights with compensation | Owner choice |
+| 2026-10-29 | 8.1: **real job market** by region (market population) and era (pilot surpluses/shortages), pay per base 80–130 %; big employers attract more applicants | Owner choice; without the size effect Austrian would shrink by attrition |
+| 2026-10-29 | 8.1: HR plans crews automatically by default (switchable); old saves and takeovers get the crews their timetable needs; new startups must hire | Realistic start; managers (8.3) will replace the simple HR switch |
+| 2026-10-29 | 8.3: managers **delegate per department** (advise / act after OK / decide alone; skills, salaries, mistakes; act while away in real-clock mode) | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1146,6 +1153,34 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: the Austrian takeover still leaves out Austrian's real routes from other airports; no ferry flights when moving
   an aircraft; AI airlines' own bases unchanged; traffic rights outside the EU come in Phase 12.
 - **Next:** Phase 8 (people: pilots, cabin crew, type ratings, strikes, managers) — or what the owner prefers.
+
+### 2026-10-29 — Session 26 (Phase 8.1: pilots and cabin crew) ✅
+- Owner decisions (all recommended): crews → strikes → managers, real headcounts, real job market, managers delegate per
+  department (§7).
+- Data `src/data/crews.ts` (licence families `ratingFamily`, hours, reserve, augmented crews, pay ratios, training times
+  and costs, pilot market 1970–2026, quota per base, attrition, `EMPLOYER_PULL`).
+- Engine `src/engine/crews.ts`: `Airline.crew` (stations → pilots per family as captains/first officers, cabin crew, pay,
+  pipeline of hires/ratings/upgrades; `auto`; monthly hires), `crewNeeds` (from the timetable per station and family),
+  `crewShortages` → `crewCancelsPair` (stable share of pairs, skipped in `plannedFlights`), `crewPayPerDayUsd` (replaces
+  the per-aircraft crew cost for airlines with crews), `hiringQuota`, `hireCrew`, `trainCrew`, `releaseCrew`,
+  `setCrewPay`, `planCrew` (HR: retrain spare pilots, upgrade, hire), `crewDailyStep` (training done, monthly attrition,
+  Monday planning, yesterday's crew cancellations with care + EU 261 + reputation). Ledger kind `training`; messages
+  `crewReady`, `crewLeft`, `crewCancellations`. Commands `HireCrew`, `TrainCrew`, `ReleaseCrew`, `SetCrewPay`,
+  `SetCrewAuto`; `withSlots` re-plans crews after timetable changes. Old saves/takeovers get the crews they need
+  (`ensureCrew`); founded airlines start with none. No save version change (optional field).
+- UI: Fleet → **Crews** tab (`src/ui/fleet/Crews.tsx`: totals, salaries a year, automatic planning switch, per station
+  have/needed per family and cabin crew with shortage chips, pay, this month's job market, hire / upgrade / type rating /
+  let go with times and costs, people coming); EN/DE; new messages and errors.
+- Tests: 198 (`crews.test.ts`: headcount of a 13 h/day A320, a new airline's cancellations until crews arrive, job market
+  and pay, upgrade/rating costs and times, salaries vs. the old crew cost). Old tests that aren't about crews remove the
+  crew record of their test airline.
+- Austrian today: ≈ 690 pilots / 1,630 cabin crew from its timetable, November margin −4.0 % (before −5.3 %), no
+  shortages and steady headcount over 7 months.
+- Verified in browser (Austrian save): Crews tab, upgrade of 2 first officers (ready in 6 weeks), phone 375 px without
+  sideways scrolling, no console errors.
+- Known: one pool per base (no individual pilots, seniority or duty rosters); AI airlines' crews not modelled; pilots of
+  stationed aircraft count at their base only.
+- **Next:** 8.2 unions, wage talks and strikes.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

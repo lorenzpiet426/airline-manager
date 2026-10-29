@@ -28,8 +28,9 @@ import { AircraftPaint, AircraftTail } from '../livery/AircraftPaint';
 import { Ownership } from '../fleet/Ownership';
 import { BuyUsed, OrderNew } from '../fleet/BuyAndOrder';
 import { FleetSummary } from '../fleet/FleetSummary';
+import { CrewTab } from '../fleet/Crews';
 
-type Tab = 'fleet' | 'maint' | 'market' | 'buy' | 'order';
+type Tab = 'fleet' | 'maint' | 'crew' | 'market' | 'buy' | 'order';
 type Filter = 'all' | AircraftCategory;
 
 /** In a check or grounded by a failure right now (the card shows a maintenance chip instead of the location). */
@@ -72,6 +73,7 @@ export function FleetScreen() {
         options={[
           { value: 'fleet', label: t('fleet.tabFleet', { count: fleetSize }) },
           { value: 'maint', label: t('fleet.tabMaint') },
+          { value: 'crew', label: t('fleet.tabCrew') },
           { value: 'market', label: t('fleet.tabMarket', { count: game.market.offers.length }) },
           { value: 'buy', label: t('fleet.tabBuy', { count: game.market.sales.length }) },
           { value: 'order', label: t('fleet.tabOrder') },
@@ -82,6 +84,8 @@ export function FleetScreen() {
         <MyFleet game={game} airline={airline} onMarket={() => setTab('market')} />
       ) : tab === 'maint' ? (
         <MaintenanceTab game={game} airline={airline} />
+      ) : tab === 'crew' ? (
+        <CrewTab game={game} airline={airline} />
       ) : tab === 'market' ? (
         <Market game={game} airline={airline} />
       ) : tab === 'buy' ? (

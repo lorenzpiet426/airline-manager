@@ -1,6 +1,7 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
-import type { LoungeQuality } from './state';
+import type { CrewRole, LoungeQuality } from './state';
+import { ensureCrew, hireCrew, planCrew, releaseCrew, setCrewPay, trainCrew, type CrewError } from './crews';
 import { closeBase, openBase, stationAircraft, stationOf, stationsOf, type BaseError } from './bases';
 import { buildLounge, closeLounge, ensureGates, ensureHubFacilities, setGates } from './hub';
 import { acquireSlots, buySlots, ensureSlots, requestSlots, type SlotShortfall } from './slots';
@@ -223,7 +224,34 @@ export interface StationAircraft {
   payload: { aircraftId: string; airportId: string };
 }
 
-export type Command = OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Crews (Phase 8.1): hiring, training (upgrade or another type rating), letting go, pay, automatic planning. */
+export interface HireCrew {
+  type: 'HireCrew';
+  airlineId: string;
+  payload: { station: string; role: CrewRole; family: string | null; count: number };
+}
+export interface TrainCrew {
+  type: 'TrainCrew';
+  airlineId: string;
+  payload: { station: string; kind: 'upgrade' | 'rating'; family: string; count: number; from?: { family: string; role: 'captain' | 'firstOfficer' } };
+}
+export interface ReleaseCrew {
+  type: 'ReleaseCrew';
+  airlineId: string;
+  payload: { station: string; role: CrewRole; family: string | null; count: number };
+}
+export interface SetCrewPay {
+  type: 'SetCrewPay';
+  airlineId: string;
+  payload: { station: string; pay: number };
+}
+export interface SetCrewAuto {
+  type: 'SetCrewAuto';
+  airlineId: string;
+  payload: { auto: boolean };
+}
+
+export type Command = HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -277,7 +305,8 @@ export type CommandError =
   | 'loungeUnknown'
   | 'originNotBase'
   | 'aircraftElsewhere'
-  | BaseError;
+  | BaseError
+  | CrewError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -315,6 +344,9 @@ function withSlots(state: GameState, world: EngineWorld, airlineId: string, chan
   if (shortfall) return undo({ ok: false, error: 'noSlot', slots: shortfall });
   // Enough gates at the hub for the busiest moment (remote stands are rented as needed, Phase 7.3).
   if (!ensureGates(state, world, airlineId)) return undo(fail('noGate'));
+  // The HR department starts hiring for the new flights at once (Phase 8.1).
+  ensureCrew(state, world);
+  if (airline?.crew?.auto) planCrew(state, world, airlineId);
   return result;
 }
 
@@ -335,6 +367,26 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
     case 'BuySlots': {
       if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
       const error = buySlots(state, world, command.airlineId, command.payload.airportId, command.payload.hours);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'HireCrew':
+    case 'TrainCrew':
+    case 'ReleaseCrew':
+    case 'SetCrewPay':
+    case 'SetCrewAuto': {
+      const airline = state.airlines[command.airlineId];
+      if (!airline) return fail('airlineUnknown');
+      ensureCrew(state, world);
+      const error =
+        command.type === 'HireCrew'
+          ? hireCrew(state, world, command.airlineId, command.payload.station, command.payload.role, command.payload.family, command.payload.count)
+          : command.type === 'TrainCrew'
+            ? trainCrew(state, command.airlineId, command.payload.station, command.payload.kind, command.payload.family, command.payload.count, command.payload.from)
+            : command.type === 'ReleaseCrew'
+              ? releaseCrew(state, world, command.airlineId, command.payload.station, command.payload.role, command.payload.family, command.payload.count)
+              : command.type === 'SetCrewPay'
+                ? setCrewPay(state, command.airlineId, command.payload.station, command.payload.pay)
+                : ((airline.crew!.auto = command.payload.auto), command.payload.auto && planCrew(state, world, command.airlineId), null);
       return error ? fail(error) : { ok: true };
     }
     case 'OpenBase':
@@ -457,6 +509,8 @@ function foundAirline(state: GameState, world: EngineWorld, p: FoundAirline['pay
     currency,
     cash: money(0, currency),
     foundedAt: state.time,
+    // A new airline has no crews yet: it hires them (Phase 8.1; the HR department plans automatically).
+    ...(p.controller === 'human' ? { crew: { stations: {}, auto: true, hired: {} } } : {}),
   };
   state.finance[id] = newFinance(state.time);
   if (p.controller === 'human') state.reputation[id] = newReputation();

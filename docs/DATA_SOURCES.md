@@ -675,6 +675,31 @@ Owner decisions: real crew bases; real traffic rules; bases can be second hubs w
   the hub or a base and are flown only by aircraft stationed there; one route per pair of airports. Gates, a lounge,
   connections (7.1–7.3) work at every base like at the hub; the AI treats bases like the hub (home rivals defend them).
 
+## Pilots and cabin crew (Phase 8.1, 2026-10-29)
+Owner decisions: real headcounts per base and licence family, a real job market by region and era, managers later (8.3).
+
+- **Hours** (EU Regulation 965/2012, ORO.FTL, read 2026-10-29): at most 900 block hours a year and 100 in 28 days;
+  airlines plan about 750 (short-haul) / 800 (long-haul) block hours per pilot and 800 per cabin crew member, plus 10 %
+  reserve (sickness, leave, standby) and a 4 % planning buffer. Augmented crews: a third pilot over 9 h block, a fourth
+  over 12 h (one captain + first officers; four pilots = two captains).
+- **Cabin crew**: EU minimum one per 50 seats (CS-25 / ORO.CC.100); long-haul one per 35 seats, plus extra crew for
+  premium cabins (service standard, modelled).
+- **Type ratings** (families: A320 incl. neo, 737 NG/MAX, A330/A340/A350 cross-crew, 757/767, E-Jets …): about 7 weeks
+  and $35k per pilot; command upgrade 6 weeks and $25k; cabin crew safety course 6 weeks and $5k; hiring takes 6 weeks
+  (notice period). Typical figures from airline and training-provider reports (modelled).
+- **Pay**: the game's existing crew costs (Austrian level, scaled by the base country's wage level); captain 1.35×, first
+  officer 0.65× of the average pilot cost. Severance about 3 months' pay.
+- **Job market** (`src/data/crews.ts`, modelled from CAE/Boeing pilot outlooks and the industry's boom and bust years):
+  pilots per month at a base by its market population (2–25), plus 1 % of the pilots the airline already employs
+  there (big employers, cadet programmes), × the pilot market of the year (surpluses after 1991, 2001, 2008, COVID;
+  shortages mid-2000s and from 2023) × pay². 30 % of candidates can start as captains, 40 % already hold the rating;
+  cabin crew 4× as many. Attrition 0.5 % a month at market pay, more when pay is low or other airlines are hiring.
+- **Shortages** cancel a stable share of that base's and family's flights (care + EU 261 compensation for 50 % of
+  passengers who claim, a reputation hit).
+- **Calibration**: an A320 flying 13 h a day needs 14 pilots (7 crews); Austrian today ≈ 680–780 pilots and
+  ≈ 1,600–1,850 cabin crew (real ≈ 1,000 pilots and ≈ 2,000 cabin crew in the Austrian AOC incl. training and office
+  roles); Austrian's November margin −4.0 % with crews (−5.3 % before), steady headcount over 7 months.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

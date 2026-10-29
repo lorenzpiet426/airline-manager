@@ -24,6 +24,8 @@ function realClockGame(start = simTime(2026, 10, 28) + 14 * 60 + 37) {
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 75_000_000, controller: 'human' },
   });
   const airlineId = (r as { id: string }).id;
+  // Crews (Phase 8.1) aren't what these tests are about: the first timetable gets its crews, as in games from before 8.1.
+  delete state.airlines[airlineId]!.crew;
   state.aircraft.T1 = {
     id: 'T1', typeId: 'A20N', airlineId, registration: 'OE-LTA', builtYear: 2020, seats: 180, cabin: economyCabin(getAircraftType('A20N'), 180),
     status: 'active', deliveryAt: state.time, locationId: 'LOWW',

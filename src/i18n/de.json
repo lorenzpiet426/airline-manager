@@ -223,7 +223,13 @@
     "gatesRented": "{{remote}} weitere Außenpositionen in {{airport}} gemietet (jetzt {{total}} Gates) für den neuen Flugplan.",
     "loungeOrdered": "Deine neue Lounge in {{airport}} ({{seats}} Plätze) wird gebaut.",
     "loungeReady": "Deine Lounge in {{airport}} ist offen.",
-    "baseOpened": "Deine neue Basis in {{airport}} ist offen: Stationiere Flugzeuge dort unter Netz → Basen."
+    "baseOpened": "Deine neue Basis in {{airport}} ist offen: Stationiere Flugzeuge dort unter Netz → Basen.",
+    "crewReady_one": "{{count}} Crewmitglied in {{airport}} hat die Ausbildung abgeschlossen und fliegt ab jetzt.",
+    "crewReady_other": "{{count}} Crewmitglieder in {{airport}} haben die Ausbildung abgeschlossen und fliegen ab jetzt.",
+    "crewLeft_one": "{{count}} Crewmitglied hat diesen Monat gekündigt. Gehalt und Arbeitsmarkt bestimmen, wie viele gehen.",
+    "crewLeft_other": "{{count}} Crewmitglieder haben diesen Monat gekündigt. Gehalt und Arbeitsmarkt bestimmen, wie viele gehen.",
+    "crewCancellations_one": "Gestern fiel {{count}} Flug wegen fehlender Crew aus: Die Passagiere bekommen Betreuung und nach EU 261 eine Entschädigung.",
+    "crewCancellations_other": "Gestern fielen {{count}} Flüge wegen fehlender Crew aus: Die Passagiere bekommen Betreuung und nach EU 261 eine Entschädigung."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -380,7 +386,10 @@
     "baseInUse": "An dieser Basis sind noch Strecken oder Flugzeuge.",
     "aircraftHasFlights": "Dieses Flugzeug hat noch geplante Flüge: Entferne sie zuerst.",
     "originNotBase": "Strecken müssen an deinem Drehkreuz oder einer deiner Basen beginnen.",
-    "aircraftElsewhere": "Dieses Flugzeug ist an einem anderen Flughafen stationiert."
+    "aircraftElsewhere": "Dieses Flugzeug ist an einem anderen Flughafen stationiert.",
+    "crewInvalid": "Prüfe die Zahlen: ganze Personen, eine Musterfamilie für Piloten und ein Gehalt zwischen 80 % und 130 %.",
+    "noCandidates": "Der Arbeitsmarkt hat diesen Monat nicht so viele Bewerber. Besseres Gehalt zieht mehr an; nächsten Monat gibt es neue.",
+    "notEnoughCrew": "So viele Leute hast du in dieser Gruppe nicht."
   },
   "fleet": {
     "title": "Flotte",
@@ -491,7 +500,8 @@
     "aog": "AOG bis {{date}}",
     "nextHeavy": "Nächster großer Check",
     "nextHeavyValue": "{{check}}-Check fällig in {{months}} Monaten",
-    "airlineLessor": "Eine andere Airline (Unterleasing)"
+    "airlineLessor": "Eine andere Airline (Unterleasing)",
+    "tabCrew": "Crews"
   },
   "network": {
     "title": "Netz",
@@ -926,6 +936,65 @@
     "slotSynced": "☁ in der Cloud",
     "slotPending": "☁ wartet auf Sync",
     "slotLocal": "nur auf diesem Gerät"
+  },
+  "crew": {
+    "title": "Crews",
+    "intro": "Jeder Flug braucht Piloten und Kabinenpersonal. Ein Pilot hat die Berechtigung für eine Flugzeugfamilie (Musterberechtigung) und fliegt etwa 750 Blockstunden im Jahr (Langstrecke 800; das EU-Limit ist 900). Jedes Flugzeug braucht also mehrere Crews, dazu etwa 10 % Reserve für Krankheit und Urlaub. Flüge über 9 Stunden brauchen einen dritten Piloten, über 12 Stunden einen vierten. Kabinenpersonal: eine Person pro 50 Sitze (Langstrecke pro 35), mehr in Premium-Kabinen. Ohne genug Crew fallen Flüge aus.",
+    "pilots": "Piloten",
+    "cabin": "Kabinenpersonal",
+    "inTraining": "Eingestellt oder in Ausbildung",
+    "salaries": "Gehälter",
+    "perYear": "{{amount}} im Jahr",
+    "auto": "Automatische Crewplanung (Personalabteilung)",
+    "autoOn": "Jeden Montag und nach jeder Flugplanänderung stellt die Personalabteilung Crews für deinen Flugplan und die bald ankommenden Flugzeuge ein, schult sie zu Kapitänen oder auf andere Muster um – soweit der Arbeitsmarkt es zulässt.",
+    "autoOff": "Du planst die Crews selbst. Achte auf die Warnungen zu fehlender Crew unten.",
+    "station": "{{code}} · {{kind}}",
+    "noNeed": "Von hier fliegen noch keine Flugzeuge.",
+    "family": "Musterfamilie",
+    "familyName": "{{name}}-Familie",
+    "captains": "Kapitäne",
+    "firstOfficers": "Erste Offiziere",
+    "short": "{{percent}} % der Flüge fallen aus",
+    "tableNote": "Vorhanden / laut Flugplan nötig; +N = eingestellt oder in Ausbildung. Kapitäne können als Erste Offiziere einspringen, nicht umgekehrt.",
+    "pay": "Gehalt (im Vergleich zum Markt)",
+    "payOption": "{{percent}} %",
+    "market": "Arbeitsmarkt diesen Monat",
+    "quota": "Piloten: {{pilots}} (davon {{captains}} als Kapitäne, {{rated}} schon mit Musterberechtigung) · Kabinenpersonal: {{cabin}}",
+    "actions": "Einstellen und schulen",
+    "action": "Was",
+    "act": {
+      "hire": "Einstellen",
+      "upgrade": "Erste Offiziere zum Kapitän schulen",
+      "rating": "Musterberechtigung für eine andere Familie",
+      "release": "Entlassen"
+    },
+    "do": {
+      "hire": "Einstellen",
+      "upgrade": "Kapitänsschulung starten",
+      "rating": "Musterberechtigung starten",
+      "release": "Entlassen"
+    },
+    "role": "Position",
+    "roles": {
+      "captain": "Kapitäne",
+      "firstOfficer": "Erste Offiziere",
+      "cabin": "Kabinenpersonal"
+    },
+    "toFamily": "Neue Familie",
+    "fromFamily": "Piloten von",
+    "count": "Wie viele",
+    "quoteHire": "Piloten, die diese Musterberechtigung schon haben, fangen in {{weeks}} Wochen an. Die anderen brauchen erst eine Musterberechtigung: {{more}} Wochen, {{cost}} pro Person.",
+    "quoteHireCabin": "Anwerben und Sicherheitskurs dauern {{weeks}} Wochen; die Ausbildung kostet insgesamt {{cost}}.",
+    "quoteUpgrade": "Die Kapitänsschulung dauert {{weeks}} Wochen; die Ersten Offiziere fliegen in der Zeit nicht. Kosten: {{cost}}.",
+    "quoteRating": "Die Piloten verlassen ihre alte Familie und schulen {{weeks}} Wochen um (Theorie, Simulator, Linienflüge unter Aufsicht). Kosten: {{cost}}.",
+    "quoteRelease": "Abfindung: etwa {{months}} Monatsgehälter pro Person.",
+    "pipeline": "Kommen bald",
+    "source": {
+      "hire": "neu eingestellt",
+      "rating": "Musterberechtigung",
+      "upgrade": "Kapitänsschulung"
+    },
+    "readyOn": "fliegt ab {{date}}"
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

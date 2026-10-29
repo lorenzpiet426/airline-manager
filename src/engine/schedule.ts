@@ -3,6 +3,7 @@
 // the game plans the pairs itself from the weekly frequency; in Detailed scheduling the player sets every pair.
 // Times are hub local time, like published timetables; the airports' time zones turn them into UTC.
 import { closureCancelsPair } from './closures';
+import { crewCancelsPair } from './crews';
 import { curfewAtTime, hasCurfews } from '../data/curfews';
 import { getAircraftType, TURNAROUND_MIN } from '../data/aircraft';
 import type { Airport } from '../data/types';
@@ -117,7 +118,11 @@ export function plannedFlights(state: GameState, world: EngineWorld, route: Rout
     if (
       !aircraft ||
       (!includeDelivering &&
-        (aircraft.status !== 'active' || grounded(aircraft, time) || aogCancels(world, route, pair, aircraft, time) || closureCancelsPair(state, world, route, pair, time)))
+        (aircraft.status !== 'active' ||
+          grounded(aircraft, time) ||
+          aogCancels(world, route, pair, aircraft, time) ||
+          closureCancelsPair(state, world, route, pair, time) ||
+          crewCancelsPair(state, world, route, pair, time)))
     ) {
       continue;
     }

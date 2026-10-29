@@ -42,6 +42,8 @@ function startup(year: number, capitalEur = 75_000_000) {
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur, controller: 'human' },
   });
   expect(founded.ok).toBe(true);
+  // Crews (Phase 8.1) aren't what these tests are about: the first timetable gets its crews, as in games from before 8.1.
+  delete state.airlines[(founded as { id: string }).id]!.crew;
   return { state, airlineId: (founded as { id: string }).id };
 }
 

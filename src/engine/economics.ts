@@ -353,8 +353,8 @@ function airportFactor(world: EngineWorld, a: Airport): number {
 }
 
 /** Employer cost per year (USD) at Austrian salary level. */
-const PILOT_COST_USD = { short: 135_000, long: 175_000 };
-const CABIN_CREW_COST_USD = 45_000;
+export const PILOT_COST_USD = { short: 135_000, long: 175_000 };
+export const CABIN_CREW_COST_USD = 45_000;
 
 /** Crew needed to keep one aircraft flying all week (several crews take turns). */
 export function crewPerAircraft(type: AircraftType, seats: number, cabin?: CabinLayout) {
