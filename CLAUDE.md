@@ -289,8 +289,9 @@ Phase 5 complete.
 Real airlines as AI with real fleets/networks per era and recognizable colors; **detailed Austrian Airlines
 takeover scenario at VIE** (multiple start years); fictional startups appearing in real-airline mode.
 Split (2026-10-29): **6.1** ✅ calibrate the real airlines to their real numbers + transfer passengers at hubs;
-**6.2** ✅ Austrian takeover today (as CEO; Lufthansa Group airlines are partners); **6.3** real airlines in past years
-(real names, hubs, colours, era fleets; modelled routes); **6.4** Austrian in past years + fictional startups.
+**6.2** ✅ Austrian takeover today (as CEO; Lufthansa Group airlines are partners); **6.3** ✅ real airlines in past years
+(real names, hubs, colours, era fleets; modelled routes; closed airlines; real founding/closing dates); **6.4** Austrian
+in past years + fictional startups.
 
 ### Phase 7 — Hubs and detailed scheduling
 Connecting traffic and O&D flows through hubs, connection waves (timetables themselves come in step 2.2),
@@ -466,6 +467,11 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 6.2: **money and ownership modelled** (most aircraft owned, A320neo/787 group leases, E195 leases ending 2027–28, 17 A320neo-family group leases coming, €350 m cash) | Owner choice; Austrian's balance sheet sits in the LH Group pool |
 | 2026-10-29 | 6.2: **partners = no attacks + feed** (LH Group by Wikidata parent + LHX + ITA) | Owner choice |
 | 2026-10-29 | 6.2: **takeover starts today** (any time mode); summer-2024 frequencies scaled to the season, holiday-island routes rest in winter | Owner choice |
+| 2026-10-29 | 6.3: past years get **today's airlines that existed then plus airlines that have closed since** (Wikidata), each between its real founding and closing day | Owner choice |
+| 2026-10-29 | 6.3: routes = **hubs + demand** (today's network thinned to the economy and size of the time; closed airlines from their real hubs to the best-ranked destinations), all `modelled` | Owner choice |
+| 2026-10-29 | 6.3: fleets = **real types per year** from Wikipedia's historical fleet tables, counts modelled; else typical types of the time | Owner choice |
+| 2026-10-29 | 6.3: **real dates**: airlines start/stop flying on their real days, with news; the AI can still bankrupt them earlier | Owner choice |
+| 2026-10-29 | 6.3: in past years every airline's frequency is its share of that time's demand (today's measured frequencies dropped) | Measured 2024 frequencies plus added closed airlines over-supplied busy routes (2005 VIE startup −59 %) |
 | 2026-10-29 | 6.1: transfer passengers at hubs (network airlines + the player), measured route passengers split into local + transfer, smaller winter schedules, route-sized aircraft, thin unmeasured routes ≤ 3/week, low-cost fares 60 % + low-cost cost profile, connections half as attractive | Calibrated to Austrian 2024, Vienna Airport 2024 and Ryanair FY25 (docs/DATA_SOURCES.md) |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
@@ -980,6 +986,34 @@ education", forbid making the data available to others (§3 iii) and require a w
   behind European business (movable curtain); old saves repaired on load (`migrate`). Austrian A320 now J20 Y142
   (real 174 incl. blocked middle seats). Tests: 169.
 - **Next:** 6.3 real airlines in past years (real names, hubs, colours, era fleets; modelled routes).
+
+### 2026-10-29 — Session 20 (Phase 6.3: real airlines of past years) ✅
+- Owner decisions (all recommended): closed airlines too, routes from hubs + demand, real types per year, real dates (§7).
+- Pipeline `npm run data:airlines:history`: `tools/download-airlines-history.ts` (Wikidata closed airlines since 1970 with
+  dates + precision, successors; founding days of today's airlines; Wikipedia articles of the closed ones, 50 per request;
+  `relevantParts` moved to `tools/wikipedia.ts`), `tools/build-airline-history.ts` (generic wikitable reader with
+  rowspans, Introduced/Retired columns, one span per type; hand `FIXES` for Malév's closing day and Interflug's hub) →
+  `airline-history.json`: 1,223 closed airlines, 1,351 founding days, historical fleets of 814 airlines.
+  `tools/aircraft-names.ts`: `HISTORICAL_PATTERNS` / `mapHistoricalType` (DC-9, 727, TriStar, Il-62 …).
+- Engine `src/engine/eraAirlines.ts`: `buildEraYear` (airlines active during a year: today's ones (founding day,
+  network thinned × home demand^0.5 × growth of young/low-cost airlines, frequencies left to the demand model) and closed
+  ones (hubs, fleet of the year, routes ranked by gravity × economy, range/charter/regional/foreign-hub rules), West Berlin
+  rule until 1990, modelled national carriers for uncovered states), `eraAirlinesOn` (filter by day, `eraChanges`),
+  `airlineEraKey`, `eraFleet`, `networkShare`, `airlineChangesToday`. `worldCache` caches one `EraYear` per year/airport era
+  and worlds per airline change day; without the history it falls back to 5.3's modelled carriers. `RealAirline.era`,
+  `RealAirlines.history/eraChanges/facts`; `aircraftFor` uses typical types for era airlines without a fitting type.
+  News `airlineFounded`/`airlineCeased` (fame ≥ 15 or the player's hub country). `DEFUNCT_COLORS` (44 airlines).
+- UI: Airlines screen intro for past years, "Flying since/until", successor, fleet "In <year>" (modelled) with source
+  note, network note + frequencies of the time, former states' names (East Germany); new-game hint and Data sources
+  texts updated (EN/DE).
+- Tests: 172 (era tests rewritten: 1980 world, growth of Ryanair/Emirates/Austrian, Pan Am/Swissair/Emirates dates,
+  Pan Am closing in the news, fallback without history; calibration 1975–2005 still holds).
+- Verified in browser (owner's 1980 save "Alpine Eighty"): 449 airlines incl. Pan Am, Eastern, TWA, Braniff; Austrian with
+  DC-9-30/-50 and 44 routes at 1980 frequencies; Pan Am's US network + flights home from its foreign hubs; Interflug at
+  Schönefeld with Il-62/Tu-134. A simulated year ≈ 4 s.
+- Known: networks of the past are modelled; fleet counts rough; some later airports exist too early (no Wikidata opening
+  date); political limits besides West Berlin not modelled for AI airlines; Wikidata's founding years are company years.
+- **Next:** 6.4 Austrian in past years (takeover scenario per start year) + fictional startups appearing in real-airline mode.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

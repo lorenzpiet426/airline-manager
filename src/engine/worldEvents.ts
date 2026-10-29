@@ -12,6 +12,7 @@ import { ratesPerEurAt } from '../data/fxHistory';
 import { eraLevels } from '../data/eras';
 import type { Airport } from '../data/types';
 import { postMessage } from './core';
+import { airlineChangesToday } from './eraAirlines';
 import { random } from './rng';
 import type { GameState, WorldEvent, WorldEventKind, WorldState } from './state';
 import { fromDate, MINUTES_PER_DAY, simTime, startOfDay, toDate, type SimTime } from './time';
@@ -350,6 +351,7 @@ export function worldDailyStep(state: GameState, world: EngineWorld): void {
   if (!w) return;
   // Real events starting today are in the news.
   for (const e of historicEvents(state.seed)) if (e.start <= state.time && e.start > state.time - DAY && e.kind !== 'milestone') announce(state, world, e);
+  announceAirlineChanges(state, world);
   if (state.time < REAL_DATA_END) {
     spawnEvents(state, world, true);
     w.events = w.events.filter((e) => e.end > state.time - 2 * YEAR);
@@ -428,6 +430,28 @@ export function worldMonthlyStep(state: GameState, world?: EngineWorld): void {
   state.fxDate = toDate(state.time).toISOString().slice(0, 10);
   w.fxHistory.push([state.time, state.fx.USD!]);
   if (w.fxHistory.length > 600) w.fxHistory.splice(0, w.fxHistory.length - 600);
+}
+
+/** Historical games (Phase 6.3): airlines starting or stopping on their real dates are in the news. */
+function announceAirlineChanges(state: GameState, world: EngineWorld): void {
+  const changes = world.realAirlines?.eraChanges;
+  if (!changes?.length) return;
+  const countries = new Set(
+    Object.values(state.airlines)
+      .filter((a) => a.controller === 'human')
+      .map((a) => world.airportById.get(a.hubId)?.country)
+      .filter((c): c is string => !!c),
+  );
+  for (const c of airlineChangesToday(changes, toDate(state.time).toISOString().slice(0, 10), countries)) {
+    // Already gone: the AI made it fail earlier.
+    if (c.kind === 'ceased' && state.ai.airlines[c.id] && state.ai.airlines[c.id]!.status !== 'active') continue;
+    postMessage(state, {
+      airlineId: null,
+      kind: c.kind === 'founded' ? 'airlineFounded' : 'airlineCeased',
+      level: 'info',
+      params: { airline: c.name, ...(c.successor ? { successor: c.successor } : {}) },
+    });
+  }
 }
 
 /** World news for the event, and a message to every player airline whose network it touches. */

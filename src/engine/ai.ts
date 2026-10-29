@@ -141,7 +141,8 @@ export function aircraftFor(airline: RealAirline, km: number, year: number, seat
     // The type closest in size to the aircraft measured on the route, else the most common one.
     .sort((x, y) => (seatsWanted ? Math.abs(Math.log(seatsOf(x) / seatsWanted)) - Math.abs(Math.log(seatsOf(y) / seatsWanted)) : 0) || y.f.inService - x.f.inService);
   if (usable[0]) return { type: usable[0].type, seats: seatsOf(usable[0]) };
-  if (airline.modelled) {
+  // Carriers of past years without a (long-range enough) fleet of that year: the typical type of the time.
+  if (airline.modelled || airline.era) {
     const type = typicalTypeOf(km, year);
     return type ? { type, seats: type.seats.typical } : null;
   }

@@ -7,7 +7,10 @@ import { TailFin } from '../components/TailFin';
 import { useEngineWorld, useRealAirlines } from '../game/useEngineWorld';
 import { useGame } from '../../game/store';
 import { currentRoutes } from '../../engine/ai';
+import { competitorsOn } from '../../engine/economics';
 import { toDate } from '../../engine/time';
+import { conditionsOf } from '../../engine/worldEvents';
+import { FORMER_STATE_CODES } from '../../data/eras';
 import { formatGameDate } from '../../i18n/format';
 import { hrefFor, useRouteParam } from '../navigation';
 import { aircraftTypeById } from '../../data/aircraft';
@@ -43,6 +46,7 @@ function AirlineList({ real }: { real: RealAirlines }) {
   const { t } = useTranslation();
   const game = useGame();
   const { language } = useSettings();
+  const stateName = (c: string) => (FORMER_STATE_CODES.includes(c as never) ? t(`era.state.${c}`) : countryName(language, c, c));
   const world = useGameWorld();
   const [query, setQuery] = useState('');
   const nameOf = (n: string) => airlineName(t, language, n);
@@ -55,7 +59,7 @@ function AirlineList({ real }: { real: RealAirlines }) {
 
   return (
     <>
-      <p className="muted">{game?.options.startYear !== undefined ? t('airlines.introModelled', { count: all.length }) : t('airlines.intro', { count: all.length })}</p>
+      <p className="muted">{game?.options.startYear !== undefined ? t('airlines.introEra', { count: all.length, year: toDate(game!.time).getUTCFullYear() }) : t('airlines.intro', { count: all.length })}</p>
       <input
         type="search"
         className="input"
@@ -75,7 +79,7 @@ function AirlineList({ real }: { real: RealAirlines }) {
                 {game?.ai.airlines[a.id]?.status === 'player' && <span className="chip chip--normal"> {t('airlines.statusPlayer')}</span>}
                 <span className="muted small">
                   {' '}
-                  {[[a.iata, a.icao].filter(Boolean).join(' / '), a.modelled ? '' : a.country ? countryName(language, a.country, a.country) : '']
+                  {[[a.iata, a.icao].filter(Boolean).join(' / '), a.modelled ? '' : a.country ? stateName(a.country) : '']
                     .filter(Boolean)
                     .map((x) => ` · ${x}`)
                     .join('')}
@@ -98,6 +102,7 @@ function AirlineList({ real }: { real: RealAirlines }) {
 function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: RealAirline }) {
   const { t } = useTranslation();
   const { language } = useSettings();
+  const stateName = (c: string) => (FORMER_STATE_CODES.includes(c as never) ? t(`era.state.${c}`) : countryName(language, c, c));
   const world = useGameWorld();
   const [showRegs, setShowRegs] = useState(false);
   const name = airlineName(t, language, a.name);
@@ -114,6 +119,19 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
   const registeredBy = new Map<string, number>();
   for (const [, type] of a.registered) registeredBy.set(type, (registeredBy.get(type) ?? 0) + 1);
   const fleetTypes = [...new Set([...a.fleet.map((f) => f.type), ...registeredBy.keys()])];
+  const year = game ? toDate(game.time).getUTCFullYear() : new Date().getUTCFullYear();
+  const dateOf = (day: string) => formatGameDate(language, new Date(`${day}T12:00:00Z`), false);
+  // Historical games: today's measured frequencies scaled to the air travel of the time, as the engine does.
+  const growth = game && engineWorld && game.options.startYear !== undefined ? conditionsOf(game, engineWorld).growth : null;
+  // Their frequencies are the demand model's share of that time's market (as the engine computes them).
+  const scaled = (r: { a: string; b: string; changed: boolean }, home: string, weekly: number | null) => {
+    if (!growth || !engineWorld || r.changed) return weekly;
+    const A = engineWorld.airportById.get(home);
+    const B = engineWorld.airportById.get(home === r.a ? r.b : r.a);
+    if (!A || !B) return weekly;
+    const modelled = weekly ?? competitorsOn(engineWorld, A, B, undefined, game?.ai)?.find((c) => c.airlineId === a.id)?.weekly ?? null;
+    return modelled === null ? null : Math.round(modelled * growth(A, B) * 2) / 2;
+  };
   // Busiest routes first (official numbers before modelled ones).
   const fromBase = routes
     .map((r) => {
@@ -122,8 +140,8 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
       // Official only when the airline is alone on the route (otherwise the official total was split: an estimate).
       // Official only for an unchanged real route with an official number where the airline is alone (no split).
       const onPair = real.on(r.a, r.b);
-      const alone = onPair.length === 1 && onPair[0]!.weekly !== null && !r.changed;
-      return { home, other, weekly: home === r.a ? r.weeklyAB : r.weeklyBA, seasonal: r.seasonal, alone, added: r.added };
+      const alone = onPair.length === 1 && onPair[0]!.weekly !== null && !r.changed && !growth;
+      return { home, other, weekly: scaled(r, home, home === r.a ? r.weeklyAB : r.weeklyBA), seasonal: r.seasonal, alone, added: r.added };
     })
     .sort((x, y) => (y.weekly ?? -1) - (x.weekly ?? -1));
 
@@ -144,7 +162,7 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
               <span className="airline-card__name">{name}</span>
               <span className="muted">
                 {t(`airlines.model.${a.model}`)}
-                {a.country ? ` · ${countryName(language, a.country, a.country)}` : ''}
+                {a.country ? ` · ${stateName(a.country)}` : ''}
               </span>
             </div>
           </div>
@@ -163,6 +181,22 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
               <>
                 <dt>{t('airlines.parent')}</dt>
                 <dd>{a.parent}</dd>
+              </>
+            )}
+            {a.era && (a.era.founded || a.era.ceased) && (
+              <>
+                <dt>{t('airlines.flying')}</dt>
+                <dd>
+                  {a.era.ceased
+                    ? t('airlines.flyingUntil', { from: a.era.founded ? dateOf(a.era.founded) : '?', until: dateOf(a.era.ceased) })
+                    : t('airlines.flyingSince', { date: dateOf(a.era.founded!) })}
+                </dd>
+              </>
+            )}
+            {a.era?.successor && (
+              <>
+                <dt>{t('airlines.successor')}</dt>
+                <dd>{a.era.successor}</dd>
               </>
             )}
             {a.modelled && (
@@ -188,7 +222,7 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
                 <tr>
                   <th>{t('airlines.type')}</th>
                   <th className="num">
-                    {t('airlines.inService')} <SourceTag tag="wikipedia" />
+                    {a.era ? t('airlines.inServiceYear', { year }) : t('airlines.inService')} <SourceTag tag={a.era ? 'modelled' : 'wikipedia'} />
                   </th>
                   {a.registered.length > 0 && (
                     <th className="num">
@@ -217,6 +251,7 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
           ) : (
             <p className="muted">{t('airlines.noFleet')}</p>
           )}
+          {a.era && <p className="muted small">{t(`airlines.eraFleet.${a.era.fleet}`, { year })}</p>}
           {a.registered.length > 0 && (
             <>
               <button type="button" className="button" onClick={() => setShowRegs((v) => !v)}>
@@ -233,7 +268,7 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
       </div>
 
       <Panel title={t('airlines.network')} code={t('airlines.routesShort', { count: routes.length })}>
-        <p className="muted small">{t('airlines.networkNote', { season: real.season })}</p>
+        <p className="muted small">{a.era ? t('airlines.eraNetworkNote', { year }) : t('airlines.networkNote', { season: real.season })}</p>
         {closedCount > 0 && <p className="small text--caution">{t('airlines.closedRoutes', { count: closedCount })}</p>}
         <table className="table">
           <thead>

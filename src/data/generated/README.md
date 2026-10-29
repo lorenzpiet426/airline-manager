@@ -17,6 +17,7 @@ reusing them.
 | `fuel-history.json` | US EIA petroleum price history (public domain) | public domain |
 | `fx-history.json` | Federal Reserve H.10 (public domain), World Bank PA.NUS.FCRF (CC BY 4.0) | CC BY 4.0 — attribution: World Bank, Federal Reserve |
 | `airport-history.json` | OurAirports closed airports (public domain), Wikidata airport dates (CC0), Wikipedia dates entered by hand | public domain / CC0 — facts |
+| `airline-history.json` | Closed airlines and founding days: Wikidata (CC0); historical fleets: English Wikipedia airline fleet tables | **CC BY-SA 4.0** — attribution: Wikipedia contributors, Wikidata |
 | `economy-history.json` | World Bank WDI population, GDP per person, air passengers (CC BY 4.0) | CC BY 4.0 — attribution: World Bank |
 
 "CC BY-SA 4.0" (share-alike) means anyone may reuse and change these files, but must credit the source and publish

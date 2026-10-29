@@ -3,6 +3,7 @@
 // (new routes, price wars, fleet changes) comes in 2.1b.
 import { AIRLINE_COLORS, generatedColors } from '../data/airlineColors';
 import { fromParts } from './era';
+import type { AirlineChange, AirlineHistory } from './eraAirlines';
 
 export type BusinessModel = 'legacy' | 'lowcost' | 'regional' | 'charter';
 /** Where a number comes from (shown in the game). */
@@ -35,6 +36,9 @@ export interface RealAirline {
   /** A modelled carrier of a historical start year (Phase 5.3): the state it belongs to and its kind
    * (N = national carrier, C = charter airline, L = low-cost airline). Its name is made by the screens. */
   modelled?: { state: string; kind: 'N' | 'C' | 'L' };
+  /** An airline of a past year (Phase 6.3): founding and closing day (YYYY-MM-DD), successor, and where the fleet of
+   * that year comes from (Wikipedia's fleet tables, today's fleet, or typical types of the time). */
+  era?: { founded: string | null; ceased: string | null; successor: string | null; fleet: 'wikipedia' | 'today' | 'typical' };
 }
 
 export interface RealRoute {
@@ -63,12 +67,18 @@ export interface RealAirlines {
   observedSeatsPerFlight(from: string, to: string): number | null;
   /** All real-world routes touching an airport (any airline). */
   routesAt(airport: string): readonly RealRoute[];
+  /** Phase 6.3: closed airlines, founding days and historical fleets (today's data only). */
+  history?: AirlineHistory;
+  /** Phase 6.3: the airlines founded or closed in the year of a historical world (for the news). */
+  eraChanges?: AirlineChange[];
+  /** Founding year and fame (Wikipedia language versions) per airline (Wikidata), today's data only. */
+  facts?: (id: string) => { founded: number | null; fame: number } | undefined;
 }
 
 /** Aircraft in service according to the fleet table. */
 export const fleetSize = (a: RealAirline) => a.fleet.reduce((s, f) => s + f.inService, 0);
 
-interface AirlinesJson { airlines: { id: string; name: string; iata: string | null; icao: string | null; country: string | null; alliance: string | null; parent: string | null; brand?: boolean; wikipedia: string | null }[] }
+interface AirlinesJson { airlines: { id: string; name: string; iata: string | null; icao: string | null; country: string | null; alliance: string | null; parent: string | null; brand?: boolean; wikipedia: string | null; founded?: number | null; fame?: number }[] }
 interface NetworksJson { season: string; airlines: { id: string; hubs: string[]; bases: string[]; routes: Omit<RealRoute, 'airline'>[] }[] }
 interface DetailsJson { airlines: { id: string; model: BusinessModel; fleet: FleetLine[] }[] }
 interface RegistersJson { aircraft: Record<string, [string, string, number | null][]> }
@@ -80,6 +90,7 @@ export function buildRealAirlines(
   details: DetailsJson,
   registers: RegistersJson,
   eurostat?: EurostatJson,
+  history?: AirlineHistory,
 ): RealAirlines {
   const observed = new Map((eurostat?.routes ?? []).filter((r) => r.weeklyPax > 0).map((r) => [`${r.from}>${r.to}`, r.weeklyPax]));
   const seatsPerFlight = new Map(
@@ -113,5 +124,13 @@ export function buildRealAirlines(
     });
     routesBy.set(net.id, net.routes.map((r) => ({ ...r, airline: net.id })));
   }
-  return fromParts(networks.season, [...byId.values()], routesBy, (from, to) => observed.get(`${from}>${to}`) ?? null, (from, to) => seatsPerFlight.get(`${from}>${to}`) ?? null, new Set((eurostat?.routes ?? []).map((r) => r.from)));
+  const base = fromParts(networks.season, [...byId.values()], routesBy, (from, to) => observed.get(`${from}>${to}`) ?? null, (from, to) => seatsPerFlight.get(`${from}>${to}`) ?? null, new Set((eurostat?.routes ?? []).map((r) => r.from)));
+  return {
+    ...base,
+    ...(history ? { history } : {}),
+    facts: (id) => {
+      const a = info.get(id);
+      return a ? { founded: a.founded ?? null, fame: a.fame ?? 0 } : undefined;
+    },
+  };
 }

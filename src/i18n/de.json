@@ -204,7 +204,10 @@
     "eventCancellations_one": "Gestern fiel {{count}} Flug aus ({{why}}): {{pax}} Passagiere versorgt (Essen, Hotels) für {{amount}}. Keine Entschädigung fällig: außergewöhnliche Umstände.",
     "eventCancellations_other": "Gestern fielen {{count}} Flüge aus ({{why}}): {{pax}} Passagiere versorgt (Essen, Hotels) für {{amount}}. Keine Entschädigung fällig: außergewöhnliche Umstände.",
     "currencyChanged": "Deine Buchhaltung läuft jetzt in {{to}}: alles in {{from}} – Kassa, Flugzeugwerte und alle früheren Abschlüsse – wurde zum festen Kurs von {{rate}} {{from}} je {{to}} umgerechnet.",
-    "airportMoved": "{{from}} wurde geschlossen: deine Flüge, dein Drehkreuz und deine Hangars dort sind nach {{to}} übersiedelt."
+    "airportMoved": "{{from}} wurde geschlossen: deine Flüge, dein Drehkreuz und deine Hangars dort sind nach {{to}} übersiedelt.",
+    "airlineFounded": "{{airline}} wurde gegründet und nimmt den Flugbetrieb auf.",
+    "airlineCeased": "{{airline}} stellt den Flugbetrieb ein: ihre Strecken sind frei für andere.",
+    "airlineCeasedSuccessor": "{{airline}} stellt den Flugbetrieb ein, {{successor}} macht weiter. Ihre Strecken sind frei für andere."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -274,7 +277,7 @@
       "2026": "Die heutigen echten Airlines und Netze."
     },
     "todayHint": "Die Welt von heute: echte Airlines mit ihren Netzen, heutige Preise.",
-    "historicalHint": "Ein historisches Spiel: Flughäfen, Flugzeugtypen, Kerosinpreise, Wechselkurse und echte Ereignisse dieser Zeit. Deine Buchhaltung läuft in der damaligen Währung (z. B. Schilling bis 1999), Preise und Tarife sind die des Jahres. Deine Konkurrenten sind modellierte nationale Fluggesellschaften (echte Airlines vergangener Jahre kommen in Phase 6). Vor der Deregulierung legt der IATA-Tarif die Preise fest. Die Echtzeit-Uhr gibt es nur für heute.",
+    "historicalHint": "Ein historisches Spiel: Flughäfen, Flugzeugtypen, Kerosinpreise, Wechselkurse und echte Ereignisse dieser Zeit. Deine Buchhaltung läuft in der damaligen Währung (z. B. Schilling bis 1999), Preise und Tarife sind die des Jahres. Deine Konkurrenten sind die echten Airlines dieses Jahres – auch solche, die es heute nicht mehr gibt – mit den Flugzeugtypen, die sie flogen, und modellierten Strecken; sie starten und stellen den Betrieb an ihren echten Tagen ein. Vor der Deregulierung legt der IATA-Tarif die Preise fest. Die Echtzeit-Uhr gibt es nur für heute.",
     "hubNotYet": "Diesen Flughafen gab es {{year}} noch nicht. Bitte wähle einen anderen Heimatflughafen.",
     "competitors": "Konkurrenz",
     "competitorsReal": "Die heutigen echten Airlines",
@@ -598,9 +601,20 @@
     "statusPlayer": "deine",
     "playerRuns": "Du führst diese Airline: Ihr Netz und ihre Flotte im Spiel gehören dir (Netz- und Flotten-Bildschirm). Darunter die echten Daten, mit denen sie begann.",
     "statusBankrupt": "pleite",
-    "introModelled": "Dein Spiel beginnt in der Vergangenheit: Diese {{count}} Airlines sind modellierte nationale, Charter- und Billigfluggesellschaften der Zeit, gebaut aus den heutigen Netzen und skaliert auf die Wirtschaft des Jahres. Echte Airlines vergangener Jahre kommen in Phase 6.",
     "source": "Quelle",
-    "modelledNote": "Für dein historisches Spiel modelliert: die Strecken der heutigen Airlines aus diesem Land, nur wo die Wirtschaft des Jahres sie füllen konnte."
+    "modelledNote": "Für dein historisches Spiel modelliert: die Strecken der heutigen Airlines aus diesem Land, nur wo die Wirtschaft des Jahres sie füllen konnte.",
+    "flying": "Flugbetrieb",
+    "flyingSince": "seit {{date}}",
+    "flyingUntil": "{{from}} – {{until}}",
+    "successor": "Nachfolger",
+    "inServiceYear": "Im Jahr {{year}}",
+    "eraFleet": {
+      "wikipedia": "Typen, die sie {{year}} flog: aus den Flottentabellen der Airline auf Wikipedia. Die Anzahl der Flugzeuge ist geschätzt.",
+      "today": "Typen, die sie {{year}} flog: die heutige Flotte, soweit es den Typ schon gab (Wikipedia hat keine historische Flottentabelle). Die Anzahl ist geschätzt.",
+      "typical": "Wikipedia hat keine Flottentabelle für diese Airline: Sie fliegt die typischen Flugzeuge ihrer Zeit."
+    },
+    "eraNetworkNote": "Strecken für {{year}} modelliert: Eine Airline, die es heute noch gibt, behält den Teil ihres heutigen Netzes, den die Wirtschaft der Zeit füllen konnte und auf den sie bis dahin gewachsen war; Airlines, die es nicht mehr gibt, fliegen von ihren echten Drehkreuzen zu den Zielen, die das Nachfragemodell am besten bewertet. Die Flüge pro Woche folgen der Nachfrage der Zeit.",
+    "introEra": "Dein Spiel ist im Jahr {{year}}: Diese {{count}} Airlines flogen damals – heutige Airlines, die es schon gab, und Airlines, die es nicht mehr gibt (Pan Am, Swissair, Interflug …), mit ihren echten Drehkreuzen, den Flugzeugtypen, die sie flogen, und ihren echten Farben, wo bekannt. Ihre Strecken sind modelliert. Airlines starten und stellen den Betrieb an ihren echten Tagen ein. Länder ohne echte Airline in den Daten haben eine modellierte nationale Airline."
   },
   "sources": {
     "title": "Datenquellen",
@@ -626,8 +640,8 @@
       "worldbank": "Wohlstand (BIP pro Kopf) und Tourismus je Land. Seit Phase 5.2 auch Bevölkerung, BIP pro Kopf, Wechselkurse und beförderte Passagiere seit 1960, für die Nachfrage in der Vergangenheit.",
       "naturalearth": "Küsten und Grenzen der Karte.",
       "openfreemap": "Schriften für die Flughafencodes auf der Karte.",
-      "wikipedia": "Welche Airline wohin fliegt (Flughafenartikel), Geschäftsmodelle, Drehkreuze, Basen, Flotten und Bestuhlung (Airline-Artikel). Die Zeitleiste echter Ereignisse seit 1970 verlinkt jedes Ereignis mit dem Artikel, aus dem die Fakten stammen.",
-      "wikidata": "Namen, Codes, Länder, Allianzen und Mutterkonzerne der Airlines; Verknüpfung von Artikeln und Flughäfen. Eröffnungsdaten von Flughäfen (welche Flughäfen es in einem historischen Jahr gab).",
+      "wikipedia": "Welche Airline wohin fliegt (Flughafen-Artikel), Geschäftsmodelle, Drehkreuze, Basen, Flotten und Sitzpläne (Airline-Artikel) und welche Flugzeugtypen jede Airline in welchen Jahren flog (historische Flottentabellen). Die echte Ereignis-Zeitleiste seit 1970 verlinkt jedes Ereignis auf den Artikel, aus dem die Fakten stammen.",
+      "wikidata": "Namen, Codes, Länder, Allianzen und Muttergesellschaften der Airlines; Verknüpfungen zwischen Artikeln und Flughäfen. Eröffnungsdaten der Flughäfen (welche Flughäfen es in einem historischen Jahr gab). Airlines, die seit 1970 eingestellt wurden, mit Gründungs- und Einstellungstag, Drehkreuzen und Nachfolgern.",
       "eurostat": "Echte Passagierzahlen, Sitze und Flüge je Strecke in Europa (Sommer 2024) – für die Nachfrage und die wöchentlichen Flüge der Airlines.",
       "eia": "Der echte Kerosinpreis, Woche für Woche im Jahr 2026. Monatliche Geschichte seit 1974 (vor Mitte 1975 aus Rohölpreisen geschätzt).",
       "ecb": "Wechselkurse zwischen den Währungen.",

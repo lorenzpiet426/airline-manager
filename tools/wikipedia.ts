@@ -34,6 +34,33 @@ export async function fetchArticle(title: string): Promise<Article> {
   return { title: json.parse.title, revid: json.parse.revid, wikitext: json.parse.wikitext };
 }
 
+/** Keep only what the pipeline reads: the infobox and the "Fleet" section. */
+export function relevantParts(wikitext: string): { infobox: string; fleet: string } {
+  const ib = wikitext.search(/\{\{\s*Infobox airline/i);
+  let infobox = '';
+  if (ib >= 0) {
+    let depth = 0;
+    for (let i = ib; i < wikitext.length - 1; i++) {
+      if (wikitext.startsWith('{{', i)) depth++, i++;
+      else if (wikitext.startsWith('}}', i)) {
+        depth--, i++;
+        if (depth === 0) {
+          infobox = wikitext.slice(ib, i + 1);
+          break;
+        }
+      }
+    }
+  }
+  const fs = wikitext.search(/\n==\s*(Fleet|Fleet history|Historical fleet|Former fleet|Aircraft)\s*==/i);
+  let fleet = '';
+  if (fs >= 0) {
+    const rest = wikitext.slice(fs + 5);
+    const end = rest.search(/\n==[^=]/);
+    fleet = wikitext.slice(fs, end < 0 ? undefined : fs + 5 + end);
+  }
+  return { infobox, fleet };
+}
+
 /** Removes references, comments and line breaks that only matter for display. */
 export function cleanWikitext(text: string): string {
   return text

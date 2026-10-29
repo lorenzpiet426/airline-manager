@@ -8,6 +8,7 @@ import networksJson from '../data/generated/networks.json';
 import detailsJson from '../data/generated/airline-details.json';
 import registersJson from '../data/generated/registers.json';
 import eurostatJson from '../data/generated/routes-eurostat.json';
+import airlineHistoryJson from '../data/generated/airline-history.json';
 import { getAircraftType } from '../data/aircraft';
 import { currencyAt, type FxHistory } from '../data/fxHistory';
 import { eraLevels, faresFreeFrom, regulatedRange, stateOf } from '../data/eras';
@@ -28,7 +29,7 @@ const airports = airportsJson as Airport[];
 const countries = countriesJson as unknown as Record<string, Country>;
 const history = airportHistoryJson as unknown as AirportHistory;
 const fxHistory = fxJson as unknown as FxHistory;
-const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
+const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson, airlineHistoryJson as never);
 const worldAt = worldCache({ airports, countries, realAirlines: real, fxHistory, airportHistory: history });
 const provider = (s: GameState) => worldAt(s.options.startYear, toDate(s.time));
 const day = (iso: string) => new Date(`${iso}T12:00:00Z`);
@@ -77,29 +78,70 @@ describe('airports through the years', () => {
   });
 });
 
-describe('modelled carriers', () => {
-  it('give every country a national carrier at its hub, the Soviet Union one for all its republics', () => {
+describe('real airlines of past years (6.3)', () => {
+  it('fly in 1980 with the types of the time: Austrian, Pan Am, Interflug, Aeroflot for the whole Soviet Union', () => {
     const w = worldAt(1980, day('1980-06-01'));
     const r = w.realAirlines!;
-    const austria = r.byId.get('~ATN')!;
-    expect(austria.hubs).toContain('LOWW');
-    expect(austria.model).toBe('legacy');
+    const austrian = r.byId.get('AUA')!;
+    expect(austrian.hubs).toContain('LOWW');
+    expect(austrian.fleet.map((f) => f.type)).toEqual(expect.arrayContaining(['DC93']));
+    expect(austrian.fleet.some((f) => f.type.startsWith('A3'))).toBe(false);
+    expect(r.byId.get('Q8681')?.name).toBe('Pan Am');
+    expect(r.byId.get('Q573915')?.name).toBe('Interflug');
+    expect(r.byId.has('AFL')).toBe(true);
+    // Airlines founded later are not there yet; every type flown was in service in 1980.
+    for (const id of ['UAE', 'EZY', 'SWR', 'BEL']) expect(r.byId.has(id)).toBe(false);
+    for (const a of r.byId.values()) for (const f of a.fleet) expect(getAircraftType(f.type).eis).toBeLessThanOrEqual(1980);
+    // Vienna–London: the national carriers of both countries.
+    expect(r.on('LOWW', 'EGLL').map((c) => c.airline.id)).toEqual(expect.arrayContaining(['AUA', 'BAW']));
+    // West Berlin before reunification: only American, British and French airlines.
+    expect(r.routesOf('AUA').some((x) => x.a === 'EDDB' || x.b === 'EDDB')).toBe(false); // EDDB = Tegel before 2020
+    expect(r.byId.get('Q573915')!.hubs).toEqual(['DE-0440']); // Interflug at Schönefeld
+    // A country without a real airline of that time in the data keeps a modelled national carrier.
+    expect([...r.byId.values()].some((a) => a.modelled)).toBe(true);
+  });
+
+  it('grow young and low-cost airlines the way they really grew', () => {
+    const routes = (id: string, year: number) => worldAt(1980, day(`${year}-06-01`)).realAirlines!.routesOf(id).length;
+    expect(routes('RYR', 1990)).toBeLessThanOrEqual(5);
+    expect(routes('RYR', 2012)).toBeGreaterThan(100);
+    expect(routes('UAE', 1990)).toBeLessThan(routes('UAE', 2005));
+    expect(routes('AUA', 1975)).toBeLessThan(routes('AUA', 2005));
+  });
+
+  it('start and stop flying on their real dates', () => {
+    const has = (id: string, iso: string) => worldAt(1980, day(iso)).realAirlines!.byId.has(id);
+    expect(has('Q8681', '1991-12-03')).toBe(true);
+    expect(has('Q8681', '1991-12-05')).toBe(false); // Pan Am stopped flying on 4 December 1991
+    expect(has('Q694098', '2002-03-30')).toBe(true);
+    expect(has('Q694098', '2002-04-02')).toBe(false); // Swissair: 31 March 2002
+    expect(has('UAE', '1985-03-20')).toBe(false);
+    expect(has('UAE', '1985-03-30')).toBe(true); // Emirates: founded 25 March 1985
+  });
+
+  it('are in the news when they stop flying', { timeout: 60_000 }, () => {
+    const state = createGame(
+      { seed: 7, startYear: 1991, startTime: simTime(1991, 12, 1), timeMode: 'weekly', realism: 'realistic', scheduling: 'simple' },
+      worldAt(1991, day('1991-12-01')),
+    );
+    applyCommand(state, provider(state), {
+      type: 'FoundAirline',
+      payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 75_000_000, controller: 'human' },
+    });
+    advance(state, provider, simTime(1991, 12, 6));
+    expect(state.messages.some((m) => m.kind === 'airlineCeased' && m.params.airline === 'Pan Am')).toBe(true);
+  });
+
+  it('let the old modelled carriers stand in when the airline history is not loaded', () => {
+    const plain = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
+    const r = worldCache({ airports, countries, realAirlines: plain, fxHistory, airportHistory: history })(1980, day('1980-06-01')).realAirlines!;
+    expect(r.byId.get('~ATN')?.hubs).toContain('LOWW');
     expect(r.byId.has('~SUN')).toBe(true);
-    expect(r.byId.has('~RUN')).toBe(false);
-    expect(r.byId.has('~CSN')).toBe(true);
-    // No low-cost airlines in Europe in 1980 — and on Vienna–London the national carriers of both countries fly.
-    expect([...r.byId.values()].filter((a) => a.model === 'lowcost' && ['AT', 'GB', 'IE', 'DE', 'DW'].includes(a.country ?? ''))).toHaveLength(0);
-    const onLondon = r.on('LOWW', 'EGLL').map((c) => c.airline.id);
-    expect(onLondon).toEqual(expect.arrayContaining(['~ATN', '~GBN']));
   });
 
-  it('let low-cost airlines appear in Europe in the late 1990s and grow', () => {
-    const lowcost = (year: number) =>
-      [...worldAt(1980, day(`${year}-06-01`)).realAirlines!.byId.values()].filter((a) => a.model === 'lowcost' && countries[a.country ?? '']?.continent === 'EU').length;
-    expect(lowcost(1990)).toBe(0);
-    expect(lowcost(2012)).toBeGreaterThan(3);
-  });
+});
 
+describe('states of the time', () => {
   it('know the states of the time', () => {
     expect(stateOf('UA', 'UKBB', day('1985-01-01'))).toBe('SU');
     expect(stateOf('UA', 'UKBB', day('1995-01-01'))).toBe('UA');

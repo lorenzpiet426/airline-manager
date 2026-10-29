@@ -464,6 +464,61 @@ network (the real airlines now fill their planes as in reality, so a newcomer mu
 
 `src/engine/takeover.test.ts` keeps it in range.
 
+## Real airlines of past years (Phase 6.3, 2026-10-29)
+Owner decisions: closed airlines too, routes from hubs + demand, real types per year, real founding/closing dates.
+
+**Data** (`npm run data:airlines:history` → `src/data/generated/airline-history.json`, CC BY-SA 4.0):
+- **Wikidata (CC0)**, downloaded 2026-10-29 (`tools/download-airlines-history.ts`): passenger airlines with a closing
+  date (P576) from 1970 on, an ICAO or IATA code and ≥ 3 Wikipedia language versions — name, codes, country, hubs
+  (P113), type, alliance, parent, founding (P571) and closing day with their precision, successor (P1366/P156/P7888).
+  Day precision is used as it is; month precision → the 15th; year precision → 1 January (founding) or 1 July
+  (closing). Several closing dates → the earliest (flights stop before the company is wound up). Also the founding
+  days of today's airlines (from 1960). Result: **1,223 closed airlines** with a hub in the game (275 without one and
+  45 cargo/other items left out), 1,351 founding days.
+- **English Wikipedia (CC BY-SA 4.0)**: the articles of the closed airlines (infobox hubs/bases, categories for the
+  business model, "Fleet" section) and the already downloaded articles of today's airlines. `tools/build-airline-history.ts`
+  reads every fleet table with "Introduced/Delivered" and "Retired" columns (rowspans copied down, one span per type,
+  counts added up); a closed airline without such a table gets its fleet at closure. Type names → game types with
+  `mapHistoricalType` (`tools/aircraft-names.ts`: DC-9, 727, TriStar, Il-62 … before today's names; Convair 880/990 are
+  shown as the similar Boeing 720). Result: historical fleets for **814 airlines** (631 closed ones).
+- Hand corrections (`FIXES` in the builder, from the airlines' Wikipedia articles): Malév stopped flying on
+  3 Feb 2012 (Wikidata: company wound up 2018); Interflug's hub is Schönefeld (Wikidata links today's BER).
+- Colours of 44 well-known closed airlines entered by hand (`DEFUNCT_COLORS`, no logos); the others are generated.
+
+**Model** (`src/engine/eraAirlines.ts`, built once per game year, filtered per day):
+- An airline flies from its founding to its closing day. Today's airlines without a founding year in Wikidata (160,
+  mostly young ones) are assumed founded when the types they fly today entered service, not before 1995.
+- **Fleet of the year**: the fleet-table spans covering that year (no last year: at most 30 years, not after closing),
+  only types in service that year; today's types without a historical row from their entry into service. Aircraft
+  numbers = table total × 0.7 (tables count all aircraft over the years) — estimates, shown as "modelled".
+  No table: typical types of the time (`typicalTypeOf`).
+- **Network of today's airlines**: today's routes mapped onto the airports of the year, only routes the economy of the
+  year could fill (as in 5.3), then shrunk to the size the airline had: × (home demand index)^0.5, young airlines
+  × ((years since founding) / 30)^1.2, low-cost airlines × e^−(2024 − year)/6 (Ryanair: 1 route in 1985, 5 in 1995,
+  42 in 2005). Hub routes are kept first, then the busiest.
+- **Network of closed airlines**: from their real hubs (bases count half) to the destinations flown from there today,
+  ranked by the gravity model × the economy of the year; as many as 0.8 routes per aircraft (at least what their fame
+  suggests: 0.6 per Wikipedia language version, ≤ 25 without fleet numbers; ≤ 150). Only distances the fleet could fly;
+  charter airlines only to holiday countries, regional airlines ≤ 2,500 km; from a hub abroad (Pan Am at Frankfurt or
+  Tokyo) only flights back home.
+- **Frequencies**: today's measured frequencies don't apply to the past; every airline's weekly flights are its share
+  of the market of the time (demand model, scaled by the economy history), so the total on a route stays right.
+- **West Berlin** (Tegel, Tempelhof) until 3 Oct 1990: only American, British and French airlines (AI airlines).
+- States without any real airline of the year keep a modelled national carrier (Phase 5.3), e.g. Greece before 1987.
+- News: founding and closing days of airlines with ≥ 15 Wikipedia language versions, or from the countries of the
+  player's hubs (not when the founding day is assumed); not when the AI made the airline fail earlier.
+
+**Checks** (`src/engine/era.test.ts`): 1980 world (Austrian with DC-9s at Vienna, Pan Am, Interflug at Schönefeld,
+Aeroflot, no Emirates/easyJet/SWISS/Brussels, every type in service, no Austrian flights to West Berlin); Ryanair and
+Emirates growth; Pan Am stops on 4 Dec 1991 (and is in the news), Swissair on 31 Mar 2002, Emirates starts on
+25 Mar 1985; the 1975/1985/1995/2005 startup calibration still holds. A simulated year of a 1990 game takes ≈ 4 s
+(before: ≈ 2 s with fewer, modelled carriers).
+
+**Known**: networks of the past are modelled (open data has almost no old route lists); fleet counts are rough; some
+airports opened later are still in the airport list of earlier years where Wikidata has no opening date (e.g. Beijing
+Daxing, Istanbul Sabiha Gökçen); political limits other than West Berlin (Albania, the Iron Curtain's traffic rights) are
+not modelled for AI airlines.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH
@@ -472,6 +527,8 @@ npm run data:build      # → src/data/generated/*.json (in git)
 npm test                # sanity checks in src/data/world.test.ts
 npm run data:history    # Phase 5.2/5.3: EIA fuel, Fed + World Bank exchange rates, World Bank economy, Wikidata airport
                         # dates → *-history.json, airport-history.json
+npm run data:airlines:history  # Phase 6.3: closed airlines + historical fleets (Wikidata, Wikipedia) → airline-history.json
+                               # (needs tools/raw/wikipedia-airlines.json from download-airline-articles.ts)
 ```
 
 ## Known simplifications (to improve later)

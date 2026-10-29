@@ -4,7 +4,7 @@
 // Run after build-wikipedia-routes.ts: node tools/download-airline-articles.ts
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { USER_AGENT } from './wikipedia.ts';
+import { relevantParts, USER_AGENT } from './wikipedia.ts';
 
 const RAW = join(import.meta.dirname, 'raw');
 const OUT = join(import.meta.dirname, '..', 'src/data/generated');
@@ -12,33 +12,6 @@ const airlines = JSON.parse(await readFile(join(OUT, 'airlines.json'), 'utf8')).
 const routes = JSON.parse(await readFile(join(RAW, 'routes-wikipedia.json'), 'utf8')).routes as { airline: string }[];
 const withRoutes = new Set(routes.map((r) => r.airline));
 const wanted = airlines.filter((a) => a.wikipedia && withRoutes.has(a.id));
-
-/** Keep only what the pipeline reads: the infobox and the "Fleet" section. */
-function relevantParts(wikitext: string): { infobox: string; fleet: string } {
-  const ib = wikitext.search(/\{\{\s*Infobox airline/i);
-  let infobox = '';
-  if (ib >= 0) {
-    let depth = 0;
-    for (let i = ib; i < wikitext.length - 1; i++) {
-      if (wikitext.startsWith('{{', i)) depth++, i++;
-      else if (wikitext.startsWith('}}', i)) {
-        depth--, i++;
-        if (depth === 0) {
-          infobox = wikitext.slice(ib, i + 1);
-          break;
-        }
-      }
-    }
-  }
-  const fs = wikitext.search(/\n==\s*Fleet\s*==/i);
-  let fleet = '';
-  if (fs >= 0) {
-    const rest = wikitext.slice(fs + 5);
-    const end = rest.search(/\n==[^=]/);
-    fleet = wikitext.slice(fs, end < 0 ? undefined : fs + 5 + end);
-  }
-  return { infobox, fleet };
-}
 
 const out: Record<string, { title: string; revid: number; infobox: string; fleet: string; categories: string[] }> = {};
 for (let i = 0; i < wanted.length; i += 50) {

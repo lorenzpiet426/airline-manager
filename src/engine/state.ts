@@ -491,6 +491,8 @@ export interface GameMessage {
     | 'leaseReturned'
     // Historical games (Phase 5.3): the euro or a re-based currency, an airport closing.
     | 'currencyChanged' | 'airportMoved'
+    // Real airlines starting and stopping on their real dates (Phase 6.3).
+    | 'airlineFounded' | 'airlineCeased'
     // Maintenance (Phase 4.2).
     | 'checkPlanned' | 'checkMoved' | 'checkStarted' | 'checkDone' | 'aCheckGrounded' | 'failure' | 'hangarOrdered' | 'hangarReady'
     // Liveries (Phase 4.3).

@@ -204,7 +204,10 @@
     "eventCancellations_one": "Yesterday {{count}} flight was cancelled ({{why}}): {{pax}} passengers looked after (meals, hotels) for {{amount}}. No compensation is due: extraordinary circumstances.",
     "eventCancellations_other": "Yesterday {{count}} flights were cancelled ({{why}}): {{pax}} passengers looked after (meals, hotels) for {{amount}}. No compensation is due: extraordinary circumstances.",
     "currencyChanged": "Your books now run in {{to}}: everything held in {{from}} – cash, aircraft values and all past accounts – was converted at the fixed rate of {{rate}} {{from}} per {{to}}.",
-    "airportMoved": "{{from}} has closed: your flights, hub and hangars there moved to {{to}}."
+    "airportMoved": "{{from}} has closed: your flights, hub and hangars there moved to {{to}}.",
+    "airlineFounded": "{{airline}} has been founded and starts flying.",
+    "airlineCeased": "{{airline}} stops flying: its routes are open to others.",
+    "airlineCeasedSuccessor": "{{airline}} stops flying; {{successor}} carries on. Its routes are open to others."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -274,7 +277,7 @@
       "2026": "Today's real airlines and networks."
     },
     "todayHint": "Today's world: real airlines with their networks, today's prices.",
-    "historicalHint": "A historical game: airports, aircraft types, fuel prices, exchange rates and real events of that time. Your books are kept in the money of the time (e.g. schilling until 1999), prices and fares are those of the year. Your rivals are modelled national carriers (real airlines of past years come in Phase 6). Before deregulation fares are fixed by the IATA tariff. The real clock is only available for today.",
+    "historicalHint": "A historical game: airports, aircraft types, fuel prices, exchange rates and real events of that time. Your books are kept in the money of the time (e.g. schilling until 1999), prices and fares are those of the year. Your rivals are the real airlines of that year – including ones that have closed since – with the aircraft types they flew and modelled routes; they start and stop flying on their real dates. Before deregulation fares are fixed by the IATA tariff. The real clock is only available for today.",
     "hubNotYet": "This airport didn't exist yet in {{year}}. Please choose another home airport.",
     "competitors": "Competitors",
     "competitorsReal": "Today's real airlines",
@@ -598,9 +601,20 @@
     "statusPlayer": "yours",
     "playerRuns": "You run this airline: its network and fleet in your game are yours (Network and Fleet screens). Below is the real-world data it started from.",
     "statusBankrupt": "bankrupt",
-    "introModelled": "Your game starts in the past: these {{count}} airlines are modelled national, charter and low-cost carriers of the time, built from today's networks and scaled to that year's economy. Real airlines of past years come in Phase 6.",
     "source": "Source",
-    "modelledNote": "Modelled for your historical game: the routes of today's airlines from this country, only where the economy of the year could fill them."
+    "modelledNote": "Modelled for your historical game: the routes of today's airlines from this country, only where the economy of the year could fill them.",
+    "flying": "Flying",
+    "flyingSince": "since {{date}}",
+    "flyingUntil": "{{from}} – {{until}}",
+    "successor": "Successor",
+    "inServiceYear": "In {{year}}",
+    "eraFleet": {
+      "wikipedia": "Types it flew in {{year}}: from the airline's fleet tables on Wikipedia. Numbers of aircraft are estimates.",
+      "today": "Types it flew in {{year}}: today's fleet where the type already existed (Wikipedia has no historical fleet table for it). Numbers are estimates.",
+      "typical": "Wikipedia has no fleet table for this airline: it flies the typical aircraft of its time."
+    },
+    "eraNetworkNote": "Routes modelled for {{year}}: an airline flying today keeps the part of today's network that the economy of the time could fill and that it had grown to; airlines that have closed since fly from their real hubs to the destinations the demand model ranks best. Weekly flights follow the demand of the time.",
+    "introEra": "Your game is in {{year}}: these {{count}} airlines were flying then — today's airlines that already existed and airlines that have closed since (Pan Am, Swissair, Interflug …), with their real hubs, the aircraft types they flew and their real colours where known. Their routes are modelled. Airlines start and stop flying on their real dates. Countries without a real airline in the data have a modelled national carrier."
   },
   "sources": {
     "title": "Data sources",
@@ -626,8 +640,8 @@
       "worldbank": "Wealth (GDP per person) and tourism per country. Since Phase 5.2 also population, GDP per person, exchange rates and air passengers carried since 1960, for demand in the past.",
       "naturalearth": "Coastlines and borders of the map.",
       "openfreemap": "Fonts for the airport codes on the map.",
-      "wikipedia": "Which airline flies where (airport articles), airline business models, hubs, bases, fleets and seat layouts (airline articles). The real event timeline since 1970 links each event to the article its facts come from.",
-      "wikidata": "Airline names, codes, countries, alliances and parent companies; links between articles and airports. Opening dates of airports (which airports existed in a historical year).",
+      "wikipedia": "Which airline flies where (airport articles), airline business models, hubs, bases, fleets and seat layouts (airline articles), and which aircraft types each airline flew in which years (historical fleet tables). The real event timeline since 1970 links each event to the article its facts come from.",
+      "wikidata": "Airline names, codes, countries, alliances and parent companies; links between articles and airports. Opening dates of airports (which airports existed in a historical year). Airlines that have closed since 1970 with their founding and closing days, hubs and successors.",
       "eurostat": "Real passenger numbers, seats and flights per route in Europe (summer 2024), used for demand and for the airlines' weekly flights.",
       "eia": "The real jet fuel price, week by week in 2026. Monthly history since 1974 (estimated from crude oil before mid-1975).",
       "ecb": "Exchange rates between currencies.",

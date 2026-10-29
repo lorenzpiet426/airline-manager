@@ -3,6 +3,8 @@
 import type { Airport, Country } from '../data/types';
 import type { FxHistory } from '../data/fxHistory';
 import { airportEraKey, airportOnDate, airportsAt, buildModelledAirlines, REAL_AIRLINES_FROM, type AirportHistory } from './era';
+import { airlineEraKey, buildEraYear, eraAirlinesOn, type EraYear } from './eraAirlines';
+import { gravityAnnualPax } from './economics';
 import type { RealAirlines } from './realAirlines';
 
 export interface EngineWorld {
@@ -54,31 +56,57 @@ export interface WorldSources {
 
 /**
  * The world a game sees on a date (Phase 5.3). Games starting today use today's airports and real airlines; historical
- * games see the airports of the date and the modelled carriers of their start year. Worlds are cached: they only
- * change when an airport opens or closes.
+ * games see the airports of the date and the airlines flying that day (Phase 6.3: the real airlines of that year, or
+ * the modelled carriers of Phase 5.3 when the airline history isn't loaded). Worlds are cached: they only change when an
+ * airport opens or closes, or an airline starts or stops flying.
  */
 export function worldCache(src: WorldSources): (startYear: number | undefined, date: Date) => EngineWorld {
   const extra = { ...(src.fxHistory ? { fxHistory: src.fxHistory } : {}), ...(src.airportHistory ? { airportHistory: src.airportHistory } : {}) };
   const today = buildEngineWorld(src.airports, src.countries, src.realAirlines, extra);
   const cache = new Map<string, EngineWorld>();
+  const years = new Map<string, EraYear>();
   return (startYear, date) => {
     const h = src.airportHistory;
     if (!h || startYear === undefined || startYear >= REAL_AIRLINES_FROM) return today;
-    const key = `${date.getUTCFullYear()}|${airportEraKey(h, date)}`;
+    const yearKey = `${date.getUTCFullYear()}|${airportEraKey(h, date)}`;
+    const real = src.realAirlines;
+    const history = real?.history;
+    let eraYear = history ? years.get(yearKey) : undefined;
+    if (real && history && !eraYear) {
+      const airports = airportsAt(src.airports, h, date);
+      const airportById = new Map(airports.map((a) => [a.id, a]));
+      const plain = buildEngineWorld(airports, src.countries);
+      eraYear = buildEraYear({
+        real,
+        history,
+        date: new Date(Date.UTC(date.getUTCFullYear(), 6, 1)),
+        airportById,
+        mapAirport: (id) => airportOnDate(h, id, date),
+        continentOf: (c) => src.countries[c]?.continent,
+        facts: (id) => real.facts?.(id),
+        gravity: (a, b) => gravityAnnualPax(plain, a, b),
+        todayOf: (id) => h.closed.find((c) => c.airport.id === id)?.movedTo ?? id,
+      });
+      if (years.size > 4) years.clear();
+      years.set(yearKey, eraYear);
+    }
+    const key = `${yearKey}|${eraYear ? airlineEraKey(eraYear, date) : ''}`;
     let world = cache.get(key);
     if (!world) {
       const airports = airportsAt(src.airports, h, date);
       const airportById = new Map(airports.map((a) => [a.id, a]));
-      const real = src.realAirlines
-        ? buildModelledAirlines({
-            real: src.realAirlines,
-            date: new Date(Date.UTC(date.getUTCFullYear(), 6, 1)),
-            airportById,
-            mapAirport: (id) => airportOnDate(h, id, date),
-            continentOf: (c) => src.countries[c]?.continent,
-          })
-        : undefined;
-      world = buildEngineWorld(airports, src.countries, real, extra);
+      const airlines = !real
+        ? undefined
+        : eraYear
+          ? eraAirlinesOn(eraYear, real, date)
+          : buildModelledAirlines({
+              real,
+              date: new Date(Date.UTC(date.getUTCFullYear(), 6, 1)),
+              airportById,
+              mapAirport: (id) => airportOnDate(h, id, date),
+              continentOf: (c) => src.countries[c]?.continent,
+            });
+      world = buildEngineWorld(airports, src.countries, airlines, extra);
       if (cache.size > 8) cache.clear();
       cache.set(key, world);
     }

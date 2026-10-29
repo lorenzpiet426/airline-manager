@@ -15,7 +15,8 @@
     "data:airlines:download": "node tools/download-airlines.ts && node tools/download-eurostat-routes.ts",
     "data:airlines:build": "node tools/build-airlines.ts && node tools/build-eurostat-routes.ts",
     "data:cpi": "node tools/download-cpi.ts && node tools/build-cpi.ts",
-    "data:history": "node tools/download-history.ts && node tools/build-history.ts && node tools/build-airport-history.ts"
+    "data:history": "node tools/download-history.ts && node tools/build-history.ts && node tools/build-airport-history.ts",
+    "data:airlines:history": "node tools/download-airlines-history.ts && node tools/build-airline-history.ts"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",

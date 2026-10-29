@@ -71,6 +71,10 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.currencyChanged', { ...p, rate: formatNumber(language, Number(p.rate), 6) });
       case 'airportMoved':
         return t('msg.airportMoved', p);
+      case 'airlineFounded':
+        return t('msg.airlineFounded', p);
+      case 'airlineCeased':
+        return t(p.successor ? 'msg.airlineCeasedSuccessor' : 'msg.airlineCeased', p);
       case 'cabinChanged':
         return t('msg.cabinChanged', p);
       case 'refitStarted':

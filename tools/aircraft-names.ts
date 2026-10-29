@@ -51,3 +51,36 @@ export function mapType(text: string): string | null | undefined {
   return undefined; // unknown to the mapping
 }
 
+
+/**
+ * Older types (Phase 6.3: historical fleet tables). Checked before TYPE_PATTERNS, so e.g. a "747-300" is the 747-300
+ * and not today's 747-400, and a "DC-9-32" isn't missed.
+ */
+export const HISTORICAL_PATTERNS: [RegExp, string | null][] = [
+  [/DC-?3\b|C-47|Dakota|Li-2/, 'DC3'], [/DC-?4\b|C-54|Skymaster/, 'DC4'], [/DC-?6/, 'DC6'], [/DC-?7/, 'DC7'],
+  [/Constellation|L-?1049|L-?749|L-?049|L-?1649/, 'CONI'], [/Convair (CV-?)?5[48]0|CV-?580|Convair 600|Convair 640/, 'CVLT'],
+  [/Convair (CV-?)?[234]40|CV-?[234]40|Metropolitan/, 'CVLP'], [/Viscount/, 'VISC'], [/Britannia/, 'BRIT'],
+  [/F-?27|Friendship|FH-227/, 'F27'], [/L-?188|Electra/, 'L188'], [/Il-?18\b/, 'IL18'], [/HS[ -]?748|Avro 748|Andover/, 'A748'],
+  [/Bandeirante|EMB[ -]?110/, 'E110'], [/Dash 7|DHC-7/, 'DHC7'], [/Shorts? 3[36]0|SD3-/, 'SH36'],
+  [/ATR 42-[235]00|ATR 42\b(?!-6)/, 'AT43'], [/ATR 72-[12]00/, 'AT72'],
+  [/Comet/, 'COMT'], [/Caravelle/, 'S210'], [/Boeing 720|\b720B?\b/, 'B720'], [/707-?(3|4)\d\d|707-320|707-420|707-?3[0-9A-Z]{2}/, 'B703'],
+  [/707/, 'B701'], [/Convair (CV-)?880|Convair (CV-)?990|Coronado/, 'B720'],
+  [/727-?2\d\d|727-200/, 'B722'], [/727/, 'B721'], [/Trident/, 'TRID'], [/VC-?10/, 'VC10'], [/One-Eleven|BAC 1-11|BAC-111|BAC 111/, 'BA11'],
+  [/DC-?8-?(6\d|7\d)|Super Sixty|Super 70/, 'DC86'], [/DC-?8/, 'DC85'],
+  [/DC-?9-?(5\d)|DC-9-50/, 'DC95'], [/MD-?87/, 'MD87'], [/MD-?90/, 'MD90'], [/MD-?8\d/, 'MD82'], [/DC-?9/, 'DC93'],
+  [/Tu-?134/, 'T134'], [/Tu-?154/, 'T154'], [/Il-?62/, 'IL62'], [/Il-?86/, 'IL86'], [/Il-?96/, 'IL96'],
+  [/Yak-?40/, 'YK40'], [/Yak-?42/, 'YK42'], [/F-?28|Fellowship/, 'F28'], [/Fokker 70\b|F70\b/, 'F70'],
+  [/737-?100\b|737-1\d\d/, 'B731'], [/737-?200|737-2\d\d/, 'B732'], [/737-?400|737-4\d\d/, 'B734'], [/737-?500|737-5\d\d/, 'B735'],
+  [/737-?600|737-6\d\d/, 'B736'], [/737-?300|737-3\d\d/, 'B733'],
+  [/747SP/, 'B74S'], [/747-?100|747-1\d\d/, 'B741'], [/747-?200|747-2\d\d/, 'B742'], [/747-?300|747-3\d\d/, 'B743'],
+  [/767-?200|767-2\d\d/, 'B762'], [/DC-?10/, 'DC10'], [/L-?1011|TriStar/, 'L101'], [/MD-?11(?!F)/, 'MD11'],
+  [/A300-?600|A300B4-6/, 'A306'], [/A300/, 'A30B'], [/Concorde/, 'CONC'], [/BAe 146|BAe-146/, 'B462'],
+  [/CRJ-?100\b/, 'CRJ1'], [/A340-?200|A340-2\d\d/, 'A342'], [/A340-?500/, 'A345'],
+  [/328 ?JET|Do ?328JET/, 'J328'],
+];
+
+/** Like mapType, but older types first (historical fleet tables). */
+export function mapHistoricalType(text: string): string | null | undefined {
+  for (const [re, id] of HISTORICAL_PATTERNS) if (re.test(text)) return id;
+  return mapType(text);
+}

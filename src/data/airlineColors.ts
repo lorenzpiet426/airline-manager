@@ -25,6 +25,54 @@ export const AIRLINE_COLORS: Readonly<Record<string, [string, string]>> = {
   GLO: ['#ff5a00', '#ffffff'], AZU: ['#0066cc', '#ffffff'], AMX: ['#0b2343', '#a0a5aa'], CMP: ['#0a2a6c', '#c8b273'],
 };
 
+/** Colours of well-known airlines that have closed (Phase 6.3), by Wikidata id; same rules as above (no logos). */
+export const DEFUNCT_COLORS: Readonly<Record<string, [string, string]>> = {
+  Q8681: ['#0f5ba7', '#ffffff'], // Pan Am
+  Q527341: ['#c8102e', '#ffffff'], // TWA
+  Q611742: ['#1c3f94', '#5aa9e6'], // Eastern
+  Q898522: ['#c8102e', '#f2b705'], // Braniff
+  Q694098: ['#e2001a', '#ffffff'], // Swissair
+  Q141146: ['#0b3a7e', '#ffffff'], // Sabena
+  Q153975: ['#00843d', '#d0103a'], // Alitalia
+  Q156829: ['#e3001b', '#ffffff'], // Air Berlin
+  Q208372: ['#003366', '#e2001a'], // Malév
+  Q573915: ['#e2001a', '#1d3f8c'], // Interflug
+  Q846885: ['#0a2a5c', '#c9a227'], // BOAC
+  Q919252: ['#e2001a', '#1d1d1b'], // BEA
+  Q1807298: ['#e2001a', '#ffffff'], // Lauda Air
+  Q660191: ['#e2001a', '#ffffff'], // Tyrolean
+  Q865858: ['#e2001a', '#ffffff'], // Niki
+  Q155038: ['#a3195b', '#ffcc00'], // Germanwings
+  Q208046: ['#003c78', '#cc0000'], // US Airways
+  Q216486: ['#00336f', '#c8a95b'], // Continental
+  Q309174: ['#c8102e', '#6c6c6c'], // Northwest
+  Q861197: ['#003a8c', '#f2b705'], // Varig
+  Q53085: ['#007a33', '#ffffff'], // Mexicana
+  Q247116: ['#00205b', '#c8102e'], // Ansett
+  Q627115: ['#5a6a7e', '#c8102e'], // Canadian Airlines
+  Q727066: ['#0b2c64', '#f5b11d'], // Jet Airways
+  Q744935: ['#c8102e', '#ffffff'], // Kingfisher
+  Q204122: ['#002f6c', '#e3001b'], // Spanair
+  Q900951: ['#ffd200', '#1d1d1b'], // Monarch
+  Q283790: ['#5b2c86', '#ffffff'], // Flybe
+  Q2021591: ['#00539b', '#f6b40e'], // Olympic Airlines
+  Q223191: ['#0057a8', '#ffffff'], // Adria Airways
+  Q221604: ['#e2001a', '#ffffff'], // Air Malta
+  Q157205: ['#003865', '#e2001a'], // British Midland
+  Q509920: ['#e2001a', '#1d3f8c'], // Transaero
+  Q645084: ['#e2001a', '#5a2d82'], // Virgin America
+  Q32436: ['#a6192e', '#ffffff'], // Cathay Dragon
+  Q978831: ['#f58025', '#ffffff'], // Sterling
+  Q876323: ['#ff6f00', '#1d3f8c'], // Indian Airlines
+  Q1156931: ['#b5006f', '#ffffff'], // WOW air
+  Q852650: ['#f6b40e', '#1d3f8c'], // Thomas Cook Airlines
+  Q746174: ['#0a5a9c', '#f2a900'], // Cyprus Airways
+  Q278906: ['#00843d', '#e2001a'], // Balkan Bulgarian
+  Q707568: ['#e2001a', '#ffffff'], // LTU
+  Q918817: ['#003a70', '#c8a95b'], // British Caledonian
+  Q667656: ['#00205b', '#ffffff'], // Crossair
+};
+
 /** A stable colour pair for airlines without known colours, derived from the airline id. */
 export function generatedColors(id: string): [string, string] {
   let h = 0;
