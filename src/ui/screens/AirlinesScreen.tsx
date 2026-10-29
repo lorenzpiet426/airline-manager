@@ -88,7 +88,9 @@ function AirlineList({ real }: { real: RealAirlines }) {
               <span className="airline-row__facts mono small">
                 {a.hubs.slice(0, 2).map((h) => world?.airportById.get(h)?.iata ?? h).join(' ')}
               </span>
-              <span className="airline-row__facts mono small">{a.modelled ? t(`airlines.model.${a.model}`) : t('airlines.aircraftShort', { count: fleetSize(a) })}</span>
+              <span className="airline-row__facts mono small">
+                  {a.startup ? t('airlines.fictional') : a.modelled ? t(`airlines.model.${a.model}`) : t('airlines.aircraftShort', { count: fleetSize(a) })}
+                </span>
               <span className="airline-row__facts mono small">{t('airlines.routesShort', { count: real.routesOf(a.id).length })}</span>
             </a>
           </li>
@@ -181,6 +183,14 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
               <>
                 <dt>{t('airlines.parent')}</dt>
                 <dd>{a.parent}</dd>
+              </>
+            )}
+            {a.startup && (
+              <>
+                <dt>{t('airlines.source')}</dt>
+                <dd className="small">
+                  <SourceTag tag="modelled" /> {t('airlines.fictionalNote', { date: dateOf(a.startup.founded) })}
+                </dd>
               </>
             )}
             {a.era && (a.era.founded || a.era.ceased) && (

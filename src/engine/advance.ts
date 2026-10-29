@@ -1,6 +1,8 @@
 // Moves the world forward in time. All three time modes use this one function:
 // real-time calls it in small steps, turn-based mode a week at a time, real-clock mode catches up.
 import { worldMonthlyStep } from './worldEvents';
+import { refreshPartners } from './takeover';
+import { startupsMonthly, withStartups } from './startups';
 import { paintOnDelivery, repaintDone } from './livery';
 import { getAircraftType } from '../data/aircraft';
 import { book, postMessage, schedule } from './core';
@@ -21,7 +23,8 @@ export function advance(state: GameState, world: EngineWorld | WorldProvider, un
   while (state.queue.length && state.queue[0]!.at <= until) {
     const event = state.queue.shift()!;
     state.time = Math.max(state.time, event.at);
-    handle(state, typeof world === 'function' ? world(state) : world, event);
+    // Fictional startups founded in this game fly alongside the real airlines (Phase 6.4).
+    handle(state, withStartups(typeof world === 'function' ? world(state) : world, state), event);
   }
   state.time = Math.max(state.time, until);
 }
@@ -34,6 +37,8 @@ function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): vo
       break;
     case 'monthStart':
       worldMonthlyStep(state, world);
+      refreshPartners(state, world);
+      startupsMonthly(state, world);
       payMonthlyRents(state);
       refreshMarket(state);
       schedule(state, { at: startOfNextMonth(state.time), kind: 'monthStart' });

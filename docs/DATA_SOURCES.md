@@ -320,13 +320,16 @@ fuel week and the ECB rates) the game uses the real data and real events (Phase 
 - **Prices**: the engine's prices are 2025 dollars.
   - In a historical year, aircraft, checks, refits, repaints, hangars and compensation are multiplied by the US CPI
     ratio (BLS).
-  - Fares are multiplied by the CPI ratio × a real fare level: 4.4 in 1970, 4.2 (1975), 3.6 (1980), 3.0 (1985), 2.5
-    (1990), 2.0 (1995), 1.6 (2000), 1.3 (2005), 1.15 (2010), 1.0 from 2019. This is modelled from:
+  - Fares are multiplied by the CPI ratio × a real fare level: 4.4 in 1970, 4.2 (1975), 3.6 (1980), 3.2 (1985), 2.9
+    (1990), 2.6 (1995), 2.1 (2000), 1.65 (2005), 1.3 (2010), 1.05 (2015), 1.0 from 2019 (changed in 6.4, before:
+    3.0 / 2.5 / 2.0 / 1.6 / 1.3 / 1.15 for 1985–2010; IATA 2016: real return fares 61 % lower than in 1995). This is
+    modelled from:
     - IATA: real yields fell nearly 6× per tonne-km since 1970;
     - ICAO's world passenger yield: roughly 7–8 US cents per passenger-km in the mid-1970s vs 8–9 in 2019, nominal;
     - A4A/DOT: US real fares about 40 % lower in 2015 than in 1979.
-  - Crew, airport, handling, navigation, sales, service and overhead costs follow the real fare level to the power
-    0.8 (IATA: real unit costs fell about 4×).
+  - Crew, airport, handling, navigation, sales, service and overhead costs follow the real fare level fully (6.4;
+    before: to the power 0.8). Airlines of the 1970s needed far more staff per aircraft (Austrian 1975: ≈ 2,500
+    employees for 11 aircraft; 2025: ≈ 6,000 for 67), so their own costs per seat fell about as fast as fares.
   - Fuel is the real then-year price; maintenance per hour comes from each aircraft type.
   - Check: a Vienna startup in its first half year, as a weekly margin:
 
@@ -518,6 +521,56 @@ Emirates growth; Pan Am stops on 4 Dec 1991 (and is in the news), Swissair on 31
 airports opened later are still in the airport list of earlier years where Wikidata has no opening date (e.g. Beijing
 Daxing, Istanbul Sabiha Gökçen); political limits other than West Berlin (Albania, the Iron Curtain's traffic rights) are
 not modelled for AI airlines.
+
+## Austrian in past years, partners over time, fictional startups (Phase 6.4, 2026-10-29)
+Owner decisions: any start year 1970–2026, Austrian's fleet per year by hand, partners following history, startups at a
+realistic rate.
+
+**Austrian's fleet per year** (`fleetHistory` in `src/data/takeovers.ts`): years from Wikipedia's historical fleet table
+(EN "Austrian Airlines"), counts where the articles say them (EN/DE "Austrian Airlines", read 2026-10-29: six Viscount
+837 from 1960, two HS 748, nine DC-9-32 from 1971, five DC-9-51 from 1975, 13 MD-81 from 1980, four A340 and four A330
+until 2007, eleven Boeing 737 until 2013 (from Lauda Air, 2004), five A320 ex Air Berlin 2017, 17 Embraer 195 from 2016,
+fifth and sixth 777 in 2014/2018, A320neo and 787-9 from the current fleet table), the other counts modelled (marked
+in the file). New aircraft arrive over three years, old ones leave over two; fleets taken over (Lauda Air 2004,
+Tyrolean 2015, Air Berlin 2017) at once. Registrations are made up in Austrian's real series (OE-LD… DC-9/MD-80,
+OE-LB… A320 family, OE-LP… 777/787 …) because old registers are not open data; all owned. Cash = today's modelled
+€350 m × (seats of the year's fleet ÷ today's), in the money of the time.
+
+**Partners over time** (`src/data/alliances.ts`, Wikipedia "Star Alliance" and "Qualiflyer" member tables): Star
+Alliance with join/leave days (1997–2014), Qualiflyer 1998–2002 (Austrian 1998 – 25 Mar 2000), Austrian's own group
+(Tyrolean from Dec 1997, Lauda Air from Jan 2001), the Lufthansa Group from 3 Sep 2009. Partners are recalculated
+every month. Subsidiaries based at the hub fly for the player: when they join (at the takeover or later on their real
+date) their aircraft (types the player doesn't fly yet) and Vienna routes become the player's (extra flights on routes
+flown already) and they stop flying as AI airlines.
+
+**Timetable**: as in 6.2, plus frequencies of the time (× the economy growth used for all airlines) and a second pass
+that gives aircraft below 60 % of their weekly hours extra flights on routes of their kind (up to daily).
+
+**6.3 change found while calibrating**: on measured routes, today's total weekly flights (Eurostat) are now shared by
+the airlines flying the route in the year (by their measured frequencies; closed airlines an average share) instead of
+an equal split of local demand — that ignored a hub carrier's transfer traffic (Austrian 2005 flew New York twice a
+week). Today's networks are cut to the year's size by flights × √distance (long-haul routes were cut first).
+
+**Check: Austrian taken over on 1 January, one simulated year** (no player decisions; real figures from Wikipedia
+and annual reports, rounded):
+
+| Year | Aircraft | Routes | Passengers (real) | Margin (real) |
+|---|---|---|---|---|
+| 1975 | 11 | 34 | 1.0 m (≈ 1 m) | +10.6 % (small profit) |
+| 1985 | 22 | 51 | 1.9 m (just over 2 m) | +3.0 % (≈ +3 %) |
+| 1995 | 32 | 71 | 3.3 m (≈ 3.5 m) | −7.4 % (around break-even) |
+| 2005 | 84 incl. Tyrolean/Lauda | 106 | 5.8 m (group ≈ 9 m incl. charter) | −7.2 % (small losses 2004–2008) |
+
+Load factors stay low (46–57 % against ≈ 65–75 % real): the generated timetable flies more than the demand model
+fills. `src/engine/takeover.test.ts` keeps 1985 in range.
+
+**Fictional startups** (`src/engine/startups.ts`): about 8 a year worldwide where domestic fares are free (USA from
+1978, Europe from the 1990s, elsewhere 1995), weighted by people, three times as likely at the player's hub; made-up
+names ("Sky Link", "Nova Air" …) and codes no real airline uses, generated colours. Low-cost after the region's low-cost
+era (60 %), else regional, charter or small network airlines; 2–4 first routes to the busiest markets from the base with
+the fewest airlines. They then follow the normal AI (reviews, growth, entering the player's routes); young ones fail
+with 1.4 %/month (≈ 40 % in three years), plus 3 %/month while losing money. Check: 13 founded in 2027–2028, 5 failed;
+none in 1975.
 
 ## How to refresh the data
 ```bash

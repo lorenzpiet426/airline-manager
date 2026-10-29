@@ -1,5 +1,6 @@
 // The complete game state: everything a save game contains. Plain data only (no classes, no Maps),
 // so it can be sent to the screen thread, saved as JSON and compared in tests.
+import type { StartupAirline } from './startups';
 import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 
@@ -47,6 +48,8 @@ export interface Airline {
   realId?: string;
   /** Real airlines of the same group (Phase 6.2): they leave this airline's routes alone and feed it passengers. */
   partners?: string[];
+  /** Subsidiaries at the hub whose aircraft and routes became this airline's (Phase 6.4). */
+  absorbed?: string[];
 }
 
 /** Colour of a livery part: one of the three livery colours, white or dark grey. */
@@ -412,6 +415,8 @@ export interface AiState {
   /** Routes opened during the game, by airport pair "A|B": airline ids. */
   added: Record<string, string[]>;
   airlines: Record<string, AiAirlineState>;
+  /** Fictional airlines founded during the game (Phase 6.4), by id ("*S1" …). */
+  startups?: Record<string, StartupAirline>;
 }
 
 export const emptyAi = (): AiState => ({ routes: {}, added: {}, airlines: {} });
@@ -481,7 +486,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).

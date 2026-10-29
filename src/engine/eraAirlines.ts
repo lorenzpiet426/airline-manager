@@ -206,16 +206,16 @@ export function buildEraYear(input: EraInput): EraYear {
       const weekly = Math.max(r.weeklyAB ?? 0, r.weeklyBA ?? 0);
       if (!fillable(A, B, weekly) || berlinClosed(date, airline.country, a, b)) continue;
       const [x, y, ab, ba] = a < b ? [a, b, r.weeklyAB, r.weeklyBA] : [b, a, r.weeklyBA, r.weeklyAB];
-      const score = (hubs.has(a) || hubs.has(b) ? 1e9 : 0) + (weekly || 1) * 1e6 + input.gravity(A, B) / 1e3;
+      // Hub routes first, then by flights × √distance (about what a route earns: long-haul flies less often).
+      const score = (hubs.has(a) || hubs.has(b) ? 1e9 : 0) + (weekly || 1) * Math.sqrt(distanceKm(A, B)) * 1e3 + input.gravity(A, B) / 1e3;
       kept.push({ ...r, a: x, b: y, weeklyAB: ab, weeklyBA: ba, score });
     }
     if (!kept.length) continue;
     const n = Math.max(1, Math.round(kept.length * share));
     const chosen = kept.sort((p, q) => q.score - p.score).slice(0, n);
-    // Merge routes that map onto the same airports (e.g. today's BER and its predecessor). Today's measured frequencies
-    // don't apply to the past: the game splits the demand of the time between the airlines of the time.
+    // Merge routes that map onto the same airports (e.g. today's BER and its predecessor).
     const merged = new Map<string, RealRoute>();
-    for (const { score: _s, ...r } of chosen) if (!merged.has(`${r.a}|${r.b}`)) merged.set(`${r.a}|${r.b}`, { ...r, weeklyAB: null, weeklyBA: null });
+    for (const { score: _s, ...r } of chosen) if (!merged.has(`${r.a}|${r.b}`)) merged.set(`${r.a}|${r.b}`, r);
     const fleet = eraFleet(history.fleets[airline.id], airline.fleet, year, foundedYear);
     airlines.push({
       ...airline,
@@ -309,6 +309,8 @@ export function buildEraYear(input: EraInput): EraYear {
     if (d.ceased <= yearEnd) changes.push({ day: d.ceased, kind: 'ceased', id: d.id, name: d.name, successor: d.successor, fame: d.fame, country });
   }
 
+  shareMeasuredFlights(real, mapAirport, routes);
+
   // ── States without a real airline: a modelled national carrier (Phase 5.3) ──
   const covered = new Set<string>();
   for (const a of airlines) {
@@ -325,6 +327,46 @@ export function buildEraYear(input: EraInput): EraYear {
   changes.sort((p, q) => p.day.localeCompare(q.day));
   const days = [...span.values()].flatMap(([from, until]) => [from, until]).filter((x): x is string => !!x).sort();
   return { airlines, routes, span, days, changes };
+}
+
+/**
+ * Measured routes (Eurostat): today's weekly total on the route, shared by the airlines flying it in the year — by their
+ * measured frequencies, closed airlines with an average share. The total keeps a hub carrier's real frequencies (with
+ * its transfer passengers) and doesn't grow when airlines of the past are added; it is scaled to the economy of the
+ * year at run time like every competitor's capacity. Routes without measured numbers stay with the demand model.
+ */
+function shareMeasuredFlights(real: RealAirlines, mapAirport: (id: string) => string | null, routes: Map<string, RealRoute[]>): void {
+  const total = new Map<string, number>();
+  const add = (from: string | null, to: string | null, weekly: number | null) => {
+    if (from && to && weekly) total.set(`${from}>${to}`, (total.get(`${from}>${to}`) ?? 0) + weekly);
+  };
+  for (const airline of real.byId.values()) {
+    for (const r of real.routesOf(airline.id)) {
+      const a = mapAirport(r.a);
+      const b = mapAirport(r.b);
+      add(a, b, r.weeklyAB);
+      add(b, a, r.weeklyBA);
+    }
+  }
+  const byPair = new Map<string, RealRoute[]>();
+  for (const list of routes.values()) for (const r of list) byPair.set(`${r.a}|${r.b}`, [...(byPair.get(`${r.a}|${r.b}`) ?? []), r]);
+  for (const list of byPair.values()) {
+    for (const forward of [true, false]) {
+      const [from, to] = forward ? [list[0]!.a, list[0]!.b] : [list[0]!.b, list[0]!.a];
+      const sum = total.get(`${from}>${to}`);
+      if (!sum) continue;
+      const own = (r: RealRoute) => (forward ? r.weeklyAB : r.weeklyBA);
+      const known = list.map(own).filter((w): w is number => !!w);
+      const typical = known.length ? known.reduce((x, y) => x + y, 0) / known.length : sum / list.length;
+      const weights = list.map((r) => own(r) || typical);
+      const weightSum = weights.reduce((x, y) => x + y, 0);
+      list.forEach((r, i) => {
+        const weekly = Math.round(((sum * weights[i]!) / weightSum) * 2) / 2;
+        if (forward) r.weeklyAB = Math.max(0.5, weekly);
+        else r.weeklyBA = Math.max(0.5, weekly);
+      });
+    }
+  }
 }
 
 /** The airlines of `year` flying on `date`. */

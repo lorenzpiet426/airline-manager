@@ -1,9 +1,13 @@
-// Taking over a real airline (Phase 6.2): the player becomes its CEO. The airline keeps its name, codes, colours, its
-// real aircraft (registrations from the official registers) and its routes from the hub; the game plans a complete
-// timetable on that fleet (real timetables may not be copied, so it is "modelled"). The real airline stops flying as an
-// AI airline, and the airlines of its group become partners: they leave its routes alone and feed it passengers.
+// Taking over a real airline (Phase 6.2, past years 6.4): the player becomes its CEO. The airline keeps its name, codes,
+// colours, its aircraft (today: registrations from the official registers; in a past year: the fleet of that year, with
+// registrations made up in its real series) and its routes from the hub; the game plans a complete timetable on that
+// fleet (real timetables may not be copied, so it is "modelled"). The real airline stops flying as an AI airline, and its
+// partners of the time (its group, subsidiaries, alliance) leave its routes alone and feed it passengers.
 import { getAircraftType, isFreighter, TURNAROUND_MIN, type AircraftType } from '../data/aircraft';
-import { TAKEOVERS, type TakeoverScenario } from '../data/takeovers';
+import { TAKEOVERS, type FleetEra, type TakeoverScenario } from '../data/takeovers';
+import { membersOn } from '../data/alliances';
+import { priceLevelAt, REAL_AIRLINES_FROM } from './era';
+import { conditionsOf } from './worldEvents';
 import type { Airport } from '../data/types';
 import { airlineCabin } from './ai';
 import { totalSeats } from './cabins';
@@ -17,16 +21,16 @@ import { convert, money } from './money';
 import type { RealAirline } from './realAirlines';
 import { newReputation } from './reputation';
 import { MODEL_REPUTATION } from './cabins';
-import { busyIntervals, freeFlightNumber, setRoutePairs, type FlightSpec } from './schedule';
+import { busyIntervals, freeFlightNumber, pairsOfRoute, setRoutePairs, type FlightSpec } from './schedule';
 import type { Aircraft, GameState, Route } from './state';
 import { addMonths, MINUTES_PER_DAY, MINUTES_PER_WEEK, simTime, startOfDay, toDate, yearOf, type SimTime } from './time';
 import { DAYS_ALL, hasDay, homeDepartures, isEastbound, seedOf, spreadDays } from './timetable';
-import { bookCurrencyAt } from './commands';
+import { bookCurrencyAt, startingCapital } from './commands';
 import { distanceKm } from './geo';
 import { newFinance } from './operations';
 import type { EngineWorld } from './world';
 
-export type TakeoverError = 'scenarioUnknown' | 'notToday' | 'noRealAirline' | 'alreadyPlaying';
+export type TakeoverError = 'scenarioUnknown' | 'notYet' | 'noRealAirline' | 'alreadyPlaying';
 
 export const takeoverScenario = (realId: string): TakeoverScenario | undefined => TAKEOVERS[realId];
 
@@ -42,6 +46,52 @@ export function groupPartners(world: EngineWorld, scenario: TakeoverScenario): s
   for (const id of scenario.extraPartners) if (real.byId.has(id)) members.add(id);
   members.delete(scenario.realId);
   return [...members].sort();
+}
+
+/**
+ * The partners on a day (Phase 6.4): the group once the airline belonged to it, its own subsidiaries of the time, and
+ * the other members of every alliance it was in that day — only airlines flying that day.
+ */
+export function partnersAt(world: EngineWorld, scenario: TakeoverScenario, date: Date): string[] {
+  const real = world.realAirlines;
+  if (!real) return [];
+  const day = date.toISOString().slice(0, 10);
+  const ids = new Set<string>(day >= scenario.groupFrom ? groupPartners(world, scenario) : []);
+  for (const id of membersOn(scenario.ownGroup, day)) ids.add(id);
+  for (const alliance of scenario.alliances) if (membersOn(alliance, day).includes(scenario.realId)) for (const id of membersOn(alliance, day)) ids.add(id);
+  ids.delete(scenario.realId);
+  return [...ids].filter((id) => real.byId.has(id)).sort();
+}
+
+/** Monthly: the partners of airlines taken over follow history (alliances joined and left, subsidiaries bought). */
+export function refreshPartners(state: GameState, world: EngineWorld): void {
+  for (const airline of Object.values(state.airlines)) {
+    const scenario = airline.realId ? takeoverScenario(airline.realId) : undefined;
+    if (scenario) airline.partners = partnersAt(world, scenario, toDate(state.time));
+  }
+  absorbSubsidiaries(state, world);
+}
+
+/** Aircraft of each fleet line in `year` (new ones arrive over three years, old ones leave over two). */
+export function fleetLinesIn(scenario: TakeoverScenario, year: number): { line: FleetEra; count: number }[] {
+  return scenario.fleetHistory
+    .map((line) => {
+      if (year < line.from || (line.until !== null && year >= line.until)) return { line, count: 0 };
+      const arriving = line.atOnce ? 1 : Math.min(1, (year - line.from + 1) / 3);
+      const leaving = line.until === null ? 1 : Math.min(1, (line.until - year) / 2);
+      return { line, count: Math.round(line.count * arriving * leaving) };
+    })
+    .filter((x) => x.count > 0);
+}
+
+/** The airline's cash at the start, in today's euros: today's amount scaled by the size of the fleet of the year. */
+export function takeoverCashEur(scenario: TakeoverScenario, year: number | undefined): number {
+  if (year === undefined || year >= REAL_AIRLINES_FROM) return scenario.cashEur;
+  const seats = (y: number) => fleetLinesIn(scenario, y).reduce((s, x) => s + x.count * getAircraftType(x.line.type).seats.typical, 0);
+  // Rounded to 2 significant digits, like a startup's capital.
+  const eur = (scenario.cashEur * seats(year)) / Math.max(1, seats(REAL_AIRLINES_FROM));
+  const e = 10 ** Math.max(0, Math.floor(Math.log10(Math.max(1, eur))) - 1);
+  return Math.round(eur / e) * e;
 }
 
 /** Spreads n values evenly over [lo, hi] (inclusive), rounded. */
@@ -62,7 +112,8 @@ export function takeOver(state: GameState, world: EngineWorld, realId: string): 
   const real = world.realAirlines?.byId.get(realId);
   if (!scenario) return { ok: false, error: 'scenarioUnknown' };
   if (!real) return { ok: false, error: 'noRealAirline' };
-  if (state.options.startYear !== undefined) return { ok: false, error: 'notToday' };
+  const past = state.options.startYear !== undefined && state.options.startYear < REAL_AIRLINES_FROM;
+  if (past && !fleetLinesIn(scenario, yearOf(state.time)).length) return { ok: false, error: 'notYet' };
   if (Object.values(state.airlines).some((a) => a.controller === 'human')) return { ok: false, error: 'alreadyPlaying' };
   const hub = world.airportById.get(real.hubs[0] ?? '');
   if (!hub) return { ok: false, error: 'noRealAirline' };
@@ -82,7 +133,7 @@ export function takeOver(state: GameState, world: EngineWorld, realId: string): 
     cash: money(0, currency),
     foundedAt: state.time,
     realId,
-    partners: groupPartners(world, scenario),
+    partners: partnersAt(world, scenario, toDate(state.time)),
   };
   const airline = state.airlines[id]!;
   airline.liveries = [{ ...defaultLivery(airline.colors, scenario.livery.titles, airline.iata), tail: scenario.livery.tail, logo: { kind: 'none' } }];
@@ -90,15 +141,76 @@ export function takeOver(state: GameState, world: EngineWorld, realId: string): 
   // A well-known brand: everybody knows it, with a network airline's usual standing.
   state.reputation[id] = { ...newReputation(1), score: MODEL_REPUTATION[real.model] };
   state.ai.airlines[realId] = { status: 'player', health: 0, since: state.time };
-  book(state, id, 'capital', convert(money(scenario.cashEur, 'EUR'), currency, state.fx));
+  if (past) book(state, id, 'capital', startingCapital(state.fx, takeoverCashEur(scenario, yearOf(state.time)), currency, priceLevelAt(state.time)));
+  else book(state, id, 'capital', convert(money(scenario.cashEur, 'EUR'), currency, state.fx));
 
-  addFleet(state, airline.id, real, scenario, hub);
+  if (past) addFleetOfYear(state, airline.id, real, scenario, hub);
+  else addFleet(state, airline.id, real, scenario, hub);
   const result = addNetwork(state, world, airline.id, real, hub);
   postMessage(state, { airlineId: id, kind: 'takenOver', level: 'info', params: { name: real.name, aircraft: Object.values(state.aircraft).filter((a) => a.airlineId === id && a.status === 'active').length, routes: result.routes } });
   if (result.seasonalSkipped || result.unplanned || result.notFromHub) {
     postMessage(state, { airlineId: id, kind: 'takeoverRoutes', level: 'caution', params: { seasonal: result.seasonalSkipped, unplanned: result.unplanned, other: result.notFromHub } });
   }
+  absorbSubsidiaries(state, world);
   return { ok: true, result: { ...result, airlineId: id } };
+}
+
+/**
+ * Subsidiaries at the hub (Tyrolean from 1997, Lauda Air from 2001) flew for the airline, not against it: once owned,
+ * their aircraft (types the airline doesn't fly yet; the others were shared out in reality) and their routes from the hub
+ * become the player's, and they stop flying as AI airlines. Called at the takeover and every month.
+ */
+export function absorbSubsidiaries(state: GameState, world: EngineWorld): void {
+  const day = toDate(state.time).toISOString().slice(0, 10);
+  for (const airline of Object.values(state.airlines)) {
+    const scenario = airline.realId ? takeoverScenario(airline.realId) : undefined;
+    if (!scenario || airline.controller !== 'human') continue;
+    const hub = world.airportById.get(airline.hubId);
+    if (!hub) continue;
+    for (const subId of membersOn(scenario.ownGroup, day)) {
+      const sub = world.realAirlines?.byId.get(subId);
+      if (!sub || airline.absorbed?.includes(subId) || (state.ai.airlines[subId] && state.ai.airlines[subId]!.status !== 'active')) continue;
+      if (![...sub.hubs, ...sub.bases].includes(hub.id)) continue;
+      airline.absorbed = [...(airline.absorbed ?? []), subId];
+      state.ai.airlines[subId] = { status: 'player', health: 0, since: state.time };
+      const own = new Set(Object.values(state.aircraft).filter((a) => a.airlineId === airline.id).map((a) => a.typeId));
+      const series = new Map(scenario.fleetHistory.map((l) => [l.type, l.series]));
+      const added = new Set<string>();
+      const year = yearOf(state.time);
+      for (const f of sub.fleet) {
+        let type: AircraftType;
+        try {
+          type = getAircraftType(f.type);
+        } catch {
+          continue;
+        }
+        if (own.has(f.type) || isFreighter(type)) continue;
+        const cabin = airlineCabin(type, sub.model, type.category === 'widebody' ? 8000 : 1000, f.seats ?? type.seats.typical);
+        for (let i = 0; i < f.inService; i++) {
+          const aircraftId = nextId(state, 'AC');
+          const a: Aircraft = {
+            id: aircraftId,
+            typeId: f.type,
+            airlineId: airline.id,
+            registration: registrationInSeries(state, `OE-L${series.get(f.type) ?? 'K'}`),
+            builtYear: Math.min(year - 1, spread(i, f.inService, Math.max(type.eis, year - 10), year - 1)),
+            seats: totalSeats(cabin),
+            cabin,
+            status: 'active',
+            deliveryAt: state.time - ESTABLISHED_DAYS * MINUTES_PER_DAY,
+            locationId: hub.id,
+            paint: 0,
+          };
+          a.owned = newOwnership(state, a, convert(money(aircraftMarketValueUsd(a, state.time), 'USD'), airline.currency, state.fx).amount, airline.currency);
+          state.aircraft[aircraftId] = a;
+          ensureMaint(state, a);
+          added.add(aircraftId);
+        }
+      }
+      const result = added.size ? addNetwork(state, world, airline.id, sub, hub, added) : { routes: 0 };
+      postMessage(state, { airlineId: airline.id, kind: 'subsidiaryJoined', level: 'info', params: { airline: sub.name, aircraft: added.size, routes: result.routes } });
+    }
+  }
 }
 
 // ─── Fleet ───────────────────────────────────────────────────────────────────────
@@ -193,6 +305,48 @@ function addFleet(state: GameState, airlineId: string, real: RealAirline, scenar
   }
 }
 
+/**
+ * A past year's fleet (Phase 6.4): the airline's own aircraft of that year, owned (a state airline bought its aircraft),
+ * built over the years the line arrived (a fleet taken over at once was some years old already). Registrations are made
+ * up in the airline's real series (old registers aren't open data).
+ */
+function addFleetOfYear(state: GameState, airlineId: string, real: RealAirline, scenario: TakeoverScenario, hub: Airport): void {
+  const airline = state.airlines[airlineId]!;
+  const year = yearOf(state.time);
+  for (const { line, count } of fleetLinesIn(scenario, year)) {
+    const type = getAircraftType(line.type);
+    const cabin = airlineCabin(type, real.model, type.category === 'widebody' ? 8000 : 1000, type.seats.typical);
+    const [lo, hi] = line.atOnce ? [Math.max(type.eis, line.from - 8), line.from] : [Math.max(type.eis, line.from), Math.min(year, line.from + 2)];
+    for (let i = 0; i < count; i++) {
+      const aircraftId = nextId(state, 'AC');
+      const a: Aircraft = {
+        id: aircraftId,
+        typeId: line.type,
+        airlineId,
+        registration: registrationInSeries(state, `OE-L${line.series}`),
+        builtYear: Math.min(year - 1, spread(i, count, lo, hi)),
+        seats: totalSeats(cabin),
+        cabin,
+        status: 'active',
+        deliveryAt: state.time - ESTABLISHED_DAYS * MINUTES_PER_DAY,
+        locationId: hub.id,
+        paint: 0,
+      };
+      a.owned = newOwnership(state, a, convert(money(aircraftMarketValueUsd(a, state.time), 'USD'), airline.currency, state.fx).amount, airline.currency);
+      state.aircraft[aircraftId] = a;
+      ensureMaint(state, a);
+    }
+  }
+}
+
+/** Next free registration of a series (OE-LDA, OE-LDB …), then of any OE-L series. */
+function registrationInSeries(state: GameState, prefix: string): string {
+  const taken = new Set(Object.values(state.aircraft).map((a) => a.registration));
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (const b of letters) if (!taken.has(`${prefix}${b}`)) return `${prefix}${b}`;
+  return nextRegistration(state, prefix.slice(0, -1));
+}
+
 /** A320neo, A321neo, A320neo … : the types of an allocation taken in turn. */
 function interleave<T extends { count: number }>(groups: T[]): T[] {
   const left = groups.map((g) => g.count);
@@ -216,10 +370,10 @@ function nextRegistration(state: GameState, prefix: string): string {
 // ─── Network and timetable ───────────────────────────────────────────────────────
 
 /** Weekly round trips the airline flies to `dest` in the season of `date` (the data's summer schedule, scaled). */
-function weeklyNow(world: EngineWorld, real: RealAirline, hub: Airport, dest: Airport, date: Date): number {
+function weeklyNow(world: EngineWorld, real: RealAirline, hub: Airport, dest: Airport, date: Date, growth: number): number {
   const out = competitorsOn(world, hub, dest)?.find((c) => c.airlineId === real.id)?.weekly ?? 0;
   const back = competitorsOn(world, dest, hub)?.find((c) => c.airlineId === real.id)?.weekly ?? out;
-  return Math.max(1, Math.round(((out + back) / 2) * capacitySeason(hub, dest, date)));
+  return Math.max(1, Math.round(((out + back) / 2) * capacitySeason(hub, dest, date) * growth));
 }
 
 /** IATA winter season (last Sunday of October to the last Sunday of March, here from the 25th): summer-only routes rest. */
@@ -256,10 +410,22 @@ const FIRST_DEP = 6 * 60;
 const LAST_DEP = 21 * 60 + 30;
 /** Flights of one route closer together than this share their passengers: spread them out. */
 const ROUTE_SPACING_MIN = 150;
+/** Share of an aircraft's weekly hours the timetable fills at least, with extra frequencies if needed. */
+const IDLE_FILL_SHARE = 0.6;
 
-function addNetwork(state: GameState, world: EngineWorld, airlineId: string, real: RealAirline, hub: Airport): Omit<TakeoverResult, 'airlineId'> {
+function addNetwork(
+  state: GameState,
+  world: EngineWorld,
+  airlineId: string,
+  real: RealAirline,
+  hub: Airport,
+  only?: ReadonlySet<string>,
+): Omit<TakeoverResult, 'airlineId'> {
   const date = toDate(state.time);
-  const fleet = Object.values(state.aircraft).filter((a) => a.airlineId === airlineId && a.status === 'active');
+  const conditions = conditionsOf(state, world);
+  // A subsidiary joining later: its aircraft fly its routes, as extra flights where the airline already flies.
+  const existing = new Map(Object.values(state.routes).filter((r) => r.airlineId === airlineId).map((r) => [r.destinationId, r]));
+  const fleet = Object.values(state.aircraft).filter((a) => a.airlineId === airlineId && a.status === 'active' && (!only || only.has(a.id)));
   const types = [...new Set(fleet.map((a) => a.typeId))].map(getAircraftType);
   let seasonalSkipped = 0;
   let notFromHub = 0;
@@ -277,8 +443,9 @@ function addNetwork(state: GameState, world: EngineWorld, airlineId: string, rea
       continue;
     }
     if (!dest || !types.some((t) => !checkRoute(world, t, hub, dest))) continue;
-    const weekly = weeklyNow(world, real, hub, dest, date);
-    const route: Route = {
+    // Past years: the frequencies of the time (air travel was smaller), like the AI airlines' (Phase 5.3).
+    const weekly = weeklyNow(world, real, hub, dest, date, conditions.growth(hub, dest));
+    const route: Route = existing.get(dest.id) ?? {
       id: nextId(state, 'R'),
       airlineId,
       originId: hub.id,
@@ -299,6 +466,13 @@ function addNetwork(state: GameState, world: EngineWorld, airlineId: string, rea
 
   const lines: Line[] = fleet.map((a) => ({ aircraft: a, type: getAircraftType(a.typeId), busy: [], hours: 0 }));
   const specs = new Map<string, FlightSpec[]>();
+  // Routes flown already keep their flights (new ones are spaced from them).
+  for (const u of units) {
+    if (state.routes[u.route.id] && !specs.has(u.route.id)) {
+      specs.set(u.route.id, pairsOfRoute(state, u.route.id).map((p) => ({ id: p.id, aircraftId: p.aircraftId, dep: p.dep, days: p.days, groundMin: p.groundMin })));
+    }
+  }
+  const before = new Map([...specs].map(([id, list]) => [id, list.length]));
   let unplannedFlights = 0;
   // Long routes first (they need the big aircraft), then each route's first flights, then shorter rotations.
   const seats = (id: string) => world.realAirlines!.observedSeatsPerFlight(hub.id, id);
@@ -310,12 +484,40 @@ function addNetwork(state: GameState, world: EngineWorld, airlineId: string, rea
     if (!placed) unplannedFlights += countDays(u.days);
   }
 
+  // Aircraft the timetable left mostly idle fly extra frequencies on routes of their kind (long-haul or not), up to
+  // daily, busiest-first: an airline uses the fleet it has.
+  const daysOn = (routeId: string) => (specs.get(routeId) ?? []).reduce((n, x) => n + countDays(x.days), 0);
+  const byRoute = new Map(units.map((u) => [u.route.id, u]));
+  for (const line of [...lines].sort((x, y) => x.hours - y.hours)) {
+    const target = WEEKLY_AVAILABLE_HOURS[line.type.category] * IDLE_FILL_SHARE;
+    const kind = [...byRoute.values()]
+      .filter((u) => u.long === (line.type.category === 'widebody') && !checkRoute(world, line.type, hub, u.dest))
+      .sort((x, y) => daysOn(x.route.id) - daysOn(y.route.id) || y.route.distanceKm - x.route.distanceKm);
+    for (const u of kind) {
+      while (line.hours < target && daysOn(u.route.id) < 7) {
+        const n = Math.min(7 - daysOn(u.route.id), 3);
+        if (!placeUnit(world, { ...u, days: spreadDays(n), rank: 9 }, [line], specs, seats(u.dest.id))) break;
+      }
+      if (line.hours >= target) break;
+    }
+  }
+
   let routes = 0;
   const unplannedRoutes = new Set<string>();
   for (const u of units) if (!specs.has(u.route.id)) unplannedRoutes.add(u.route.id);
+  const done = new Set<string>();
   for (const u of units) {
     const list = specs.get(u.route.id);
-    if (!list || state.routes[u.route.id]) continue;
+    if (!list || done.has(u.route.id)) continue;
+    done.add(u.route.id);
+    if (state.routes[u.route.id]) {
+      // Extra flights on a route flown already.
+      if (list.length > (before.get(u.route.id) ?? 0)) {
+        setRoutePairs(state, u.route, list);
+        routes++;
+      }
+      continue;
+    }
     u.route.flightNumber = freeFlightNumber(state, airlineId);
     state.routes[u.route.id] = u.route;
     setRoutePairs(state, u.route, list);

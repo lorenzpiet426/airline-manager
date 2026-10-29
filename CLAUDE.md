@@ -290,8 +290,8 @@ Real airlines as AI with real fleets/networks per era and recognizable colors; *
 takeover scenario at VIE** (multiple start years); fictional startups appearing in real-airline mode.
 Split (2026-10-29): **6.1** ✅ calibrate the real airlines to their real numbers + transfer passengers at hubs;
 **6.2** ✅ Austrian takeover today (as CEO; Lufthansa Group airlines are partners); **6.3** ✅ real airlines in past years
-(real names, hubs, colours, era fleets; modelled routes; closed airlines; real founding/closing dates); **6.4** Austrian
-in past years + fictional startups.
+(real names, hubs, colours, era fleets; modelled routes; closed airlines; real founding/closing dates); **6.4** ✅ Austrian
+in past years + fictional startups. Phase 6 complete.
 
 ### Phase 7 — Hubs and detailed scheduling
 Connecting traffic and O&D flows through hubs, connection waves (timetables themselves come in step 2.2),
@@ -457,7 +457,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 5.3: rivals in historical games = **modelled national carriers** (plus charter and, where they existed, low-cost carriers), rebuilt each year from today's networks; former states (Soviet Union, Yugoslavia, Czechoslovakia, East/West Germany) have their own | Owner choice; real airlines of past years in Phase 6 |
 | 2026-10-29 | 5.3: **regulated fares** before deregulation (±10 % around the official fare, no AI price wars); free from US 1978, EU 1993/94, else 1995 | Owner choice |
 | 2026-10-29 | 5.3: **real airports per year** (12 replaced airports shown as the old one, Tempelhof/Schönefeld closing with routes moving to BER, 104 later airports hidden before opening) | Owner choice |
-| 2026-10-29 | 5.3: prices = 2025 dollars × US CPI ratio; fares additionally × a real fare level (4.2× in 1975 → 1 from 2019), own operating costs × that level^0.8; fuel and maintenance per type unchanged | Keeps realistic margins in every decade (calibration test) |
+| 2026-10-29 | 5.3: prices = 2025 dollars × US CPI ratio; fares additionally × a real fare level (4.2× in 1975 → 1 from 2019), own operating costs × that level^0.8 (^1.0 since 6.4); fuel and maintenance per type unchanged | Keeps realistic margins in every decade (calibration test) |
 | 2026-10-29 | 5.3: game options carry `startYear` (unset for today's games); no save version change; worlds are cached per year/airport change | Old saves unaffected |
 | 2026-10-29 | Phase 6 order: **calibrate first** (6.1), then Austrian takeover today (6.2), real airlines in past years (6.3), Austrian in the past + fictional startups (6.4) | Owner choice; before 6.1 every real airline lost 30–80 % of revenue in the model |
 | 2026-10-29 | Takeover **both ways**: as Austrian's CEO in a scenario (6.2), and buying airlines later with the stock market (Phase 10) | Owner choice |
@@ -472,6 +472,12 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 6.3: fleets = **real types per year** from Wikipedia's historical fleet tables, counts modelled; else typical types of the time | Owner choice |
 | 2026-10-29 | 6.3: **real dates**: airlines start/stop flying on their real days, with news; the AI can still bankrupt them earlier | Owner choice |
 | 2026-10-29 | 6.3: in past years every airline's frequency is its share of that time's demand (today's measured frequencies dropped) | Measured 2024 frequencies plus added closed airlines over-supplied busy routes (2005 VIE startup −59 %) |
+| 2026-10-29 | 6.4: Austrian takeover in **any start year 1970–2026** | Owner choice |
+| 2026-10-29 | 6.4: Austrian's **fleet per year entered by hand** (Wikipedia EN/DE, counts partly modelled), registrations made up in its real OE-L series, all owned | Owner choice; old registers aren't open data |
+| 2026-10-29 | 6.4: **partners follow history** (Tyrolean 1997, Lauda Air 2001, Qualiflyer 1998–2000, Star Alliance from 2000, Lufthansa Group from Sep 2009; also today: LH Group + Star Alliance) | Owner choice |
+| 2026-10-29 | 6.4: subsidiaries at the hub **fly for the player** (aircraft + routes join on their real date) | Otherwise Tyrolean/Lauda competed with Austrian at Vienna |
+| 2026-10-29 | 6.4: **fictional startups at a realistic rate** (≈ 8/year in free markets, many fail) | Owner choice |
+| 2026-10-29 | 6.4: real fare level 1985–2010 raised (IATA 2016: −61 % since 1995) and own costs follow it fully (was ^0.8) | Austrian's margins per decade went from +27 % … −30 % to +11 % … −7 % |
 | 2026-10-29 | 6.1: transfer passengers at hubs (network airlines + the player), measured route passengers split into local + transfer, smaller winter schedules, route-sized aircraft, thin unmeasured routes ≤ 3/week, low-cost fares 60 % + low-cost cost profile, connections half as attractive | Calibrated to Austrian 2024, Vienna Airport 2024 and Ryanair FY25 (docs/DATA_SOURCES.md) |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
@@ -1014,6 +1020,30 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: networks of the past are modelled; fleet counts rough; some later airports exist too early (no Wikidata opening
   date); political limits besides West Berlin not modelled for AI airlines; Wikidata's founding years are company years.
 - **Next:** 6.4 Austrian in past years (takeover scenario per start year) + fictional startups appearing in real-airline mode.
+
+### 2026-10-29 — Session 21 (Phase 6.4: Austrian in past years + fictional startups) ✅ — Phase 6 complete
+- Owner decisions (all recommended): any start year, fleet per year by hand, partners following history, startups at a
+  realistic rate (§7).
+- Data: `src/data/alliances.ts` (Star Alliance and Qualiflyer memberships with dates, `membersOn`), `takeovers.ts`
+  (`FleetEra`, Austrian's `fleetHistory` 1960–2026 with sources, `ownGroup`, `alliances`, `groupFrom`).
+- Engine `takeover.ts`: `fleetLinesIn`, `takeoverCashEur`, `partnersAt` + monthly `refreshPartners`, `addFleetOfYear`
+  (owned, OE-L series), frequencies × growth of the year, idle-aircraft fill (≥ 60 % of weekly hours), extra flights on
+  existing routes, `absorbSubsidiaries` (Tyrolean, Lauda Air: aircraft + Vienna routes, AI status `player`, message
+  `subsidiaryJoined`). Error `notToday` → `notYet`. `startups.ts`: `StartupAirline` in `state.ai.startups` (optional,
+  no save version change), `withStartups` overlay (advance, worker, UI hook), `startupsMonthly` (founding, failure),
+  message `startupFounded`; `RealAirline.startup`. `eraAirlines.ts`: measured route totals shared by the year's airlines,
+  routes ranked by flights × √distance. `eras.ts`: fare table 1985–2015 and `COST_FOLLOWS_FARES` 1.0 (see §7).
+- UI: wizard: start-year choice also for the takeover, preview of the year's fleet, routes, cash (money of the time) and
+  partners, notes for past years; Airlines screen marks fictional airlines; texts EN/DE.
+- Tests: 178 (`takeover.test.ts`: 1985 fleet/currency/no partners/valid timetable, partners 1999/2001/2012, 2001
+  subsidiaries joining, 1985 margin; `startups.test.ts`: 2027–28 founding/failing/competing, none in 1975).
+- Calibration (one simulated year, details in DATA_SOURCES): Austrian 1975 +10.6 %, 1985 +3.0 % (real ≈ +3 %, 1.9 m pax
+  vs real 2 m), 1995 −7.4 %, 2005 −7.2 %; load factors still low (46–57 %).
+- Verified in browser: 1980 takeover from the wizard (18 aircraft: 9 DC-9-30, 5 DC-9-50, 4 MD-80; 43 routes; ATS 230 m),
+  two weeks played (margin ≈ +1 %), fleet OE-LDA…, phone 375 px without sideways scrolling.
+- Known: Austrian's fleet doesn't follow its real future deliveries during the game (the player orders); load factors low;
+  only Austrian can be taken over; startups fly typical aircraft and appear only in games with real airlines.
+- **Next:** Phase 7 (hubs: connection waves, slots, curfews, gates, lounges, bases) — or what the owner prefers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

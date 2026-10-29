@@ -1,5 +1,6 @@
 // The engine's home: a background thread (Web Worker). It owns the game state, runs the clock
 // and applies commands; the screen only receives copies of the state to display.
+import { withStartups } from '../engine/startups';
 import * as Comlink from 'comlink';
 import type { Airport, Country } from '../data/types';
 import { advance, type WorldProvider } from '../engine/advance';
@@ -58,7 +59,8 @@ function loadWorld(): Promise<WorldProvider> {
       fxHistory,
       airportHistory,
     });
-    return (world = (s: GameState) => at(s.options.startYear, toDate(s.time)));
+    // Plus the fictional startups founded in this game (Phase 6.4).
+    return (world = (s: GameState) => withStartups(at(s.options.startYear, toDate(s.time)), s));
   });
   return worldPromise;
 }

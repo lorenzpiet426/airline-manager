@@ -207,14 +207,18 @@
     "airportMoved": "{{from}} has closed: your flights, hub and hangars there moved to {{to}}.",
     "airlineFounded": "{{airline}} has been founded and starts flying.",
     "airlineCeased": "{{airline}} stops flying: its routes are open to others.",
-    "airlineCeasedSuccessor": "{{airline}} stops flying; {{successor}} carries on. Its routes are open to others."
+    "airlineCeasedSuccessor": "{{airline}} stops flying; {{successor}} carries on. Its routes are open to others.",
+    "subsidiaryJoined_one": "{{airline}} now belongs to your group: its {{count}} aircraft and {{routes}} routes from your hub are yours (its flights were the group's flights).",
+    "subsidiaryJoined_other": "{{airline}} now belongs to your group: its {{count}} aircraft and {{routes}} routes from your hub are yours (its flights were the group's flights).",
+    "startupFounded_one": "New airline: {{airline}} (fictional) starts flying from {{base}} with {{count}} route.",
+    "startupFounded_other": "New airline: {{airline}} (fictional) starts flying from {{base}} with {{count}} routes."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
     "scenarioStartupTitle": "Found a startup",
     "scenarioStartupHint": "Your own airline: name, colours, hub and money – today or in any year since 1970.",
     "takeoverTitle": "Take over {{name}}",
-    "takeoverHint": "Become CEO of the real airline today: its aircraft, routes and timetable, with the Lufthansa Group as partners.",
+    "takeoverHint": "Become CEO of the real airline – today or in any year since 1970: its aircraft, routes and timetable of that year, with its partners of the time.",
     "takeoverHub": "Hub",
     "takeoverFleet": "Fleet (official register)",
     "takeoverFleetValue_one": "{{count}} aircraft",
@@ -224,7 +228,7 @@
     "takeoverRoutesValue_one": "{{count}} route",
     "takeoverRoutesValue_other": "{{count}} routes",
     "takeoverCash": "Cash (modelled)",
-    "takeoverPartners": "Group partners",
+    "takeoverPartners": "Partners",
     "takeoverNotes": "Routes and flights per week come from Wikipedia and Eurostat (summer 2024, scaled to the season); the game plans the timetable on the real fleet (real timetables may not be copied, so it is “modelled”). Build years, which aircraft are leased and the cash are modelled too, because the airline doesn’t publish them. The Embraer 195s leave by 2028; 17 new A320neo-family aircraft arrive from the group. Summer-only holiday routes rest in the winter. Your partners never attack your routes, and some of their passengers connect onto your flights in Vienna.",
     "takeoverScheduling": "Detailed: the game plans every aircraft’s rotations on the real fleet; you can change any flight.",
     "takeoverStart": "Take over",
@@ -281,11 +285,14 @@
     "hubNotYet": "This airport didn't exist yet in {{year}}. Please choose another home airport.",
     "competitors": "Competitors",
     "competitorsReal": "Today's real airlines",
-    "competitorsModelled": "Modelled national carriers of the time"
+    "competitorsModelled": "Real airlines of that year",
+    "takeoverNotesPast": "Austrian in {{year}}: the fleet of that year from Wikipedia (types and years; numbers of aircraft partly modelled), registrations made up in Austrian's real OE-L series (old registers aren't open data), all aircraft owned. Routes are modelled like those of the other airlines of the year, the timetable is planned by the game, the cash is modelled from the size of the fleet. Partners follow history: its subsidiaries Tyrolean (from 1997) and Lauda Air (from 2001) – their aircraft and Vienna routes become yours –, Qualiflyer with Swissair (1998–2000), Star Alliance (from 2000) and the Lufthansa Group (from September 2009). Nothing is planned for you: new aircraft you order yourself.",
+    "takeoverNoPartners": "none yet",
+    "takeoverFleetPast": "Fleet in {{year}}"
   },
   "errors": {
     "scenarioUnknown": "This airline can’t be taken over yet.",
-    "notToday": "Takeovers start today; past years come in a later step.",
+    "notYet": "The airline wasn't flying yet in that year.",
     "noRealAirline": "The real airline data isn’t loaded.",
     "alreadyPlaying": "This game already has an airline.",
     "nameLength": "The name needs 2 to 40 characters.",
@@ -614,7 +621,9 @@
       "typical": "Wikipedia has no fleet table for this airline: it flies the typical aircraft of its time."
     },
     "eraNetworkNote": "Routes modelled for {{year}}: an airline flying today keeps the part of today's network that the economy of the time could fill and that it had grown to; airlines that have closed since fly from their real hubs to the destinations the demand model ranks best. Weekly flights follow the demand of the time.",
-    "introEra": "Your game is in {{year}}: these {{count}} airlines were flying then — today's airlines that already existed and airlines that have closed since (Pan Am, Swissair, Interflug …), with their real hubs, the aircraft types they flew and their real colours where known. Their routes are modelled. Airlines start and stop flying on their real dates. Countries without a real airline in the data have a modelled national carrier."
+    "introEra": "Your game is in {{year}}: these {{count}} airlines were flying then — today's airlines that already existed and airlines that have closed since (Pan Am, Swissair, Interflug …), with their real hubs, the aircraft types they flew and their real colours where known. Their routes are modelled. Airlines start and stop flying on their real dates. Countries without a real airline in the data have a modelled national carrier.",
+    "fictional": "fictional",
+    "fictionalNote": "A fictional airline founded in your game on {{date}}: made-up name, code and colours. It flies the typical aircraft of its time and grows, shrinks or fails like a real startup."
   },
   "sources": {
     "title": "Data sources",

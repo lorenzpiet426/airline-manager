@@ -18,7 +18,7 @@ import { countryName, formatGameDate, formatMoney, formatNumber } from '../../i1
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 import { fromDate } from '../../engine/time';
-import { groupPartners, takeoverStart } from '../../engine/takeover';
+import { fleetLinesIn, partnersAt, takeoverCashEur, takeoverStart } from '../../engine/takeover';
 import { TAKEOVERS } from '../../data/takeovers';
 import { getAircraftType } from '../../data/aircraft';
 
@@ -52,9 +52,7 @@ export function NewGameScreen() {
   // 'startup', or the real airline taken over (Phase 6.2).
   const [scenario, setScenario] = useState<'startup' | keyof typeof TAKEOVERS>('startup');
   const takeover = scenario === 'startup' ? null : TAKEOVERS[scenario]!;
-  const [yearChoice, setStartYear] = useState(REAL_AIRLINES_FROM);
-  // A takeover starts today (the real airline's fleet and network of today).
-  const startYear = takeover ? REAL_AIRLINES_FROM : yearChoice;
+  const [startYear, setStartYear] = useState(REAL_AIRLINES_FROM);
   const historical = startYear < REAL_AIRLINES_FROM;
   const startDate = new Date(Date.UTC(startYear, 0, 1));
   // The world of the start year: its airports (Kai Tak, Riem …) and exchange rates.
@@ -82,13 +80,21 @@ export function NewGameScreen() {
   const mode: TimeMode = historical && timeMode === 'realclock' ? 'realtime' : timeMode;
   const { iata, icao } = codesEdited ? codes : suggestCodes(name);
 
-  // The airline to take over, as it is today (fleet from the registers, routes, partners).
+  // The airline to take over as it was in the start year (today: fleet from the registers; past years: Phase 6.4).
   const real = takeover ? engine?.realAirlines?.byId.get(takeover.realId) : undefined;
   const fleetByType = new Map<string, number>();
-  for (const [, type] of real?.registered ?? []) fleetByType.set(type, (fleetByType.get(type) ?? 0) + 1);
+  if (historical && takeover) for (const { line, count } of fleetLinesIn(takeover, startYear)) fleetByType.set(line.type, (fleetByType.get(line.type) ?? 0) + count);
+  else for (const [, type] of real?.registered ?? []) fleetByType.set(type, (fleetByType.get(type) ?? 0) + 1);
+  const fleetCount = [...fleetByType.values()].reduce((x, y) => x + y, 0);
   const realHub = real ? world?.airportById.get(real.hubs[0] ?? '') : undefined;
   const realRoutes = real && engine?.realAirlines ? engine.realAirlines.routesOf(real.id).filter((r) => r.a === realHub?.id || r.b === realHub?.id).length : 0;
-  const partners = takeover && engine ? groupPartners(engine, takeover).map((id) => engine.realAirlines?.byId.get(id)?.name ?? id) : [];
+  const partners = takeover && engine ? partnersAt(engine, takeover, startDate).map((id) => engine.realAirlines?.byId.get(id)?.name ?? id) : [];
+  const takeoverCurrency = realHub ? currencyAt(realHub.country, historical ? startDate : new Date()) : 'EUR';
+  const takeoverCash = takeover
+    ? historical
+      ? startingCapital(fx, takeoverCashEur(takeover, startYear), fx[takeoverCurrency] ? takeoverCurrency : 'USD', priceLevel(startYear))
+      : { amount: takeover.cashEur, currency: 'EUR' }
+    : null;
   const typeName = (id: string) => {
     try {
       return getAircraftType(id).name;
@@ -104,7 +110,7 @@ export function NewGameScreen() {
       seed: crypto.getRandomValues(new Uint32Array(1))[0]!,
       startYear,
       // A real-clock game starts now; a takeover today; the others on 1 January.
-      ...(mode === 'realclock' ? { startTime: fromDate(new Date()) } : takeover ? { startTime: takeoverStart(new Date()) } : {}),
+      ...(mode === 'realclock' ? { startTime: fromDate(new Date()) } : takeover && !historical ? { startTime: takeoverStart(new Date()) } : {}),
       timeMode: mode,
       realism: 'realistic' as const,
       scheduling,
@@ -140,40 +146,6 @@ export function NewGameScreen() {
         </div>
       </Panel>
 
-      {takeover ? (
-        <Panel title={real?.name ?? takeover.realId} code="2">
-          {real ? (
-            <>
-              <div className="identity">
-                <TailFin primary={real.colors.primary} secondary={real.colors.secondary} code={real.iata ?? ''} size={96} />
-                <dl className="facts identity__fields">
-                  <dt>{t('newGame.takeoverHub')}</dt>
-                  <dd>{realHub ? `${realHub.iata} · ${realHub.name}` : '—'}</dd>
-                  <dt>{t('newGame.takeoverFleet')}</dt>
-                  <dd>
-                    {t('newGame.takeoverFleetValue', { count: real.registered.length })}{' '}
-                    <span className="muted small">
-                      ({[...fleetByType].map(([type, n]) => `${n} × ${typeName(type)}`).join(', ')})
-                    </span>
-                  </dd>
-                  <dt>{t('newGame.takeoverComing')}</dt>
-                  <dd>{takeover.incoming.map((x) => `${x.count} × ${typeName(x.typeId)}`).join(', ')}</dd>
-                  <dt>{t('newGame.takeoverRoutes')}</dt>
-                  <dd>{t('newGame.takeoverRoutesValue', { count: realRoutes })}</dd>
-                  <dt>{t('newGame.takeoverCash')}</dt>
-                  <dd className="mono">{formatMoney(language, { amount: takeover.cashEur, currency: 'EUR' })}</dd>
-                  <dt>{t('newGame.takeoverPartners')}</dt>
-                  <dd className="small">{partners.join(', ')}</dd>
-                </dl>
-              </div>
-              <p className="muted small">{t('newGame.takeoverNotes')}</p>
-            </>
-          ) : (
-            <p className="muted">{t('map.loading')}</p>
-          )}
-        </Panel>
-      ) : (
-      <>
       <Panel title={t('newGame.era')} code="2">
         <div className="choices choices--years" role="radiogroup" aria-label={t('newGame.era')}>
           {[...YEAR_PRESETS, REAL_AIRLINES_FROM].map((y) => (
@@ -200,6 +172,44 @@ export function NewGameScreen() {
         <p className="muted small">{historical ? t('newGame.historicalHint') : t('newGame.todayHint')}</p>
       </Panel>
 
+      {takeover ? (
+        <Panel title={real?.name ?? takeover.realId} code="3">
+          {real ? (
+            <>
+              <div className="identity">
+                <TailFin primary={real.colors.primary} secondary={real.colors.secondary} code={real.iata ?? ''} size={96} />
+                <dl className="facts identity__fields">
+                  <dt>{t('newGame.takeoverHub')}</dt>
+                  <dd>{realHub ? `${realHub.iata} · ${realHub.name}` : '—'}</dd>
+                  <dt>{historical ? t('newGame.takeoverFleetPast', { year: startYear }) : t('newGame.takeoverFleet')}</dt>
+                  <dd>
+                    {t('newGame.takeoverFleetValue', { count: fleetCount })}{' '}
+                    <span className="muted small">
+                      ({[...fleetByType].map(([type, n]) => `${n} × ${typeName(type)}`).join(', ')})
+                    </span>
+                  </dd>
+                  {!historical && (
+                    <>
+                      <dt>{t('newGame.takeoverComing')}</dt>
+                      <dd>{takeover.incoming.map((x) => `${x.count} × ${typeName(x.typeId)}`).join(', ')}</dd>
+                    </>
+                  )}
+                  <dt>{t('newGame.takeoverRoutes')}</dt>
+                  <dd>{t('newGame.takeoverRoutesValue', { count: realRoutes })}</dd>
+                  <dt>{t('newGame.takeoverCash')}</dt>
+                  <dd className="mono">{takeoverCash ? formatMoney(language, takeoverCash) : '—'}</dd>
+                  <dt>{t('newGame.takeoverPartners')}</dt>
+                  <dd className="small">{partners.length ? partners.join(', ') : t('newGame.takeoverNoPartners')}</dd>
+                </dl>
+              </div>
+              <p className="muted small">{historical ? t('newGame.takeoverNotesPast', { year: startYear }) : t('newGame.takeoverNotes')}</p>
+            </>
+          ) : (
+            <p className="muted">{t('map.loading')}</p>
+          )}
+        </Panel>
+      ) : (
+      <>
       <Panel title={t('newGame.identity')} code="3">
         <div className="identity">
           <TailFin primary={colors[0]} secondary={colors[1]} code={iata || '··'} size={96} />
@@ -312,7 +322,7 @@ export function NewGameScreen() {
       </>
       )}
 
-      <Panel title={t('newGame.mode')} code={takeover ? '3' : '6'}>
+      <Panel title={t('newGame.mode')} code={takeover ? '4' : '6'}>
         <span className="field__label">{t('newGame.timeMode')}</span>
         <Segmented
           label={t('newGame.timeMode')}
@@ -347,7 +357,7 @@ export function NewGameScreen() {
           <dt>{t('newGame.scenario')}</dt>
           <dd>{takeover ? t('newGame.takeoverTitle', { name: real?.name ?? takeover.realId }) : t('newGame.scenarioStartup')}</dd>
           <dt>{t('newGame.startDate')}</dt>
-          <dd>{mode === 'realclock' ? t('newGame.startDateNow') : formatGameDate(language, takeover ? new Date() : startDate, false)}</dd>
+          <dd>{mode === 'realclock' ? t('newGame.startDateNow') : formatGameDate(language, takeover && !historical ? new Date() : startDate, false)}</dd>
           <dt>{t('newGame.competitors')}</dt>
           <dd>{historical ? t('newGame.competitorsModelled') : t('newGame.competitorsReal')}</dd>
           <dt>{t('newGame.realism')}</dt>

@@ -25,8 +25,8 @@ export function priceLevel(year: number): number {
  * passenger-km in the mid-1970s and 8–9 cents in 2019 (money of each year), i.e. about 4× higher after inflation.
  */
 const REAL_FARE: [number, number][] = [
-  [1970, 4.4], [1975, 4.2], [1980, 3.6], [1985, 3.0], [1990, 2.5], [1995, 2.0], [2000, 1.6], [2005, 1.3],
-  [2010, 1.15], [2015, 1.05], [2019, 1.0],
+  [1970, 4.4], [1975, 4.2], [1980, 3.6], [1985, 3.2], [1990, 2.9], [1995, 2.6], [2000, 2.1], [2005, 1.65],
+  [2010, 1.3], [2015, 1.05], [2019, 1.0],
 ];
 
 function interpolate(table: [number, number][], year: number): number {
@@ -50,7 +50,7 @@ export const realFareLevel = (year: number): number => interpolate(REAL_FARE, ye
  * sales and overheads therefore
  * follow the fare level to this power — calibrated so typical routes keep realistic margins in every decade.
  */
-export const COST_FOLLOWS_FARES = 0.8;
+export const COST_FOLLOWS_FARES = 1.0;
 
 /** Multipliers for an amount in 2025 dollars: fares and the airline's own operating costs (not fuel or aircraft). */
 export function eraLevels(year: number): { prices: number; fares: number; costs: number } {

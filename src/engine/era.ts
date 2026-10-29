@@ -90,7 +90,7 @@ export type ModelledKind = 'N' | 'C' | 'L';
  * interstate in 1979), Europe from the mid-1990s (Ryanair 1991, easyJet 1995), Asia, Latin America and Australia around
  * 2000–2004. They then took a growing share of their markets over about 15 years.
  */
-const LOW_COST_FROM: Record<string, number> = { NA: 1979, EU: 1995, OC: 2000, SA: 2001, AS: 2002, AF: 2004 };
+export const LOW_COST_FROM: Record<string, number> = { NA: 1979, EU: 1995, OC: 2000, SA: 2001, AS: 2002, AF: 2004 };
 const LOW_COST_RAMP_YEARS = 15;
 
 /** Holiday countries of the European package-tour charters (1960s–1990s). */

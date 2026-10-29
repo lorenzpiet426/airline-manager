@@ -207,14 +207,18 @@
     "airportMoved": "{{from}} wurde geschlossen: deine Flüge, dein Drehkreuz und deine Hangars dort sind nach {{to}} übersiedelt.",
     "airlineFounded": "{{airline}} wurde gegründet und nimmt den Flugbetrieb auf.",
     "airlineCeased": "{{airline}} stellt den Flugbetrieb ein: ihre Strecken sind frei für andere.",
-    "airlineCeasedSuccessor": "{{airline}} stellt den Flugbetrieb ein, {{successor}} macht weiter. Ihre Strecken sind frei für andere."
+    "airlineCeasedSuccessor": "{{airline}} stellt den Flugbetrieb ein, {{successor}} macht weiter. Ihre Strecken sind frei für andere.",
+    "subsidiaryJoined_one": "{{airline}} gehört jetzt zu deinem Konzern: ihr {{count}} Flugzeug und ihre {{routes}} Strecken von deinem Drehkreuz sind deine (ihre Flüge waren Flüge des Konzerns).",
+    "subsidiaryJoined_other": "{{airline}} gehört jetzt zu deinem Konzern: ihre {{count}} Flugzeuge und {{routes}} Strecken von deinem Drehkreuz sind deine (ihre Flüge waren Flüge des Konzerns).",
+    "startupFounded_one": "Neue Airline: {{airline}} (erfunden) startet in {{base}} mit {{count}} Strecke.",
+    "startupFounded_other": "Neue Airline: {{airline}} (erfunden) startet in {{base}} mit {{count}} Strecken."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
     "scenarioStartupTitle": "Startup gründen",
     "scenarioStartupHint": "Deine eigene Airline: Name, Farben, Drehkreuz und Geld – heute oder in jedem Jahr seit 1970.",
     "takeoverTitle": "{{name}} übernehmen",
-    "takeoverHint": "Werde heute CEO der echten Airline: ihre Flugzeuge, Strecken und ihr Flugplan, die Lufthansa Group als Partner.",
+    "takeoverHint": "Werde CEO der echten Airline – heute oder in jedem Jahr seit 1970: ihre Flugzeuge, Strecken und Flugpläne dieses Jahres, mit ihren damaligen Partnern.",
     "takeoverHub": "Drehkreuz",
     "takeoverFleet": "Flotte (amtliches Register)",
     "takeoverFleetValue_one": "{{count}} Flugzeug",
@@ -224,7 +228,7 @@
     "takeoverRoutesValue_one": "{{count}} Strecke",
     "takeoverRoutesValue_other": "{{count}} Strecken",
     "takeoverCash": "Geld (modelliert)",
-    "takeoverPartners": "Konzernpartner",
+    "takeoverPartners": "Partner",
     "takeoverNotes": "Strecken und Flüge pro Woche stammen aus Wikipedia und Eurostat (Sommer 2024, an die Saison angepasst); den Flugplan plant das Spiel auf der echten Flotte (echte Flugpläne dürfen nicht kopiert werden, daher „modelliert“). Baujahre, welche Flugzeuge geleast sind und das Geld sind ebenfalls modelliert, weil die Airline sie nicht veröffentlicht. Die Embraer 195 gehen bis 2028; 17 neue Flugzeuge der A320neo-Familie kommen vom Konzern. Reine Sommer-Urlaubsstrecken ruhen im Winter. Deine Partner greifen deine Strecken nie an, und manche ihrer Fluggäste steigen in Wien auf deine Flüge um.",
     "takeoverScheduling": "Detailliert: Das Spiel plant die Umläufe jedes Flugzeugs auf der echten Flotte; du kannst jeden Flug ändern.",
     "takeoverStart": "Übernehmen",
@@ -281,11 +285,14 @@
     "hubNotYet": "Diesen Flughafen gab es {{year}} noch nicht. Bitte wähle einen anderen Heimatflughafen.",
     "competitors": "Konkurrenz",
     "competitorsReal": "Die heutigen echten Airlines",
-    "competitorsModelled": "Modellierte nationale Fluggesellschaften der Zeit"
+    "competitorsModelled": "Echte Airlines dieses Jahres",
+    "takeoverNotesPast": "Austrian im Jahr {{year}}: die Flotte dieses Jahres aus Wikipedia (Typen und Jahre; Anzahl teils modelliert), Kennzeichen in Austrians echter OE-L-Serie erfunden (alte Register sind keine offenen Daten), alle Flugzeuge im Eigentum. Die Strecken sind modelliert wie die der anderen Airlines des Jahres, den Flugplan plant das Spiel, das Geld ist aus der Größe der Flotte modelliert. Die Partner folgen der Geschichte: die Töchter Tyrolean (ab 1997) und Lauda Air (ab 2001) – ihre Flugzeuge und Wien-Strecken werden deine –, Qualiflyer mit Swissair (1998–2000), Star Alliance (ab 2000) und die Lufthansa Group (ab September 2009). Nichts ist für dich vorgeplant: Neue Flugzeuge bestellst du selbst.",
+    "takeoverNoPartners": "noch keine",
+    "takeoverFleetPast": "Flotte im Jahr {{year}}"
   },
   "errors": {
     "scenarioUnknown": "Diese Airline kann noch nicht übernommen werden.",
-    "notToday": "Übernahmen beginnen heute; vergangene Jahre kommen in einem späteren Schritt.",
+    "notYet": "Die Airline flog in diesem Jahr noch nicht.",
     "noRealAirline": "Die Daten der echten Airlines sind nicht geladen.",
     "alreadyPlaying": "Dieses Spiel hat schon eine Airline.",
     "nameLength": "Der Name braucht 2 bis 40 Zeichen.",
@@ -614,7 +621,9 @@
       "typical": "Wikipedia hat keine Flottentabelle für diese Airline: Sie fliegt die typischen Flugzeuge ihrer Zeit."
     },
     "eraNetworkNote": "Strecken für {{year}} modelliert: Eine Airline, die es heute noch gibt, behält den Teil ihres heutigen Netzes, den die Wirtschaft der Zeit füllen konnte und auf den sie bis dahin gewachsen war; Airlines, die es nicht mehr gibt, fliegen von ihren echten Drehkreuzen zu den Zielen, die das Nachfragemodell am besten bewertet. Die Flüge pro Woche folgen der Nachfrage der Zeit.",
-    "introEra": "Dein Spiel ist im Jahr {{year}}: Diese {{count}} Airlines flogen damals – heutige Airlines, die es schon gab, und Airlines, die es nicht mehr gibt (Pan Am, Swissair, Interflug …), mit ihren echten Drehkreuzen, den Flugzeugtypen, die sie flogen, und ihren echten Farben, wo bekannt. Ihre Strecken sind modelliert. Airlines starten und stellen den Betrieb an ihren echten Tagen ein. Länder ohne echte Airline in den Daten haben eine modellierte nationale Airline."
+    "introEra": "Dein Spiel ist im Jahr {{year}}: Diese {{count}} Airlines flogen damals – heutige Airlines, die es schon gab, und Airlines, die es nicht mehr gibt (Pan Am, Swissair, Interflug …), mit ihren echten Drehkreuzen, den Flugzeugtypen, die sie flogen, und ihren echten Farben, wo bekannt. Ihre Strecken sind modelliert. Airlines starten und stellen den Betrieb an ihren echten Tagen ein. Länder ohne echte Airline in den Daten haben eine modellierte nationale Airline.",
+    "fictional": "erfunden",
+    "fictionalNote": "Eine erfundene Airline, gegründet in deinem Spiel am {{date}}: Name, Code und Farben sind ausgedacht. Sie fliegt die typischen Flugzeuge ihrer Zeit und wächst, schrumpft oder scheitert wie ein echtes Start-up."
   },
   "sources": {
     "title": "Datenquellen",

@@ -6,6 +6,7 @@ import { loadAirportHistory } from '../../data/airportHistory';
 import type { RealAirlines } from '../../engine/realAirlines';
 import { worldCache, type EngineWorld } from '../../engine/world';
 import { toDate } from '../../engine/time';
+import { withStartups } from '../../engine/startups';
 import { useGame } from '../../game/store';
 
 type WorldAt = (startYear: number | undefined, date: Date) => EngineWorld;
@@ -43,7 +44,7 @@ export function useEngineWorld(): EngineWorld | null {
   const game = useGame();
   const at = useWorldAtFn();
   if (!at) return null;
-  return game ? at(game.options.startYear, toDate(game.time)) : at(undefined, new Date());
+  return game ? withStartups(at(game.options.startYear, toDate(game.time)), game) : at(undefined, new Date());
 }
 
 /** The airlines of the running game's world: today's real airlines, or the modelled carriers of a historical game. */

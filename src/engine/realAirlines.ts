@@ -39,6 +39,8 @@ export interface RealAirline {
   /** An airline of a past year (Phase 6.3): founding and closing day (YYYY-MM-DD), successor, and where the fleet of
    * that year comes from (Wikipedia's fleet tables, today's fleet, or typical types of the time). */
   era?: { founded: string | null; ceased: string | null; successor: string | null; fleet: 'wikipedia' | 'today' | 'typical' };
+  /** A fictional airline founded during the game (Phase 6.4): its founding day. */
+  startup?: { founded: string };
 }
 
 export interface RealRoute {
