@@ -25,6 +25,7 @@ import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { Panel } from '../components/Panel';
 import { useEngineWorld } from '../game/useEngineWorld';
+import { UnionsPanel } from './Unions';
 
 /** Readable names of the licence families (aircraft names, not translated). */
 const FAMILY_NAMES: Record<string, string> = {
@@ -42,7 +43,7 @@ const familyName = (family: string): string => {
 };
 
 type Action = 'hire' | 'upgrade' | 'rating' | 'release';
-const PAY_STEPS = [0.8, 0.9, 1, 1.1, 1.2, 1.3];
+const PAY_STEPS = [1, 1.05, 1.1, 1.2, 1.3];
 
 /**
  * Crews (Phase 8.1): pilots per licence family and cabin crew at each station, what the timetable needs, people in
@@ -88,6 +89,7 @@ export function CrewTab({ game, airline }: { game: GameState; airline: Airline }
         <p className="muted small">{auto ? t('crew.autoOn') : t('crew.autoOff')}</p>
         {error && <p className="notice notice--error">{t(`errors.${error}`)}</p>}
       </Panel>
+      <UnionsPanel game={game} airline={airline} />
       {stationsOf(airline).map((station) => (
         <StationPanel
           key={station}
@@ -217,7 +219,7 @@ function StationPanel({
           <select className="input" value={s.pay} onChange={(e) => void run({ type: 'SetCrewPay', airlineId: airline.id, payload: { station, pay: Number(e.target.value) } })}>
             {PAY_STEPS.map((p) => (
               <option key={p} value={p}>
-                {t('crew.payOption', { percent: Math.round(p * 100) })}
+                {t('crew.payOption', { percent: Math.round((p - 1) * 100) })}
               </option>
             ))}
           </select>

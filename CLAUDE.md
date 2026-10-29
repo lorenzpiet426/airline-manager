@@ -303,7 +303,7 @@ night curfews; **7.3** ✅ gates + own lounges; **7.4** ✅ bases (routes not fr
 Pilots and cabin crew, type ratings and training, crew shortages, strikes; hireable managers with skills,
 salaries, mistakes, and delegation levels.
 Split (2026-10-29): **8.1** ✅ pilots and cabin crew (headcounts, hiring, type ratings, upgrades, shortages);
-**8.2** unions, wage talks and strikes; **8.3** managers with delegation per department.
+**8.2** ✅ unions, wage talks and strikes; **8.3** managers with delegation per department.
 
 ### Phase 9 — Revenue and operations detail
 Fare classes, booking curves, dynamic pricing; loyalty program; on-time performance, delays, weather,
@@ -498,6 +498,10 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 8.1: **real job market** by region (market population) and era (pilot surpluses/shortages), pay per base 80–130 %; big employers attract more applicants | Owner choice; without the size effect Austrian would shrink by attrition |
 | 2026-10-29 | 8.1: HR plans crews automatically by default (switchable); old saves and takeovers get the crews their timetable needs; new startups must hire | Realistic start; managers (8.3) will replace the simple HR switch |
 | 2026-10-29 | 8.3: managers **delegate per department** (advise / act after OK / decide alone; skills, salaries, mistakes; act while away in real-clock mode) | Owner choice |
+| 2026-10-29 | 8.2: wage talks in **rounds of offers** (union demand from inflation, profits, job market; offers every 2 weeks; mediation; HR offers if the player doesn't) | Owner choice |
+| 2026-10-29 | 8.2: **pilot and cabin crew unions per country** with real names | Owner choice |
+| 2026-10-29 | 8.2: **real strike culture by country** (notice, warning strikes, minimum services, no-strike periods); strikes only after the agreement ends; EU 261 compensation for own-staff strikes from 2021 unless 14 days' notice | Owner choice; CJEU C-28/20 |
+| 2026-10-29 | 8.2: **the agreement sets pay**; the station pay setting becomes extra pay on top (100–130 %) | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1181,6 +1185,33 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: one pool per base (no individual pilots, seniority or duty rosters); AI airlines' crews not modelled; pilots of
   stationed aircraft count at their base only.
 - **Next:** 8.2 unions, wage talks and strikes.
+
+### 2026-10-29 — Session 27 (Phase 8.2: unions, wage talks and strikes) ✅
+- Owner decisions (all recommended): rounds of offers, unions per country and group, real strike culture, agreement sets
+  pay (§7).
+- Data `src/data/unions.ts` (union names, `strikeCulture` per country incl. UK notice before 2017, Italian no-strike
+  periods, talks timing, participation, `inflationBefore` from BLS CPI).
+- Engine `src/engine/unions.ts`: `Airline.labour` (`Agreement` per "country|group": pay level, second-year step, until,
+  mood, `WageTalks`, `Strike`s; no save version change), `ensureLabour` (agreements for every crew country, modelled end
+  3–24 months ahead; Austrian takeover today: real end 31 Dec 2026), `groupPay`/`groupMood` (used by crews.ts for salaries,
+  hiring quota, severance, attrition), `unionDemand`, `offerWage`, `acceptDemand`, `callMediation`, `answerProposal`,
+  `maybeStrike` (weekly after expiry), `strikeShare`/`strikeCancelsPair` (skipped in `plannedFlights`), strike
+  cancellations booked with care + EU 261 (from 2021, < 14 days' notice), `labourDailyStep` (steps, talks opening,
+  mediation proposals, HR offers rising per round, HR mediation before repeated strikes). Commands `OfferWage`,
+  `AcceptDemand`, `CallMediation`, `AnswerProposal`; `SetCrewPay` now 1–1.3 (extra pay). Messages `talksOpened`,
+  `unionAnswer`, `agreementSigned`, `hrOffer`, `strikeAnnounced`, `strikeCancellations`, `mediationStarted`,
+  `mediationProposal`, `mediationRejected`.
+- UI: Fleet → Crews: **Unions and wage agreements** panel (`src/ui/fleet/Unions.tsx`: union, group, country, status chip,
+  pay vs market, runs until, mood, strike culture, strikes called; talks: demand, inflation, best offer, round, offer
+  input, accept demand, mediation, proposal answer); extra-pay setting; message texts; EN/DE.
+- Tests: 203 (`unions.test.ts`: agreements per country, talks/offers/signing, German warning strike then strikes with
+  compensation, strike share + mediation, HR negotiating alone).
+- Verified in browser: new Austrian takeover today → talks opened (vida pilots 4.6 %, cabin 3.4 %), offer 2 % → union
+  down to 4 % and next round in 2 weeks, mediation started; phone 375 px without sideways scrolling. Fixed a crash in the
+  message log (dates formatted for messages that don't carry them).
+- Known: AI airlines' strikes are not modelled (only the world events' strikes); one agreement per country (no separate
+  regional/LCC agreements); disputes only at agreement ends (no other conflicts yet).
+- **Next:** 8.3 managers with delegation per department.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

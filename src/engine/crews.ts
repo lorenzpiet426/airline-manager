@@ -44,6 +44,7 @@ import { pairBlocks, pairDepartureUtc } from './schedule';
 import type { Airline, AirlineCrew, CrewBatch, CrewRole, FlightPair, GameState, Route, StationCrew } from './state';
 import { MINUTES_PER_DAY, startOfDay, toDate, type SimTime } from './time';
 import { hasDay } from './timetable';
+import { groupMood, groupPay } from './unions';
 import type { EngineWorld } from './world';
 
 const WEEK = 7 * MINUTES_PER_DAY;
@@ -201,14 +202,15 @@ export function crewPayPerDayUsd(state: GameState, world: EngineWorld, airline: 
   let total = 0;
   for (const [station, s] of Object.entries(airline.crew?.stations ?? {})) {
     const country = world.airportById.get(station)?.country ?? world.airportById.get(airline.hubId)?.country ?? 'AT';
-    const wage = wageFactor(world, country) * s.pay;
-    let yearly = s.cabin * yearlyPayUsd('cabin', false);
+    const pilotPay = groupPay(world, airline, station, 'pilots');
+    const cabinPay = groupPay(world, airline, station, 'cabin');
+    let yearly = s.cabin * yearlyPayUsd('cabin', false) * cabinPay;
     for (const [family, p] of Object.entries(s.pilots)) {
       const long = familyIsLong(state, airline.id, family);
-      yearly += p.captains * yearlyPayUsd('captain', long) + p.firstOfficers * yearlyPayUsd('firstOfficer', long);
+      yearly += (p.captains * yearlyPayUsd('captain', long) + p.firstOfficers * yearlyPayUsd('firstOfficer', long)) * pilotPay;
     }
-    for (const b of s.pipeline) yearly += b.count * yearlyPayUsd(b.role, b.family ? familyIsLong(state, airline.id, b.family) : false);
-    total += (yearly * wage) / 365;
+    for (const b of s.pipeline) yearly += b.count * yearlyPayUsd(b.role, b.family ? familyIsLong(state, airline.id, b.family) : false) * (b.role === 'cabin' ? cabinPay : pilotPay);
+    total += (yearly * wageFactor(world, country)) / 365;
   }
   return total;
 }
@@ -220,18 +222,20 @@ const monthKey = (time: SimTime) => toDate(time).toISOString().slice(0, 7);
 /** Hires still possible this month at a station: pilots (of them captains) and cabin crew. */
 export function hiringQuota(state: GameState, world: EngineWorld, airline: Airline, station: string): { pilots: number; captains: number; rated: number; cabin: number } {
   const s = airline.crew?.stations[station];
-  const pay = s?.pay ?? 1;
+  const pay = groupPay(world, airline, station, 'pilots');
+  const cabinPay = groupPay(world, airline, station, 'cabin');
   const airport = world.airportById.get(station);
   // Big employers attract more applicants and train their own (cadet programmes): about 1 % of their pilots a month more.
   const employed = Object.values(s?.pilots ?? {}).reduce((n, p) => n + p.captains + p.firstOfficers, 0);
-  const base = (pilotsPerMonth(airport?.marketPop ?? 1_000_000) + employed * EMPLOYER_PULL) * pilotMarket(toDate(state.time).getUTCFullYear()) * pay ** 2;
+  const market = (pilotsPerMonth(airport?.marketPop ?? 1_000_000) + employed * EMPLOYER_PULL) * pilotMarket(toDate(state.time).getUTCFullYear());
+  const base = market * pay ** 2;
   const done = airline.crew?.hired[station];
   const used = done && done.month === monthKey(state.time) ? done : { pilots: 0, cabin: 0, captains: 0, rated: 0 };
   return {
     pilots: Math.max(0, Math.floor(base) - used.pilots),
     captains: Math.max(0, Math.floor(base * CAPTAIN_SHARE) - (used.captains ?? 0)),
     rated: Math.max(0, Math.floor(base * RATED_SHARE) - (used.rated ?? 0)),
-    cabin: Math.max(0, Math.floor(base * CABIN_PER_PILOT) - used.cabin),
+    cabin: Math.max(0, Math.floor(market * cabinPay ** 2 * CABIN_PER_PILOT) - used.cabin),
   };
 }
 
@@ -321,13 +325,15 @@ export function releaseCrew(state: GameState, world: EngineWorld, airlineId: str
     else p.firstOfficers -= count;
   }
   const long = family ? familyIsLong(state, airlineId, family) : false;
-  trainingCost(state, airline, ((count * yearlyPayUsd(role, long) * wageFactor(world, country) * s.pay) / 12) * SEVERANCE_MONTHS);
+  const pay = groupPay(world, airline, station, role === 'cabin' ? 'cabin' : 'pilots');
+  trainingCost(state, airline, ((count * yearlyPayUsd(role, long) * wageFactor(world, country) * pay) / 12) * SEVERANCE_MONTHS);
   return null;
 }
 
 export function setCrewPay(state: GameState, airlineId: string, station: string, pay: number): CrewError | null {
   const airline = state.airlines[airlineId]!;
-  if (!Number.isFinite(pay) || pay < 0.8 || pay > 1.3) return 'crewInvalid';
+  // Extra pay on top of the collective agreement (Phase 8.2: never below it).
+  if (!Number.isFinite(pay) || pay < 1 || pay > 1.3) return 'crewInvalid';
   if (!stationsOf(airline).includes(station)) return 'baseUnknown';
   airline.crew ??= { stations: {}, auto: true, hired: {} };
   stationCrew(airline.crew, station).pay = Math.round(pay * 100) / 100;
@@ -409,18 +415,21 @@ export function crewDailyStep(state: GameState, world: EngineWorld): void {
       }
       postMessage(state, { airlineId: airline.id, kind: 'crewReady', level: 'info', params: { airport: world.airportById.get(station)?.iata ?? station, count: ready.reduce((n, b) => n + b.count, 0) } });
     }
-    if (date.getUTCDate() === 1) attrition(state, airline);
+    if (date.getUTCDate() === 1) attrition(state, world, airline);
     if (date.getUTCDay() === 1 && airline.crew.auto) planCrew(state, world, airline.id);
     bookCrewCancellations(state, world, airline);
   }
 }
 
 /** People leave: more when pay is below the market and when other airlines are hiring (shortage). */
-function attrition(state: GameState, airline: Airline): void {
+function attrition(state: GameState, world: EngineWorld, airline: Airline): void {
   const market = pilotMarket(toDate(state.time).getUTCFullYear());
   let left = 0;
-  for (const s of Object.values(airline.crew!.stations)) {
-    const rate = MONTHLY_ATTRITION * (2 - s.pay) ** 3 * Math.min(3, 1 / market);
+  for (const [station, s] of Object.entries(airline.crew!.stations)) {
+    // Low pay, a tight market elsewhere and an angry mood (Phase 8.2) make more people leave.
+    const rateOf = (group: 'pilots' | 'cabin') =>
+      MONTHLY_ATTRITION * Math.max(0.2, 2 - groupPay(world, airline, station, group)) ** 3 * Math.min(3, 1 / market) * (1 + Math.max(0, -groupMood(world, airline, station, group)) * 0.5);
+    let rate = rateOf('cabin');
     const leave = (n: number) => {
       const exact = n * rate;
       const k = Math.floor(exact) + (random(state) < exact - Math.floor(exact) ? 1 : 0);
@@ -428,6 +437,7 @@ function attrition(state: GameState, airline: Airline): void {
       return n - k;
     };
     s.cabin = leave(s.cabin);
+    rate = rateOf('pilots');
     for (const p of Object.values(s.pilots)) {
       p.captains = leave(p.captains);
       p.firstOfficers = leave(p.firstOfficers);

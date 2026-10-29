@@ -58,6 +58,53 @@ export interface Airline {
   bases?: Base[];
   /** Pilots and cabin crew (Phase 8.1); absent in games from before until first used. */
   crew?: AirlineCrew;
+  /** Collective agreements with the crews' unions (Phase 8.2), keyed "country|group". */
+  labour?: Record<string, Agreement>;
+}
+
+/** A collective agreement with the pilots' or cabin crew's union in one country (Phase 8.2). */
+export interface Agreement {
+  country: string;
+  group: 'pilots' | 'cabin';
+  /** Pay level agreed, relative to the market (1 = market pay). */
+  pay: number;
+  /** The agreed raise for the second year, applied on `at`. */
+  step?: { at: SimTime; factor: number };
+  /** Runs until (peace obligation until then). */
+  until: SimTime;
+  /** The crews' mood: −1 angry … 0 neutral … +1 content. */
+  mood: number;
+  talks?: WageTalks;
+  /** Strikes announced or under way. */
+  strikes: Strike[];
+}
+
+export interface WageTalks {
+  opened: SimTime;
+  round: number;
+  /** The union's demand and the least it will accept (yearly raises, 0.04 = 4 %). */
+  demand: number;
+  floor: number;
+  /** Inflation the talks start from. */
+  inflation: number;
+  /** The airline's best offer so far. */
+  offer?: number;
+  /** Strikes and warning strikes called in these talks. */
+  actions?: number;
+  /** When the next offer can be made. */
+  nextRound: SimTime;
+  /** Mediation under way until … (peace meanwhile), then the mediator's proposal waits for an answer. */
+  mediationUntil?: SimTime;
+  proposal?: number;
+  proposalUntil?: SimTime;
+}
+
+export interface Strike {
+  from: SimTime;
+  until: SimTime;
+  announced: SimTime;
+  /** A warning strike (a few hours, part of the day's flights). */
+  warning: boolean;
 }
 
 export type CrewRole = 'captain' | 'firstOfficer' | 'cabin';
@@ -76,7 +123,7 @@ export interface CrewBatch {
 export interface StationCrew {
   pilots: Record<string, { captains: number; firstOfficers: number }>;
   cabin: number;
-  /** Pay relative to the market (0.8–1.3). */
+  /** Pay on top of the collective agreement (1–1.3; 0.8–1.3 relative to the market before Phase 8.2). */
   pay: number;
   pipeline: CrewBatch[];
 }
@@ -556,7 +603,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).

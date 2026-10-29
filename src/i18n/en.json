@@ -229,7 +229,20 @@
     "crewLeft_one": "{{count}} crew member resigned this month. Pay and the job market decide how many leave.",
     "crewLeft_other": "{{count}} crew members resigned this month. Pay and the job market decide how many leave.",
     "crewCancellations_one": "Yesterday {{count}} flight was cancelled for want of crew: passengers get care and, under EU 261, compensation.",
-    "crewCancellations_other": "Yesterday {{count}} flights were cancelled for want of crew: passengers get care and, under EU 261, compensation."
+    "crewCancellations_other": "Yesterday {{count}} flights were cancelled for want of crew: passengers get care and, under EU 261, compensation.",
+    "talksOpened": "Wage talks: {{union}} ({{group}}, {{country}}) asks for {{demand}} a year. The agreement ends on {{until}}; until then there are no strikes.",
+    "unionAnswer": "{{union}} ({{group}}) rejected {{offer}} a year and now asks for {{demand}}.",
+    "agreementSigned": "New agreement with {{union}} ({{group}}, {{country}}): {{raise}} a year, running until {{until}}. No strikes until then.",
+    "hrOffer": "Your HR department offered {{union}} ({{group}}) {{offer}} a year.",
+    "strikeAnnounced_one": "{{union}} has called a strike of the {{group}} in {{country}} on {{from}} ({{count}} day). Expect most flights from there to be cancelled.",
+    "strikeAnnounced_other": "{{union}} has called a strike of the {{group}} in {{country}} from {{from}} ({{count}} days). Expect most flights from there to be cancelled.",
+    "warningStrikeAnnounced": "{{union}} has called a warning strike of the {{group}} in {{country}} on {{from}}: a few hours, part of the day's flights will be cancelled.",
+    "strikeCancellations_one": "Yesterday {{count}} flight was cancelled by a strike. Passengers get care, and under EU 261 compensation unless they were told 14 days ahead.",
+    "strikeCancellations_other": "Yesterday {{count}} flights were cancelled by strikes. Passengers get care, and under EU 261 compensation unless they were told 14 days ahead.",
+    "mediationStarted": "Mediation with {{union}} ({{group}}) until {{until}}. No strikes meanwhile.",
+    "mediationProposal": "The mediator proposes {{proposal}} a year for the {{group}} ({{union}}). Answer within a week.",
+    "mediationRejected_union": "The members of {{union}} voted against the mediator's proposal. The talks go on.",
+    "mediationRejected_airline": "You turned down the mediator's proposal. The {{group}} are not pleased; the talks go on."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -389,7 +402,12 @@
     "aircraftElsewhere": "This aircraft is stationed at another airport.",
     "crewInvalid": "Check the numbers: whole people, a licence family for pilots, and pay between 80 % and 130 %.",
     "noCandidates": "The job market doesn't have that many candidates this month. Better pay attracts more; next month there are new ones.",
-    "notEnoughCrew": "You don't have that many people in that group."
+    "notEnoughCrew": "You don't have that many people in that group.",
+    "noTalks": "There are no wage talks with this union right now.",
+    "offerTooSoon": "The union is still discussing your last offer (or mediation is under way). You can make the next offer on the date shown.",
+    "offerInvalid": "Offer a yearly raise between 0 % and 25 %.",
+    "noProposal": "There is no mediator's proposal to answer.",
+    "mediationBusy": "Mediation is already under way."
   },
   "fleet": {
     "title": "Fleet",
@@ -956,8 +974,8 @@
     "firstOfficers": "First officers",
     "short": "{{percent}} % of flights cancelled",
     "tableNote": "Have / needed by the timetable; +N = hired or in training. Captains can fill in as first officers, not the other way round.",
-    "pay": "Pay (vs the market)",
-    "payOption": "{{percent}} %",
+    "pay": "Extra pay on top of the agreement",
+    "payOption": "+{{percent}} %",
     "market": "Job market this month",
     "quota": "Pilots: {{pilots}} (of them {{captains}} as captains, {{rated}} already type-rated) · cabin crew: {{cabin}}",
     "actions": "Hire and train",
@@ -995,6 +1013,60 @@
       "upgrade": "command upgrade"
     },
     "readyOn": "flying from {{date}}"
+  },
+  "unions": {
+    "title": "Unions and wage agreements",
+    "intro": "Your pilots and cabin crew in each country have a collective agreement with their union. It sets their pay and forbids strikes while it runs (usually two years). A few weeks before it ends, the union asks for a raise (inflation, your profits, the job market). You answer with offers every two weeks. Once the old agreement has ended, a union that is still far apart may strike. How often, and with how much notice, depends on the country. Mediation brings a compromise. If you don't answer, your HR department negotiates (when automatic crew planning is on).",
+    "generic": {
+      "pilots": "Pilots' union",
+      "cabin": "Cabin crew union"
+    },
+    "group": {
+      "pilots": "pilots",
+      "cabin": "cabin crew"
+    },
+    "pay": "Pay vs the market",
+    "until": "Agreement runs until",
+    "mood": "Mood",
+    "moods": {
+      "content": "content",
+      "neutral": "neutral",
+      "unhappy": "unhappy",
+      "angry": "angry"
+    },
+    "culture": "Strikes in this country",
+    "cultureValue": "{{level}}, {{notice}} days' notice",
+    "militancy": {
+      "low": "rare",
+      "medium": "sometimes",
+      "high": "frequent"
+    },
+    "status": {
+      "peace": "Peace obligation",
+      "talks": "Talks",
+      "dispute": "No agreement",
+      "mediation": "Mediation",
+      "strikeComing": "Strike called",
+      "striking": "On strike"
+    },
+    "warningStrike": "Warning strike on {{from}}",
+    "strike_one": "Strike on {{from}} ({{count}} day)",
+    "strike_other": "Strike from {{from}} ({{count}} days)",
+    "demand": "Union demand",
+    "perYear": "{{value}} a year",
+    "inflation": "Inflation last year",
+    "yourOffer": "Your best offer",
+    "round": "Round",
+    "proposal": "The mediator proposes {{value}} a year. Answer by {{date}}; the union's members then vote.",
+    "acceptProposal": "Accept the proposal",
+    "rejectProposal": "Turn it down",
+    "mediating": "Mediation under way until {{date}} (no strikes meanwhile).",
+    "nextRound": "The union is discussing your offer. Next offer possible on {{date}}.",
+    "offerLabel": "Your offer (% raise a year)",
+    "makeOffer": "Make offer",
+    "acceptDemand": "Accept {{value}}",
+    "callMediation": "Call a mediator",
+    "talksNote": "A raise equal to inflation keeps pay where it is; more raises it above the market (crews stay and hiring is easier), less lets it fall behind. Offering less than before angers the crews."
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

@@ -4,6 +4,8 @@ import { toDate } from '../../engine/time';
 import type { World } from '../../data/world';
 import { countryName, formatGameDate, formatMoney, formatNumber, formatZulu } from '../../i18n/format';
 import { airlineName } from './airlineName';
+import { unionName } from '../fleet/Unions';
+import type { UnionGroup } from '../../data/unions';
 import { useSettings } from '../../settings/settings';
 
 /** The ops message log (like ACARS messages in a cockpit), newest first. */
@@ -79,6 +81,33 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.crewLeft', { count: Number(p.count) });
       case 'crewCancellations':
         return t('msg.crewCancellations', { count: Number(p.count) });
+      case 'talksOpened':
+      case 'unionAnswer':
+      case 'agreementSigned':
+      case 'hrOffer':
+      case 'strikeAnnounced':
+      case 'mediationStarted':
+      case 'mediationProposal':
+      case 'mediationRejected': {
+        // Each kind carries only some of these fields.
+        const pct = (v: unknown) => (v === undefined ? '' : `${formatNumber(language, Number(v), 1)} %`);
+        const day = (v: unknown) => (v === undefined ? '' : formatGameDate(language, toDate(Number(v)), false));
+        const kind = m.kind === 'strikeAnnounced' && Number(p.warning) ? 'warningStrikeAnnounced' : m.kind === 'mediationRejected' ? `mediationRejected_${p.by}` : m.kind;
+        return t(`msg.${kind}`, {
+          union: unionName(t, String(p.country), p.group as UnionGroup),
+          group: t(`unions.group.${p.group}`),
+          country: countryName(language, String(p.country), String(p.country)),
+          demand: pct(p.demand),
+          offer: pct(p.offer),
+          raise: pct(p.raise),
+          proposal: pct(p.proposal),
+          until: day(p.until),
+          from: day(p.from),
+          count: Number(p.days ?? 0),
+        });
+      }
+      case 'strikeCancellations':
+        return t('msg.strikeCancellations', { count: Number(p.count) });
       case 'gatesRented':
         return t('msg.gatesRented', p);
       case 'loungeOrdered':

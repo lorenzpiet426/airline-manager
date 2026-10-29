@@ -4,6 +4,7 @@
 // Times are hub local time, like published timetables; the airports' time zones turn them into UTC.
 import { closureCancelsPair } from './closures';
 import { crewCancelsPair } from './crews';
+import { strikeCancelsPair } from './unions';
 import { curfewAtTime, hasCurfews } from '../data/curfews';
 import { getAircraftType, TURNAROUND_MIN } from '../data/aircraft';
 import type { Airport } from '../data/types';
@@ -122,7 +123,8 @@ export function plannedFlights(state: GameState, world: EngineWorld, route: Rout
           grounded(aircraft, time) ||
           aogCancels(world, route, pair, aircraft, time) ||
           closureCancelsPair(state, world, route, pair, time) ||
-          crewCancelsPair(state, world, route, pair, time)))
+          crewCancelsPair(state, world, route, pair, time) ||
+          strikeCancelsPair(state, world, route, pair, time)))
     ) {
       continue;
     }

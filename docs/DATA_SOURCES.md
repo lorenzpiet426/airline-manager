@@ -700,6 +700,32 @@ Owner decisions: real headcounts per base and licence family, a real job market 
   ≈ 1,600–1,850 cabin crew (real ≈ 1,000 pilots and ≈ 2,000 cabin crew in the Austrian AOC incl. training and office
   roles); Austrian's November margin −4.0 % with crews (−5.3 % before), steady headcount over 7 months.
 
+## Unions, wage agreements and strikes (Phase 8.2, 2026-10-29)
+Owner decisions: rounds of offers, pilot and cabin crew unions per country, real strike culture by country, pay set by
+the agreement (extra pay on top allowed).
+
+- **Unions** (`src/data/unions.ts`): real union names for 17 countries (e.g. vida in Austria, Vereinigung Cockpit and
+  UFO in Germany, SNPL/SNPNC in France, BALPA/Unite in the UK, ALPA/AFA-CWA in the USA); others "pilots' union".
+- **Austrian Airlines**: cockpit and cabin crew (vida) struck in spring 2024; the agreement signed then raises pay by
+  19.4 % in three steps and runs until the end of 2026 with a peace obligation (industriemagazin.at, vienna.at, ORF,
+  April–June 2024, read 2026-10-29). A takeover today starts with talks for the next agreement.
+- **Strike culture** (modelled from labour law and practice, read 2026-10-29): Germany warning strikes after the peace
+  obligation, 1–2 days' notice; France 5 days' notice (loi Diard 2012); Italy 10 days, guaranteed flights, no strikes
+  27 Jul–5 Sep and 17 Dec–7 Jan (Law 146/1990); Spain/Portugal 10 days with minimum services; UK ballot + 14 days'
+  notice (Trade Union Act 2016, from 2017; 7 before); Switzerland peace obligation, almost never; USA Railway Labor Act
+  (NMB mediation, 30-day cooling-off), very rare; Austria rare (social partnership). How readily unions strike
+  ("militancy") is a modelled number per country.
+- **Talks**: agreements run 2 years; talks start 10 weeks before the end; offers every 2 weeks. Demand = last year's
+  inflation (US CPI, BLS; 2.5 % after the data ends) + catching up if pay is below the market + a share of profits
+  (margin above 3 %) + the pilot market (shortage/surplus) + militancy − mood. The union signs at a hidden minimum
+  between inflation and its demand (firmer where strikes are common). Mediation: 3 weeks of peace, proposal halfway,
+  members accept 85 %.
+- **Strikes** cancel a stable share of the flights from the country's stations (pilots 90 %, cabin crew 75 %; warning
+  strikes 40 % of that; minus minimum services). EU 261: own-staff strikes are no extraordinary circumstance (CJEU
+  C-28/20 Airhelp v SAS, 23 March 2021): compensation unless announced 14 days ahead; before 2021 only care.
+- **Pay**: a raise equal to inflation keeps the pay level; the level feeds salaries, hiring (pay²) and people leaving
+  (plus an angry mood). Austrian today: the HR department settles ≈ 3.6 % (pilots) / 3.1 % (cabin) in December 2026.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

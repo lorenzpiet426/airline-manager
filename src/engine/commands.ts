@@ -1,6 +1,7 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
 import type { CrewRole, LoungeQuality } from './state';
+import { acceptDemand, answerProposal, callMediation, ensureLabour, offerWage, type UnionError } from './unions';
 import { ensureCrew, hireCrew, planCrew, releaseCrew, setCrewPay, trainCrew, type CrewError } from './crews';
 import { closeBase, openBase, stationAircraft, stationOf, stationsOf, type BaseError } from './bases';
 import { buildLounge, closeLounge, ensureGates, ensureHubFacilities, setGates } from './hub';
@@ -251,7 +252,29 @@ export interface SetCrewAuto {
   payload: { auto: boolean };
 }
 
-export type Command = HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Wage talks (Phase 8.2): an offer (yearly raise), accepting the union's demand, mediation and its proposal. */
+export interface OfferWage {
+  type: 'OfferWage';
+  airlineId: string;
+  payload: { key: string; raise: number };
+}
+export interface AcceptDemand {
+  type: 'AcceptDemand';
+  airlineId: string;
+  payload: { key: string };
+}
+export interface CallMediation {
+  type: 'CallMediation';
+  airlineId: string;
+  payload: { key: string };
+}
+export interface AnswerProposal {
+  type: 'AnswerProposal';
+  airlineId: string;
+  payload: { key: string; accept: boolean };
+}
+
+export type Command = OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -306,7 +329,8 @@ export type CommandError =
   | 'originNotBase'
   | 'aircraftElsewhere'
   | BaseError
-  | CrewError;
+  | CrewError
+  | UnionError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -387,6 +411,23 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
               : command.type === 'SetCrewPay'
                 ? setCrewPay(state, command.airlineId, command.payload.station, command.payload.pay)
                 : ((airline.crew!.auto = command.payload.auto), command.payload.auto && planCrew(state, world, command.airlineId), null);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'OfferWage':
+    case 'AcceptDemand':
+    case 'CallMediation':
+    case 'AnswerProposal': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      ensureLabour(state, world);
+      const key = command.payload.key;
+      const error =
+        command.type === 'OfferWage'
+          ? offerWage(state, command.airlineId, key, command.payload.raise)
+          : command.type === 'AcceptDemand'
+            ? acceptDemand(state, command.airlineId, key)
+            : command.type === 'CallMediation'
+              ? callMediation(state, command.airlineId, key)
+              : answerProposal(state, command.airlineId, key, command.payload.accept);
       return error ? fail(error) : { ok: true };
     }
     case 'OpenBase':

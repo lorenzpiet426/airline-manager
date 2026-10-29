@@ -229,7 +229,20 @@
     "crewLeft_one": "{{count}} Crewmitglied hat diesen Monat gekündigt. Gehalt und Arbeitsmarkt bestimmen, wie viele gehen.",
     "crewLeft_other": "{{count}} Crewmitglieder haben diesen Monat gekündigt. Gehalt und Arbeitsmarkt bestimmen, wie viele gehen.",
     "crewCancellations_one": "Gestern fiel {{count}} Flug wegen fehlender Crew aus: Die Passagiere bekommen Betreuung und nach EU 261 eine Entschädigung.",
-    "crewCancellations_other": "Gestern fielen {{count}} Flüge wegen fehlender Crew aus: Die Passagiere bekommen Betreuung und nach EU 261 eine Entschädigung."
+    "crewCancellations_other": "Gestern fielen {{count}} Flüge wegen fehlender Crew aus: Die Passagiere bekommen Betreuung und nach EU 261 eine Entschädigung.",
+    "talksOpened": "Lohnverhandlungen: {{union}} ({{group}}, {{country}}) fordert {{demand}} pro Jahr. Der Vertrag endet am {{until}}; bis dahin gibt es keine Streiks.",
+    "unionAnswer": "{{union}} ({{group}}) hat {{offer}} pro Jahr abgelehnt und fordert jetzt {{demand}}.",
+    "agreementSigned": "Neuer Kollektivvertrag mit {{union}} ({{group}}, {{country}}): {{raise}} pro Jahr, gültig bis {{until}}. Bis dahin keine Streiks.",
+    "hrOffer": "Deine Personalabteilung hat {{union}} ({{group}}) {{offer}} pro Jahr angeboten.",
+    "strikeAnnounced_one": "{{union}} hat einen Streik der {{group}} in {{country}} am {{from}} angekündigt ({{count}} Tag). Die meisten Flüge von dort werden ausfallen.",
+    "strikeAnnounced_other": "{{union}} hat einen Streik der {{group}} in {{country}} ab {{from}} angekündigt ({{count}} Tage). Die meisten Flüge von dort werden ausfallen.",
+    "warningStrikeAnnounced": "{{union}} hat einen Warnstreik der {{group}} in {{country}} am {{from}} angekündigt: ein paar Stunden, ein Teil der Flüge des Tages fällt aus.",
+    "strikeCancellations_one": "Gestern fiel {{count}} Flug wegen eines Streiks aus. Die Passagiere bekommen Betreuung und nach EU 261 eine Entschädigung, wenn sie nicht 14 Tage vorher informiert wurden.",
+    "strikeCancellations_other": "Gestern fielen {{count}} Flüge wegen Streiks aus. Die Passagiere bekommen Betreuung und nach EU 261 eine Entschädigung, wenn sie nicht 14 Tage vorher informiert wurden.",
+    "mediationStarted": "Schlichtung mit {{union}} ({{group}}) bis {{until}}. Bis dahin keine Streiks.",
+    "mediationProposal": "Der Schlichter schlägt {{proposal}} pro Jahr für die {{group}} ({{union}}) vor. Antworte innerhalb einer Woche.",
+    "mediationRejected_union": "Die Mitglieder von {{union}} haben gegen den Schlichterspruch gestimmt. Die Verhandlungen gehen weiter.",
+    "mediationRejected_airline": "Du hast den Schlichterspruch abgelehnt. Die {{group}} sind verärgert; die Verhandlungen gehen weiter."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -389,7 +402,12 @@
     "aircraftElsewhere": "Dieses Flugzeug ist an einem anderen Flughafen stationiert.",
     "crewInvalid": "Prüfe die Zahlen: ganze Personen, eine Musterfamilie für Piloten und ein Gehalt zwischen 80 % und 130 %.",
     "noCandidates": "Der Arbeitsmarkt hat diesen Monat nicht so viele Bewerber. Besseres Gehalt zieht mehr an; nächsten Monat gibt es neue.",
-    "notEnoughCrew": "So viele Leute hast du in dieser Gruppe nicht."
+    "notEnoughCrew": "So viele Leute hast du in dieser Gruppe nicht.",
+    "noTalks": "Mit dieser Gewerkschaft laufen gerade keine Lohnverhandlungen.",
+    "offerTooSoon": "Die Gewerkschaft berät noch über dein letztes Angebot (oder eine Schlichtung läuft). Das nächste Angebot ist am angezeigten Datum möglich.",
+    "offerInvalid": "Biete eine jährliche Erhöhung zwischen 0 % und 25 % an.",
+    "noProposal": "Es gibt keinen Schlichterspruch, auf den du antworten kannst.",
+    "mediationBusy": "Eine Schlichtung läuft bereits."
   },
   "fleet": {
     "title": "Flotte",
@@ -956,8 +974,8 @@
     "firstOfficers": "Erste Offiziere",
     "short": "{{percent}} % der Flüge fallen aus",
     "tableNote": "Vorhanden / laut Flugplan nötig; +N = eingestellt oder in Ausbildung. Kapitäne können als Erste Offiziere einspringen, nicht umgekehrt.",
-    "pay": "Gehalt (im Vergleich zum Markt)",
-    "payOption": "{{percent}} %",
+    "pay": "Zulage zusätzlich zum Kollektivvertrag",
+    "payOption": "+{{percent}} %",
     "market": "Arbeitsmarkt diesen Monat",
     "quota": "Piloten: {{pilots}} (davon {{captains}} als Kapitäne, {{rated}} schon mit Musterberechtigung) · Kabinenpersonal: {{cabin}}",
     "actions": "Einstellen und schulen",
@@ -995,6 +1013,60 @@
       "upgrade": "Kapitänsschulung"
     },
     "readyOn": "fliegt ab {{date}}"
+  },
+  "unions": {
+    "title": "Gewerkschaften und Kollektivverträge",
+    "intro": "Deine Piloten und dein Kabinenpersonal haben in jedem Land einen Kollektivvertrag mit ihrer Gewerkschaft. Er legt die Gehälter fest und verbietet Streiks, solange er läuft (meist zwei Jahre; Friedenspflicht). Ein paar Wochen vor dem Ende fordert die Gewerkschaft eine Erhöhung (Inflation, deine Gewinne, Arbeitsmarkt). Du antwortest alle zwei Wochen mit einem Angebot. Ist der alte Vertrag abgelaufen, kann eine Gewerkschaft streiken, wenn ihr noch weit auseinanderliegt. Wie oft und mit wie viel Vorlauf, hängt vom Land ab. Eine Schlichtung bringt einen Kompromiss. Wenn du nicht antwortest, verhandelt deine Personalabteilung (bei automatischer Crewplanung).",
+    "generic": {
+      "pilots": "Pilotengewerkschaft",
+      "cabin": "Gewerkschaft des Kabinenpersonals"
+    },
+    "group": {
+      "pilots": "Piloten",
+      "cabin": "Flugbegleiter"
+    },
+    "pay": "Gehalt im Vergleich zum Markt",
+    "until": "Vertrag gilt bis",
+    "mood": "Stimmung",
+    "moods": {
+      "content": "zufrieden",
+      "neutral": "neutral",
+      "unhappy": "unzufrieden",
+      "angry": "wütend"
+    },
+    "culture": "Streiks in diesem Land",
+    "cultureValue": "{{level}}, {{notice}} Tage Vorlauf",
+    "militancy": {
+      "low": "selten",
+      "medium": "manchmal",
+      "high": "häufig"
+    },
+    "status": {
+      "peace": "Friedenspflicht",
+      "talks": "Verhandlungen",
+      "dispute": "Kein Vertrag",
+      "mediation": "Schlichtung",
+      "strikeComing": "Streik angekündigt",
+      "striking": "Streik"
+    },
+    "warningStrike": "Warnstreik am {{from}}",
+    "strike_one": "Streik am {{from}} ({{count}} Tag)",
+    "strike_other": "Streik ab {{from}} ({{count}} Tage)",
+    "demand": "Forderung der Gewerkschaft",
+    "perYear": "{{value}} pro Jahr",
+    "inflation": "Inflation im Vorjahr",
+    "yourOffer": "Dein bestes Angebot",
+    "round": "Runde",
+    "proposal": "Der Schlichter schlägt {{value}} pro Jahr vor. Antworte bis {{date}}; danach stimmen die Gewerkschaftsmitglieder ab.",
+    "acceptProposal": "Schlichterspruch annehmen",
+    "rejectProposal": "Ablehnen",
+    "mediating": "Schlichtung läuft bis {{date}} (bis dahin keine Streiks).",
+    "nextRound": "Die Gewerkschaft berät über dein Angebot. Nächstes Angebot am {{date}} möglich.",
+    "offerLabel": "Dein Angebot (% Erhöhung pro Jahr)",
+    "makeOffer": "Angebot machen",
+    "acceptDemand": "{{value}} annehmen",
+    "callMediation": "Schlichter anrufen",
+    "talksNote": "Eine Erhöhung in Höhe der Inflation hält das Gehalt, wo es ist. Mehr hebt es über den Markt (Crews bleiben, Einstellen geht leichter), weniger lässt es zurückfallen. Ein niedrigeres Angebot als zuvor verärgert die Crews."
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",
