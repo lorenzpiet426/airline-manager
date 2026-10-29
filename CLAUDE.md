@@ -303,7 +303,7 @@ night curfews; **7.3** ✅ gates + own lounges; **7.4** ✅ bases (routes not fr
 Pilots and cabin crew, type ratings and training, crew shortages, strikes; hireable managers with skills,
 salaries, mistakes, and delegation levels.
 Split (2026-10-29): **8.1** ✅ pilots and cabin crew (headcounts, hiring, type ratings, upgrades, shortages);
-**8.2** ✅ unions, wage talks and strikes; **8.3** managers with delegation per department.
+**8.2** ✅ unions, wage talks and strikes; **8.3** ✅ managers with delegation per department. Phase 8 complete.
 
 ### Phase 9 — Revenue and operations detail
 Fare classes, booking curves, dynamic pricing; loyalty program; on-time performance, delays, weather,
@@ -502,6 +502,11 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 8.2: **pilot and cabin crew unions per country** with real names | Owner choice |
 | 2026-10-29 | 8.2: **real strike culture by country** (notice, warning strikes, minimum services, no-strike periods); strikes only after the agreement ends; EU 261 compensation for own-staff strikes from 2021 unless 14 days' notice | Owner choice; CJEU C-28/20 |
 | 2026-10-29 | 8.2: **the agreement sets pay**; the station pay setting becomes extra pay on top (100–130 %) | Owner choice |
+| 2026-10-29 | 8.3: managers for **all five departments** (network, revenue, fleet, maintenance, HR); finance with loans in Phase 10 | Owner choice |
+| 2026-10-29 | 8.3: **generated candidates** (local made-up names, 1–5 stars, experience, specialty, salary by skill; new each month; poaching) | Owner choice |
+| 2026-10-29 | 8.3: **proposal inbox** for "after my OK" (expires after 2 weeks, waits while away); "advise" = advice only; "decide alone" acts and reports | Owner choice |
+| 2026-10-29 | 8.3: **judgement by skill** (estimate = true effect + error shrinking with skill); forecast and real effect shown in a track record | Owner choice |
+| 2026-10-29 | 8.3: without a head a department makes no proposals; HR staff keep planning crews (old behaviour); manager randomness from stable hashes (other random events unchanged) | Old games and calibration unchanged |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1212,6 +1217,34 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: AI airlines' strikes are not modelled (only the world events' strikes); one agreement per country (no separate
   regional/LCC agreements); disputes only at agreement ends (no other conflicts yet).
 - **Next:** 8.3 managers with delegation per department.
+
+### 2026-10-29 — Session 28 (Phase 8.3: managers with delegation) ✅ — Phase 8 complete
+- Owner decisions (all recommended): all five departments, generated people, proposal inbox, judgement by skill (§7).
+- Data `src/data/managers.ts` (departments, delegation levels, specialties, salaries, skill odds, judgement noise, name
+  lists by region, `managerName`).
+- Engine `src/engine/managers.ts`: `Airline.mgmt` (`Management`: heads, delegation, candidates, proposals, decisions,
+  review/idle bookkeeping; no save version change), `ensureMgmt`, `appointHeads` (takeover: skill 3–4; HR alone, revenue
+  and fleet and maintenance after OK, network advises), `hireManager`/`fireManager` (severance), `setDelegation` (HR syncs
+  `crew.auto`), `propose` (auto → `applyCommand` + decision; else inbox/advice), `approveProposal`/`declineProposal`,
+  `routeOutlook`, reviews per department (revenue weekly, network day 3, fleet day 10, maintenance day 17, HR Mondays),
+  `managerWageOffer` (used by unions.ts), passive `reliabilityFactor` (maintenance.ts failures), `recruitingFactor`
+  (crews.ts quota), `leaseRentFactor` (fleet.ts extensions), salaries as overhead (ledger `management`), monthly candidates
+  and poaching, messages `managerHired`/`managerLeft`/`managerActions`/`proposalsWaiting`. Commands `HireManager`,
+  `FireManager`, `SetDelegation`, `ApproveProposal`, `DeclineProposal`, `SetFares`, `RunCrewPlan`; `crewShortfall`.
+- UI: new **Management** screen (`#/management`, rail + More, people icon): inbox with approve/decline/advice, one panel per
+  department (head with stars/experience/specialty/salary/help, delegation switch, candidates to hire), track record
+  (forecast vs real effect after 4 weeks); EN/DE.
+- Tests: 209 (`managers.test.ts`: candidates and salary, revenue proposal approved with forecast/actual, advice vs
+  deciding alone, skill vs judgement, network opens a route for an idle aircraft, HR head recruiting + HR delegation).
+- Austrian today: five heads appointed; the revenue head proposes ≈ 9 fare changes a month (mostly +3…6 %, real effects
+  close to forecasts); ≈ 3.5 s per simulated month.
+- Verified in browser (Austrian save): Management screen, hired a 2-star revenue head, one week → 4 proposals, approved one
+  → track record; phone 375 px without sideways scrolling.
+- Known: **multi-airport cities** — competitors on VIE–CDG don't count on VIE–ORY, so routes to a city's second airport
+  look too profitable (seen when the network head proposed VIE–ORY at ≈ 50 % direct margin; pre-existing model issue);
+  network heads only add routes, not frequencies on existing ones; no finance department until Phase 10.
+- **Next:** Phase 9 (revenue and operations detail: fare classes, booking curves, loyalty, delays, incidents) — or what
+  the owner prefers. Consider fixing the multi-airport competition first.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

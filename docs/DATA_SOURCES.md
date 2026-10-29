@@ -726,6 +726,26 @@ the agreement (extra pay on top allowed).
 - **Pay**: a raise equal to inflation keeps the pay level; the level feeds salaries, hiring (pay²) and people leaving
   (plus an angry mood). Austrian today: the HR department settles ≈ 3.6 % (pilots) / 3.1 % (cabin) in December 2026.
 
+## Managers (Phase 8.3, 2026-10-29)
+Owner decisions: all five departments, generated people, a proposal inbox, judgement by skill.
+
+- **People** (`src/data/managers.ts`): made-up names from common first and last names of the hub's region (no real
+  people); skill 1–5 stars (20/35/28/13/4 %), experience, a specialty; three new candidates per department each month.
+- **Salaries** (modelled from published pay for airline department heads, vice-president level at a mid-size European
+  airline ≈ €150–400k a year): $120k / 165k / 230k / 320k / 450k by skill (± 10 %), × the hub country's wage level and the
+  price level of the year. Severance 6 months' salary. Leaving: 0.6 % a month, the 4–5-star ones 1 % more (poached).
+- **Judgement**: a manager's estimate of a decision's effect = the model's true effect + an error of 45 / 30 / 20 / 12 /
+  6 % (by skill; × 0.65 with a matching specialty) of a typical effect size. Weak managers therefore sometimes choose
+  worse options; the true effect (the model's own forecast at the time of the decision) is shown four weeks later.
+- **Decisions**: revenue — fares ×0.94…1.06 on 3–7 routes a week (oldest-reviewed first); network — closing routes with
+  two months of losses and a poor outlook, opening one route a month for the aircraft with most unused hours (largest
+  markets in range, no flight bans, first free time from 06:00, tried on a copy of the game); fleet — lease extensions
+  within a year of the end (aircraft's recent route results vs the new rent), idle aircraft (6 weeks) returned or sold;
+  maintenance — an own hangar when the yearly saving beats running costs and building cost over its life; HR — crew
+  plans and wage offers (the head's guess of the union's minimum).
+- **Help without deciding** (modelled): technical failures × (1.1 − 0.05 × skill), recruits × (0.9 + 0.05 × skill),
+  lease-extension rent × (1.04 − 0.02 × skill); without a head: unchanged.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

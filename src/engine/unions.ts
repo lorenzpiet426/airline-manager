@@ -31,6 +31,7 @@ import { random } from './rng';
 import { pairDepartureUtc } from './schedule';
 import { pnlCosts, type Agreement, type Airline, type FlightPair, type GameState, type Route } from './state';
 import { addMonths, MINUTES_PER_DAY, startOfDay, toDate, type SimTime } from './time';
+import { managerWageOffer, propose } from './managers';
 import type { EngineWorld } from './world';
 
 const DAY = MINUTES_PER_DAY;
@@ -312,7 +313,24 @@ export function labourDailyStep(state: GameState, world: EngineWorld): void {
         callMediation(state, airline.id, key);
         continue;
       }
-      if (airline.crew?.auto && t.mediationUntil === undefined && state.time >= t.nextRound + WEEK) {
+      // With a head of HR (Phase 8.3) the head's own guess of what the union will sign: done at once, or proposed.
+      const head = airline.mgmt?.heads.hr;
+      if (head && t.mediationUntil === undefined && state.time >= t.nextRound + 2 * DAY) {
+        const offer = managerWageOffer(head, t, `${airline.id}|${key}|${t.round}|${t.opened}`);
+        if (airline.mgmt!.delegation.hr === 'auto') {
+          offerWage(state, airline.id, key, offer, true);
+          if (!a.talks) continue;
+        } else {
+          propose(state, world, airline, 'hr', {
+            kind: 'wageOffer',
+            target: `wage|${key}|${t.round}`,
+            params: { country: a.country, group: a.group, offer: offer * 100, demand: t.demand * 100 },
+            command: { type: 'OfferWage', airlineId: airline.id, payload: { key, raise: offer } },
+            forecastUsd: null,
+            actualUsd: null,
+          });
+        }
+      } else if (!head && airline.crew?.auto && t.mediationUntil === undefined && state.time >= t.nextRound + WEEK) {
         const offer = round3(Math.min(t.demand, Math.max(t.inflation * 0.9 + (t.demand - t.inflation * 0.9) * (0.1 + 0.25 * t.round), t.offer ?? 0)));
         offerWage(state, airline.id, key, offer, true);
         if (!a.talks) continue;

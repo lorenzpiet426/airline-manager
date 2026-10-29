@@ -26,6 +26,7 @@ import { grantHistoricSlots } from './slots';
 import { grantHistoricGates, hubGates, LOUNGE_SEATS } from './hub';
 import { ensureCrew, grantCrewForNeeds } from './crews';
 import { ensureLabour } from './unions';
+import { appointHeads } from './managers';
 import type { Aircraft, GameState, Route } from './state';
 import { addMonths, MINUTES_PER_DAY, MINUTES_PER_WEEK, simTime, startOfDay, toDate, yearOf, type SimTime } from './time';
 import { DAYS_ALL, hasDay, homeDepartures, isEastbound, seedOf, spreadDays } from './timetable';
@@ -165,6 +166,8 @@ export function takeOver(state: GameState, world: EngineWorld, realId: string): 
   // end of 2026 (ORF, June 2024); other years: agreements running out at modelled times.
   const realAgreement = simTime(2026, 12, 31);
   ensureLabour(state, world, scenario.realId === 'AUA' && state.time >= simTime(2024, 6, 1) && state.time < realAgreement ? { AT: realAgreement } : undefined);
+  // Its heads of department (Phase 8.3): fares and the fleet proposed for the player's OK, the network as advice.
+  appointHeads(state, world, id, { hr: 'auto', revenue: 'approve', network: 'advise', fleet: 'approve', maintenance: 'approve' });
   // Its own lounges at the hub (today's size, smaller with a smaller fleet in past years; already open).
   const scale = past ? Math.min(1, takeoverCashEur(scenario, yearOf(state.time)) / scenario.cashEur) : 1;
   const seats = Math.max(LOUNGE_SEATS[0], Math.min(LOUNGE_SEATS[1], Math.round((scenario.hubLounge.seats * scale) / 10) * 10));

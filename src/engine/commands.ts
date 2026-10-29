@@ -1,6 +1,8 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
 import type { CrewRole, LoungeQuality } from './state';
+import { approveProposal, declineProposal, ensureMgmt, fireManager, hireManager, setDelegation, type ManagerError } from './managers';
+import type { Delegation, Department } from '../data/managers';
 import { acceptDemand, answerProposal, callMediation, ensureLabour, offerWage, type UnionError } from './unions';
 import { ensureCrew, hireCrew, planCrew, releaseCrew, setCrewPay, trainCrew, type CrewError } from './crews';
 import { closeBase, openBase, stationAircraft, stationOf, stationsOf, type BaseError } from './bases';
@@ -274,7 +276,46 @@ export interface AnswerProposal {
   payload: { key: string; accept: boolean };
 }
 
-export type Command = OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Managers (Phase 8.3): hiring and letting go heads of department, what they may decide, their proposals. */
+export interface HireManager {
+  type: 'HireManager';
+  airlineId: string;
+  payload: { candidateId: string };
+}
+export interface FireManager {
+  type: 'FireManager';
+  airlineId: string;
+  payload: { dept: Department };
+}
+export interface SetDelegation {
+  type: 'SetDelegation';
+  airlineId: string;
+  payload: { dept: Department; level: Delegation };
+}
+export interface ApproveProposal {
+  type: 'ApproveProposal';
+  airlineId: string;
+  payload: { id: string };
+}
+export interface DeclineProposal {
+  type: 'DeclineProposal';
+  airlineId: string;
+  payload: { id: string };
+}
+/** New fares on a route (economy factor and premium classes), e.g. from the head of revenue management. */
+export interface SetFares {
+  type: 'SetFares';
+  airlineId: string;
+  payload: { routeId: string; fareFactor: number; classFares?: ClassFares };
+}
+/** The HR department's crew plan (hiring and training for the timetable). */
+export interface RunCrewPlan {
+  type: 'RunCrewPlan';
+  airlineId: string;
+  payload: Record<string, never>;
+}
+
+export type Command = HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -330,7 +371,8 @@ export type CommandError =
   | 'aircraftElsewhere'
   | BaseError
   | CrewError
-  | UnionError;
+  | UnionError
+  | ManagerError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -410,8 +452,52 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
               ? releaseCrew(state, world, command.airlineId, command.payload.station, command.payload.role, command.payload.family, command.payload.count)
               : command.type === 'SetCrewPay'
                 ? setCrewPay(state, command.airlineId, command.payload.station, command.payload.pay)
-                : ((airline.crew!.auto = command.payload.auto), command.payload.auto && planCrew(state, world, command.airlineId), null);
+                : ((airline.crew!.auto = command.payload.auto),
+                  airline.mgmt && (airline.mgmt.delegation.hr = command.payload.auto ? 'auto' : 'approve'),
+                  command.payload.auto && planCrew(state, world, command.airlineId),
+                  null);
       return error ? fail(error) : { ok: true };
+    }
+    case 'HireManager':
+    case 'FireManager':
+    case 'SetDelegation':
+    case 'ApproveProposal':
+    case 'DeclineProposal': {
+      const airline = state.airlines[command.airlineId];
+      if (!airline) return fail('airlineUnknown');
+      ensureMgmt(state, world);
+      if (command.type === 'ApproveProposal') {
+        const r = approveProposal(state, world, command.airlineId, command.payload.id);
+        return r ? fail(r.error as CommandError) : { ok: true };
+      }
+      const error =
+        command.type === 'HireManager'
+          ? hireManager(state, world, command.airlineId, command.payload.candidateId)
+          : command.type === 'FireManager'
+            ? fireManager(state, world, command.airlineId, command.payload.dept)
+            : command.type === 'SetDelegation'
+              ? (setDelegation(state, command.airlineId, command.payload.dept, command.payload.level) ??
+                (command.payload.dept === 'hr' && command.payload.level === 'auto' && airline.crew ? (planCrew(state, world, command.airlineId), null) : null))
+              : declineProposal(state, command.airlineId, command.payload.id);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'SetFares': {
+      const route = state.routes[command.payload.routeId];
+      if (!route || route.airlineId !== command.airlineId) return fail('routeUnknown');
+      const from = world.airportById.get(route.originId);
+      const to = world.airportById.get(route.destinationId);
+      if (!from || !to) return fail('airportUnknown');
+      const [low, high] = fareRange(state, from, to);
+      const fares = [command.payload.fareFactor, ...Object.values(command.payload.classFares ?? {})];
+      if (!fares.every((f) => Number.isFinite(f) && f >= Math.max(0.5, low) - 1e-9 && f <= Math.min(1.5, high) + 1e-9)) return fail('fareInvalid');
+      route.fareFactor = command.payload.fareFactor;
+      if (command.payload.classFares) route.classFares = { ...route.classFares, ...command.payload.classFares };
+      return { ok: true, id: route.id };
+    }
+    case 'RunCrewPlan': {
+      if (!state.airlines[command.airlineId]?.crew) return fail('airlineUnknown');
+      planCrew(state, world, command.airlineId);
+      return { ok: true };
     }
     case 'OfferWage':
     case 'AcceptDemand':

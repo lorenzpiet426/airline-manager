@@ -5,6 +5,7 @@ import { ensureHubFacilities, gateRentPerDayUsd, groundContext, loungeRunPerDayU
 import { baseRunPerDayUsd, stationOf } from './bases';
 import { crewDailyStep, crewPayPerDayUsd, ensureCrew } from './crews';
 import { ensureLabour, labourDailyStep } from './unions';
+import { ensureMgmt, managersDailyStep } from './managers';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -61,6 +62,7 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   ensureHubFacilities(state, world);
   ensureCrew(state, world);
   ensureLabour(state, world);
+  ensureMgmt(state, world);
   bookDay(state, world);
   // Historical games: the euro and re-based currencies arrive, closed airports hand over to their successors.
   currencyChangeStep(state);
@@ -77,6 +79,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   // Crews start or leave, the HR department plans, yesterday's flights without crew are paid for (Phase 8.1).
   crewDailyStep(state, world);
   labourDailyStep(state, world);
+  // Heads of department review, propose and decide (Phase 8.3).
+  managersDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {
     closeWeek(state);
     recordSlotUse(state, world);

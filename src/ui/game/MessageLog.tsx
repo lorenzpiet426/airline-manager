@@ -106,6 +106,12 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
           count: Number(p.days ?? 0),
         });
       }
+      case 'managerHired':
+      case 'managerLeft':
+        return t(`msg.${m.kind}`, { name: p.name, deptName: t(`mgmt.dept.${p.dept}`) });
+      case 'managerActions':
+      case 'proposalsWaiting':
+        return t(`msg.${m.kind}`, { count: Number(p.count) });
       case 'strikeCancellations':
         return t('msg.strikeCancellations', { count: Number(p.count) });
       case 'gatesRented':

@@ -18,7 +18,8 @@
     "saves": "Spielstände",
     "livery": "Lackierung",
     "aircraft": "Flugzeuge",
-    "history": "Geschichte"
+    "history": "Geschichte",
+    "management": "Management"
   },
   "status": {
     "sim": "SIM",
@@ -242,7 +243,13 @@
     "mediationStarted": "Schlichtung mit {{union}} ({{group}}) bis {{until}}. Bis dahin keine Streiks.",
     "mediationProposal": "Der Schlichter schlägt {{proposal}} pro Jahr für die {{group}} ({{union}}) vor. Antworte innerhalb einer Woche.",
     "mediationRejected_union": "Die Mitglieder von {{union}} haben gegen den Schlichterspruch gestimmt. Die Verhandlungen gehen weiter.",
-    "mediationRejected_airline": "Du hast den Schlichterspruch abgelehnt. Die {{group}} sind verärgert; die Verhandlungen gehen weiter."
+    "mediationRejected_airline": "Du hast den Schlichterspruch abgelehnt. Die {{group}} sind verärgert; die Verhandlungen gehen weiter.",
+    "managerHired": "{{name}} leitet ab jetzt: {{deptName}}.",
+    "managerLeft": "{{name}} (Leitung {{deptName}}) ist zu einer anderen Airline gewechselt.",
+    "managerActions_one": "Deine Manager haben heute {{count}} Entscheidung getroffen (siehe Management).",
+    "managerActions_other": "Deine Manager haben heute {{count}} Entscheidungen getroffen (siehe Management).",
+    "proposalsWaiting_one": "{{count}} neuer Vorschlag deiner Manager wartet auf dein OK (siehe Management).",
+    "proposalsWaiting_other": "{{count}} neue Vorschläge deiner Manager warten auf dein OK (siehe Management)."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -407,7 +414,12 @@
     "offerTooSoon": "Die Gewerkschaft berät noch über dein letztes Angebot (oder eine Schlichtung läuft). Das nächste Angebot ist am angezeigten Datum möglich.",
     "offerInvalid": "Biete eine jährliche Erhöhung zwischen 0 % und 25 % an.",
     "noProposal": "Es gibt keinen Schlichterspruch, auf den du antworten kannst.",
-    "mediationBusy": "Eine Schlichtung läuft bereits."
+    "mediationBusy": "Eine Schlichtung läuft bereits.",
+    "candidateUnknown": "Diese Person hat eine andere Stelle angenommen.",
+    "noManager": "Diese Abteilung hat keine Leitung.",
+    "proposalUnknown": "Dieser Vorschlag ist nicht mehr offen.",
+    "adviceOnly": "Das ist nur ein Rat: Die Abteilung darf nicht handeln. Mach es selbst oder lass die Abteilung nach deinem OK handeln.",
+    "delegationInvalid": "Wähle beraten, nach meinem OK oder selbst entscheiden."
   },
   "fleet": {
     "title": "Flotte",
@@ -1067,6 +1079,100 @@
     "acceptDemand": "{{value}} annehmen",
     "callMediation": "Schlichter anrufen",
     "talksNote": "Eine Erhöhung in Höhe der Inflation hält das Gehalt, wo es ist. Mehr hebt es über den Markt (Crews bleiben, Einstellen geht leichter), weniger lässt es zurückfallen. Ein niedrigeres Angebot als zuvor verärgert die Crews."
+  },
+  "mgmt": {
+    "title": "Management",
+    "inbox_one": "Posteingang ({{count}})",
+    "inbox_other": "Posteingang ({{count}})",
+    "inboxIntro": "Was deine Abteilungsleitungen vorschlagen. Jeder Vorschlag zeigt die Wirkung, die die Leitung erwartet; Manager können sich irren, die schwächeren öfter. Vorschläge verfallen nach zwei Wochen.",
+    "inboxEmpty": "Nichts offen.",
+    "expected": "Erwartet {{value}} pro Woche",
+    "actual": "tatsächlich {{value}} pro Woche",
+    "actualLater": "tatsächliche Wirkung ab {{date}} bekannt",
+    "adviceOnly": "Rat: Setz ihn selbst in den Bildschirmen um, wenn du zustimmst.",
+    "approve": "Genehmigen",
+    "decline": "Ablehnen",
+    "dismiss": "Verwerfen",
+    "notPossible": "Das ist nicht mehr möglich.",
+    "dept": {
+      "network": "Netzplanung",
+      "revenue": "Revenue Management",
+      "fleet": "Flotte",
+      "maintenance": "Technik",
+      "hr": "Personal"
+    },
+    "does": {
+      "network": "Schaut jeden Monat auf Strecken, die seit zwei Monaten Verlust machen (schlägt vor, sie zu schließen), und auf Flugzeuge mit freien Stunden (schlägt eine neue Strecke vor, die in den Flugplan passt).",
+      "revenue": "Prüft jede Woche ein paar Strecken (mehr mit einer besseren Leitung) und schlägt Preise vor, die mehr einbringen sollten.",
+      "fleet": "Jeden Monat: Leasingverträge, die innerhalb eines Jahres enden (verlängern, wenn das Flugzeug mehr verdient als die neue Miete), und Flugzeuge, die seit sechs Wochen stehen (zurückgeben oder verkaufen).",
+      "maintenance": "Schlägt einen eigenen Hangar vor, wenn er Geld spart. Eine gute Leitung verhindert auch technische Störungen (Zuverlässigkeitstechnik).",
+      "hr": "Plant die Crews (Einstellen, Kapitänsschulungen, Musterberechtigungen) und verhandelt mit den Gewerkschaften. Eine gute Leitung findet mehr Bewerber und schätzt besser ein, wo eine Gewerkschaft unterschreibt."
+    },
+    "noHead": "Keine Leitung: Diese Abteilung macht keine Vorschläge. Stell unten jemanden ein.",
+    "noHeadHr": "Keine Leitung: Die Personalabteilung plant die Crews und macht einfache Lohnangebote (wenn sie selbst entscheidet). Eine Leitung verhandelt besser und findet mehr Bewerber.",
+    "effect": {
+      "maintenance": "Technische Störungen {{value}}",
+      "hr": "Bewerber vom Arbeitsmarkt {{value}}",
+      "fleet": "Miete bei Leasingverlängerungen {{value}}"
+    },
+    "fire": "Kündigen (6 Monatsgehälter)",
+    "hire": "Einstellen",
+    "replace": "Stattdessen einstellen",
+    "delegation": "Was die Leitung darf",
+    "level": {
+      "advise": "Beraten",
+      "approve": "Nach meinem OK",
+      "auto": "Selbst entscheiden"
+    },
+    "levelNote": {
+      "advise": "Vorschläge erscheinen nur als Rat. Jede Änderung machst du selbst.",
+      "approve": "Vorschläge warten im Posteingang, bis du sie genehmigst oder ablehnst (auch während du weg bist).",
+      "auto": "Die Leitung entscheidet selbst und meldet es, auch während du in Echtzeit-Spielen weg bist."
+    },
+    "showCandidates_one": "{{count}} Bewerbung zeigen",
+    "showCandidates_other": "{{count}} Bewerbungen zeigen",
+    "hideCandidates": "Bewerbungen ausblenden",
+    "candidatesNote": "Jeden Monat neue Bewerbungen. Bessere kosten viel mehr, und die besten werden manchmal von anderen Airlines abgeworben.",
+    "skillLabel_one": "{{count}} Stern",
+    "skillLabel_other": "{{count}} Sterne",
+    "experience_one": "{{count}} Jahr in der Branche",
+    "experience_other": "{{count}} Jahre in der Branche",
+    "salary": "{{value}} pro Jahr",
+    "spec": {
+      "shortHaul": "Kurzstrecke",
+      "longHaul": "Langstrecke",
+      "premium": "Premium-Kabinen",
+      "leasing": "Leasing",
+      "narrowbody": "Schmalrumpfflugzeuge",
+      "widebody": "Großraumflugzeuge",
+      "negotiation": "Verhandlungen",
+      "recruiting": "Recruiting"
+    },
+    "size": {
+      "narrow": "Schmalrumpf",
+      "wide": "Großraum"
+    },
+    "record": "Entscheidungen und Bilanz",
+    "recordIntro": "Was entschieden wurde, von wem, was die Leitung erwartet hat, und vier Wochen später die tatsächliche Wirkung (im Modell, bei sonst gleichen Bedingungen).",
+    "recordEmpty": "Noch keine Entscheidungen.",
+    "by": {
+      "manager": "von der Leitung",
+      "player": "von dir genehmigt"
+    },
+    "proposal": {
+      "fares": "Preise auf {{route}} von {{from}} % auf {{to}} % des Marktpreises ändern.",
+      "closeRoute": "{{route}} schließen: seit zwei Monaten Verlust.",
+      "openRoute_one": "{{route}} mit {{registration}} eröffnen, {{count}} Umlauf pro Woche.",
+      "openRoute_other": "{{route}} mit {{registration}} eröffnen, {{count}} Umläufe pro Woche.",
+      "extendLease": "Leasing von {{registration}} um {{years}} Jahre verlängern.",
+      "returnLease_one": "{{registration}} vorzeitig an den Leasinggeber zurückgeben: steht seit {{count}} Woche.",
+      "returnLease_other": "{{registration}} vorzeitig an den Leasinggeber zurückgeben: steht seit {{count}} Wochen.",
+      "sellAircraft_one": "{{registration}} verkaufen: steht seit {{count}} Woche.",
+      "sellAircraft_other": "{{registration}} verkaufen: steht seit {{count}} Wochen.",
+      "buildHangar": "Eigenen {{size}}-Hangar am Drehkreuz bauen ({{cost}}).",
+      "crewPlan": "Crewplan umsetzen: etwa {{pilots}} Piloten und {{cabin}} Flugbegleiter noch einzustellen oder zu schulen.",
+      "wageOffer": "{{union}} ({{group}}) {{offer}} pro Jahr anbieten (Forderung: {{demand}})."
+    }
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

@@ -1,6 +1,7 @@
 // Fleet ownership (Phase 4.1): ordering new aircraft from the factory (delivery slots, payments in stages), buying and
 // selling used aircraft, scrapping, and the end of leases (return, extension, early return). Owned aircraft are
 // written off over their useful life; selling below or above that book value is a loss or gain in the accounts.
+import { leaseRentFactor } from './managers';
 import { getAircraftType } from '../data/aircraft';
 import {
   backlogYears,
@@ -319,7 +320,8 @@ export function extendLease(state: GameState, airlineId: string, aircraftId: str
   if (!a.lease) return fail('notLeased');
   if (!Number.isInteger(years) || years < 1 || years > 6) return fail('yearsInvalid');
   if (a.lease.endAt > addMonths(state.time, EXTEND_WINDOW_MONTHS)) return fail('extendTooEarly');
-  a.lease.monthlyRent = money(extensionRentUsd(a, state.time), 'USD');
+  // A good head of fleet negotiates a better rent (Phase 8.3).
+  a.lease.monthlyRent = money(Math.round((extensionRentUsd(a, state.time) * leaseRentFactor(state.airlines[airlineId])) / 1000) * 1000, 'USD');
   a.lease.endAt = addMonths(a.lease.endAt, years * 12);
   a.lease.warned = false;
   postMessage(state, {

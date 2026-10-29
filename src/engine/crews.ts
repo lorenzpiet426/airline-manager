@@ -45,6 +45,7 @@ import type { Airline, AirlineCrew, CrewBatch, CrewRole, FlightPair, GameState, 
 import { MINUTES_PER_DAY, startOfDay, toDate, type SimTime } from './time';
 import { hasDay } from './timetable';
 import { groupMood, groupPay } from './unions';
+import { recruitingFactor } from './managers';
 import type { EngineWorld } from './world';
 
 const WEEK = 7 * MINUTES_PER_DAY;
@@ -228,14 +229,15 @@ export function hiringQuota(state: GameState, world: EngineWorld, airline: Airli
   // Big employers attract more applicants and train their own (cadet programmes): about 1 % of their pilots a month more.
   const employed = Object.values(s?.pilots ?? {}).reduce((n, p) => n + p.captains + p.firstOfficers, 0);
   const market = (pilotsPerMonth(airport?.marketPop ?? 1_000_000) + employed * EMPLOYER_PULL) * pilotMarket(toDate(state.time).getUTCFullYear());
-  const base = market * pay ** 2;
+  // A good head of HR finds more candidates (Phase 8.3).
+  const base = market * pay ** 2 * recruitingFactor(airline);
   const done = airline.crew?.hired[station];
   const used = done && done.month === monthKey(state.time) ? done : { pilots: 0, cabin: 0, captains: 0, rated: 0 };
   return {
     pilots: Math.max(0, Math.floor(base) - used.pilots),
     captains: Math.max(0, Math.floor(base * CAPTAIN_SHARE) - (used.captains ?? 0)),
     rated: Math.max(0, Math.floor(base * RATED_SHARE) - (used.rated ?? 0)),
-    cabin: Math.max(0, Math.floor(market * cabinPay ** 2 * CABIN_PER_PILOT) - used.cabin),
+    cabin: Math.max(0, Math.floor(market * cabinPay ** 2 * CABIN_PER_PILOT * recruitingFactor(airline)) - used.cabin),
   };
 }
 
@@ -338,6 +340,25 @@ export function setCrewPay(state: GameState, airlineId: string, station: string,
   airline.crew ??= { stations: {}, auto: true, hired: {} };
   stationCrew(airline.crew, station).pay = Math.round(pay * 100) / 100;
   return null;
+}
+
+/** People still to hire or train for today's timetable and the aircraft about to arrive (for the head of HR). */
+export function crewShortfall(state: GameState, world: EngineWorld, airlineId: string): { pilots: number; cabin: number } {
+  const airline = state.airlines[airlineId];
+  let pilots = 0;
+  let cabin = 0;
+  if (!airline?.crew) return { pilots, cabin };
+  for (const [station, need] of crewNeeds(state, airlineId, world, true)) {
+    const s = airline.crew.stations[station] ?? emptyStation();
+    const coming = (role: CrewRole, family: string | null) => s.pipeline.filter((b) => b.role === role && b.family === family).reduce((n, b) => n + b.count, 0);
+    cabin += Math.max(0, planned(need.cabin) - s.cabin - coming('cabin', null));
+    for (const [family, p] of need.pilots) {
+      const have = s.pilots[family] ?? { captains: 0, firstOfficers: 0 };
+      pilots += Math.max(0, planned(p.captains) - have.captains - coming('captain', family));
+      pilots += Math.max(0, planned(p.firstOfficers) - have.firstOfficers - coming('firstOfficer', family));
+    }
+  }
+  return { pilots, cabin };
 }
 
 // ─── Automatic planning (the HR department) ─────────────────────────────────────

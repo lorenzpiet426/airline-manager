@@ -3,6 +3,8 @@
 import type { StartupAirline } from './startups';
 import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
+import type { Command } from './commands';
+import type { Delegation, Department } from '../data/managers';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
 export const SAVE_VERSION = 11;
@@ -60,6 +62,58 @@ export interface Airline {
   crew?: AirlineCrew;
   /** Collective agreements with the crews' unions (Phase 8.2), keyed "country|group". */
   labour?: Record<string, Agreement>;
+  /** Heads of department, what they may decide, their proposals and decisions (Phase 8.3). */
+  mgmt?: Management;
+}
+
+export interface Manager {
+  id: string;
+  dept: Department;
+  name: string;
+  /** 1–5 stars. */
+  skill: number;
+  experience: number;
+  specialty: string | null;
+  /** Yearly salary in 2025 USD at Austrian wage level (scaled by the hub country and the price level). */
+  salaryUsd: number;
+  hiredAt?: SimTime;
+}
+
+/** Something a manager suggests (or did): the command it runs, the manager's forecast and the true effect. */
+export interface Proposal {
+  id: string;
+  dept: Department;
+  kind: string;
+  params: Record<string, string | number>;
+  /** What is changed (a route, an aircraft …): one open proposal per target. */
+  target: string;
+  command: Command;
+  /** The manager's estimate of the effect (USD a week; null where there is no money effect to estimate). */
+  forecastUsd: number | null;
+  /** The real effect (USD a week), shown only some weeks after the decision. */
+  actualUsd: number | null;
+  at: SimTime;
+  expiresAt: SimTime;
+  /** Advice only (the department may not act): the player does it in the screens. */
+  advice: boolean;
+}
+
+export interface Decision extends Proposal {
+  by: 'manager' | 'player';
+  decidedAt: SimTime;
+  revealAt: SimTime;
+}
+
+export interface Management {
+  heads: Partial<Record<Department, Manager>>;
+  delegation: Record<Department, Delegation>;
+  candidates: Manager[];
+  proposals: Proposal[];
+  /** The last decisions (newest last). */
+  decisions: Decision[];
+  /** When each route's fares were last reviewed; since when aircraft have stood idle. */
+  reviewed: Record<string, SimTime>;
+  idleSince: Record<string, SimTime>;
 }
 
 /** A collective agreement with the pilots' or cabin crew's union in one country (Phase 8.2). */
@@ -603,7 +657,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -636,7 +690,9 @@ export type LedgerKind =
   // Setting up a base (Phase 7.4).
   | 'base'
   // Type ratings, upgrades, cabin training, severance (Phase 8.1).
-  | 'training';
+  | 'training'
+  // Managers' salaries and severance (Phase 8.3).
+  | 'management';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {

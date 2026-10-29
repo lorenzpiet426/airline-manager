@@ -4,6 +4,7 @@
 // by an MRO (maintenance company) or in the airline's own hangar. Leased aircraft pay maintenance reserves to the lessor,
 // who pays the heavy checks from them. Technical failures ground aircraft for hours or days: flights are cancelled,
 // passengers are compensated (EU 261) and the reputation suffers.
+import { reliabilityFactor } from './managers';
 import { repaintWithCheck } from './livery';
 import { getAircraftType, type AircraftType } from '../data/aircraft';
 import {
@@ -388,7 +389,8 @@ function rollFailure(state: GameState, world: EngineWorld, a: Aircraft): void {
   const p = PROGRAMME[type.category];
   // How far into its check cycle the aircraft is (0 = just checked, 1 = due).
   const used = Math.max((m.fh - m.c.fh) / p.cFh, (state.time - m.c.at) / (p.cMonths * 30.4 * DAY));
-  const q = failureChance(ageOf(a, state.time), used, yearOf(state.time) - type.eis < 3);
+  // A good head of maintenance (reliability engineering, Phase 8.3) prevents some failures.
+  const q = failureChance(ageOf(a, state.time), used, yearOf(state.time) - type.eis < 3) * reliabilityFactor(state.airlines[a.airlineId], type.category === 'widebody');
   if (random(state) >= 1 - (1 - q) ** (departures.length * 2)) return;
   const from = departures[Math.floor(random(state) * departures.length)]!;
   const hours = failureHours(random(state), random(state));

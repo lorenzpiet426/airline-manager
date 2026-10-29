@@ -18,7 +18,8 @@
     "saves": "Saves",
     "livery": "Livery",
     "aircraft": "Aircraft",
-    "history": "History"
+    "history": "History",
+    "management": "Management"
   },
   "status": {
     "sim": "SIM",
@@ -242,7 +243,13 @@
     "mediationStarted": "Mediation with {{union}} ({{group}}) until {{until}}. No strikes meanwhile.",
     "mediationProposal": "The mediator proposes {{proposal}} a year for the {{group}} ({{union}}). Answer within a week.",
     "mediationRejected_union": "The members of {{union}} voted against the mediator's proposal. The talks go on.",
-    "mediationRejected_airline": "You turned down the mediator's proposal. The {{group}} are not pleased; the talks go on."
+    "mediationRejected_airline": "You turned down the mediator's proposal. The {{group}} are not pleased; the talks go on.",
+    "managerHired": "{{name}} is your new head of {{deptName}}.",
+    "managerLeft": "{{name}}, head of {{deptName}}, has left for another airline.",
+    "managerActions_one": "Your managers made {{count}} decision today (see Management).",
+    "managerActions_other": "Your managers made {{count}} decisions today (see Management).",
+    "proposalsWaiting_one": "{{count}} new proposal from your managers is waiting for your OK (see Management).",
+    "proposalsWaiting_other": "{{count}} new proposals from your managers are waiting for your OK (see Management)."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -407,7 +414,12 @@
     "offerTooSoon": "The union is still discussing your last offer (or mediation is under way). You can make the next offer on the date shown.",
     "offerInvalid": "Offer a yearly raise between 0 % and 25 %.",
     "noProposal": "There is no mediator's proposal to answer.",
-    "mediationBusy": "Mediation is already under way."
+    "mediationBusy": "Mediation is already under way.",
+    "candidateUnknown": "That candidate has taken another job.",
+    "noManager": "This department has no head.",
+    "proposalUnknown": "That proposal is no longer open.",
+    "adviceOnly": "This is advice only: the department may not act. Do it yourself, or let the department act after your OK.",
+    "delegationInvalid": "Choose advise, after my OK, or decide alone."
   },
   "fleet": {
     "title": "Fleet",
@@ -1067,6 +1079,100 @@
     "acceptDemand": "Accept {{value}}",
     "callMediation": "Call a mediator",
     "talksNote": "A raise equal to inflation keeps pay where it is; more raises it above the market (crews stay and hiring is easier), less lets it fall behind. Offering less than before angers the crews."
+  },
+  "mgmt": {
+    "title": "Management",
+    "inbox_one": "Inbox ({{count}})",
+    "inbox_other": "Inbox ({{count}})",
+    "inboxIntro": "What your heads of department propose. Each proposal shows the effect the manager expects; managers can be wrong, the weaker ones more often. Proposals expire after two weeks.",
+    "inboxEmpty": "Nothing waiting.",
+    "expected": "Manager expects {{value}} a week",
+    "actual": "real effect {{value}} a week",
+    "actualLater": "real effect known from {{date}}",
+    "adviceOnly": "Advice: do it yourself in the screens if you agree.",
+    "approve": "Approve",
+    "decline": "Decline",
+    "dismiss": "Dismiss",
+    "notPossible": "That is no longer possible.",
+    "dept": {
+      "network": "Network planning",
+      "revenue": "Revenue management",
+      "fleet": "Fleet",
+      "maintenance": "Maintenance",
+      "hr": "Human resources"
+    },
+    "does": {
+      "network": "Looks every month at routes that have lost money for two months (proposes closing them) and at aircraft with unused hours (proposes a new route that fits the timetable).",
+      "revenue": "Reviews a few routes every week (more with a better head) and proposes fares that should earn more.",
+      "fleet": "Every month: leases ending within a year (extend them if the aircraft earns more than the new rent) and aircraft standing idle for six weeks (give back or sell).",
+      "maintenance": "Proposes an own hangar when it would save money. A good head also prevents technical failures (reliability engineering).",
+      "hr": "Plans crews (hiring, upgrades, type ratings) and negotiates with the unions. A good head finds more recruits and guesses better where a union will sign."
+    },
+    "noHead": "No head: this department makes no proposals. Hire one below.",
+    "noHeadHr": "No head: the HR staff plan crews and make simple wage offers (when deciding alone). A head negotiates better and finds more recruits.",
+    "effect": {
+      "maintenance": "Technical failures {{value}}",
+      "hr": "Recruits from the job market {{value}}",
+      "fleet": "Rent for lease extensions {{value}}"
+    },
+    "fire": "Let go (6 months' salary)",
+    "hire": "Hire",
+    "replace": "Hire instead",
+    "delegation": "What the head may do",
+    "level": {
+      "advise": "Advise",
+      "approve": "After my OK",
+      "auto": "Decide alone"
+    },
+    "levelNote": {
+      "advise": "Proposals appear as advice only. You make every change yourself.",
+      "approve": "Proposals wait in the inbox until you approve or decline them (also while you are away).",
+      "auto": "The head decides alone and reports it, also while you are away in real-clock games."
+    },
+    "showCandidates_one": "Show {{count}} candidate",
+    "showCandidates_other": "Show {{count}} candidates",
+    "hideCandidates": "Hide candidates",
+    "candidatesNote": "New candidates every month. Better ones cost much more, and the best are sometimes poached by other airlines.",
+    "skillLabel_one": "{{count}} star",
+    "skillLabel_other": "{{count}} stars",
+    "experience_one": "{{count}} year in the industry",
+    "experience_other": "{{count}} years in the industry",
+    "salary": "{{value}} a year",
+    "spec": {
+      "shortHaul": "short-haul",
+      "longHaul": "long-haul",
+      "premium": "premium cabins",
+      "leasing": "leasing",
+      "narrowbody": "narrow-bodies",
+      "widebody": "wide-bodies",
+      "negotiation": "negotiation",
+      "recruiting": "recruiting"
+    },
+    "size": {
+      "narrow": "narrow-body",
+      "wide": "wide-body"
+    },
+    "record": "Decisions and track record",
+    "recordIntro": "What was decided, by whom, what the manager expected, and four weeks later the real effect (in the model, with everything else unchanged).",
+    "recordEmpty": "No decisions yet.",
+    "by": {
+      "manager": "by the manager",
+      "player": "approved by you"
+    },
+    "proposal": {
+      "fares": "Change fares on {{route}} from {{from}} % to {{to}} % of the market fare.",
+      "closeRoute": "Close {{route}}: it has lost money for two months.",
+      "openRoute_one": "Open {{route}} with {{registration}}, {{count}} round trip a week.",
+      "openRoute_other": "Open {{route}} with {{registration}}, {{count}} round trips a week.",
+      "extendLease": "Extend the lease of {{registration}} by {{years}} years.",
+      "returnLease_one": "Give {{registration}} back to the lessor early: idle for {{count}} week.",
+      "returnLease_other": "Give {{registration}} back to the lessor early: idle for {{count}} weeks.",
+      "sellAircraft_one": "Sell {{registration}}: idle for {{count}} week.",
+      "sellAircraft_other": "Sell {{registration}}: idle for {{count}} weeks.",
+      "buildHangar": "Build an own {{size}} hangar at the hub ({{cost}}).",
+      "crewPlan": "Run the crew plan: about {{pilots}} pilots and {{cabin}} cabin crew still to hire or train.",
+      "wageOffer": "Offer {{union}} ({{group}}) {{offer}} a year (they ask for {{demand}})."
+    }
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",
