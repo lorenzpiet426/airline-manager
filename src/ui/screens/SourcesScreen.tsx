@@ -21,6 +21,7 @@ const SOURCES: { key: string; name: string; licence: string; url: string }[] = [
   { key: 'tc', name: 'Transport Canada — Canadian Civil Aircraft Register', licence: 'Non-commercial reuse with attribution', url: 'https://tc.canada.ca/' },
   { key: 'austrocontrol', name: 'Austro Control — Luftfahrzeugregister', licence: 'Public register', url: 'https://www.austrocontrol.at/' },
   { key: 'iaa', name: 'Irish Aviation Authority — aircraft register', licence: 'Public register', url: 'https://www.iaa.ie/' },
+  { key: 'slots', name: 'IATA Worldwide Airport Slot Guidelines; slot coordinators (ACL, FHKD, SCA …)', licence: 'Facts', url: 'https://www.iata.org/en/programs/ops-infra/slots/' },
   { key: 'reports', name: 'Airline and airport annual reports (Austrian Airlines / Lufthansa Group, Ryanair, Flughafen Wien)', licence: 'Facts', url: 'https://www.austrianairlines.ag/' },
   { key: 'manufacturers', name: 'Aircraft manufacturers (published figures)', licence: 'Facts', url: 'https://www.airbus.com/' },
   { key: 'plex', name: 'IBM Plex fonts', licence: 'SIL OFL', url: 'https://github.com/IBM/plex' },

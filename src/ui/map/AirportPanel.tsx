@@ -1,4 +1,7 @@
+import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
+import { curfewsAt } from '../../data/curfews';
+import { slotAirport } from '../../data/slots';
 import type { Airport, Country } from '../../data/types';
 import { useSettings } from '../../settings/settings';
 import {
@@ -17,6 +20,9 @@ export function AirportPanel({ airport, country, onClose }: { airport: Airport; 
   const { language } = useSettings();
   const n = (value: number) => formatNumber(language, value);
   const local = localTimeIn(language, airport.tz);
+  // Phase 7.2: slot coordination and night rules as they are today.
+  const slot = slotAirport(airport.id);
+  const rules = curfewsAt(airport.id, new Date().getUTCFullYear());
 
   return (
     <aside className="airport-panel" aria-label={airport.name}>
@@ -78,6 +84,27 @@ export function AirportPanel({ airport, country, onClose }: { airport: Airport; 
         )}
       </section>
 
+      {(slot || rules.length > 0) && (
+        <section className="airport-panel__section">
+          <h3>{t('airport.section.slots')}</h3>
+          <dl className="facts">
+            <dt>{t('airport.slots')}</dt>
+            <dd className="small">
+              {slot
+                ? t('airport.slotsValue', { capacity: slot.capacity, use: Math.round(slot.use * 100) }) + (slot.pairUsd ? ` · ${t('airport.slotsTradable')}` : '')
+                : t('airport.slotsNone')}
+            </dd>
+            {rules.map((c, i) => (
+              <Fragment key={i}>
+                <dt>{t(`slots.kind.${c.kind}`)}</dt>
+                <dd className="small">
+                  <span className="mono">{`${c.from}–${c.until}`}</span> <span className="muted">· {c.note}</span>
+                </dd>
+              </Fragment>
+            ))}
+          </dl>
+        </section>
+      )}
       <section className="airport-panel__section">
         <h3>{t('airport.section.market')}</h3>
         <dl className="facts">

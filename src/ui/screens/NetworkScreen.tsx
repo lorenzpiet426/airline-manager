@@ -6,7 +6,8 @@ import { Segmented } from '../components/Segmented';
 import { DeparturesBoard } from '../network/DeparturesBoard';
 import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
 import { ConnectionsView } from '../network/ConnectionsView';
-import { daysText, hhmmText } from '../game/timetableText';
+import { SlotsView } from '../network/SlotsView';
+import { daysText, hhmmText, weekdayNames } from '../game/timetableText';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
 import { SourceTag } from '../components/SourceTag';
@@ -54,6 +55,7 @@ import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 import { routeTransfers } from '../../engine/transfers';
+import { nextSeasonStart, slotPriceUsd, type SlotShortfall } from '../../engine/slots';
 
 /** Load factor colours (ECAM logic): green good, amber weak, red poor. */
 export const lfClass = (lf: number) => (lf >= 0.75 ? 'text--normal' : lf >= 0.55 ? 'text--caution' : 'text--warning');
@@ -72,7 +74,7 @@ export function NetworkScreen() {
   const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const [editing, setEditing] = useState<Editing>(null);
-  const [tab, setTab] = useState<'routes' | 'timetable' | 'connections'>('routes');
+  const [tab, setTab] = useState<'routes' | 'timetable' | 'connections' | 'slots'>('routes');
 
   if (!game || !airline) {
     return (
@@ -132,6 +134,7 @@ export function NetworkScreen() {
                 { value: 'routes', label: t('network.routes') },
                 { value: 'timetable', label: t('timetable.board') },
                 { value: 'connections', label: t('connections.tab') },
+                { value: 'slots', label: t('slots.tab') },
               ]}
               onChange={setTab}
             />
@@ -153,6 +156,8 @@ export function NetworkScreen() {
             </Panel>
           ) : tab === 'connections' && engineWorld ? (
             <ConnectionsView game={game} world={engineWorld} airline={airline} code={code} />
+          ) : tab === 'slots' && engineWorld ? (
+            <SlotsView game={game} world={engineWorld} airline={airline} code={code} />
           ) : routes.length === 0 ? (
             <Panel title={t('network.routes')}>
               <p className="muted">{t('network.empty')}</p>
@@ -284,6 +289,9 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<CommandError | null>(null);
+  // Phase 7.2: the airport and hours without a free slot, after a refused plan; and a note after asking for slots.
+  const [shortfall, setShortfall] = useState<SlotShortfall | null>(null);
+  const [requested, setRequested] = useState(false);
 
   const hub = world?.airportById.get(airline.hubId);
   const dest = destinationId ? world?.airportById.get(destinationId) : undefined;
@@ -385,7 +393,26 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     );
     setBusy(false);
     if (result.ok) onDone();
-    else setError(result.error);
+    else {
+      setError(result.error);
+      setShortfall(result.slots ?? null);
+      setRequested(false);
+    }
+  };
+
+  const buyMissing = async () => {
+    if (!shortfall) return;
+    setBusy(true);
+    const bought = await sendCommand({ type: 'BuySlots', airlineId: airline.id, payload: shortfall });
+    setBusy(false);
+    if (!bought.ok) setError(bought.error);
+    else await submit();
+  };
+
+  const requestMissing = async () => {
+    if (!shortfall) return;
+    await sendCommand({ type: 'RequestSlots', airlineId: airline.id, payload: shortfall });
+    setRequested(true);
   };
 
   const close = async () => {
@@ -491,6 +518,17 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
         </div>
 
         {shown && <p className="notice notice--error">{t(`errors.${shown}`)}</p>}
+        {shown === 'noSlot' && shortfall && (
+          <SlotShortfallNote
+            game={game}
+            airline={airline}
+            shortfall={shortfall}
+            busy={busy}
+            requested={requested}
+            onBuy={() => void buyMissing()}
+            onRequest={() => void requestMissing()}
+          />
+        )}
       </Panel>
 
       {detailed && draft && engineWorld && (
@@ -669,5 +707,53 @@ function FactRow({ label, value }: { label: string; value: string }) {
       <dt>{label}</dt>
       <dd className="mono muted">{value}</dd>
     </>
+  );
+}
+
+/** A refused plan (Phase 7.2): which slots are missing, and buying them (where trading is allowed) or asking for them. */
+function SlotShortfallNote({
+  game,
+  airline,
+  shortfall,
+  busy,
+  requested,
+  onBuy,
+  onRequest,
+}: {
+  game: GameState;
+  airline: Airline;
+  shortfall: SlotShortfall;
+  busy: boolean;
+  requested: boolean;
+  onBuy: () => void;
+  onRequest: () => void;
+}) {
+  const { t } = useTranslation();
+  const { language } = useSettings();
+  const world = useGameWorld();
+  const names = weekdayNames(language);
+  const airport = world?.airportById.get(shortfall.airportId);
+  const hours = [...new Set(shortfall.hours)].sort((a, b) => a - b);
+  const prices = shortfall.hours.map((h) => slotPriceUsd(shortfall.airportId, h, game.time));
+  const usd = prices.every((p) => p !== null) ? prices.reduce((s: number, p) => s + p!, 0) : null;
+  const when = formatGameDate(language, toDate(nextSeasonStart(game.time)), false);
+  return (
+    <div className="notice">
+      <p>
+        {t('slots.missing', { count: shortfall.hours.length, airport: airport?.iata ?? shortfall.airportId })}{' '}
+        <span className="mono small">{hours.slice(0, 8).map((h) => `${names[Math.floor(h / 24)]} ${String(h % 24).padStart(2, '0')}:00`).join(' · ')}{hours.length > 8 ? ' …' : ''}</span>
+      </p>
+      <p className="muted small">{usd !== null ? t('slots.tradable') : t('slots.notTradable', { date: when })}</p>
+      <div className="toolbar-row">
+        {usd !== null && (
+          <button type="button" className="button button--primary" disabled={busy} onClick={onBuy}>
+            {t('slots.buy', { price: formatMoney(language, convert(money(usd, 'USD'), airline.currency, game.fx), false) })}
+          </button>
+        )}
+        <button type="button" className="button" disabled={busy || requested} onClick={onRequest}>
+          {requested ? t('slots.requested', { date: when }) : t('slots.request', { date: when })}
+        </button>
+      </div>
+    </div>
   );
 }

@@ -597,6 +597,41 @@ flight; slots realistic (IATA Level 3, seasons, 80/20, Heathrow slot trading); r
   timetable is less tightly banked than the real one; players gain by planning waves. Computing a hub of 124 routes
   takes ≈ 85 ms (cached until the timetable changes, refreshed daily for partners).
 
+## Slots and night curfews (Phase 7.2, 2026-10-29)
+**Data** (entered by hand, read 2026-10-29; facts):
+- `src/data/slots.ts`: 61 of the ≈ 215 IATA Level 3 (slot-coordinated) airports
+  ([IATA](https://iata.org/en/programs/ops-infra/slots/coordinated-airports)): the busiest in Europe, Asia, the Middle
+  East and the Americas. `capacity` = declared movements per hour (coordinators' published capacities, rounded, partly
+  estimated → modelled); `use` = how full the peak hours are today (estimated from capacity reports; Heathrow 100 %,
+  Amsterdam 98 %, Vienna 70 %). Trading allowed in the UK and at the US slot-controlled airports (JFK, LaGuardia,
+  Washington National), with the price of a peak daily slot pair in 2016 dollars: Heathrow $60 m (SAS sold a pair for
+  $60 m in 2014 ([Business Traveller](https://www.businesstraveller.com/business-travel/sas-sells-heathrow-slots-75-million/)),
+  Oman Air paid $75 m in 2016 ([One Mile at a Time](https://onemileatatime.com/oman-air-heathrow-slot/))), others
+  estimated (Gatwick $6 m, JFK $25 m, LaGuardia and Washington $10 m …). An hourly demand profile (night 3–10 %, peaks
+  07–08 and 17–19) is shared by all airports; at airports over 85 % full the daytime profile flattens out (Heathrow is
+  full all day).
+- `src/data/curfews.ts`: night rules of 30 airports (Wikipedia "Night flying restrictions" and the airports' articles,
+  e.g. Frankfurt 23:00–05:00 since October 2011, Zurich 23:30–06:00 since July 2010, Sydney 23:00–06:00 (Curfew Act
+  1995), Paris-Orly 23:30–06:00, Narita 00:00–06:00, London airports' night quota 23:30–06:00), with the year they began
+  where known. "ban" = no scheduled take-offs or landings; "quota" = flights allowed with double landing fees (night
+  noise charges). The other airports of the world's busiest ≈ 100 have no general night restriction.
+
+**Model** (`src/engine/slots.ts`): slots are weekly series (one movement in one hour of the week, local time) held by the
+player per coordinated airport. Existing flights keep theirs (historic rights: old saves on loading, takeovers). A
+timetable change takes free slots at once; free = capacity × (1 − use of the year × hour profile) − slots held. Without
+them the change is refused (and undone), naming the airport and hours; the player can buy them (trading airports;
+price = pair price ÷ 14 × (0.3 + 0.7 × hour profile), CPI from 2016 to the game's year) or ask for them for the next IATA
+season (from the last Sunday of March / October): granted where capacity is free, otherwise with 35 % chance for new
+entrants (< 5 slots a day at the airport, EU rule) and 10 % for others. Use it or lose it: at the season start, slot series
+used less than 80 % of the season's weeks (recorded every Monday) shrink to what was used. Airports fill with the
+economy of the year (demand index^0.8 before 2025) and 3 %/year after the real data ends. AI airlines hold no explicit
+slots (the `use` stands for them). Curfews: the player's timetable (Detailed and Simple), the takeover's generated
+timetables and the AI airlines' generated departures avoid bans.
+
+**Checks** (`src/engine/slots.test.ts`): rules and years (Frankfurt 2005 vs 2015), a Frankfurt arrival after 23:00 refused,
+Heathrow full at 08:00 for a newcomer but buyable (≈ $60 m+ a peak pair in today's money), not tradable in Lisbon,
+use it or lose it and requests at the season start, IATA season dates.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

@@ -116,7 +116,8 @@
     "section": {
       "position": "Position",
       "runways": "Pisten",
-      "market": "Markt"
+      "market": "Markt",
+      "slots": "Slots und Nachtregeln"
     },
     "coordinates": "Koordinaten",
     "elevation": "Höhe",
@@ -131,7 +132,11 @@
     "catchment": "Einzugsgebiet (100 km)",
     "gdpPerCapita": "BIP pro Kopf",
     "tourists": "Touristenankünfte (Land)",
-    "marketNote": "Einzugsgebiet = Einwohner der Städte im Umkreis von 100 km. Daraus wird in Phase 1.4 die Passagiernachfrage berechnet."
+    "marketNote": "Einzugsgebiet = Einwohner der Städte im Umkreis von 100 km. Daraus wird in Phase 1.4 die Passagiernachfrage berechnet.",
+    "slots": "Slots",
+    "slotsValue": "Koordiniert (IATA Level 3): etwa {{capacity}} Bewegungen pro Stunde, Spitzenzeiten zu {{use}} % voll",
+    "slotsTradable": "Slots können gekauft werden",
+    "slotsNone": "Nicht koordiniert"
   },
   "sim": {
     "speed": "Simulationsgeschwindigkeit",
@@ -211,7 +216,10 @@
     "subsidiaryJoined_one": "{{airline}} gehört jetzt zu deinem Konzern: ihr {{count}} Flugzeug und ihre {{routes}} Strecken von deinem Drehkreuz sind deine (ihre Flüge waren Flüge des Konzerns).",
     "subsidiaryJoined_other": "{{airline}} gehört jetzt zu deinem Konzern: ihre {{count}} Flugzeuge und {{routes}} Strecken von deinem Drehkreuz sind deine (ihre Flüge waren Flüge des Konzerns).",
     "startupFounded_one": "Neue Airline: {{airline}} (erfunden) startet in {{base}} mit {{count}} Strecke.",
-    "startupFounded_other": "Neue Airline: {{airline}} (erfunden) startet in {{base}} mit {{count}} Strecken."
+    "startupFounded_other": "Neue Airline: {{airline}} (erfunden) startet in {{base}} mit {{count}} Strecken.",
+    "slotsBought_one": "{{count}} Slot in {{airport}} gekauft.",
+    "slotsBought_other": "{{count}} Slots in {{airport}} gekauft.",
+    "slotSeason": "Neue Saison in {{airport}}: {{granted}} von {{asked}} beantragten Slots wurden zugeteilt; {{lost}} ungenutzte Slots gingen an den Koordinator zurück (Use it or lose it)."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -351,7 +359,11 @@
     "imageTooBig": "Das Bild ist auch verkleinert zu groß. Versuch ein einfacheres Bild.",
     "drawingTooBig": "Die Zeichnung hat zu viele Striche. Mach ein paar rückgängig.",
     "alreadyPainted": "Dieses Flugzeug trägt schon deine aktuelle Lackierung.",
-    "inHangar": "Das Flugzeug ist gerade im Hangar."
+    "inHangar": "Das Flugzeug ist gerade im Hangar.",
+    "curfewHub": "Ein Start oder eine Landung an deinem Drehkreuz fällt in dessen Nachtflugverbot.",
+    "curfewDestination": "Ein Start oder eine Landung am Ziel fällt in dessen Nachtflugverbot.",
+    "noSlot": "Der Slot-Koordinator hat für diesen Plan keine freien Slots.",
+    "notTradable": "An diesem Flughafen können keine Slots gekauft werden (Handel ist dort nicht erlaubt)."
   },
   "fleet": {
     "title": "Flotte",
@@ -662,7 +674,8 @@
       "manufacturers": "Flugzeugleistung: Sitze, Reichweite, Startstrecke, Gewicht.",
       "plex": "Die Schriftarten des Spiels.",
       "bls": "US-Verbraucherpreise seit 1913, um historische Flugzeugpreise im Geld jedes Jahres zu zeigen.",
-      "fed": "Tägliche Wechselkurse seit 1971 (inkl. Schilling und der anderen alten Euro-Währungen), für den Geschichte-Bildschirm und historische Startjahre."
+      "fed": "Tägliche Wechselkurse seit 1971 (inkl. Schilling und der anderen alten Euro-Währungen), für den Geschichte-Bildschirm und historische Startjahre.",
+      "slots": "Welche Flughäfen slot-koordiniert sind, ihre erklärten Kapazitäten und Auslastung (IATA Worldwide Airport Slot Guidelines, Kapazitätsberichte der Koordinatoren); Slotpreise aus berichteten Verkäufen (Heathrow)."
     }
   },
   "timetable": {
@@ -1896,5 +1909,34 @@
     "possible": "Mögliche Pax/Woche",
     "none": "Noch keine Anschlüsse: Du brauchst Flüge zu mindestens zwei Zielen.",
     "noneMissed": "Keine: Jede Reise mit Reisenden hat einen Anschluss."
+  },
+  "slots": {
+    "tab": "Slots",
+    "title": "Deine Slots",
+    "intro": "An slot-koordinierten Flughäfen braucht jeder Start und jede Landung einen Slot (eine Bewegung pro Woche in einer Stunde). Deine Flüge behalten ihre Slots; neue bekommen freie Slots sofort, sonst beantragst du sie für die nächste Saison (ab {{date}}) oder kaufst sie, wo Handel erlaubt ist. Use it or lose it: Slots, die in weniger als {{share}} % der Wochen einer Saison genutzt werden, gehen an den Koordinator zurück.",
+    "airport": "Flughafen",
+    "held": "Gehalten/Tag",
+    "needed": "Benötigt/Tag",
+    "used": "Genutzt diese Saison",
+    "asked": "Beantragt",
+    "full": "Auslastung (Spitze)",
+    "none": "Du fliegst noch keinen slot-koordinierten Flughafen an.",
+    "tableNote": "Slots pro Tag = Slots der Woche ÷ 7. Gehalten, aber nicht benötigt: frei für neue Flüge, aber am Saisonende weg, wenn ungenutzt.",
+    "curfews": "Nachtregeln in deinem Netz",
+    "hours": "Zeiten (lokal)",
+    "rule": "Regel",
+    "kind": {
+      "ban": "Nachtflugverbot",
+      "quota": "Nachtkontingent"
+    },
+    "noCurfews": "Keiner deiner Flughäfen hat Nachtbeschränkungen.",
+    "curfewNote": "Nachtflugverbot: Es dürfen keine Starts oder Landungen geplant werden. Nachtkontingent: Flüge erlaubt, aber doppelte Landegebühren (Nachtlärmzuschläge).",
+    "missing_one": "In {{airport}} fehlt {{count}} Slot pro Woche:",
+    "missing_other": "In {{airport}} fehlen {{count}} Slots pro Woche:",
+    "tradable": "Hier können Slots von anderen Airlines gekauft werden (wie in echt, teuer in den gefragtesten Stunden).",
+    "notTradable": "Hier können keine Slots gekauft werden: Beantrage sie beim Koordinator für die Saison ab {{date}}. Neueinsteiger (weniger als 5 Slots pro Tag) haben bei der Hälfte der frei werdenden Slots Vorrang.",
+    "buy": "Für {{price}} kaufen",
+    "request": "Für {{date}} beantragen",
+    "requested": "Beantragt (Entscheidung am {{date}})"
   }
 }

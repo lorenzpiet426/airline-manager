@@ -296,7 +296,7 @@ in past years + fictional startups. Phase 6 complete.
 ### Phase 7 — Hubs and detailed scheduling
 Connecting traffic and O&D flows through hubs, connection waves (timetables themselves come in step 2.2),
 slots (LHR, JFK…), curfews, gates, lounges, bases.
-Split (2026-10-29): **7.1** ✅ connection waves (flight-by-flight connections, minimum connecting times); **7.2** slots +
+Split (2026-10-29): **7.1** ✅ connection waves (flight-by-flight connections, minimum connecting times); **7.2** ✅ slots +
 night curfews; **7.3** gates + own lounges; **7.4** bases (routes not from the hub).
 
 ### Phase 8 — People
@@ -1070,6 +1070,32 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: Austrian today ≈ −4.7 % in November (was −0.6 %) and 36 % transfer (real ≈ 46 %); AI airlines still use the
   frequency model; partners' passengers spread evenly; Simple-mode auto-planning ignores waves.
 - **Next:** 7.2 slots + night curfews.
+
+### 2026-10-29 — Session 23 (Phase 7.2: slots and night curfews) ✅
+- Owner decisions from 7.1: realistic slots (Level 3, seasons, newcomer priority, 80/20, buying at Heathrow), real curfews.
+  Defaults chosen here (no new questions): existing flights keep their slots (historic rights); slots per hour of the
+  week; AI airlines hold no explicit slots; quota periods cost double landing fees; slots in every start year (airports
+  less full in the past).
+- Data `src/data/slots.ts` (61 Level 3 airports: capacity, use, trading prices), `src/data/curfews.ts` (30 airports,
+  ban/quota, since-years, `curfewAtTime`, `hasCurfews`).
+- Engine `src/engine/slots.ts` (`SlotHolding` in `state.slots`: held/used/weeks/requests per hour of the week;
+  `slotUse`, `freeSlots`, `slotNeeds`, `grantHistoricSlots`, `ensureSlots`, `acquireSlots`, `buySlots`, `requestSlots`,
+  `recordSlotUse` (Mondays), `seasonStarts`/`seasonChange` (80/20 + allocation), `slotPriceUsd`). Commands `BuySlots`,
+  `RequestSlots`; `OpenRoute`/`UpdateRoute` run through `withSlots` (refused plan undone, `CommandResult.slots`).
+  Curfews: `curfewProblem` in `validateSpecs` (errors `curfewHub`/`curfewDestination`) and the Simple auto-planner;
+  takeover generator and AI `competitorDepartures` avoid bans; night quota = double landing fee in `routeWeek`. Ledger
+  kind `slotPurchase` (cash, not P&L). Messages `slotsBought`, `slotSeason`. Worker grants historic slots on loading.
+- UI: route planner shows missing slots (airport, hours) with "Buy them for …" / "Ask for them for <season>"; Network →
+  **Slots** tab (held/needed per day, use this season, asked for, how full; night rules on the network); airport panel
+  "Slots and night rules"; Data sources credit; EN/DE.
+- Tests: 187 (`slots.test.ts` 6; older tests that fly to Heathrow give the test airline LHR slots; maintenance test
+  flies to Málaga instead of Lisbon).
+- Verified in browser: Austrian save from 7.1 got its historic slots on loading (VIE 309/day, LHR 7.7, ZRH 8 …), Slots
+  tab and night-rule list, Heathrow airport panel; no console errors. The "buy/ask" box in the planner was only checked by
+  the engine tests (every Austrian aircraft was busy at Heathrow's peak, so no refused plan could be made by hand).
+- Known: slot holdings are per hour (not exact minutes); AI airlines aren't slot-limited; delays and late arrivals into
+  curfews come with Phase 9; slots can't be sold yet.
+- **Next:** 7.3 gates + own lounges.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

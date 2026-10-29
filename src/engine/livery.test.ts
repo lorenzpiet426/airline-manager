@@ -13,12 +13,15 @@ import { planFor } from './operations';
 import { SAVE_VERSION, type GameState, type Livery } from './state';
 import { addMonths, MINUTES_PER_DAY, simTime } from './time';
 import { buildEngineWorld } from './world';
+import { slotHolding } from './slots';
 
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>);
 const DAY = MINUTES_PER_DAY;
 
 function startup() {
   const state = createGame({ seed: 3, startYear: 2026, startTime: simTime(2026, 10, 28), timeMode: 'realtime', realism: 'realistic', scheduling: 'simple' });
+  // These tests fly to Heathrow, where a newcomer would get no slots (Phase 7.2): the test airline holds some.
+  state.slots = { EGLL: slotHolding(20) };
   const r = applyCommand(state, world, {
     type: 'FoundAirline',
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 200_000_000, controller: 'human' },

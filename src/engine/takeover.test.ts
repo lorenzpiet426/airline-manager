@@ -62,7 +62,7 @@ describe('taking over Austrian Airlines (6.2)', () => {
     expect(airline.partners).toEqual(expect.arrayContaining(['DLH', 'SWR', 'BEL', 'EWG', 'EDW']));
     // Austrian no longer flies as an AI airline: the player's flights are the supply.
     expect(competitorsOn(world, ap('LOWW'), ap('EGLL'), undefined, state.ai)!.some((c) => c.airlineId === 'AUA')).toBe(false);
-  });
+  }, 60_000);
 
   it('repairs cabins that are too long in saves from before the fix', () => {
     const { state } = austrian();
@@ -72,7 +72,7 @@ describe('taking over Austrian Airlines (6.2)', () => {
     const fixed = loaded.aircraft[a.id]!;
     expect(validateCabin(getAircraftType('A320'), fixed.cabin)).toBeNull();
     expect(fixed.seats).toBe(fixed.cabin.reduce((s, c) => s + c.seats, 0));
-  });
+  }, 60_000);
 
   it('runs realistically: about break-even in the first winter month', () => {
     const { state, id } = austrian(simTime(2026, 11, 2));

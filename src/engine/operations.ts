@@ -1,5 +1,6 @@
 // Daily operations and accounting: every day at 00:00 UTC each route earns its ticket revenue and
 // pays its costs, crews are paid and lease costs accrue. Monday closes last week's profit-and-loss report.
+import { ensureSlots, isSeasonStart, recordSlotUse, seasonChange } from './slots';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -51,6 +52,8 @@ const usdTo = (fx: FxRates, currency: string) => (fx[currency] ?? 1) / (fx.USD ?
 
 /** Called at 00:00 UTC every day: books the day that just ended, and closes the week on Mondays. */
 export function dailyStep(state: GameState, world: EngineWorld): void {
+  // Games from before slots existed (Phase 7.2): today's timetable keeps its slots.
+  ensureSlots(state, world);
   bookDay(state, world);
   // Historical games: the euro and re-based currencies arrive, closed airports hand over to their successors.
   currencyChangeStep(state);
@@ -64,7 +67,12 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   worldDailyStep(state, world);
   // The real airlines review their networks (a share of them each day) and react to the player.
   aiDailyStep(state, world);
-  if (startOfWeek(state.time) === state.time) closeWeek(state);
+  if (startOfWeek(state.time) === state.time) {
+    closeWeek(state);
+    recordSlotUse(state, world);
+  }
+  // A new IATA season: use it or lose it, and the slots asked for.
+  if (isSeasonStart(state.time)) seasonChange(state, world);
   if (startOfMonth(state.time) === state.time) closeMonth(state);
 }
 

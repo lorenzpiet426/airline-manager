@@ -1,5 +1,6 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
+import { acquireSlots, buySlots, ensureSlots, requestSlots, type SlotShortfall } from './slots';
 import { takeOver, type TakeoverError } from './takeover';
 import { defaultLivery, repaint, setLivery, type LiveryError, type RepaintError } from './livery';
 import { getAircraftType } from '../data/aircraft';
@@ -169,7 +170,19 @@ export interface BuildHangar {
   payload: { size: HangarSize };
 }
 
-export type Command = TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Slots (Phase 7.2): buy them where trading is allowed, or ask for them in the next season's allocation. */
+export interface BuySlots {
+  type: 'BuySlots';
+  airlineId: string;
+  payload: { airportId: string; hours: number[] };
+}
+export interface RequestSlots {
+  type: 'RequestSlots';
+  airlineId: string;
+  payload: { airportId: string; hours: number[] };
+}
+
+export type Command = BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -212,11 +225,32 @@ export type CommandError =
   | LiveryError
   | RepaintError
   | ScheduleError
-  | TakeoverError;
+  | TakeoverError
+  | 'noSlot'
+  | 'notTradable';
 
-export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError };
+/** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
+export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
 
 const fail = (error: CommandError): CommandResult => ({ ok: false, error });
+
+/**
+ * Applies a timetable change, then takes the slots it needs (Phase 7.2). Without free slots at a coordinated airport
+ * the change is undone and the result names the airport and the hours.
+ */
+function withSlots(state: GameState, world: EngineWorld, airlineId: string, change: () => CommandResult): CommandResult {
+  ensureSlots(state, world);
+  const before = { routes: structuredClone(state.routes), flights: structuredClone(state.flights), messages: state.messages.length, next: state.nextId };
+  const result = change();
+  if (!result.ok) return result;
+  const shortfall = acquireSlots(state, world, airlineId);
+  if (!shortfall) return result;
+  state.routes = before.routes;
+  state.flights = before.flights;
+  state.messages.length = before.messages;
+  state.nextId = before.next;
+  return { ok: false, error: 'noSlot', slots: shortfall };
+}
 
 export function applyCommand(state: GameState, world: EngineWorld, command: Command): CommandResult {
   switch (command.type) {
@@ -229,9 +263,18 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
     case 'LeaseAircraft':
       return leaseAircraft(state, world, command.airlineId, command.payload.offerId);
     case 'OpenRoute':
-      return openRoute(state, world, command.airlineId, command.payload);
+      return withSlots(state, world, command.airlineId, () => openRoute(state, world, command.airlineId, command.payload));
     case 'UpdateRoute':
-      return updateRoute(state, world, command.airlineId, command.payload);
+      return withSlots(state, world, command.airlineId, () => updateRoute(state, world, command.airlineId, command.payload));
+    case 'BuySlots': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const error = buySlots(state, world, command.airlineId, command.payload.airportId, command.payload.hours);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'RequestSlots':
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      requestSlots(state, world, command.payload.airportId, command.payload.hours);
+      return { ok: true };
     case 'CloseRoute':
       return closeRoute(state, world, command.airlineId, command.payload.routeId);
     case 'SetScheduling':

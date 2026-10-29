@@ -13,6 +13,7 @@ import { distanceKm } from './geo';
 import { pnlCosts, SAVE_VERSION, type GameState } from './state';
 import { MINUTES_PER_DAY, simTime, startOfWeek } from './time';
 import { buildEngineWorld, longestHardRunwayM } from './world';
+import { slotHolding } from './slots';
 
 const airports = airportsJson as Airport[];
 const world = buildEngineWorld(airports, countriesJson as unknown as Record<string, Country>);
@@ -111,6 +112,8 @@ describe('route rules', () => {
 
 function airlineWithAircraft(typeId = 'A20N') {
   const state = createGame({ seed: 1, startYear: 2026, timeMode: 'realtime', realism: 'realistic', scheduling: 'simple' });
+  // These tests fly to Heathrow, where a newcomer would get no slots (Phase 7.2): the test airline holds some.
+  state.slots = { EGLL: slotHolding(20) };
   const founded = applyCommand(state, world, {
     type: 'FoundAirline',
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 75_000_000, controller: 'human' },

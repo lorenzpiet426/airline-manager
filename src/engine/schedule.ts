@@ -3,6 +3,7 @@
 // the game plans the pairs itself from the weekly frequency; in Detailed scheduling the player sets every pair.
 // Times are hub local time, like published timetables; the airports' time zones turn them into UTC.
 import { closureCancelsPair } from './closures';
+import { curfewAtTime, hasCurfews } from '../data/curfews';
 import { getAircraftType, TURNAROUND_MIN } from '../data/aircraft';
 import type { Airport } from '../data/types';
 import { nextId } from './core';
@@ -25,7 +26,7 @@ export interface FlightSpec {
   groundMin: number;
 }
 
-export type ScheduleError = 'noFlights' | 'timeInvalid' | 'daysInvalid' | 'groundTooShort' | 'groundTooLong' | 'overlap' | 'aircraftBusy';
+export type ScheduleError = 'noFlights' | 'timeInvalid' | 'daysInvalid' | 'groundTooShort' | 'groundTooLong' | 'overlap' | 'aircraftBusy' | 'curfewHub' | 'curfewDestination';
 
 /** Longest planned stay at the destination (a night stop, or a day and a night). */
 export const MAX_GROUND_MIN = 36 * 60;
@@ -67,6 +68,20 @@ export function pairTimes(world: EngineWorld, typeId: string, route: Route, spec
     backArr: spec.dep + out + spec.groundMin + back,
     span: out + spec.groundMin + back,
   };
+}
+
+/**
+ * Night curfews (Phase 7.2): does a pair take off or land at either airport while it is closed for the night? The hub's
+ * times are its local ones, the destination's its own.
+ */
+export function curfewProblem(world: EngineWorld, typeId: string, route: Route, spec: Pick<FlightSpec, 'dep' | 'groundMin'>, time: SimTime): 'curfewHub' | 'curfewDestination' | null {
+  if (!hasCurfews(route.originId) && !hasCurfews(route.destinationId)) return null;
+  const year = yearOf(time);
+  const t = pairTimes(world, typeId, route, spec, time);
+  const ban = (airportId: string, minute: number) => curfewAtTime(airportId, minute, year)?.kind === 'ban';
+  if (ban(route.originId, t.outDep) || ban(route.originId, t.backArr)) return 'curfewHub';
+  if (ban(route.destinationId, t.outArr) || ban(route.destinationId, t.backDep)) return 'curfewDestination';
+  return null;
 }
 
 /** True while the aircraft is in the hangar for a cabin refit (its flights are cancelled). */
@@ -183,6 +198,8 @@ export function validateSpecs(
     if (spec.groundMin > MAX_GROUND_MIN) return { error: 'groundTooLong', index: i };
     const problem = checkRoute(world, type, hub, dest);
     if (problem) return { error: problem, index: i };
+    const curfew = curfewProblem(world, type.id, route, spec, state.time);
+    if (curfew) return { error: curfew, index: i };
     // The aircraft can't be in two places: other routes' pairs and this route's other pairs.
     const others = pairsOfAircraft(state, aircraft.id)
       .filter((p) => p.routeId !== route.id)
@@ -279,6 +296,8 @@ export function autoPlanAircraft(state: GameState, world: EngineWorld, aircraftI
       cursor = (Math.floor(cursor / 1440) + (tod > LAST_DEPARTURE ? 1 : 0)) * 1440 + FIRST_DEPARTURE;
     }
     const { out, back } = pairBlocks(world, aircraft.typeId, route);
+    // Night curfews (Phase 7.2): wait until the trip fits, in half-hour steps (at most a day).
+    for (let tries = 0; tries < 48 && curfewProblem(world, aircraft.typeId, route, { dep: cursor % 1440, groundMin: turn }, state.time); tries++) cursor += 30;
     const dep = cursor % 1440;
     const day = Math.floor(cursor / 1440) % 7;
     const key = `${route.id}|${dep}`;

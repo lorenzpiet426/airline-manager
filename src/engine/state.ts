@@ -409,6 +409,16 @@ export interface AiAirlineState {
   since?: SimTime;
 }
 
+/** Slots held at one coordinated airport (Phase 7.2), per hour of the week (local time, Monday 00–01 = 0). */
+export interface SlotHolding {
+  held: number[];
+  /** Slots of each hour used, added up week by week this season (use it or lose it). */
+  used: number[];
+  weeks: number;
+  /** Slots asked for in the next season's allocation. */
+  requests: number[];
+}
+
 export interface AiState {
   /** Key: "airline|A|B" with A < B (airport ids). */
   routes: Record<string, AiRouteState>;
@@ -486,7 +496,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -511,7 +521,9 @@ export interface GameMessage {
 export type LedgerKind =
   | 'capital' | 'leaseDeposit' | 'leaseRent' | 'refit'
   | 'orderPayment' | 'purchase' | 'sale' | 'leaseReturnFee' | 'depositBack'
-  | 'check' | 'repair' | 'compensation' | 'hangar' | 'repaint';
+  | 'check' | 'repair' | 'compensation' | 'hangar' | 'repaint'
+  // Slots bought at airports where trading is allowed (Phase 7.2): an asset, not a cost of the year.
+  | 'slotPurchase';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {
@@ -542,6 +554,8 @@ export interface GameState {
   finance: Record<string, AirlineFinance>;
   /** Changes made by the real airlines' AI (2.1b). */
   ai: AiState;
+  /** The player's slots at coordinated airports (Phase 7.2), by airport; absent in games from before 7.2 until first used. */
+  slots?: Record<string, SlotHolding>;
   /** Economy, fuel, exchange rates and events after the real data ends (Phase 5.1). */
   world: WorldState;
   /** Own maintenance hangars (Phase 4.2). */

@@ -14,12 +14,15 @@ import { planFor } from './operations';
 import { SAVE_VERSION, type GameState } from './state';
 import { addMonths, MINUTES_PER_DAY, simTime, startOfDay } from './time';
 import { buildEngineWorld } from './world';
+import { slotHolding } from './slots';
 
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>);
 const DAY = MINUTES_PER_DAY;
 
 function startup() {
   const state = createGame({ seed: 5, startYear: 2026, startTime: simTime(2026, 10, 28), timeMode: 'realtime', realism: 'realistic', scheduling: 'simple' });
+  // These tests fly to Heathrow, where a newcomer would get no slots (Phase 7.2): the test airline holds some.
+  state.slots = { EGLL: slotHolding(20) };
   const r = applyCommand(state, world, {
     type: 'FoundAirline',
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 200_000_000, controller: 'human' },
@@ -166,8 +169,9 @@ describe('A-checks', () => {
       type: 'OpenRoute',
       airlineId,
       payload: {
-        destinationId: 'LPPT', aircraftId: 'N2', frequency: 0, fareFactor: 1,
-        // Out in the afternoon, a night in Lisbon, back next morning: only ~6 hours a day at the hub.
+        destinationId: 'LEMG', aircraftId: 'N2', frequency: 0, fareFactor: 1,
+        // Out in the afternoon, a night in Málaga, back next morning: only ~6 hours a day at the hub. (Not Lisbon:
+        // a newcomer gets no evening slot there, Phase 7.2.)
         flights: [{ aircraftId: 'N2', dep: 15 * 60, days: 0b1111111, groundMin: 10 * 60 }],
       },
     });

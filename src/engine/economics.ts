@@ -3,6 +3,7 @@
 // they are converted into the airline's book currency when booked.
 // Calibration notes and sources: docs/DATA_SOURCES.md ("Economics model").
 import { CHECK_SHARE } from '../data/maintenance';
+import { curfewAtTime } from '../data/curfews';
 import { getAircraftType, TURNAROUND_MIN, type AircraftCategory, type AircraftType } from '../data/aircraft';
 import { fuelUsdPerKg, INTO_PLANE_USD_PER_GAL, jetFuelSpot, KG_PER_GALLON } from '../data/fuel';
 import type { Conditions } from './worldEvents';
@@ -31,7 +32,7 @@ import {
   type Segment,
 } from './cabins';
 import type { AiState, CabinClass, CabinLayout, CabinSection, ClassFares, ExperienceSums } from './state';
-import { fromDate, utcOffsetMin, type SimTime } from './time';
+import { fromDate, utcOffsetMin, yearOf, type SimTime } from './time';
 import {
   BLOCK_OVERHEAD_H,
   blockMinutes,
@@ -559,7 +560,15 @@ export function competitorDepartures(world: EngineWorld, airlineId: string, A: A
       (d) => wrapDay(d - offB + blockBA + genericTurnMin(long) + offA).min,
     );
   }
-  return deps.map((dep, i) => ({ dep, arr: dep - offA + blockAB + offB, weight: weights[i]! }));
+  // Night curfews (Phase 7.2): flights leave when the airport opens, or early enough to land before the other one closes.
+  const year = yearOf(time);
+  return deps.map((dep, i) => {
+    let d = dep;
+    for (let k = 0; k < 16 && curfewAtTime(A.id, d, year)?.kind === 'ban'; k++) d += 30;
+    for (let k = 0; k < 16 && curfewAtTime(B.id, d - offA + blockAB + offB, year)?.kind === 'ban'; k++) d -= 30;
+    d = ((d % 1440) + 1440) % 1440;
+    return { dep: d, arr: d - offA + blockAB + offB, weight: weights[i]! };
+  });
 }
 
 /** A typical timetable for `frequency` round trips (used when a plan has none, e.g. for the AI's own sums). */
@@ -850,8 +859,11 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     const mtowT = f.type.mtowKg / 1000;
     costs.fuel += f.type.fuelKgPerHour * (h + 0.15) * n * fuelPrice;
     costs.maintenance += f.type.maintUsdPerBlockHour * (1 + 0.01 * f.ageYears) * (ctx.checksSeparate ? 1 - CHECK_SHARE : 1) * h * n * lv.prices;
-    // Landing fee per tonne of MTOW at the arrival airport, passenger fee at the departure airport.
-    costs.airport += ((6 * mtowT * n * airportFactor(world, B)) + 13 * result.pax * airportFactor(world, A)) * lv.costs;
+    // Landing fee per tonne of MTOW at the arrival airport, passenger fee at the departure airport; take-offs and
+    // landings in a night quota period pay double landing fees (night noise charges, Phase 7.2).
+    const year = date.getUTCFullYear();
+    const night = curfewAtTime(A.id, f.dep, year)?.kind === 'quota' || curfewAtTime(B.id, info[i]!.arr, year)?.kind === 'quota' ? 2 : 1;
+    costs.airport += ((6 * mtowT * n * airportFactor(world, B) * night) + 13 * result.pax * airportFactor(world, A)) * lv.costs;
     costs.handling += ((250 + 7 * f.seats) * wageFactor(world, B.country) * n + result.pax * (1.5 + 0.0025 * m.distanceKm)) * lv.costs;
     const navKey = `${f.type.id}|${f.dir}`;
     if (!nav.has(navKey)) nav.set(navKey, navigationChargeUsd(world, f.type, A, B, m.distanceKm));

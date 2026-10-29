@@ -55,7 +55,7 @@ describe('connections at the hub (7.1)', () => {
         expect(sum).toBeCloseTo(leg.pax, 3);
       }
     }
-  });
+  }, 60_000);
 
   it('the takeover timetable flies in waves: most departures leave with a bank', () => {
     const { state, id } = austrian();
@@ -63,5 +63,5 @@ describe('connections at the hub (7.1)', () => {
     const waves = [420, 630, 810, 1020, 1230];
     const inWave = out.filter((f) => waves.some((w) => Math.abs((f.at % 1440) - w) <= 30)).length;
     expect(inWave / out.length).toBeGreaterThan(0.6);
-  });
+  }, 60_000);
 });

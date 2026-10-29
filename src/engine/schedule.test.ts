@@ -20,6 +20,7 @@ import { SAVE_VERSION, type GameState } from './state';
 import { fromDate, simTime, utcOffsetMin } from './time';
 import { blockMinutes, DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slotHolding } from './slots';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -29,6 +30,8 @@ const A320 = getAircraftType('A20N');
 
 function startup(scheduling: 'simple' | 'detailed') {
   const state = createGame({ seed: 1, startYear: 2026, timeMode: 'realtime', realism: 'realistic', scheduling });
+  // These tests fly to Heathrow, where a newcomer would get no slots (Phase 7.2): the test airline holds some.
+  state.slots = { EGLL: slotHolding(20) };
   const founded = applyCommand(state, world, {
     type: 'FoundAirline',
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 200_000_000, controller: 'human' },

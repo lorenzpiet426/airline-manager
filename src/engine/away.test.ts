@@ -11,11 +11,14 @@ import { createGame } from './game';
 import { pnlCosts } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay } from './time';
 import { buildEngineWorld } from './world';
+import { slotHolding } from './slots';
 
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>);
 
 function realClockGame(start = simTime(2026, 10, 28) + 14 * 60 + 37) {
   const state = createGame({ seed: 9, startYear: 2026, startTime: start, timeMode: 'realclock', realism: 'realistic', scheduling: 'simple' });
+  // These tests fly to Heathrow, where a newcomer would get no slots (Phase 7.2): the test airline holds some.
+  state.slots = { EGLL: slotHolding(20) };
   const r = applyCommand(state, world, {
     type: 'FoundAirline',
     payload: { name: 'Danube Air', iata: 'D7', icao: 'DNB', primary: '#c8102e', secondary: '#ffffff', hubId: 'LOWW', capitalEur: 75_000_000, controller: 'human' },

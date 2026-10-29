@@ -21,7 +21,8 @@ import { convert, money } from './money';
 import type { RealAirline } from './realAirlines';
 import { newReputation } from './reputation';
 import { MODEL_REPUTATION } from './cabins';
-import { busyIntervals, freeFlightNumber, pairBlocks, pairsOfRoute, setRoutePairs, type FlightSpec } from './schedule';
+import { busyIntervals, curfewProblem, freeFlightNumber, pairBlocks, pairsOfRoute, setRoutePairs, type FlightSpec } from './schedule';
+import { grantHistoricSlots } from './slots';
 import type { Aircraft, GameState, Route } from './state';
 import { addMonths, MINUTES_PER_DAY, MINUTES_PER_WEEK, simTime, startOfDay, toDate, yearOf, type SimTime } from './time';
 import { DAYS_ALL, hasDay, homeDepartures, isEastbound, seedOf, spreadDays } from './timetable';
@@ -152,6 +153,8 @@ export function takeOver(state: GameState, world: EngineWorld, realId: string): 
     postMessage(state, { airlineId: id, kind: 'takeoverRoutes', level: 'caution', params: { seasonal: result.seasonalSkipped, unplanned: result.unplanned, other: result.notFromHub } });
   }
   absorbSubsidiaries(state, world);
+  // The airline's flights keep their slots (historic rights, Phase 7.2).
+  grantHistoricSlots(state, world, id);
   return { ok: true, result: { ...result, airlineId: id } };
 }
 
@@ -208,6 +211,8 @@ export function absorbSubsidiaries(state: GameState, world: EngineWorld): void {
         }
       }
       const result = added.size ? addNetwork(state, world, airline.id, sub, hub, added) : { routes: 0 };
+      // The subsidiary's slots come with its flights.
+      if (state.slots) grantHistoricSlots(state, world, airline.id);
       postMessage(state, { airlineId: airline.id, kind: 'subsidiaryJoined', level: 'info', params: { airline: sub.name, aircraft: added.size, routes: result.routes } });
     }
   }
@@ -500,7 +505,7 @@ function addNetwork(
   for (const u of units) u.long = u.route.distanceKm > 4500 || (seats(u.dest.id) ?? 0) > 230;
   units.sort((x, y) => Number(y.long) - Number(x.long) || x.rank - y.rank || y.route.distanceKm - x.route.distanceKm);
   for (const u of units) {
-    const placed = placeUnit(world, u, lines, specs, seats(u.dest.id));
+    const placed = placeUnit(world, u, lines, specs, seats(u.dest.id), state.time);
     if (!placed) unplannedFlights += countDays(u.days);
   }
 
@@ -516,7 +521,7 @@ function addNetwork(
     for (const u of kind) {
       while (line.hours < target && daysOn(u.route.id) < 7) {
         const n = Math.min(7 - daysOn(u.route.id), 3);
-        if (!placeUnit(world, { ...u, days: spreadDays(n), rank: 9 }, [line], specs, seats(u.dest.id))) break;
+        if (!placeUnit(world, { ...u, days: spreadDays(n), rank: 9 }, [line], specs, seats(u.dest.id), state.time)) break;
       }
       if (line.hours >= target) break;
     }
@@ -558,7 +563,7 @@ const overlaps = (a: [number, number], b: [number, number]) =>
  * the aircraft measured on the route, at the earliest time the aircraft is free on all those days, keeping the route's
  * flights apart. Returns false when no aircraft has room.
  */
-function placeUnit(world: EngineWorld, u: Unit, lines: Line[], specs: Map<string, FlightSpec[]>, seatsWanted: number | null): boolean {
+function placeUnit(world: EngineWorld, u: Unit, lines: Line[], specs: Map<string, FlightSpec[]>, seatsWanted: number | null, time: SimTime): boolean {
   const hub = world.airportById.get(u.route.originId)!;
   const own = specs.get(u.route.id) ?? [];
   let best: { line: Line; spec: FlightSpec; score: number } | null = null;
@@ -587,6 +592,8 @@ function placeUnit(world: EngineWorld, u: Unit, lines: Line[], specs: Map<string
       const isWave = WAVES.some((w) => Math.abs(w - dep) <= 30);
       if (!isWave && earliestTaken) break;
       const spec: FlightSpec = { aircraftId: line.aircraft.id, dep, days: u.days, groundMin };
+      // Night curfews at either end (Phase 7.2).
+      if (curfewProblem(world, type.id, u.route, spec, time)) continue;
       const busy = busyIntervals(world, type.id, u.route, spec);
       if (busy.some((a) => line.busy.some((b) => overlaps(a, b)))) continue;
       if (!isWave) earliestTaken = true;

@@ -1,6 +1,7 @@
 // The engine's home: a background thread (Web Worker). It owns the game state, runs the clock
 // and applies commands; the screen only receives copies of the state to display.
 import { withStartups } from '../engine/startups';
+import { ensureSlots } from '../engine/slots';
 import * as Comlink from 'comlink';
 import type { Airport, Country } from '../data/types';
 import { advance, type WorldProvider } from '../engine/advance';
@@ -152,6 +153,8 @@ async function loadState(raw: unknown): Promise<EngineSnapshot | null> {
   const loaded = migrate(raw);
   if (!loaded) return null;
   ensureFlights(loaded, world(loaded));
+  // Games from before Phase 7.2: the timetable keeps its slots (historic rights).
+  ensureSlots(loaded, world(loaded));
   state = loaded;
   return setSpeed(0);
 }

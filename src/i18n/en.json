@@ -116,7 +116,8 @@
     "section": {
       "position": "Position",
       "runways": "Runways",
-      "market": "Market"
+      "market": "Market",
+      "slots": "Slots and night rules"
     },
     "coordinates": "Coordinates",
     "elevation": "Elevation",
@@ -131,7 +132,11 @@
     "catchment": "Catchment (100 km)",
     "gdpPerCapita": "GDP per capita",
     "tourists": "Tourist arrivals (country)",
-    "marketNote": "Catchment = people living in cities within 100 km. Passenger demand is calculated from these figures in Phase 1.4."
+    "marketNote": "Catchment = people living in cities within 100 km. Passenger demand is calculated from these figures in Phase 1.4.",
+    "slots": "Slots",
+    "slotsValue": "Coordinated (IATA Level 3): about {{capacity}} movements an hour, peak hours {{use}} % full",
+    "slotsTradable": "slots can be bought",
+    "slotsNone": "Not coordinated"
   },
   "sim": {
     "speed": "Simulation speed",
@@ -211,7 +216,10 @@
     "subsidiaryJoined_one": "{{airline}} now belongs to your group: its {{count}} aircraft and {{routes}} routes from your hub are yours (its flights were the group's flights).",
     "subsidiaryJoined_other": "{{airline}} now belongs to your group: its {{count}} aircraft and {{routes}} routes from your hub are yours (its flights were the group's flights).",
     "startupFounded_one": "New airline: {{airline}} (fictional) starts flying from {{base}} with {{count}} route.",
-    "startupFounded_other": "New airline: {{airline}} (fictional) starts flying from {{base}} with {{count}} routes."
+    "startupFounded_other": "New airline: {{airline}} (fictional) starts flying from {{base}} with {{count}} routes.",
+    "slotsBought_one": "Bought {{count}} slot at {{airport}}.",
+    "slotsBought_other": "Bought {{count}} slots at {{airport}}.",
+    "slotSeason": "New season at {{airport}}: {{granted}} of {{asked}} slots asked for were granted; {{lost}} unused slots went back to the coordinator (use it or lose it)."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -351,7 +359,11 @@
     "imageTooBig": "The picture is too big, even after shrinking. Try a simpler picture.",
     "drawingTooBig": "The drawing has too many lines. Undo some of them.",
     "alreadyPainted": "This aircraft already wears your current livery.",
-    "inHangar": "The aircraft is in the hangar right now."
+    "inHangar": "The aircraft is in the hangar right now.",
+    "curfewHub": "A take-off or landing at your hub falls into its night curfew.",
+    "curfewDestination": "A take-off or landing at the destination falls into its night curfew.",
+    "noSlot": "The slot coordinator has no free slots for this plan.",
+    "notTradable": "Slots can't be bought at this airport (trading isn't allowed there)."
   },
   "fleet": {
     "title": "Fleet",
@@ -662,7 +674,8 @@
       "manufacturers": "Aircraft performance: seats, range, take-off distance, weight.",
       "plex": "The game's typefaces.",
       "bls": "US consumer prices since 1913, to show historical aircraft prices in the money of any year.",
-      "fed": "Daily exchange rates since 1971 (incl. the Austrian schilling and the other old euro currencies), for the History screen and historical start years."
+      "fed": "Daily exchange rates since 1971 (incl. the Austrian schilling and the other old euro currencies), for the History screen and historical start years.",
+      "slots": "Which airports are slot-coordinated, their declared capacities and how full they are (IATA Worldwide Airport Slot Guidelines, coordinators' capacity reports); slot prices from reported sales (Heathrow)."
     }
   },
   "timetable": {
@@ -1896,5 +1909,34 @@
     "possible": "Possible pax/week",
     "none": "No connections yet: you need flights to at least two destinations.",
     "noneMissed": "None: every journey with travellers has a connection."
+  },
+  "slots": {
+    "tab": "Slots",
+    "title": "Your slots",
+    "intro": "At slot-coordinated airports every take-off and landing needs a slot (one movement a week in one hour). Your flights keep their slots; new ones get free slots at once, otherwise ask for them for the next season (from {{date}}) or buy them where trading is allowed. Use it or lose it: slots used less than {{share}} % of a season's weeks go back to the coordinator.",
+    "airport": "Airport",
+    "held": "Held/day",
+    "needed": "Needed/day",
+    "used": "Used this season",
+    "asked": "Asked for",
+    "full": "How full (peak)",
+    "none": "You don't fly to a slot-coordinated airport yet.",
+    "tableNote": "Slots per day = slots of the week ÷ 7. Held but not needed: free for new flights, but lost at the end of the season if unused.",
+    "curfews": "Night rules on your network",
+    "hours": "Hours (local)",
+    "rule": "Rule",
+    "kind": {
+      "ban": "Night curfew",
+      "quota": "Night quota"
+    },
+    "noCurfews": "None of your airports has night restrictions.",
+    "curfewNote": "Curfew: no take-offs or landings may be planned. Night quota: flights allowed, but landing fees are doubled (night noise charges).",
+    "missing_one": "{{count}} slot a week is missing at {{airport}}:",
+    "missing_other": "{{count}} slots a week are missing at {{airport}}:",
+    "tradable": "Slots can be bought here from other airlines (as in reality, at high prices for the busiest hours).",
+    "notTradable": "Slots can't be bought here: ask the coordinator for them in the allocation for the season from {{date}}. New entrants (fewer than 5 slots a day) get priority for half of the slots that come free.",
+    "buy": "Buy them for {{price}}",
+    "request": "Ask for them for {{date}}",
+    "requested": "Asked for (decided on {{date}})"
   }
 }
