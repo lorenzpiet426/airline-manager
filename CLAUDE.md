@@ -297,7 +297,7 @@ in past years + fictional startups. Phase 6 complete.
 Connecting traffic and O&D flows through hubs, connection waves (timetables themselves come in step 2.2),
 slots (LHR, JFK…), curfews, gates, lounges, bases.
 Split (2026-10-29): **7.1** ✅ connection waves (flight-by-flight connections, minimum connecting times); **7.2** ✅ slots +
-night curfews; **7.3** ✅ gates + own lounges; **7.4** bases (routes not from the hub).
+night curfews; **7.3** ✅ gates + own lounges; **7.4** ✅ bases (routes not from the hub). Phase 7 complete.
 
 ### Phase 8 — People
 Pilots and cabin crew, type ratings and training, crew shortages, strikes; hireable managers with skills,
@@ -474,6 +474,9 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 6.3: fleets = **real types per year** from Wikipedia's historical fleet tables, counts modelled; else typical types of the time | Owner choice |
 | 2026-10-29 | 6.3: **real dates**: airlines start/stop flying on their real days, with news; the AI can still bankrupt them earlier | Owner choice |
 | 2026-10-29 | 6.3: in past years every airline's frequency is its share of that time's demand (today's measured frequencies dropped) | Measured 2024 frequencies plus added closed airlines over-supplied busy routes (2005 VIE startup −59 %) |
+| 2026-10-29 | 7.4: **real crew bases** (set-up and running costs, stationed aircraft and crews at local wages, routes from hub or base) | Owner choice |
+| 2026-10-29 | 7.4: bases allowed in the **own country and the EU single aviation market** (real dates, Brexit); other rights in Phase 12 | Owner choice |
+| 2026-10-29 | 7.4: bases can be **second hubs** with flight-by-flight connections, gates and lounges | Owner choice |
 | 2026-10-29 | 7.3: **realistic gate capacity** at the hub (contact gates + remote stands, peak of aircraft on the ground, remote = bus, worse rating, +10 min MCT; remote stands rented automatically, contact gates on purpose) | Owner choice |
 | 2026-10-29 | 7.3: **own lounges of any size and quality** at the hub (bases with 7.4); otherwise contract lounge per passenger; partners' lounges at their hubs | Owner choice |
 | 2026-10-29 | Phase 7 order: **7.1 waves → 7.2 slots + curfews → 7.3 gates + lounges → 7.4 bases** | Owner choice |
@@ -1119,6 +1122,30 @@ education", forbid making the data available to others (§3 iii) and require a w
   give-back below need refused, phone 375 px without sideways scrolling, no console errors.
 - Known: gates only at the hub (bases in 7.4); AI airlines don't compete for gates explicitly; one lounge per airport.
 - **Next:** 7.4 bases (routes that don't start at the hub; lounges and gates there).
+
+### 2026-10-29 — Session 25 (Phase 7.4: bases) ✅ — Phase 7 complete
+- Owner decisions (all recommended): real crew bases, real traffic rules, bases as second hubs (§7).
+- Data `src/data/aviationMarkets.ts` (single aviation market membership dates, `inSingleMarket`).
+- Engine `src/engine/bases.ts` (`stationsOf`, `stationOf`, `baseRight`, `openBase`, `closeBase`, `stationAircraft`,
+  `baseRunPerDayUsd`); `Airline.bases` (`Base` with its own gates), `Aircraft.baseId`, ledger kind `base`, message
+  `baseOpened`. Commands `OpenBase`, `CloseBase`, `StationAircraft`; `RouteSettings.originId`; `validateRoute`
+  (`originNotBase`, `aircraftElsewhere`), `validateSpecs` (aircraft station = route origin), one route per airport pair.
+  `hub.ts` generalised per station (`gatesOf`, `hubGates(…, airportId)`, cache per airport, `ensureGates` at all stations,
+  `setGates`/`buildLounge` with airportId, `GroundContext.lounges` by airport); connections at bases work through
+  `routeTransfers` (route origin); crews at the station country's wages; base running costs in overheads; AI
+  `playerHubs` = hub + bases.
+- UI: Network → **Bases** tab (stations with aircraft/routes/gates, open a base via airport search with rights check and
+  costs, close, station aircraft), station chooser on the Hub and Connections tabs, planner "Route starts at" (hub/bases)
+  with the aircraft stationed there; EN/DE.
+- Tests: 193 (`bases.test.ts`: rights incl. 1990/2003/2005/Brexit, base costs, aircraft station rules, routes and gates at a
+  base, a Málaga → Munich → Warsaw connection at the base, one route per pair, closing/moving refused while in use).
+  While testing, another program used ≈ 2.5 CPU cores: three long simulation tests ran into their time limits (the 7.3 code
+  as slow), all others passed.
+- Verified in browser (Austrian save): Bases tab, base opened at Innsbruck (€1.8 m set-up), aircraft moved there, planner
+  offers VIE/INN as origin, station chooser on Hub; phone 375 px without sideways scrolling; no console errors.
+- Known: the Austrian takeover still leaves out Austrian's real routes from other airports; no ferry flights when moving
+  an aircraft; AI airlines' own bases unchanged; traffic rights outside the EU come in Phase 12.
+- **Next:** Phase 8 (people: pilots, cabin crew, type ratings, strikes, managers) — or what the owner prefers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

@@ -26,7 +26,7 @@ export interface FlightSpec {
   groundMin: number;
 }
 
-export type ScheduleError = 'noFlights' | 'timeInvalid' | 'daysInvalid' | 'groundTooShort' | 'groundTooLong' | 'overlap' | 'aircraftBusy' | 'curfewHub' | 'curfewDestination';
+export type ScheduleError = 'noFlights' | 'timeInvalid' | 'daysInvalid' | 'groundTooShort' | 'groundTooLong' | 'overlap' | 'aircraftBusy' | 'curfewHub' | 'curfewDestination' | 'aircraftElsewhere';
 
 /** Longest planned stay at the destination (a night stop, or a day and a night). */
 export const MAX_GROUND_MIN = 36 * 60;
@@ -191,6 +191,8 @@ export function validateSpecs(
     const spec = specs[i]!;
     const aircraft = state.aircraft[spec.aircraftId];
     if (!aircraft || aircraft.airlineId !== route.airlineId) return { error: 'aircraftUnknown', index: i };
+    // Aircraft fly from where they are stationed (Phase 7.4).
+    if ((aircraft.baseId ?? state.airlines[route.airlineId]?.hubId) !== route.originId) return { error: 'aircraftElsewhere', index: i };
     if (!Number.isInteger(spec.dep) || spec.dep < 0 || spec.dep >= 1440 || spec.dep % 5 !== 0) return { error: 'timeInvalid', index: i };
     if (!Number.isInteger(spec.days) || spec.days < 1 || spec.days > DAYS_ALL) return { error: 'daysInvalid', index: i };
     const type = getAircraftType(aircraft.typeId);

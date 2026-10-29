@@ -17,6 +17,7 @@ import { priceLevelAt } from './era';
 import { convert, money } from './money';
 import { pairTimes } from './schedule';
 import { slotUse } from './slots';
+import { stationsOf } from './bases';
 import type { Airline, GameState, Lounge, LoungeQuality } from './state';
 import { addMonths, type SimTime } from './time';
 import { hasDay } from './timetable';
@@ -45,13 +46,27 @@ export function gatesAt(airport: Airport): { contact: number; remote: number } {
   return { contact: airport.size === 'small' ? 0 : Math.round(capacity * 0.5), remote: Math.round(capacity * 0.9) };
 }
 
+/** The gates the airline rents at one of its stations (the hub, or a base: Phase 7.4). */
+export function gatesOf(airline: Airline | undefined, airportId: string): { contact: number; remote: number } | undefined {
+  if (!airline) return undefined;
+  return airportId === airline.hubId ? airline.gates : airline.bases?.find((b) => b.airportId === airportId)?.gates;
+}
+
+function setGatesOf(airline: Airline, airportId: string, gates: { contact: number; remote: number }): void {
+  if (airportId === airline.hubId) airline.gates = gates;
+  else {
+    const base = airline.bases?.find((b) => b.airportId === airportId);
+    if (base) base.gates = gates;
+  }
+}
+
 /** Gates still free for the player (the other airlines use their share; busy airports have few left). */
 export function freeGates(state: GameState, world: EngineWorld, airlineId: string, airportId: string): { contact: number; remote: number } {
   const airport = world.airportById.get(airportId);
   if (!airport) return { contact: 0, remote: 0 };
   const total = gatesAt(airport);
   const use = slotAirport(airportId) ? slotUse(world, airportId, state.time) : airport.size === 'large' ? 0.75 : airport.size === 'medium' ? 0.55 : 0.4;
-  const rented = state.airlines[airlineId]?.gates ?? { contact: 0, remote: 0 };
+  const rented = gatesOf(state.airlines[airlineId], airportId) ?? { contact: 0, remote: 0 };
   return {
     contact: Math.max(0, Math.floor(total.contact * (1 - use)) - rented.contact),
     remote: Math.max(0, Math.floor(total.remote * (1 - 0.6 * use)) - rented.remote),
@@ -77,10 +92,10 @@ export interface HubGates {
   short: number;
 }
 
-/** The airline's gate visits at its hub in a week, and the contact gates or remote stands they get. */
-export function hubGates(state: GameState, world: EngineWorld, airlineId: string): HubGates {
+/** The airline's gate visits at its hub (or a base) in a week, and the contact gates or remote stands they get. */
+export function hubGates(state: GameState, world: EngineWorld, airlineId: string, airportId?: string): HubGates {
   const airline = state.airlines[airlineId];
-  const hubId = airline?.hubId ?? '';
+  const hubId = airportId ?? airline?.hubId ?? '';
   // Landings and take-offs at the hub per aircraft, in time order.
   const moves = new Map<string, { at: number; key: string; landing: boolean }[]>();
   for (const pair of Object.values(state.flights)) {
@@ -130,7 +145,7 @@ export function hubGates(state: GameState, world: EngineWorld, airlineId: string
     if (n > peak) [peak, peakAt] = [n, i * STEP];
   });
   // Contact gates first come, first served; the others stand remote.
-  const rented = airline?.gates ?? { contact: 0, remote: 0 };
+  const rented = gatesOf(airline, hubId) ?? { contact: 0, remote: 0 };
   const contactUse = new Array<number>(slots).fill(0);
   const remoteUse = new Array<number>(slots).fill(0);
   const gateOf = new Map<string, 'contact' | 'remote'>();
@@ -147,18 +162,21 @@ export function hubGates(state: GameState, world: EngineWorld, airlineId: string
   return { peak, peakAt, load, gateOf, short };
 }
 
-const hubCache = new WeakMap<GameState, { key: string; gates: HubGates }>();
+const hubCache = new WeakMap<GameState, Map<string, { key: string; gates: HubGates }>>();
 /** hubGates, cached until the timetable or the gates rented change. */
-export function hubGatesCached(state: GameState, world: EngineWorld, airlineId: string): HubGates {
-  const g = state.airlines[airlineId]?.gates;
-  const key = `${airlineId}|${g?.contact ?? 0}|${g?.remote ?? 0}|${Object.values(state.flights)
+export function hubGatesCached(state: GameState, world: EngineWorld, airlineId: string, airportId?: string): HubGates {
+  const at = airportId ?? state.airlines[airlineId]?.hubId ?? '';
+  const g = gatesOf(state.airlines[airlineId], at);
+  const key = `${airlineId}|${at}|${g?.contact ?? 0}|${g?.remote ?? 0}|${Object.values(state.flights)
     .filter((p) => p.airlineId === airlineId)
     .map((p) => `${p.id}${p.dep}${p.days}${p.groundMin}${p.aircraftId}`)
     .join('')}`;
-  const hit = hubCache.get(state);
+  let byAirport = hubCache.get(state);
+  if (!byAirport) hubCache.set(state, (byAirport = new Map()));
+  const hit = byAirport.get(at);
   if (hit?.key === key) return hit.gates;
-  const gates = hubGates(state, world, airlineId);
-  hubCache.set(state, { key, gates });
+  const gates = hubGates(state, world, airlineId, at);
+  byAirport.set(at, { key, gates });
   return gates;
 }
 
@@ -169,14 +187,23 @@ export function hubGatesCached(state: GameState, world: EngineWorld, airlineId: 
 export function ensureGates(state: GameState, world: EngineWorld, airlineId: string): boolean {
   const airline = state.airlines[airlineId];
   if (!airline) return true;
-  airline.gates ??= { contact: 0, remote: 0 };
-  const need = hubGates(state, world, airlineId).peak;
-  const missing = need - airline.gates.contact - airline.gates.remote;
-  if (missing <= 0) return true;
-  const free = freeGates(state, world, airlineId, airline.hubId);
-  if (free.remote < missing) return false;
-  airline.gates.remote += missing;
-  postMessage(state, { airlineId, kind: 'gatesRented', level: 'info', params: { remote: missing, total: airline.gates.contact + airline.gates.remote } });
+  // At the hub and at every base (Phase 7.4).
+  for (const airportId of stationsOf(airline)) {
+    const gates = gatesOf(airline, airportId) ?? { contact: 0, remote: 0 };
+    setGatesOf(airline, airportId, gates);
+    const need = hubGates(state, world, airlineId, airportId).peak;
+    const missing = need - gates.contact - gates.remote;
+    if (missing <= 0) continue;
+    const free = freeGates(state, world, airlineId, airportId);
+    if (free.remote < missing) return false;
+    gates.remote += missing;
+    postMessage(state, {
+      airlineId,
+      kind: 'gatesRented',
+      level: 'info',
+      params: { remote: missing, total: gates.contact + gates.remote, airport: world.airportById.get(airportId)?.iata ?? airportId },
+    });
+  }
   return true;
 }
 
@@ -195,20 +222,25 @@ export function ensureHubFacilities(state: GameState, world: EngineWorld): void 
 }
 
 /** Renting or giving back gates (totals); fewer than the timetable needs at its peak is refused. */
-export function setGates(state: GameState, world: EngineWorld, airlineId: string, contact: number, remote: number): 'gatesUnavailable' | 'gatesNeeded' | null {
+export function setGates(state: GameState, world: EngineWorld, airlineId: string, contact: number, remote: number, airportId?: string): 'gatesUnavailable' | 'gatesNeeded' | 'baseUnknown' | null {
   const airline = state.airlines[airlineId]!;
-  const now = airline.gates ?? { contact: 0, remote: 0 };
-  const free = freeGates(state, world, airlineId, airline.hubId);
+  const at = airportId ?? airline.hubId;
+  if (!stationsOf(airline).includes(at)) return 'baseUnknown';
+  const now = gatesOf(airline, at) ?? { contact: 0, remote: 0 };
+  const free = freeGates(state, world, airlineId, at);
   if (!Number.isInteger(contact) || !Number.isInteger(remote) || contact < 0 || remote < 0) return 'gatesUnavailable';
   if (contact - now.contact > free.contact || remote - now.remote > free.remote) return 'gatesUnavailable';
-  if (contact + remote < hubGates(state, world, airlineId).peak) return 'gatesNeeded';
-  airline.gates = { contact, remote };
+  if (contact + remote < hubGates(state, world, airlineId, at).peak) return 'gatesNeeded';
+  setGatesOf(airline, at, { contact, remote });
   return null;
 }
 
 /** Daily gate rent (USD, prices of the year) for the accounts. */
 export const gateRentPerDayUsd = (airline: Airline, time: SimTime): number =>
-  (((airline.gates?.contact ?? 0) * CONTACT_GATE_USD_YEAR + (airline.gates?.remote ?? 0) * REMOTE_STAND_USD_YEAR) / 365) * priceLevelAt(time);
+  stationsOf(airline).reduce((sum, id) => {
+    const g = gatesOf(airline, id);
+    return sum + ((g?.contact ?? 0) * CONTACT_GATE_USD_YEAR + (g?.remote ?? 0) * REMOTE_STAND_USD_YEAR) / 365;
+  }, 0) * priceLevelAt(time);
 
 // ─── Lounges ─────────────────────────────────────────────────────────────────────
 
@@ -233,17 +265,26 @@ export const loungeAt = (airline: Airline | undefined, airportId: string, time: 
   airline?.lounges?.find((l) => l.airportId === airportId && l.readyAt <= time);
 
 /** Building a lounge at the hub: cash now, open after LOUNGE_BUILD_MONTHS. */
-export function buildLounge(state: GameState, world: EngineWorld, airlineId: string, seats: number, quality: LoungeQuality): 'loungeInvalid' | 'loungeExists' | 'insufficientCash' | null {
+export function buildLounge(
+  state: GameState,
+  world: EngineWorld,
+  airlineId: string,
+  seats: number,
+  quality: LoungeQuality,
+  airportId?: string,
+): 'loungeInvalid' | 'loungeExists' | 'insufficientCash' | 'baseUnknown' | null {
   const airline = state.airlines[airlineId]!;
+  const at = airportId ?? airline.hubId;
+  if (!stationsOf(airline).includes(at)) return 'baseUnknown';
   if (!Number.isInteger(seats) || seats < LOUNGE_SEATS[0] || seats > LOUNGE_SEATS[1] || !LOUNGE_QUALITIES.includes(quality)) return 'loungeInvalid';
-  if (airline.lounges?.some((l) => l.airportId === airline.hubId)) return 'loungeExists';
+  if (airline.lounges?.some((l) => l.airportId === at)) return 'loungeExists';
   const usd = seats * LOUNGE_BUILD_USD_PER_SEAT[quality] * priceLevelAt(state.time);
   if (airline.cash.amount < convert(money(usd, 'USD'), airline.currency, state.fx).amount) return 'insufficientCash';
   book(state, airlineId, 'lounge', money(-usd, 'USD'));
   const readyAt = addMonths(state.time, LOUNGE_BUILD_MONTHS);
-  (airline.lounges ??= []).push({ airportId: airline.hubId, seats, quality, readyAt, builtUsd: usd });
-  schedule(state, { at: readyAt, kind: 'loungeReady', airlineId, airportId: airline.hubId });
-  postMessage(state, { airlineId, kind: 'loungeOrdered', level: 'info', params: { airport: world.airportById.get(airline.hubId)?.iata ?? airline.hubId, seats } });
+  (airline.lounges ??= []).push({ airportId: at, seats, quality, readyAt, builtUsd: usd });
+  schedule(state, { at: readyAt, kind: 'loungeReady', airlineId, airportId: at });
+  postMessage(state, { airlineId, kind: 'loungeOrdered', level: 'info', params: { airport: world.airportById.get(at)?.iata ?? at, seats } });
   return null;
 }
 
@@ -258,13 +299,15 @@ export function closeLounge(state: GameState, airlineId: string, airportId: stri
 export const loungeRunPerDayUsd = (airline: Airline, time: SimTime): number =>
   (airline.lounges ?? []).filter((l) => l.readyAt <= time).reduce((s, l) => s + (l.seats * LOUNGE_RUN_USD_PER_SEAT_YEAR[l.quality]) / 365, 0) * priceLevelAt(time);
 
-/** Business and first class passengers departing the hub last week (from the route statistics). */
-export function premiumDeparturesPerWeek(state: GameState, airlineId: string): number {
+/** Business and first class passengers departing an airport of the airline last week (from the route statistics). */
+export function premiumDeparturesPerWeek(state: GameState, airlineId: string, airportId?: string): number {
   const week = state.finance[airlineId]?.history.at(-1);
   if (!week) return 0;
+  const at = airportId ?? state.airlines[airlineId]?.hubId;
   let n = 0;
   for (const [routeId, r] of Object.entries(week.routes)) {
-    if (state.routes[routeId]?.airlineId !== airlineId) continue;
+    const route = state.routes[routeId];
+    if (route?.airlineId !== airlineId || (route.originId !== at && route.destinationId !== at)) continue;
     // Half of a route's passengers leave from the hub.
     n += ((r.classes?.J?.pax ?? 0) + (r.classes?.F?.pax ?? 0)) / 2;
   }
@@ -273,7 +316,7 @@ export function premiumDeparturesPerWeek(state: GameState, airlineId: string): n
 
 /** Premium passengers in the lounge at the busiest time, and how crowded it is (1 = full; above = overcrowded). */
 export function loungeCrowding(state: GameState, airlineId: string, lounge: Lounge): { peak: number; load: number } {
-  const peak = (premiumDeparturesPerWeek(state, airlineId) / 7) * PEAK_SHARE;
+  const peak = (premiumDeparturesPerWeek(state, airlineId, lounge.airportId) / 7) * PEAK_SHARE;
   return { peak, load: peak / lounge.seats };
 }
 
@@ -286,13 +329,18 @@ export function loungeExperience(lounge: Lounge, load: number): number {
 export function groundContext(state: GameState, world: EngineWorld, airlineId: string): GroundContext | undefined {
   const airline = state.airlines[airlineId];
   if (!airline || airline.controller !== 'human') return undefined;
-  const lounge = loungeAt(airline, airline.hubId, state.time);
+  const lounges = new Map<string, { experience: number; visitorUsd: number }>();
+  for (const l of airline.lounges ?? []) {
+    if (l.readyAt <= state.time) lounges.set(l.airportId, { experience: loungeExperience(l, loungeCrowding(state, airlineId, l).load), visitorUsd: LOUNGE_VISITOR_USD[l.quality] });
+  }
   const partnerLounges = new Set<string>();
   for (const id of airline.partners ?? []) for (const h of world.realAirlines?.byId.get(id)?.hubs ?? []) partnerLounges.add(h);
+  // Gates at the hub and every base (flight keys are unique, so one map serves all).
+  const gateOf = new Map<string, 'contact' | 'remote'>();
+  for (const at of stationsOf(airline)) if (gatesOf(airline, at)) for (const [k, v] of hubGatesCached(state, world, airlineId, at).gateOf) gateOf.set(k, v);
   return {
-    hubId: airline.hubId,
-    ...(airline.gates ? { gateOf: hubGatesCached(state, world, airlineId).gateOf } : {}),
-    ...(lounge ? { lounge: { experience: loungeExperience(lounge, loungeCrowding(state, airlineId, lounge).load), visitorUsd: LOUNGE_VISITOR_USD[lounge.quality] } } : {}),
+    ...(gateOf.size ? { gateOf } : {}),
+    ...(lounges.size ? { lounges } : {}),
     ...(partnerLounges.size ? { partnerLounges } : {}),
   };
 }

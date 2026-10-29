@@ -54,6 +54,15 @@ export interface Airline {
   gates?: { contact: number; remote: number };
   /** Own lounges (Phase 7.3). */
   lounges?: Lounge[];
+  /** Bases away from the hub (Phase 7.4). */
+  bases?: Base[];
+}
+
+/** A base (Phase 7.4): an airport where aircraft and crews are stationed, with its own gates. */
+export interface Base {
+  airportId: string;
+  openedAt: SimTime;
+  gates?: { contact: number; remote: number };
 }
 
 export type LoungeQuality = 'standard' | 'premium' | 'flagship';
@@ -202,6 +211,8 @@ export type CabinLayout = CabinSection[];
 export type ClassFares = Record<'W' | 'J' | 'F', number>;
 
 export interface Aircraft {
+  /** The base the aircraft is stationed at (Phase 7.4); absent = the hub. */
+  baseId?: string;
   id: string;
   typeId: string;
   airlineId: string;
@@ -514,7 +525,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -543,7 +554,9 @@ export type LedgerKind =
   // Slots bought at airports where trading is allowed (Phase 7.2): an asset, not a cost of the year.
   | 'slotPurchase'
   // Building an own lounge (Phase 7.3).
-  | 'lounge';
+  | 'lounge'
+  // Setting up a base (Phase 7.4).
+  | 'base';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {

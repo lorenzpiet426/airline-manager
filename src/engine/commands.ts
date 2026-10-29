@@ -1,6 +1,7 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
 import type { LoungeQuality } from './state';
+import { closeBase, openBase, stationAircraft, stationOf, stationsOf, type BaseError } from './bases';
 import { buildLounge, closeLounge, ensureGates, ensureHubFacilities, setGates } from './hub';
 import { acquireSlots, buySlots, ensureSlots, requestSlots, type SlotShortfall } from './slots';
 import { takeOver, type TakeoverError } from './takeover';
@@ -62,6 +63,8 @@ export interface LeaseAircraft {
 }
 
 export interface RouteSettings {
+  /** Where the route starts (Phase 7.4): the hub (default) or a base. Fixed once the route is open. */
+  originId?: string;
   aircraftId: string;
   /** Round trips per week. */
   frequency: number;
@@ -188,12 +191,14 @@ export interface RequestSlots {
 export interface RentGates {
   type: 'RentGates';
   airlineId: string;
-  payload: { contact: number; remote: number };
+  /** At the hub (default) or a base. */
+  payload: { contact: number; remote: number; airportId?: string };
 }
 export interface BuildLounge {
   type: 'BuildLounge';
   airlineId: string;
-  payload: { seats: number; quality: LoungeQuality };
+  /** At the hub (default) or a base. */
+  payload: { seats: number; quality: LoungeQuality; airportId?: string };
 }
 export interface CloseLounge {
   type: 'CloseLounge';
@@ -201,7 +206,24 @@ export interface CloseLounge {
   payload: { airportId: string };
 }
 
-export type Command = RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Bases (Phase 7.4): open or close one, station an aircraft at the hub or a base. */
+export interface OpenBase {
+  type: 'OpenBase';
+  airlineId: string;
+  payload: { airportId: string };
+}
+export interface CloseBase {
+  type: 'CloseBase';
+  airlineId: string;
+  payload: { airportId: string };
+}
+export interface StationAircraft {
+  type: 'StationAircraft';
+  airlineId: string;
+  payload: { aircraftId: string; airportId: string };
+}
+
+export type Command = OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -252,7 +274,10 @@ export type CommandError =
   | 'gatesNeeded'
   | 'loungeInvalid'
   | 'loungeExists'
-  | 'loungeUnknown';
+  | 'loungeUnknown'
+  | 'originNotBase'
+  | 'aircraftElsewhere'
+  | BaseError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -312,15 +337,27 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       const error = buySlots(state, world, command.airlineId, command.payload.airportId, command.payload.hours);
       return error ? fail(error) : { ok: true };
     }
+    case 'OpenBase':
+    case 'CloseBase':
+    case 'StationAircraft': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const error =
+        command.type === 'OpenBase'
+          ? openBase(state, world, command.airlineId, command.payload.airportId)
+          : command.type === 'CloseBase'
+            ? closeBase(state, command.airlineId, command.payload.airportId)
+            : stationAircraft(state, command.airlineId, command.payload.aircraftId, command.payload.airportId);
+      return error ? fail(error) : { ok: true };
+    }
     case 'RentGates': {
       if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
       ensureHubFacilities(state, world);
-      const error = setGates(state, world, command.airlineId, command.payload.contact, command.payload.remote);
+      const error = setGates(state, world, command.airlineId, command.payload.contact, command.payload.remote, command.payload.airportId);
       return error ? fail(error) : { ok: true };
     }
     case 'BuildLounge': {
       if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
-      const error = buildLounge(state, world, command.airlineId, command.payload.seats, command.payload.quality);
+      const error = buildLounge(state, world, command.airlineId, command.payload.seats, command.payload.quality, command.payload.airportId);
       return error ? fail(error) : { ok: true };
     }
     case 'CloseLounge': {
@@ -490,7 +527,9 @@ export function validateRoute(
 ): CommandError | null {
   const airline = state.airlines[airlineId];
   if (!airline) return 'airlineUnknown';
-  const from = world.airportById.get(airline.hubId);
+  const originId = (exceptRouteId ? state.routes[exceptRouteId]?.originId : settings.originId) ?? airline.hubId;
+  if (!stationsOf(airline).includes(originId)) return 'originNotBase';
+  const from = world.airportById.get(originId);
   const to = world.airportById.get(destinationId);
   if (!from || !to) return 'airportUnknown';
   if (from.id === to.id) return 'sameAirport';
@@ -504,6 +543,7 @@ export function validateRoute(
   }
   const aircraft = state.aircraft[settings.aircraftId];
   if (!aircraft || aircraft.airlineId !== airlineId) return 'aircraftUnknown';
+  if (stationOf(airline, aircraft) !== originId) return 'aircraftElsewhere';
   if (!Number.isInteger(settings.frequency) || settings.frequency < 1 || settings.frequency > MAX_FREQUENCY) return 'frequencyInvalid';
   const type = getAircraftType(aircraft.typeId);
   const problem = checkRoute(world, type, from, to);
@@ -535,8 +575,12 @@ function openRoute(state: GameState, world: EngineWorld, airlineId: string, p: O
   if (error) return fail(error);
   const airline = state.airlines[airlineId]!;
   const routes = Object.values(state.routes).filter((r) => r.airlineId === airlineId);
-  if (routes.some((r) => r.destinationId === p.destinationId)) return fail('routeExists');
-  const from = world.airportById.get(airline.hubId)!;
+  const originId = p.originId ?? airline.hubId;
+  // One route per pair of airports (either way round).
+  if (routes.some((r) => (r.originId === originId && r.destinationId === p.destinationId) || (r.originId === p.destinationId && r.destinationId === originId))) {
+    return fail('routeExists');
+  }
+  const from = world.airportById.get(originId)!;
   const to = world.airportById.get(p.destinationId)!;
   // Flight numbers: outbound odd (101, 103 …), return = outbound + 1, like most airlines.
   const used = new Set(routes.map((r) => r.flightNumber));

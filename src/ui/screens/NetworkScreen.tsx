@@ -8,6 +8,7 @@ import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
 import { ConnectionsView } from '../network/ConnectionsView';
 import { SlotsView } from '../network/SlotsView';
 import { HubView } from '../network/HubView';
+import { BasesView } from '../network/BasesView';
 import { daysText, hhmmText, weekdayNames } from '../game/timetableText';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
@@ -57,6 +58,7 @@ import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 import { routeTransfers } from '../../engine/transfers';
 import { groundContext } from '../../engine/hub';
+import { stationOf, stationsOf } from '../../engine/bases';
 import { nextSeasonStart, slotPriceUsd, type SlotShortfall } from '../../engine/slots';
 
 /** Load factor colours (ECAM logic): green good, amber weak, red poor. */
@@ -76,7 +78,9 @@ export function NetworkScreen() {
   const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const [editing, setEditing] = useState<Editing>(null);
-  const [tab, setTab] = useState<'routes' | 'timetable' | 'connections' | 'slots' | 'hub'>('routes');
+  const [tab, setTab] = useState<'routes' | 'timetable' | 'connections' | 'slots' | 'hub' | 'bases'>('routes');
+  // Hub and Connections tabs: the hub or one of the bases (Phase 7.4).
+  const [station, setStation] = useState(airline?.hubId ?? '');
 
   if (!game || !airline) {
     return (
@@ -138,6 +142,7 @@ export function NetworkScreen() {
                 { value: 'connections', label: t('connections.tab') },
                 { value: 'slots', label: t('slots.tab') },
                 { value: 'hub', label: t('hub.tab') },
+                { value: 'bases', label: t('bases.tab') },
               ]}
               onChange={setTab}
             />
@@ -157,12 +162,23 @@ export function NetworkScreen() {
             <Panel title={t('timetable.board')} code="FIDS">
               <DeparturesBoard game={game} world={engineWorld} airline={airline} code={code} />
             </Panel>
-          ) : tab === 'connections' && engineWorld ? (
-            <ConnectionsView game={game} world={engineWorld} airline={airline} code={code} />
+          ) : (tab === 'connections' || tab === 'hub') && engineWorld ? (
+            <>
+              {(airline.bases?.length ?? 0) > 0 && (
+                <div className="toolbar-row">
+                  <Segmented label={t('bases.station')} value={stationsOf(airline).includes(station) ? station : airline.hubId} options={stationsOf(airline).map((id) => ({ value: id, label: code(id) }))} onChange={setStation} />
+                </div>
+              )}
+              {tab === 'connections' ? (
+                <ConnectionsView game={game} world={engineWorld} airline={airline} code={code} airportId={stationsOf(airline).includes(station) ? station : airline.hubId} />
+              ) : (
+                <HubView game={game} world={engineWorld} airline={airline} airportId={stationsOf(airline).includes(station) ? station : airline.hubId} />
+              )}
+            </>
           ) : tab === 'slots' && engineWorld ? (
             <SlotsView game={game} world={engineWorld} airline={airline} code={code} />
-          ) : tab === 'hub' && engineWorld ? (
-            <HubView game={game} world={engineWorld} airline={airline} />
+          ) : tab === 'bases' && engineWorld ? (
+            <BasesView game={game} world={engineWorld} airline={airline} code={code} />
           ) : routes.length === 0 ? (
             <Panel title={t('network.routes')}>
               <p className="muted">{t('network.empty')}</p>
@@ -280,7 +296,9 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   const { language } = useSettings();
   const world = useGameWorld();
   const engineWorld = useEngineWorld();
-  const fleet = Object.values(game.aircraft).filter((a) => a.airlineId === airline.id);
+  // Where the route starts (Phase 7.4): the hub or a base; only aircraft stationed there can fly it.
+  const [originId, setOriginId] = useState(route?.originId ?? airline.hubId);
+  const fleet = Object.values(game.aircraft).filter((a) => a.airlineId === airline.id && stationOf(airline, a) === originId);
   const detailed = game.options.scheduling === 'detailed';
   const code = (id: string) => world?.airportById.get(id)?.iata ?? id;
 
@@ -298,7 +316,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   const [shortfall, setShortfall] = useState<SlotShortfall | null>(null);
   const [requested, setRequested] = useState(false);
 
-  const hub = world?.airportById.get(airline.hubId);
+  const hub = world?.airportById.get(originId);
   const dest = destinationId ? world?.airportById.get(destinationId) : undefined;
   // Before deregulation fares could only move a little around the regulated fare (historical games).
   const fares = hub && dest ? fareRange(game, hub, dest) : FARE_FACTOR_RANGE;
@@ -311,8 +329,8 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   const aircraft = game.aircraft[aircraftId];
   const draft = useMemo(() => (hub && dest ? (route ?? draftRoute(airline.id, hub, dest)) : null), [hub, dest, route, airline.id]);
   const settings = detailed
-    ? { aircraftId: specs[0]?.aircraftId ?? '', frequency: 0, fareFactor, classFares, flights: specs }
-    : { aircraftId, frequency, fareFactor, classFares };
+    ? { originId, aircraftId: specs[0]?.aircraftId ?? '', frequency: 0, fareFactor, classFares, flights: specs }
+    : { originId, aircraftId, frequency, fareFactor, classFares };
   // The classes the route's aircraft offer (fares can be set for each of them).
   const offered = CLASSES.filter((cls) =>
     (detailed ? specs.map((x) => x.aircraftId) : [aircraftId]).some((id) => game.aircraft[id]?.cabin.some((s) => s.cls === cls)),
@@ -320,7 +338,12 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   const problem =
     engineWorld && destinationId ? validateRoute(game, engineWorld, airline.id, destinationId, settings, route?.id) : null;
   const specProblem = detailed && engineWorld && draft ? validateSpecs(game, engineWorld, draft, specs) : null;
-  const duplicate = !route && destinationId && Object.values(game.routes).some((r) => r.airlineId === airline.id && r.destinationId === destinationId);
+  const duplicate =
+    !route &&
+    destinationId &&
+    Object.values(game.routes).some(
+      (r) => r.airlineId === airline.id && ((r.originId === originId && r.destinationId === destinationId) || (r.originId === destinationId && r.destinationId === originId)),
+    );
 
   const book = (usd: number) => convert(money(usd, 'USD'), airline.currency, game.fx);
   const fmt = (usd: number) => formatMoney(language, book(usd), false);
@@ -437,6 +460,30 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
   return (
     <div className="planner">
       <Panel title={route ? t('network.editTitle') : t('network.openTitle')} code={`${hub?.iata ?? ''} ⇄ ${dest?.iata ?? '···'}`}>
+        {!route && (airline.bases?.length ?? 0) > 0 && (
+          <>
+            <span className="field__label">{t('bases.origin')}</span>
+            <div className="choices" role="radiogroup" aria-label={t('bases.origin')}>
+              {stationsOf(airline).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={id === originId}
+                  className="choice"
+                  onClick={() => {
+                    setOriginId(id);
+                    setSpecs([]);
+                    setAircraftId(Object.values(game.aircraft).find((a) => a.airlineId === airline.id && stationOf(airline, a) === id)?.id ?? '');
+                  }}
+                >
+                  <span className="choice__title mono">{code(id)}</span>
+                  <span className="muted small">{id === airline.hubId ? t('bases.hub') : t('bases.base')}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
         <span className="field__label">{t('network.destination')}</span>
         {dest ? (
           <div className="hubcard">

@@ -220,9 +220,10 @@
     "slotsBought_one": "{{count}} Slot in {{airport}} gekauft.",
     "slotsBought_other": "{{count}} Slots in {{airport}} gekauft.",
     "slotSeason": "Neue Saison in {{airport}}: {{granted}} von {{asked}} beantragten Slots wurden zugeteilt; {{lost}} ungenutzte Slots gingen an den Koordinator zurück (Use it or lose it).",
-    "gatesRented": "{{remote}} weitere Außenpositionen an deinem Drehkreuz gemietet (jetzt {{total}} Gates) für den neuen Flugplan.",
+    "gatesRented": "{{remote}} weitere Außenpositionen in {{airport}} gemietet (jetzt {{total}} Gates) für den neuen Flugplan.",
     "loungeOrdered": "Deine neue Lounge in {{airport}} ({{seats}} Plätze) wird gebaut.",
-    "loungeReady": "Deine Lounge in {{airport}} ist offen."
+    "loungeReady": "Deine Lounge in {{airport}} ist offen.",
+    "baseOpened": "Deine neue Basis in {{airport}} ist offen: Stationiere Flugzeuge dort unter Netz → Basen."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -372,7 +373,14 @@
     "gatesNeeded": "Dein Flugplan braucht zur vollsten Zeit mehr Gates.",
     "loungeInvalid": "Wähle 50 bis 800 Plätze und eine Qualität.",
     "loungeExists": "Du hast an deinem Drehkreuz schon eine Lounge.",
-    "loungeUnknown": "Dort gibt es keine Lounge."
+    "loungeUnknown": "Dort gibt es keine Lounge.",
+    "baseNotAllowed": "Deine Airline darf dort keine Basis eröffnen (Verkehrsrechte: eigenes Land oder, für Airlines daraus, der europäische Luftverkehrsbinnenmarkt).",
+    "baseExists": "Von dort fliegst du schon.",
+    "baseUnknown": "Das ist keine deiner Basen.",
+    "baseInUse": "An dieser Basis sind noch Strecken oder Flugzeuge.",
+    "aircraftHasFlights": "Dieses Flugzeug hat noch geplante Flüge: Entferne sie zuerst.",
+    "originNotBase": "Strecken müssen an deinem Drehkreuz oder einer deiner Basen beginnen.",
+    "aircraftElsewhere": "Dieses Flugzeug ist an einem anderen Flughafen stationiert."
   },
   "fleet": {
     "title": "Flotte",
@@ -1989,5 +1997,24 @@
     },
     "buildCost": "Bau: {{cost}} · Betrieb: {{run}} pro Jahr · öffnet in {{months}} Monaten.",
     "build": "Lounge bauen"
+  },
+  "bases": {
+    "tab": "Basen",
+    "title": "Dein Drehkreuz und deine Basen",
+    "intro": "Eine Basis ist ein Flughafen, an dem du Flugzeuge und Crews stationierst: Sie fliegen von dort, übernachten dort, die Crews bekommen die Löhne dieses Landes, und Passagiere können dort umsteigen wie an deinem Drehkreuz (mit eigenen Gates und Lounge). Basen sind im eigenen Land erlaubt und – für Airlines des europäischen Luftverkehrsbinnenmarkts (seit 1997) – überall darin. Weitere Rechte kommen in Phase 12.",
+    "station": "Station",
+    "aircraft": "Flugzeuge",
+    "routes": "Strecken von dort",
+    "gates": "Gates",
+    "hub": "Drehkreuz",
+    "base": "Basis",
+    "close": "Schließen",
+    "open": "Basis eröffnen",
+    "cost": "Aufbau {{setup}} · Betrieb {{run}} pro Jahr (Stationsbüro, Crewplanung, Linienwartung).",
+    "openButton": "Basis eröffnen",
+    "origin": "Strecke beginnt in",
+    "stationed": "Wo deine Flugzeuge stationiert sind",
+    "stationedNote": "Ein Flugzeug fliegt nur Strecken von seiner Station. Es kann zu einer anderen Station wechseln, solange keine Flüge geplant sind.",
+    "registration": "Flugzeug"
   }
 }

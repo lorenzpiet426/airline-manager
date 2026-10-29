@@ -4,6 +4,7 @@ import {
   CONTACT_GATE_USD_YEAR,
   freeGates,
   gatesAt,
+  gatesOf,
   hubGatesCached,
   LOUNGE_BUILD_MONTHS,
   LOUNGE_BUILD_USD_PER_SEAT,
@@ -29,11 +30,11 @@ const W = 720;
 const H = 140;
 
 /** Your hub on the ground (Phase 7.3): gates rented and needed over the day, and your lounge. */
-export function HubView({ game, world, airline }: { game: GameState; world: EngineWorld; airline: Airline }) {
+export function HubView({ game, world, airline, airportId }: { game: GameState; world: EngineWorld; airline: Airline; airportId: string }) {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const hub = world.airportById.get(airline.hubId);
-  const gates = airline.gates ?? { contact: 0, remote: 0 };
+  const hub = world.airportById.get(airportId);
+  const gates = gatesOf(airline, airportId) ?? { contact: 0, remote: 0 };
   const [contact, setContact] = useState(gates.contact);
   const [remote, setRemote] = useState(gates.remote);
   // After renting (or a timetable change renting stands) the fields show the new numbers.
@@ -48,7 +49,7 @@ export function HubView({ game, world, airline }: { game: GameState; world: Engi
   const book = (usd: number) => formatMoney(language, convert(money(usd, 'USD'), airline.currency, game.fx), false);
 
   const data = useMemo(() => {
-    const g = hubGatesCached(game, world, airline.id);
+    const g = hubGatesCached(game, world, airline.id, airportId);
     // The most aircraft at the gates in each hour of the day (any day of the week).
     const perHour = new Array<number>(24).fill(0);
     g.load.forEach((n, i) => {
@@ -57,12 +58,12 @@ export function HubView({ game, world, airline }: { game: GameState; world: Engi
     });
     const kinds = [...g.gateOf.values()];
     return { peak: g.peak, peakAt: g.peakAt, perHour, contactShare: kinds.length ? kinds.filter((k) => k === 'contact').length / kinds.length : 0, short: g.short };
-  }, [game, world, airline.id]);
-  const free = freeGates(game, world, airline.id, airline.hubId);
+  }, [game, world, airline.id, airportId]);
+  const free = freeGates(game, world, airline.id, airportId);
   const total = hub ? gatesAt(hub) : { contact: 0, remote: 0 };
   const max = Math.max(1, data.peak, gates.contact + gates.remote);
   const bar = W / 24;
-  const lounge = airline.lounges?.find((l) => l.airportId === airline.hubId);
+  const lounge = airline.lounges?.find((l) => l.airportId === airportId);
   const crowd = lounge ? loungeCrowding(game, airline.id, lounge) : null;
   const run = async (command: Parameters<typeof sendCommand>[0]) => {
     const r = await sendCommand(command);
@@ -72,7 +73,7 @@ export function HubView({ game, world, airline }: { game: GameState; world: Engi
 
   return (
     <>
-      <Panel title={t('hub.gatesTitle', { hub: hub?.iata ?? airline.hubId })} code="GATE">
+      <Panel title={t('hub.gatesTitle', { hub: hub?.iata ?? airportId })} code="GATE">
         <p className="muted small">{t('hub.gatesIntro')}</p>
         <dl className="facts facts--compact">
           <dt>{t('hub.rented')}</dt>
@@ -118,13 +119,13 @@ export function HubView({ game, world, airline }: { game: GameState; world: Engi
           type="button"
           className="button button--primary"
           disabled={contact === gates.contact && remote === gates.remote}
-          onClick={() => void run({ type: 'RentGates', airlineId: airline.id, payload: { contact, remote } })}
+          onClick={() => void run({ type: 'RentGates', airlineId: airline.id, payload: { contact, remote, airportId } })}
         >
           {t('hub.applyGates')}
         </button>
       </Panel>
 
-      <Panel title={t('hub.loungeTitle', { hub: hub?.iata ?? airline.hubId })} code="LNG">
+      <Panel title={t('hub.loungeTitle', { hub: hub?.iata ?? airportId })} code="LNG">
         <p className="muted small">{t('hub.loungeIntro')}</p>
         {lounge ? (
           <>
@@ -145,7 +146,7 @@ export function HubView({ game, world, airline }: { game: GameState; world: Engi
             <button
               type="button"
               className="button"
-              onClick={() => window.confirm(t('hub.closeConfirm')) && void run({ type: 'CloseLounge', airlineId: airline.id, payload: { airportId: airline.hubId } })}
+              onClick={() => window.confirm(t('hub.closeConfirm')) && void run({ type: 'CloseLounge', airlineId: airline.id, payload: { airportId } })}
             >
               {t('hub.close')}
             </button>
@@ -175,7 +176,7 @@ export function HubView({ game, world, airline }: { game: GameState; world: Engi
                 months: LOUNGE_BUILD_MONTHS,
               })}
             </p>
-            <button type="button" className="button button--primary" onClick={() => void run({ type: 'BuildLounge', airlineId: airline.id, payload: { seats, quality } })}>
+            <button type="button" className="button button--primary" onClick={() => void run({ type: 'BuildLounge', airlineId: airline.id, payload: { seats, quality, airportId } })}>
               {t('hub.build')}
             </button>
           </>

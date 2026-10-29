@@ -660,6 +660,21 @@ Owner decisions: realistic gate capacity at the hub; own lounges of any size (hu
   lounges at their hubs: +2.
 - Austrian takeover: its Vienna lounges (≈ 600 premium seats today, smaller with the fleet in past years).
 
+## Bases (Phase 7.4, 2026-10-29)
+Owner decisions: real crew bases; real traffic rules; bases can be second hubs with flight-by-flight connections.
+
+- **Where** (`src/data/aviationMarkets.ts`, Wikipedia "European Common Aviation Area", "Enlargement of the European
+  Union", read 2026-10-29): in the airline's own country (the state of the time: West/East Germany, Soviet Union …),
+  and for airlines of the single aviation market anywhere in it — full cabotage from 1 April 1997 for the EU-15 and
+  Norway/Iceland (EEA), Switzerland from 1 June 2002, the 2004 members from 1 May 2004, Bulgaria and Romania 2007,
+  Croatia 1 July 2013, the United Kingdom until 31 December 2020. Other countries: Phase 12 (freedoms of the air).
+- **Costs** (modelled): set-up $2 m (station office, crew rooms, recruiting, ground equipment), running $3 m a year
+  (station management, crew planning, line maintenance), in the overheads line; crews of stationed aircraft are paid
+  at the base country's wage level.
+- **Rules**: aircraft are stationed at the hub or a base (they can move while they have no flights); routes start at
+  the hub or a base and are flown only by aircraft stationed there; one route per pair of airports. Gates, a lounge,
+  connections (7.1–7.3) work at every base like at the hub; the AI treats bases like the hub (home rivals defend them).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

@@ -2,6 +2,7 @@
 // pays its costs, crews are paid and lease costs accrue. Monday closes last week's profit-and-loss report.
 import { ensureSlots, isSeasonStart, recordSlotUse, seasonChange } from './slots';
 import { ensureHubFacilities, gateRentPerDayUsd, groundContext, loungeRunPerDayUsd } from './hub';
+import { baseRunPerDayUsd, stationOf } from './bases';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -141,11 +142,12 @@ function bookDay(state: GameState, world: EngineWorld): void {
   for (const aircraft of Object.values(state.aircraft)) {
     if (aircraft.status !== 'active') continue;
     const airline = state.airlines[aircraft.airlineId];
-    const hub = airline && world.airportById.get(airline.hubId);
-    if (!airline || !hub) continue;
+    // Crews are paid at the wages of the country where the aircraft is stationed (hub or base, Phase 7.4).
+    const station = airline && world.airportById.get(stationOf(airline, aircraft));
+    if (!airline || !station) continue;
     const k = usdTo(state.fx, airline.currency);
     const day = dayOf(airline.id);
-    const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, hub.country, aircraft.cabin) * k * levels.costs;
+    const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, station.country, aircraft.cabin) * k * levels.costs;
     day.lines.crew += crew;
     if (aircraft.lease) day.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
     // Refits were paid in cash; the accounts write them off day by day.
@@ -159,7 +161,8 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const hub = world.airportById.get(airline.hubId);
     if (!hub) continue;
     const active = Object.values(state.aircraft).filter((a) => a.airlineId === airline.id && a.status === 'active').length;
-    const overhead = overheadPerDayUsd(world, hub.country, active) * usdTo(state.fx, airline.currency) * levels.costs;
+    // Running the bases (Phase 7.4) is part of the overheads.
+    const overhead = (overheadPerDayUsd(world, hub.country, active) * levels.costs + baseRunPerDayUsd(airline, state.time - 1)) * usdTo(state.fx, airline.currency);
     dayOf(airline.id).lines.overhead += overhead;
     // Gates rented at the hub and own lounges (Phase 7.3).
     const gates = gateRentPerDayUsd(airline, state.time - 1) * usdTo(state.fx, airline.currency);

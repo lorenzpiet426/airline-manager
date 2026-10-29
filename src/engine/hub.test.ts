@@ -69,7 +69,7 @@ describe('gates (7.3)', () => {
   it('a bus to a remote stand costs money and passengers notice it', () => {
     const plan = { type: A320, seats: 180, frequency: 7, fareFactor: 1, ageYears: 5, rampUp: 1, flights: [{ dir: 0 as const, days: DAYS_ALL, dep: 540, type: A320, seats: 180, cabin: economyCabin(A320, 180), ageYears: 5, key: 'P1:0' }] };
     const date = new Date(Date.UTC(2026, 4, 12));
-    const at = (gate: 'contact' | 'remote') => routeWeek(world, ap('LOWW'), ap('LEMG'), plan, date, { ground: { hubId: 'LOWW', gateOf: new Map([['P1:0', gate]]) } });
+    const at = (gate: 'contact' | 'remote') => routeWeek(world, ap('LOWW'), ap('LEMG'), plan, date, { ground: { gateOf: new Map([['P1:0', gate]]) } });
     const contact = at('contact');
     const remote = at('remote');
     expect(remote.costs.handling).toBeGreaterThan(contact.costs.handling);
@@ -88,10 +88,10 @@ describe('lounges (7.3)', () => {
     // 200 seats × $30,000 ≈ $6 m.
     expect(cash - state.airlines[airlineId]!.cash.amount).toBeGreaterThan(4_500_000);
     // Not open yet; once open, business passengers leaving the hub get its bonus instead of a contract lounge.
-    expect(groundContext(state, world, airlineId)!.lounge).toBeUndefined();
+    expect(groundContext(state, world, airlineId)!.lounges).toBeUndefined();
     state.airlines[airlineId]!.lounges![0]!.readyAt = state.time;
     const g = groundContext(state, world, airlineId)!;
-    expect(g.lounge!.experience).toBe(LOUNGE_EXPERIENCE.premium);
+    expect(g.lounges!.get('LOWW')!.experience).toBe(LOUNGE_EXPERIENCE.premium);
     const cabin = standardCabin(A320, 'twoShort');
     const plan = { type: A320, seats: 180, frequency: 7, fareFactor: 1, ageYears: 5, rampUp: 1, flights: [{ dir: 0 as const, days: DAYS_ALL, dep: 540, type: A320, seats: 180, cabin, ageYears: 5 }] };
     const week = routeWeek(world, ap('LOWW'), ap('EGLL'), plan, new Date(Date.UTC(2026, 4, 12)), { ground: g });

@@ -526,10 +526,10 @@ export interface RouteContext {
 }
 
 export interface GroundContext {
-  hubId: string;
   gateOf?: ReadonlyMap<string, 'contact' | 'remote'>;
-  /** Own lounge at the hub: what it adds to a premium passenger's experience, and its food and drinks per visitor (USD). */
-  lounge?: { experience: number; visitorUsd: number };
+  /** Own lounges (hub, bases) by airport: what one adds to a premium passenger's experience, and food and drinks per
+   * visitor (USD). */
+  lounges?: ReadonlyMap<string, { experience: number; visitorUsd: number }>;
   /** Airports where a partner's lounge is used. */
   partnerLounges?: ReadonlySet<string>;
 }
@@ -863,9 +863,10 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
           let ground = g.gateOf && f.key && g.gateOf.get(f.key) === 'remote' ? REMOTE_EXPERIENCE : 0;
           if (s.cls === 'J' || s.cls === 'F') {
             const from = ends[f.dir].id;
-            if (from === g.hubId && g.lounge) {
-              ground += g.lounge.experience;
-              costs.service += p * (g.lounge.visitorUsd * lv.prices - CONTRACT_LOUNGE_USD[s.cls] * lv.costs);
+            const own = g.lounges?.get(from);
+            if (own) {
+              ground += own.experience;
+              costs.service += p * (own.visitorUsd * lv.prices - CONTRACT_LOUNGE_USD[s.cls] * lv.costs);
             } else if (g.partnerLounges?.has(from)) ground += PARTNER_LOUNGE_EXPERIENCE;
           }
           if (ground) e.ground = (e.ground ?? 0) + p * ground;

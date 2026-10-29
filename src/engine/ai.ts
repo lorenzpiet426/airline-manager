@@ -28,6 +28,7 @@ import { fitCabin, haul, MODEL_REPUTATION, modelCabin, totalSeats } from './cabi
 import { typicalRentUsd } from './market';
 import { fleetSize, type BusinessModel, type RealAirline } from './realAirlines';
 import { random } from './rng';
+import { stationsOf } from './bases';
 import { networkChanged, realLegTransfers } from './transfers';
 import { plannedFlights } from './schedule';
 import type { AiRouteState, CabinLayout, GameState } from './state';
@@ -285,7 +286,8 @@ export function aiDailyStep(state: GameState, world: EngineWorld): void {
     world,
     state,
     date: toDate(state.time - 1),
-    playerHubs: new Set(player ? [player.hubId] : []),
+    // The player's hub and bases (Phase 7.4): the home rivals defend them.
+    playerHubs: new Set(player ? stationsOf(player) : []),
     playerId: player?.id ?? null,
     partners: new Set(player?.partners ?? []),
     playerPairs: new Set(

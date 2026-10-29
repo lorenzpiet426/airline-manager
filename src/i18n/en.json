@@ -220,9 +220,10 @@
     "slotsBought_one": "Bought {{count}} slot at {{airport}}.",
     "slotsBought_other": "Bought {{count}} slots at {{airport}}.",
     "slotSeason": "New season at {{airport}}: {{granted}} of {{asked}} slots asked for were granted; {{lost}} unused slots went back to the coordinator (use it or lose it).",
-    "gatesRented": "Rented {{remote}} more remote stands at your hub (now {{total}} gates) for the new timetable.",
+    "gatesRented": "Rented {{remote}} more remote stands at {{airport}} (now {{total}} gates) for the new timetable.",
     "loungeOrdered": "Your new lounge at {{airport}} ({{seats}} seats) is being built.",
-    "loungeReady": "Your lounge at {{airport}} is open."
+    "loungeReady": "Your lounge at {{airport}} is open.",
+    "baseOpened": "Your new base at {{airport}} is open: station aircraft there under Network → Bases."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -372,7 +373,14 @@
     "gatesNeeded": "Your timetable needs more gates than that at its busiest moment.",
     "loungeInvalid": "Choose between 50 and 800 seats and a quality.",
     "loungeExists": "You already have a lounge at your hub.",
-    "loungeUnknown": "There is no lounge there."
+    "loungeUnknown": "There is no lounge there.",
+    "baseNotAllowed": "Your airline may not open a base there (traffic rights: own country, or the European single aviation market for airlines from it).",
+    "baseExists": "You already fly from there.",
+    "baseUnknown": "That isn't one of your bases.",
+    "baseInUse": "Routes or aircraft are still at this base.",
+    "aircraftHasFlights": "This aircraft still has flights planned: remove them first.",
+    "originNotBase": "Routes must start at your hub or one of your bases.",
+    "aircraftElsewhere": "This aircraft is stationed at another airport."
   },
   "fleet": {
     "title": "Fleet",
@@ -1989,5 +1997,24 @@
     },
     "buildCost": "Building: {{cost}} · running: {{run}} a year · opens in {{months}} months.",
     "build": "Build lounge"
+  },
+  "bases": {
+    "tab": "Bases",
+    "title": "Your hub and bases",
+    "intro": "A base is an airport where you station aircraft and crews: they fly routes from there and spend the nights there, crews are paid at that country's wages, and passengers can change planes there like at your hub (with gates and a lounge of its own). Bases are allowed in your own country and — for an airline of the European single aviation market (since 1997) — anywhere in it. Further rights come in Phase 12.",
+    "station": "Station",
+    "aircraft": "Aircraft",
+    "routes": "Routes from it",
+    "gates": "Gates",
+    "hub": "hub",
+    "base": "base",
+    "close": "Close",
+    "open": "Open a base",
+    "cost": "Set-up {{setup}} · running {{run}} a year (station office, crew planning, line maintenance).",
+    "openButton": "Open base",
+    "origin": "Route starts at",
+    "stationed": "Where your aircraft are stationed",
+    "stationedNote": "An aircraft flies only routes from its station. It can move to another station while it has no flights planned.",
+    "registration": "Aircraft"
   }
 }

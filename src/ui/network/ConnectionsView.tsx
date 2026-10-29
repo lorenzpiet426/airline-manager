@@ -16,13 +16,13 @@ const AXIS = H / 2;
  * Your hub's connections (Phase 7.1): the waves of arrivals and departures over the day, the flights carrying the most
  * connecting passengers, and journeys that have travellers but no workable connection.
  */
-export function ConnectionsView({ game, world, airline, code }: { game: GameState; world: EngineWorld; airline: Airline; code: (id: string) => string }) {
+export function ConnectionsView({ game, world, airline, code, airportId }: { game: GameState; world: EngineWorld; airline: Airline; code: (id: string) => string; airportId: string }) {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const hub = world.airportById.get(airline.hubId);
+  const hub = world.airportById.get(airportId);
   const data = useMemo(() => {
-    const pc = playerConnections(world, game, airline.id, airline.hubId);
-    const flights = hubFlights(world, game, airline.id, airline.hubId);
+    const pc = playerConnections(world, game, airline.id, airportId);
+    const flights = hubFlights(world, game, airline.id, airportId);
     const arrivals = new Array<number>(24).fill(0);
     const departures = new Array<number>(24).fill(0);
     for (const list of flights.in.values()) for (const f of list) arrivals[Math.floor((f.at % 1440) / 60)]! += 1 / 7;
@@ -40,7 +40,7 @@ export function ConnectionsView({ game, world, airline, code }: { game: GameStat
     const options = pc.connections.length;
     const waits = pc.connections.reduce((s, c) => s + c.wait * c.pax, 0) / Math.max(1, pc.connections.reduce((s, c) => s + c.pax, 0));
     return { arrivals, departures, top, missed: pc.missed.slice(0, 10), options, waits, potential: pc.connections.reduce((s, c) => s + c.pax, 0) };
-  }, [world, game, airline.id, airline.hubId]);
+  }, [world, game, airline.id, airportId]);
 
   const lastWeek = game.finance[airline.id]?.history.at(-1);
   const lastTransfer = lastWeek ? Object.values(lastWeek.routes).reduce((s, r) => s + (r.transfer ?? 0), 0) : null;
@@ -59,7 +59,7 @@ export function ConnectionsView({ game, world, airline, code }: { game: GameStat
 
   return (
     <>
-      <Panel title={t('connections.title', { hub: hub?.iata ?? airline.hubId })} code="HUB">
+      <Panel title={t('connections.title', { hub: hub?.iata ?? airportId })} code="HUB">
         <p className="muted small">{t('connections.intro')}</p>
         <dl className="facts facts--compact">
           <dt>{t('connections.mct')}</dt>

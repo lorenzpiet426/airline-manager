@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { stationOf } from '../../engine/bases';
 import { getAircraftType, TURNAROUND_MIN } from '../../data/aircraft';
 import { MAX_GROUND_MIN, pairTimes, type FlightSpec } from '../../engine/schedule';
 import type { GameState, Route } from '../../engine/state';
@@ -45,12 +46,13 @@ export function TimetableEditor({
 }) {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const fleet = Object.values(game.aircraft).filter((a) => a.airlineId === route.airlineId);
+  // Only aircraft stationed where the route starts (Phase 7.4).
+  const airline = game.airlines[route.airlineId];
+  const fleet = Object.values(game.aircraft).filter((a) => a.airlineId === route.airlineId && stationOf(airline, a) === route.originId);
   const names = weekdayNames(language, 'narrow');
   const update = (i: number, change: Partial<FlightSpec>) => onChange(specs.map((s, j) => (j === i ? { ...s, ...change } : s)));
   const hub = code(route.originId);
   const dest = code(route.destinationId);
-  const airline = game.airlines[route.airlineId];
 
   return (
     <div className="tt-editor">
