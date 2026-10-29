@@ -5,6 +5,7 @@
 //    currencies until they joined the euro.
 //  - World Bank World Development Indicators (CC BY 4.0): official exchange rate (yearly, all countries), population,
 //    GDP per person in constant dollars, and air passengers carried, 1960 onwards.
+//  - Wikidata (CC0): opening, founding and closing dates of airports (Phase 5.3: which airports existed in a year).
 // Output: tools/raw/history/… (not in git). Run: node tools/download-history.ts, then node tools/build-history.ts
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -13,6 +14,7 @@ const DIR = join(import.meta.dirname, 'raw', 'history');
 await mkdir(join(DIR, 'eia'), { recursive: true });
 await mkdir(join(DIR, 'fed'), { recursive: true });
 await mkdir(join(DIR, 'worldbank'), { recursive: true });
+await mkdir(join(DIR, 'wikidata'), { recursive: true });
 
 async function get(url: string): Promise<Response> {
   const res = await fetch(url);
@@ -55,3 +57,18 @@ for (const indicator of ['PA.NUS.FCRF', 'SP.POP.TOTL', 'NY.GDP.PCAP.KD', 'IS.AIR
   await writeFile(join(DIR, 'worldbank', `${indicator}.json`), JSON.stringify(json[1]));
   console.log(`World Bank ${indicator}: ${json[0].total} values`);
 }
+
+// Wikidata: airports (by ICAO code) with their official opening (P1619), inception (P571) and closure (P3999) dates.
+const USER_AGENT = 'AirlineManagerGame/0.1 (https://github.com/lorenzpiet426/airline-manager; hobby game data pipeline)';
+const QUERY = `
+SELECT ?item ?icao ?opened ?inception ?closed WHERE {
+  ?item wdt:P239 ?icao .
+  OPTIONAL { ?item wdt:P1619 ?opened } OPTIONAL { ?item wdt:P571 ?inception } OPTIONAL { ?item wdt:P3999 ?closed }
+  FILTER(BOUND(?opened) || BOUND(?inception) || BOUND(?closed))
+}`;
+const wd = await fetch(`https://query.wikidata.org/sparql?query=${encodeURIComponent(QUERY)}`, {
+  headers: { Accept: 'application/sparql-results+json', 'User-Agent': USER_AGENT },
+});
+if (!wd.ok) throw new Error(`Wikidata query failed: HTTP ${wd.status}`);
+await writeFile(join(DIR, 'wikidata', 'airport-dates.json'), await wd.text());
+console.log('Wikidata airport dates');

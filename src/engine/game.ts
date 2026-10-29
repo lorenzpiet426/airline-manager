@@ -11,7 +11,10 @@ import { refreshMarket } from './market';
 import { newFinance } from './operations';
 import { sumPeriods } from './finance';
 import { emptyAi, SAVE_VERSION, type GameOptions, type GameState, type PnlWeek } from './state';
-import { MINUTES_PER_DAY, simTime, startOfDay, startOfMonth, startOfNextMonth, type SimTime } from './time';
+import { MINUTES_PER_DAY, simTime, startOfDay, startOfMonth, startOfNextMonth, toDate, type SimTime } from './time';
+import { REAL_AIRLINES_FROM } from './era';
+import { ratesPerEurAt } from '../data/fxHistory';
+import type { EngineWorld } from './world';
 
 export interface NewGameOptions extends GameOptions {
   seed: number;
@@ -20,17 +23,25 @@ export interface NewGameOptions extends GameOptions {
   startTime?: SimTime;
 }
 
-export function createGame(options: NewGameOptions): GameState {
+export function createGame(options: NewGameOptions, world?: EngineWorld): GameState {
   const startTime = options.startTime ?? simTime(options.startYear, 1, 1);
+  const historical = options.startYear < REAL_AIRLINES_FROM;
+  // Historical games: the real exchange rates of the start month (incl. schilling, mark, lira …).
+  const fx = historical && world?.fxHistory ? ratesPerEurAt(world.fxHistory, toDate(startTime)) : { ...ECB_RATES };
   const state: GameState = {
     version: SAVE_VERSION,
     seed: options.seed >>> 0,
     rng: options.seed >>> 0,
     time: startTime,
     startTime,
-    options: { timeMode: options.timeMode, realism: options.realism, scheduling: options.scheduling },
-    fx: { ...ECB_RATES },
-    fxDate: FX_DATE,
+    options: {
+      timeMode: options.timeMode,
+      realism: options.realism,
+      scheduling: options.scheduling,
+      ...(historical ? { startYear: options.startYear } : {}),
+    },
+    fx,
+    fxDate: historical ? toDate(startTime).toISOString().slice(0, 10) : FX_DATE,
     airlines: {},
     aircraft: {},
     market: { offers: [], sales: [] },
@@ -40,7 +51,7 @@ export function createGame(options: NewGameOptions): GameState {
     ai: emptyAi(),
     reputation: {},
     hangars: {},
-    world: newWorldState(ECB_RATES),
+    world: newWorldState(fx),
     queue: [],
     messages: [],
     ledger: [],

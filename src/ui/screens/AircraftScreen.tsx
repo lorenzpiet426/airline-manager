@@ -14,7 +14,7 @@ import { AircraftSide } from '../livery/AircraftSide';
 import { hrefFor, useRouteParam } from '../navigation';
 
 // The aircraft encyclopedia (Phase 4.4): every type in the database, today's and historical, with its specs, side view
-// and a timeline of when it was built and flown. Historical types become flyable with historical start years (Phase 5).
+// and a timeline of when it was built and flown. Historical types can be flown in games starting in their years (Phase 5.3).
 
 type Category = 'all' | AircraftCategory;
 type Status = 'all' | 'flying' | 'retired';

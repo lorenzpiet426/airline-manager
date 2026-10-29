@@ -2846,3 +2846,10 @@ a.button {
   font-size: 0.75rem;
   color: var(--text-dim);
 }
+
+/* Start years in the new-game wizard (Phase 5.3): two columns on phones. */
+@media (max-width: 559px) {
+  .choices--years {
+    grid-template-columns: 1fr 1fr;
+  }
+}

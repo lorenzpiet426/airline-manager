@@ -74,9 +74,10 @@ export function WorldPanel({ game, airline, world }: { game: GameState; airline:
           <span className="kpi__hint">{t('world.demandHint')}</span>
         </div>
         <div className="kpi">
-          <span className="kpi__label">{t('world.growth')}</span>
-          <span className="kpi__value mono">{pct(language, c.trend - 1)}</span>
-          <span className="kpi__hint">{t('world.growthHint')}</span>
+          {/* Before today: how much air travel there was compared with today (1975: about a tenth). */}
+          <span className="kpi__label">{t(c.trend < 1 ? 'world.trafficToday' : 'world.growth')}</span>
+          <span className="kpi__value mono">{c.trend < 1 ? `${Math.round(c.trend * 100)} %` : pct(language, c.trend - 1)}</span>
+          <span className="kpi__hint">{t(c.trend < 1 ? 'world.trafficTodayHint' : 'world.growthHint')}</span>
         </div>
       </div>
       <h3 className="world-panel__title">{t('world.now')}</h3>

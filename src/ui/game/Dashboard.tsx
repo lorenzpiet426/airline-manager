@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from './useEngineWorld';
 import { periodKpis, type Kpis } from '../../engine/kpis';
 import type { Airline, GameState } from '../../engine/state';
 import { toDate } from '../../engine/time';
@@ -58,7 +58,7 @@ function format(language: Language, currency: string, key: Key, v: number | null
 export function Dashboard({ game, airline }: { game: GameState; airline: Airline }) {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const world = useWorld();
+  const world = useGameWorld();
   const fin = game.finance[airline.id];
   const weeks = (fin?.history ?? []).slice(-TREND_WEEKS);
   const active = Object.values(game.aircraft).filter((a) => a.airlineId === airline.id && a.status === 'active').length;

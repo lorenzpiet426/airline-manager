@@ -2,15 +2,17 @@
 // and applies commands; the screen only receives copies of the state to display.
 import * as Comlink from 'comlink';
 import type { Airport, Country } from '../data/types';
-import { advance } from '../engine/advance';
+import { advance, type WorldProvider } from '../engine/advance';
 import { applyCommand, type Command, type CommandResult } from '../engine/commands';
-import { buildEngineWorld, type EngineWorld } from '../engine/world';
+import { worldCache } from '../engine/world';
+import { loadFxHistory } from '../data/fxHistory';
+import { loadAirportHistory } from '../data/airportHistory';
 import { loadRealAirlines } from '../data/realAirlinesData';
 import { createGame, migrate, type NewGameOptions } from '../engine/game';
 import { ensureFlights } from '../engine/schedule';
 import { decodeSave, encodeSave, summarize, type SaveSummary } from '../persistence/saveFile';
 import type { GameState } from '../engine/state';
-import { fromDate, MINUTES_PER_DAY, type SimTime } from '../engine/time';
+import { fromDate, MINUTES_PER_DAY, simTime, toDate, type SimTime } from '../engine/time';
 import { awaySummary, markAway } from '../engine/away';
 import type { AwayReport, EngineSnapshot, Speed } from './protocol';
 
@@ -34,22 +36,30 @@ let lastTick = 0;
 let timer: ReturnType<typeof setInterval> | null = null;
 let listener: ((snapshot: EngineSnapshot) => void) | null = null;
 let rev = 0;
-let worldPromise: Promise<EngineWorld> | null = null;
-/** Set once the world data has loaded; the clock only runs with a loaded world. */
-let world: EngineWorld | null = null;
+let worldPromise: Promise<WorldProvider> | null = null;
+/** Set once the world data has loaded; the clock only runs with a loaded world. Gives each game the world of its date. */
+let world: WorldProvider | null = null;
 let liveTimer: ReturnType<typeof setInterval> | null = null;
 let catchingUp: { from: SimTime; to: SimTime } | null = null;
 let away: AwayReport | null = null;
 
-function loadWorld(): Promise<EngineWorld> {
+function loadWorld(): Promise<WorldProvider> {
   worldPromise ??= Promise.all([
     import('../data/generated/airports.json'),
     import('../data/generated/countries.json'),
     loadRealAirlines(),
-  ]).then(
-    ([airports, countries, real]) =>
-      (world = buildEngineWorld(airports.default as Airport[], countries.default as unknown as Record<string, Country>, real)),
-  );
+    loadFxHistory(),
+    loadAirportHistory(),
+  ]).then(([airports, countries, realAirlines, fxHistory, airportHistory]) => {
+    const at = worldCache({
+      airports: airports.default as Airport[],
+      countries: countries.default as unknown as Record<string, Country>,
+      realAirlines,
+      fxHistory,
+      airportHistory,
+    });
+    return (world = (s: GameState) => at(s.options.startYear, toDate(s.time)));
+  });
   return worldPromise;
 }
 
@@ -139,7 +149,7 @@ async function loadState(raw: unknown): Promise<EngineSnapshot | null> {
   const world = await loadWorld();
   const loaded = migrate(raw);
   if (!loaded) return null;
-  ensureFlights(loaded, world);
+  ensureFlights(loaded, world(loaded));
   state = loaded;
   return setSpeed(0);
 }
@@ -153,8 +163,8 @@ const api = {
   /** Creates a new world and founds the player's airline in it. */
   async newGame(options: NewGameOptions, founding: Extract<Command, { type: 'FoundAirline' }>): Promise<Outcome> {
     const world = await loadWorld();
-    const next = createGame(options);
-    const result = applyCommand(next, world, founding);
+    const next = createGame(options, world({ options: { startYear: options.startYear }, time: options.startTime ?? simTime(options.startYear, 1, 1) } as GameState));
+    const result = applyCommand(next, world(next), founding);
     if (result.ok) state = next;
     return { result, snapshot: setSpeed(0) };
   },
@@ -164,7 +174,7 @@ const api = {
 
   async command(command: Command): Promise<Outcome> {
     if (!state) return { result: { ok: false, error: 'airlineUnknown' }, snapshot: emit() };
-    const result = applyCommand(state, await loadWorld(), command);
+    const result = applyCommand(state, (await loadWorld())(state), command);
     // Switching to the real clock starts it (and catches up to today).
     if (result.ok && command.type === 'SetTimeMode') return { result, snapshot: setSpeed(0) };
     return { result, snapshot: emit() };

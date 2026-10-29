@@ -282,7 +282,8 @@ Historical start years (1970s/1990s/2000s), aircraft EIS/retirement dates, event
 9/11, 2008, COVID, airspace closures, volcanic ash), economy cycles, fuel prices, currencies.
 Split (2026-10-28): **5.1** ✅ world events + economy in today's games (random at real frequencies after Oct 2026);
 **5.2** ✅ historical data (fuel prices, exchange rates and old currencies, GDP/population by year, real event timeline
-1970–2026, History screen); **5.3** historical start years (modelled incumbents until Phase 6; books in schilling etc. until 1999).
+1970–2026, History screen); **5.3** ✅ historical start years (modelled incumbents until Phase 6; books in schilling etc. until 1999).
+Phase 5 complete.
 
 ### Phase 6 — Real airlines and the Austrian Airlines takeover
 Real airlines as AI with real fleets/networks per era and recognizable colors; **detailed Austrian Airlines
@@ -448,6 +449,12 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-28 | 5.1: the past stays real (no invented events before 24 Oct 2026); AI airlines see the same conditions in both their sums (no capacity cuts in crises yet) | Avoids AI mass exits; crisis capacity cuts later |
 | 2026-10-28 | 5.2: real history **from 1970**, **big + regional events** (153), **real big events + random small ones** in the past, a **History screen** to see it before 5.3 | Owner choice (all recommended) |
 | 2026-10-28 | 5.2: real events also apply to today's games before 24 Oct 2026 (e.g. the 2026 Iran war); events still going on then end at a per-game random date, shown as "no end in sight" | Realism; nobody knows when wars end |
+| 2026-10-29 | 5.3: **any start year 1970–2026** (quick choices 1970/80/90/2000/2010/today) | Owner choice |
+| 2026-10-29 | 5.3: rivals in historical games = **modelled national carriers** (plus charter and, where they existed, low-cost carriers), rebuilt each year from today's networks; former states (Soviet Union, Yugoslavia, Czechoslovakia, East/West Germany) have their own | Owner choice; real airlines of past years in Phase 6 |
+| 2026-10-29 | 5.3: **regulated fares** before deregulation (±10 % around the official fare, no AI price wars); free from US 1978, EU 1993/94, else 1995 | Owner choice |
+| 2026-10-29 | 5.3: **real airports per year** (12 replaced airports shown as the old one, Tempelhof/Schönefeld closing with routes moving to BER, 104 later airports hidden before opening) | Owner choice |
+| 2026-10-29 | 5.3: prices = 2025 dollars × US CPI ratio; fares additionally × a real fare level (4.2× in 1975 → 1 from 2019), own operating costs × that level^0.8; fuel and maintenance per type unchanged | Keeps realistic margins in every decade (calibration test) |
+| 2026-10-29 | 5.3: game options carry `startYear` (unset for today's games); no save version change; worlds are cached per year/airport change | Old saves unaffected |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -886,6 +893,29 @@ education", forbid making the data available to others (§3 iii) and require a w
   (TRY, PLN, BRL…) are in today's units; costs other than fuel are still in 2025 dollars; fares in the past need their
   historic level; the into-plane fuel fee is in 2026 dollars.
 - **Next:** 5.3 historical start years (modelled incumbents, books in schilling etc., historical airports and prices).
+
+### 2026-10-29 — Session 17 (Phase 5.3: historical start years) ✅ — Phase 5 complete
+- Owner decisions (all recommended): any year 1970–2026, modelled national carriers, regulated fares, real airports per year (§7).
+- Data: `tools/build-airport-history.ts` → `airport-history.json` (OurAirports closed airports + Wikidata opening dates via
+  `download-history.ts`); `src/data/eras.ts` (price levels, real fare level, deregulation dates, former states incl. West
+  Germany `DW`); `currencyHistory.ts` old units (TRL, PLZ, ROL, MXP, BGL, ISJ, ILP/ILR) and dollar books;
+  `fxHistory.ts` `ratesPerEurAt`, `currencyAt` (old units), `nextCurrencyChange`.
+- Engine: `era.ts` (`airportsAt`, `airportOnDate`, `buildModelledAirlines`, `fromParts`, `priceLevelAt`), `world.ts`
+  `worldCache` (world per game year + airport change), `advance` takes a world provider, `books.ts` (euro/re-basing
+  restatement), `airportMoves.ts`, conditions carry `levels` (prices/fares/costs), price levels in market, fleet,
+  maintenance, refits, repaints, hangars, AI; factory orders by production years (era discounts and waits,
+  `behindIronCurtain`); lessors with their real years; regulated fares (`fareRange`, AI no price wars); EU 261 from 2005.
+- UI: wizard start year (choices + any year; hub search in that year's airports; capital in the money of the time; no real
+  clock for the past), era-aware `useEngineWorld`/`useGameWorld` on all game screens, carrier names (`airlineName`), planner
+  (regulated slider + note, market size and competitors scaled to the year), Airlines intro/notes, World panel "Air travel
+  compared with today", new messages (currency changed, airport moved).
+- Tests: 161 (airports per year, carriers, states, schilling → euro restatement, old units, prices, factory orders,
+  regulated fares, calibration of 1975/1985/1995/2005 startups).
+- Verified in browser: 1975 and 1980 Vienna games (ATS 240m, ATS 16.8/$, DC-9/727/Caravelle market with ILFC/GPA, VIE–LHR
+  regulated until 1994 with Austrian + British national carriers, Kai Tak on the map), German, phone 375 px, no console errors.
+- Known: modelled networks are today's geography scaled down (not real old networks); one world price level for wages and
+  fees; Ukrainian airports missing in all years.
+- **Next:** Phase 6 (real airlines per era + Austrian Airlines takeover) — or what the owner prefers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

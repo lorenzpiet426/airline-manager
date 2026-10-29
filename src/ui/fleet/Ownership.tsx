@@ -7,7 +7,7 @@ import { aircraftMarketValueUsd, bookValue, earlyReturnFeeUsd, extensionRentUsd 
 import { convert, money } from '../../engine/money';
 import { pairsOfAircraft } from '../../engine/schedule';
 import type { Aircraft, Airline, GameState } from '../../engine/state';
-import { addMonths, toDate } from '../../engine/time';
+import { addMonths, toDate, yearOf } from '../../engine/time';
 import { sendCommand } from '../../game/store';
 import { formatGameDate, formatMoney } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
@@ -74,7 +74,7 @@ export function Ownership({ game, airline, aircraft }: { game: GameState; airlin
     ];
     actions = aircraft.status === 'active' ? ['sell', 'scrap'] : [];
     if (asking === 'sell') question = t('fleet.ask.sell', { price: local(Math.round(market * 0.97)), count: routes });
-    if (asking === 'scrap') question = t('fleet.ask.scrap', { price: local(partsValueUsd(getAircraftType(aircraft.typeId))), count: routes });
+    if (asking === 'scrap') question = t('fleet.ask.scrap', { price: local(partsValueUsd(getAircraftType(aircraft.typeId), yearOf(game.time))), count: routes });
   } else if (aircraft.order) {
     const o = aircraft.order;
     const paid = o.payments.reduce((s, p) => s + (p.paid ?? 0), 0);

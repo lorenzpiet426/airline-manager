@@ -200,11 +200,13 @@
     "worldEvent": "{{what}}: {{where}} (bis {{date}}).",
     "eventAffects": "{{what}} betrifft dein Streckennetz: {{where}}, bis {{date}}. Flüge dorthin können ausfallen.",
     "eventCancellations_one": "Gestern fiel {{count}} Flug aus ({{why}}): {{pax}} Passagiere versorgt (Essen, Hotels) für {{amount}}. Keine Entschädigung fällig: außergewöhnliche Umstände.",
-    "eventCancellations_other": "Gestern fielen {{count}} Flüge aus ({{why}}): {{pax}} Passagiere versorgt (Essen, Hotels) für {{amount}}. Keine Entschädigung fällig: außergewöhnliche Umstände."
+    "eventCancellations_other": "Gestern fielen {{count}} Flüge aus ({{why}}): {{pax}} Passagiere versorgt (Essen, Hotels) für {{amount}}. Keine Entschädigung fällig: außergewöhnliche Umstände.",
+    "currencyChanged": "Deine Buchhaltung läuft jetzt in {{to}}: alles in {{from}} – Kassa, Flugzeugwerte und alle früheren Abschlüsse – wurde zum festen Kurs von {{rate}} {{from}} je {{to}} umgerechnet.",
+    "airportMoved": "{{from}} wurde geschlossen: deine Flüge, dein Drehkreuz und deine Hangars dort sind nach {{to}} übersiedelt."
   },
   "newGame": {
     "title": "Gründe deine Airline",
-    "intro": "Ein Startup im Jahr 2026. Wähle Auftritt, Heimatbasis und Kapital – dann least du dein erstes Flugzeug.",
+    "intro": "Ein Startup im Jahr 2026 – oder in einem beliebigen Jahr seit 1970. Wähle Epoche, Auftritt, Heimatbasis und Kapital, dann least du dein erstes Flugzeug.",
     "identity": "Name & Lackierung",
     "name": "Name der Airline",
     "namePlaceholder": "z. B. Danube Air",
@@ -233,14 +235,30 @@
     "scenario": "Szenario",
     "scenarioStartup": "Startup-Airline",
     "startDate": "Start",
-    "startDateValue": "1. Jänner 2026",
     "realism": "Realismus",
     "realismRealistic": "Realistisch",
-    "laterHint": "Hardcore-Realismus, historische Startjahre, die Übernahme von Austrian Airlines und Konkurrenten kommen in späteren Phasen.",
+    "laterHint": "Hardcore-Realismus, echte Airlines vergangener Jahre und die Übernahme von Austrian Airlines kommen in späteren Phasen.",
     "found": "Airline gründen",
     "replaceWarning": "Du hast bereits ein laufendes Spiel. Eine neue Airline ersetzt es.",
     "scheduling": "Flugplanung",
-    "startDateNow": "Heute (echtes Datum und Uhrzeit)"
+    "startDateNow": "Heute (echtes Datum und Uhrzeit)",
+    "era": "Startjahr",
+    "today": "Heute",
+    "startYear": "Oder ein beliebiges Jahr eingeben (1970–2026)",
+    "eraHint": {
+      "1970": "Die Jumbos kommen, Fliegen ist Luxus, die IATA legt die Tarife fest.",
+      "1980": "Ölkrise, Kerosin extrem teuer; die US-Airlines wurden gerade dereguliert.",
+      "1990": "Der Eiserne Vorhang ist weg, Europa noch reguliert, der Golfkrieg droht.",
+      "2000": "Billigflieger kommen auf, der Euro naht – dann der 11. September.",
+      "2010": "Aschewolke, Schuldenkrise, Billigflieger überall.",
+      "2026": "Die heutigen echten Airlines und Netze."
+    },
+    "todayHint": "Die Welt von heute: echte Airlines mit ihren Netzen, heutige Preise.",
+    "historicalHint": "Ein historisches Spiel: Flughäfen, Flugzeugtypen, Kerosinpreise, Wechselkurse und echte Ereignisse dieser Zeit. Deine Buchhaltung läuft in der damaligen Währung (z. B. Schilling bis 1999), Preise und Tarife sind die des Jahres. Deine Konkurrenten sind modellierte nationale Fluggesellschaften (echte Airlines vergangener Jahre kommen in Phase 6). Vor der Deregulierung legt der IATA-Tarif die Preise fest. Die Echtzeit-Uhr gibt es nur für heute.",
+    "hubNotYet": "Diesen Flughafen gab es {{year}} noch nicht. Bitte wähle einen anderen Heimatflughafen.",
+    "competitors": "Konkurrenz",
+    "competitorsReal": "Die heutigen echten Airlines",
+    "competitorsModelled": "Modellierte nationale Fluggesellschaften der Zeit"
   },
   "errors": {
     "nameLength": "Der Name braucht 2 bis 40 Zeichen.",
@@ -395,7 +413,8 @@
       "chinaOnly": "bisher nur für chinesische Airlines",
       "notBuilt": "wird nicht mehr gebaut",
       "freighter": "Frachter",
-      "notInService": "noch nicht verfügbar"
+      "notInService": "noch nicht verfügbar",
+      "eastBloc": "Sowjetischer Typ: vor 1992 nicht an westliche Airlines verkauft"
     },
     "orderNote": "Wartezeiten und Preise sind aus öffentlichen Nachrichten modelliert (die Bestelllisten der Hersteller dürfen nicht übernommen werden). Leasing (auch neue Flugzeuge von Leasinggebern) und Gebrauchtkauf sind die schnellen Wege zu wachsen.",
     "boughtNotice": "{{type}} gekauft.",
@@ -408,7 +427,8 @@
     "inCheck": "{{check}}-Check bis {{date}}",
     "aog": "AOG bis {{date}}",
     "nextHeavy": "Nächster großer Check",
-    "nextHeavyValue": "{{check}}-Check fällig in {{months}} Monaten"
+    "nextHeavyValue": "{{check}}-Check fällig in {{months}} Monaten",
+    "airlineLessor": "Eine andere Airline (Unterleasing)"
   },
   "network": {
     "title": "Netz",
@@ -460,7 +480,8 @@
     "introDetailed": "Deine Strecken ab dem Drehkreuz mit eigenem Flugplan: Jeder Flug hat eine Abflugzeit, Verkehrstage und ein Flugzeug.",
     "fixedNoteDetailed": "Nicht enthalten: Crew-Gehälter und Leasing von {{registration}} (zusammen {{cost}} pro Woche), die sie mit ihren anderen Strecken teilen, und die Gemeinkosten der Airline. Die Strecke braucht {{hours}} Blockstunden pro Woche.",
     "classFare": "Tarif {{cls}}",
-    "classLf": "Auslastung je Klasse"
+    "classLf": "Auslastung je Klasse",
+    "regulatedFares": "Regulierte Strecke: Bis {{date}} legen Regierungen und der IATA-Tarif die Preise hier fest, du kannst nur ±10 % um den offiziellen Tarif verlangen. Keine Preiskriege."
   },
   "finance": {
     "title": "Finanzen",
@@ -549,7 +570,10 @@
     "newRoute": "neu",
     "closedRoutes_one": "{{count}} Strecke in diesem Spiel eingestellt.",
     "closedRoutes_other": "{{count}} Strecken in diesem Spiel eingestellt.",
-    "statusBankrupt": "pleite"
+    "statusBankrupt": "pleite",
+    "introModelled": "Dein Spiel beginnt in der Vergangenheit: Diese {{count}} Airlines sind modellierte nationale, Charter- und Billigfluggesellschaften der Zeit, gebaut aus den heutigen Netzen und skaliert auf die Wirtschaft des Jahres. Echte Airlines vergangener Jahre kommen in Phase 6.",
+    "source": "Quelle",
+    "modelledNote": "Für dein historisches Spiel modelliert: die Strecken der heutigen Airlines aus diesem Land, nur wo die Wirtschaft des Jahres sie füllen konnte."
   },
   "sources": {
     "title": "Datenquellen",
@@ -570,13 +594,13 @@
       "modelled": "Vom Nachfragemodell des Spiels geschätzt, wo keine echte Zahl vorliegt."
     },
     "use": {
-      "ourairports": "Alle Flughäfen mit Linienflügen: Lage, Pisten, Größe.",
+      "ourairports": "Alle Flughäfen mit Linienflügen: Lage, Pisten, Größe. Auch die geschlossenen Flughäfen historischer Spiele (Kai Tak, München-Riem, Berlin-Tegel, Tempelhof, Schönefeld, Athen-Ellinikon, Oslo-Fornebu, Denver-Stapleton …).",
       "geonames": "Einwohnerzahlen der Städte (Einzugsgebiet und Marktgröße) und Zeitzonen.",
       "worldbank": "Wohlstand (BIP pro Kopf) und Tourismus je Land. Seit Phase 5.2 auch Bevölkerung, BIP pro Kopf, Wechselkurse und beförderte Passagiere seit 1960, für die Nachfrage in der Vergangenheit.",
       "naturalearth": "Küsten und Grenzen der Karte.",
       "openfreemap": "Schriften für die Flughafencodes auf der Karte.",
       "wikipedia": "Welche Airline wohin fliegt (Flughafenartikel), Geschäftsmodelle, Drehkreuze, Basen, Flotten und Bestuhlung (Airline-Artikel). Die Zeitleiste echter Ereignisse seit 1970 verlinkt jedes Ereignis mit dem Artikel, aus dem die Fakten stammen.",
-      "wikidata": "Namen, Codes, Länder, Allianzen und Mutterkonzerne der Airlines; Verknüpfung von Artikeln und Flughäfen.",
+      "wikidata": "Namen, Codes, Länder, Allianzen und Mutterkonzerne der Airlines; Verknüpfung von Artikeln und Flughäfen. Eröffnungsdaten von Flughäfen (welche Flughäfen es in einem historischen Jahr gab).",
       "eurostat": "Echte Passagierzahlen, Sitze und Flüge je Strecke in Europa (Sommer 2024) – für die Nachfrage und die wöchentlichen Flüge der Airlines.",
       "eia": "Der echte Kerosinpreis, Woche für Woche im Jahr 2026. Monatliche Geschichte seit 1974 (vor Mitte 1975 aus Rohölpreisen geschätzt).",
       "ecb": "Wechselkurse zwischen den Währungen.",
@@ -1046,7 +1070,7 @@
     "orderable": "Kann neu beim Hersteller bestellt werden (Flotte → Neu bestellen).",
     "marketOnly": "Wird nicht mehr gebaut, fliegt aber noch: gebrauchte Flugzeuge können auf dem Leasing- und Gebrauchtmarkt auftauchen.",
     "freighterLater": "Ein Frachter: Frachtflüge kommen in einer späteren Phase.",
-    "historical": "Historischer Typ: verfügbar mit historischen Startjahren (Phase 5), in den Jahren, in denen er wirklich flog.",
+    "historical": "Im Jahr deines Spiels nicht gebaut oder geflogen. Starte ein Spiel in den Jahren, in denen er flog (Neues Spiel → Startjahr), um ihn zu leasen oder zu kaufen.",
     "source": "Gerundete Hersteller- und Lexikonwerte, von Hand eingetragen; Ausmusterungsjahre sind ungefähr."
   },
   "world": {
@@ -1096,7 +1120,9 @@
     "recent": "Letzte drei Monate",
     "openLine": "jetzt {{share}} % · kein Ende absehbar",
     "openEnd": "kein Ende absehbar",
-    "openClosureLine": "{{share}} % der Flüge fallen aus · kein Ende absehbar"
+    "openClosureLine": "{{share}} % der Flüge fallen aus · kein Ende absehbar",
+    "trafficToday": "Flugverkehr im Vergleich zu heute",
+    "trafficTodayHint": "Wie viele Menschen damals flogen, verglichen mit 2024 (aus Bevölkerung und Wohlstand jedes Landes, abgestimmt auf die Passagierzahlen der Weltbank). Märkte und die Flüge deiner Konkurrenz sind entsprechend kleiner."
   },
   "history": {
     "title": "Weltgeschichte",
@@ -1778,6 +1804,20 @@
     "iranWarDemand2026": {
       "name": "Reisende meiden den Nahen Osten",
       "text": "Die Nachfrage nach Reisen in die Golfregion fällt stark (geschätzt)."
+    }
+  },
+  "era": {
+    "state": {
+      "SU": "Sowjetunion",
+      "YU": "Jugoslawien",
+      "CS": "Tschechoslowakei",
+      "DD": "DDR",
+      "DW": "Bundesrepublik Deutschland"
+    },
+    "carrier": {
+      "N": "{{country}} · nationale Fluggesellschaft",
+      "C": "{{country}} · Charterfluggesellschaft",
+      "L": "{{country}} · Billigfluggesellschaft"
     }
   }
 }

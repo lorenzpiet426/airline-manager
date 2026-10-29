@@ -2,6 +2,8 @@
 // pays its costs, crews are paid and lease costs accrue. Monday closes last week's profit-and-loss report.
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
+import { currencyChangeStep } from './books';
+import { moveFromClosedAirports } from './airportMoves';
 import { getAircraftType } from '../data/aircraft';
 import { aiDailyStep } from './ai';
 import { postMessage } from './core';
@@ -49,6 +51,9 @@ const usdTo = (fx: FxRates, currency: string) => (fx[currency] ?? 1) / (fx.USD ?
 /** Called at 00:00 UTC every day: books the day that just ended, and closes the week on Mondays. */
 export function dailyStep(state: GameState, world: EngineWorld): void {
   bookDay(state, world);
+  // Historical games: the euro and re-based currencies arrive, closed airports hand over to their successors.
+  currencyChangeStep(state);
+  moveFromClosedAirports(state, world);
   // Payments to manufacturers, lease reminders and leases that end.
   dailyFleetStep(state, world);
   // Flight hours, checks, maintenance reserves, hangars and today's technical failures.
@@ -64,6 +69,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
 
 function bookDay(state: GameState, world: EngineWorld): void {
   const date = toDate(state.time - 1); // prices of the day that just ended
+  const yesterday = conditionsOf(state, world, state.time - 1);
+  const levels = yesterday.levels;
   const cashChange: Record<string, number> = {};
   // The day's figures per airline, added to the running week and month at the end.
   const days: Record<string, PnlPeriod> = {};
@@ -79,7 +86,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!plan || !from || !to || !airline) continue;
     const rep = state.reputation[airline.id];
     const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
-    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: conditionsOf(state, world, state.time - 1) });
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday });
     if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
     const lines = dayOf(airline.id).lines;
@@ -124,7 +131,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     if (!airline || !hub) continue;
     const k = usdTo(state.fx, airline.currency);
     const day = dayOf(airline.id);
-    const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, hub.country, aircraft.cabin) * k;
+    const crew = crewCostPerDayUsd(world, getAircraftType(aircraft.typeId), aircraft.seats, hub.country, aircraft.cabin) * k * levels.costs;
     day.lines.crew += crew;
     if (aircraft.lease) day.lines.lease += (aircraft.lease.monthlyRent.amount * k) / daysInMonth(state.time - 1);
     // Refits were paid in cash; the accounts write them off day by day.
@@ -138,7 +145,7 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const hub = world.airportById.get(airline.hubId);
     if (!hub) continue;
     const active = Object.values(state.aircraft).filter((a) => a.airlineId === airline.id && a.status === 'active').length;
-    const overhead = overheadPerDayUsd(world, hub.country, active) * usdTo(state.fx, airline.currency);
+    const overhead = overheadPerDayUsd(world, hub.country, active) * usdTo(state.fx, airline.currency) * levels.costs;
     dayOf(airline.id).lines.overhead += overhead;
     cashChange[airline.id] = (cashChange[airline.id] ?? 0) - overhead;
   }

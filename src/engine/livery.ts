@@ -5,6 +5,7 @@
 import { getAircraftType, type AircraftCategory } from '../data/aircraft';
 import { book, postMessage, schedule } from './core';
 import { convert, money } from './money';
+import { priceLevelAt } from './era';
 import { grounded } from './schedule';
 import type { Aircraft, Airline, FuselageStyle, GameState, Livery, LiveryFont, PaintSlot, TailStyle } from './state';
 import { MINUTES_PER_DAY, startOfDay } from './time';
@@ -127,11 +128,12 @@ const REPAINT: Record<AircraftCategory, { usd: number; days: number }> = {
   widebody: { usd: 400_000, days: 10 },
 };
 
-export function repaintQuote(aircraft: Pick<Aircraft, 'typeId'>): { usd: number; days: number } {
+/** Cost (USD; `level` = prices of the time, see era.ts) and days of a repaint. */
+export function repaintQuote(aircraft: Pick<Aircraft, 'typeId'>, level = 1): { usd: number; days: number } {
   const type = getAircraftType(aircraft.typeId);
   const r = REPAINT[type.category];
   const size = type.category === 'widebody' ? (type.seats.typical / 300) ** 0.7 : 1;
-  return { usd: Math.round((r.usd * size) / 1000) * 1000, days: r.days };
+  return { usd: Math.round((r.usd * size * level) / 1000) * 1000, days: r.days };
 }
 
 export type RepaintError = 'airlineUnknown' | 'aircraftUnknown' | 'notActive' | 'alreadyPainted' | 'inHangar' | 'insufficientCash';
@@ -149,7 +151,7 @@ export function repaint(state: GameState, airlineId: string, aircraftId: string,
     return { ok: true, id: a.id };
   }
   if (grounded(a, state.time)) return { ok: false, error: 'inHangar' };
-  const q = repaintQuote(a);
+  const q = repaintQuote(a, priceLevelAt(state.time));
   if (airline.cash.amount < convert(money(q.usd, 'USD'), airline.currency, state.fx).amount) return { ok: false, error: 'insufficientCash' };
   const cost = book(state, airlineId, 'repaint', money(-q.usd, 'USD'), a.id);
   writeOff(state, a, -cost.amount);
@@ -191,7 +193,7 @@ export function repaintWithCheck(state: GameState, a: Aircraft): void {
   if (!a.repaintAtCheck || !airline) return;
   delete a.repaintAtCheck;
   if (!inOldLivery(airline, a)) return;
-  const cost = book(state, a.airlineId, 'repaint', money(-repaintQuote(a).usd, 'USD'), a.id);
+  const cost = book(state, a.airlineId, 'repaint', money(-repaintQuote(a, priceLevelAt(state.time)).usd, 'USD'), a.id);
   writeOff(state, a, -cost.amount);
   a.paint = currentPaint(airline);
   prune(state, airline);

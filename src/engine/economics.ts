@@ -584,7 +584,12 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   const t = haul(m.distanceKm);
   const cond = ctx.conditions;
   // In bad times airlines discount: fares follow demand a little (a 20 % drop in leisure demand ≈ 6 % lower fares).
-  const average = marketFareUsd(world, from, to, date, cond?.fuelSpot) * (cond ? cond.demand(from, to, 'leisure') ** 0.3 : 1);
+  // Historical years: fares and the airline's own costs in the money of the time (fuel prices already are; for the
+  // fare's fuel surcharge the price is turned into today's money first). Fuel burn and maintenance per hour come from
+  // each aircraft type, so old types already cost more: they only follow consumer prices.
+  const lv = cond?.levels ?? { prices: 1, fares: 1, costs: 1 };
+  const average =
+    marketFareUsd(world, from, to, date, cond ? cond.fuelSpot / lv.prices : undefined) * (cond ? cond.demand(from, to, 'leisure') ** 0.3 : 1) * lv.fares;
   const marketFare = (cls: CabinClass) => average * classFareRatio(cls, t);
   const myFactor = (cls: CabinClass) => fareFactorOf(cls, plan.fareFactor, plan.classFares);
   const biz = m.businessShare;
@@ -700,7 +705,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
 
   // Passengers, revenue and costs flight by flight.
   const costs: RouteCosts = { fuel: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, service: 0 };
-  const fuelPrice = cond ? (cond.fuelSpot + INTO_PLANE_USD_PER_GAL) / KG_PER_GALLON : fuelUsdPerKg(date);
+  const fuelPrice = cond ? (cond.fuelSpot + INTO_PLANE_USD_PER_GAL * lv.prices) / KG_PER_GALLON : fuelUsdPerKg(date);
   const nav = new Map<string, number>();
   const byClass: Partial<Record<CabinClass, ClassResult>> = {};
   const experience: Partial<Record<CabinClass, ExperienceSums>> = {};
@@ -743,7 +748,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         result.pax += p;
         revenue += p * fareUsd;
         totalDemand += d;
-        costs.service += p * serviceCostUsd(s.cls, t);
+        costs.service += p * serviceCostUsd(s.cls, t) * lv.costs;
         // What these passengers will tell others: their seat, the aircraft's age, the price and how full it was.
         const e = (experience[s.cls] ??= { pax: 0, product: 0, age: 0, value: 0, crowd: 0 });
         const lf = p / seatsToday;
@@ -759,13 +764,13 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     const h = info[i]!.blockMin / 60;
     const mtowT = f.type.mtowKg / 1000;
     costs.fuel += f.type.fuelKgPerHour * (h + 0.15) * n * fuelPrice;
-    costs.maintenance += f.type.maintUsdPerBlockHour * (1 + 0.01 * f.ageYears) * (ctx.checksSeparate ? 1 - CHECK_SHARE : 1) * h * n;
+    costs.maintenance += f.type.maintUsdPerBlockHour * (1 + 0.01 * f.ageYears) * (ctx.checksSeparate ? 1 - CHECK_SHARE : 1) * h * n * lv.prices;
     // Landing fee per tonne of MTOW at the arrival airport, passenger fee at the departure airport.
-    costs.airport += (6 * mtowT * n * airportFactor(world, B)) + 13 * result.pax * airportFactor(world, A);
-    costs.handling += (250 + 7 * f.seats) * wageFactor(world, B.country) * n + result.pax * (1.5 + 0.0025 * m.distanceKm);
+    costs.airport += ((6 * mtowT * n * airportFactor(world, B)) + 13 * result.pax * airportFactor(world, A)) * lv.costs;
+    costs.handling += ((250 + 7 * f.seats) * wageFactor(world, B.country) * n + result.pax * (1.5 + 0.0025 * m.distanceKm)) * lv.costs;
     const navKey = `${f.type.id}|${f.dir}`;
     if (!nav.has(navKey)) nav.set(navKey, navigationChargeUsd(world, f.type, A, B, m.distanceKm));
-    costs.navigation += nav.get(navKey)! * n;
+    costs.navigation += nav.get(navKey)! * n * lv.costs;
     flights += n;
     seats += result.seats;
     pax += result.pax;

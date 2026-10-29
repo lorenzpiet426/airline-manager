@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { priceLevelAt } from '../../engine/era';
 import { useTranslation } from 'react-i18next';
 import type { CommandError } from '../../engine/commands';
 import { inOldLivery, liveryOf, repaintQuote } from '../../engine/livery';
@@ -26,7 +27,7 @@ export function AircraftPaint({ game, airline, aircraft }: { game: GameState; ai
   const [error, setError] = useState<CommandError | null>(null);
   // Already in the paint shop: the chip on the card says until when.
   const old = inOldLivery(airline, aircraft) && (aircraft.paintUntil ?? 0) <= game.time;
-  const q = repaintQuote(aircraft);
+  const q = repaintQuote(aircraft, priceLevelAt(game.time));
   const price = formatMoney(language, convert(money(q.usd, 'USD'), airline.currency, game.fx));
   const send = async (atCheck: boolean) => {
     const r = await sendCommand({ type: 'Repaint', airlineId: airline.id, payload: { aircraftId: aircraft.id, atCheck } });

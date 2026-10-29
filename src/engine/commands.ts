@@ -2,7 +2,10 @@
 // send a command; the engine checks it against the rules and either applies it or explains why not.
 import { defaultLivery, repaint, setLivery, type LiveryError, type RepaintError } from './livery';
 import { getAircraftType } from '../data/aircraft';
-import { bookCurrencyFor } from '../data/currencies';
+import { ECB_RATES } from '../data/currencies';
+import { regulatedRange } from '../data/eras';
+import { currencyAt } from '../data/fxHistory';
+import { priceLevelAt } from './era';
 import { registrationPattern } from '../data/registrations';
 import { book, nextId, postMessage, schedule } from './core';
 import { checkRoute, roundTripHours, WEEKLY_AVAILABLE_HOURS } from './economics';
@@ -162,6 +165,11 @@ export interface BuildHangar {
 export type Command = SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
+
+/** The fare factors allowed between two airports now: before deregulation only small deviations (Phase 5.3). */
+export function fareRange(state: GameState, from: { country: string }, to: { country: string }): readonly [number, number] {
+  return regulatedRange(from.country, to.country, toDate(state.time)) ?? FARE_FACTOR_RANGE;
+}
 export const MAX_FREQUENCY = 84;
 
 export type CommandError =
@@ -255,9 +263,21 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
   }
 }
 
-/** Starting capital for a startup, in the hub country's currency, rounded to a headline figure. */
-export function startingCapital(fx: FxRates, capitalEur: number, currency: string): Money {
-  return money(roundNice(convert(money(capitalEur, 'EUR'), currency, fx).amount), currency);
+/**
+ * Starting capital for a startup, in the hub country's currency, rounded to a headline figure. The choices are in
+ * today's euros; a historical game gets the same buying power in the money of its year (`priceLevel` = then-year
+ * dollars per today's dollar).
+ */
+export function startingCapital(fx: FxRates, capitalEur: number, currency: string, priceLevel = 1): Money {
+  if (priceLevel === 1) return money(roundNice(convert(money(capitalEur, 'EUR'), currency, fx).amount), currency);
+  const usd = capitalEur * (ECB_RATES.USD ?? 1) * priceLevel;
+  return money(roundNice(convert(money(usd, 'USD'), currency, fx).amount), currency);
+}
+
+/** The currency a new airline keeps its books in: the hub country's money of the time (if its rate is known). */
+export function bookCurrencyAt(state: GameState, country: string): string {
+  const currency = currencyAt(country, toDate(state.time));
+  return state.fx[currency] ? currency : 'USD';
 }
 
 function foundAirline(state: GameState, world: EngineWorld, p: FoundAirline['payload']): CommandResult {
@@ -276,7 +296,7 @@ function foundAirline(state: GameState, world: EngineWorld, p: FoundAirline['pay
   if (!(CAPITAL_OPTIONS_EUR as readonly number[]).includes(p.capitalEur)) return fail('capitalInvalid');
 
   const id = nextId(state, 'AL');
-  const currency = bookCurrencyFor(hub.country);
+  const currency = bookCurrencyAt(state, hub.country);
   state.airlines[id] = {
     id,
     name,
@@ -292,7 +312,7 @@ function foundAirline(state: GameState, world: EngineWorld, p: FoundAirline['pay
   state.finance[id] = newFinance(state.time);
   if (p.controller === 'human') state.reputation[id] = newReputation();
   state.airlines[id]!.liveries = [defaultLivery(state.airlines[id]!.colors, name, p.iata.toUpperCase())];
-  const capital = book(state, id, 'capital', startingCapital(state.fx, p.capitalEur, currency));
+  const capital = book(state, id, 'capital', startingCapital(state.fx, p.capitalEur, currency, state.options.startYear !== undefined ? priceLevelAt(state.time) : 1));
   postMessage(state, {
     airlineId: id,
     kind: 'founded',
@@ -363,7 +383,8 @@ export function validateRoute(
   if (!from || !to) return 'airportUnknown';
   if (from.id === to.id) return 'sameAirport';
   const fares = [settings.fareFactor, ...Object.values(settings.classFares ?? {})];
-  if (!fares.every((f) => f >= FARE_FACTOR_RANGE[0] && f <= FARE_FACTOR_RANGE[1])) return 'fareInvalid';
+  const [low, high] = fareRange(state, from, to);
+  if (!fares.every((f) => f >= low - 1e-9 && f <= high + 1e-9)) return 'fareInvalid';
   if (state.options.scheduling === 'detailed') {
     const existing = exceptRouteId ? state.routes[exceptRouteId] : undefined;
     const route: Route = existing ?? { ...draftRoute(airlineId, from, to), id: '' };
@@ -478,7 +499,7 @@ function refitCabin(state: GameState, airlineId: string, aircraftId: string, cab
   const type = getAircraftType(aircraft.typeId);
   const error = validateCabin(type, cabin);
   if (error) return fail(error);
-  const quote = refitQuote(type, aircraft.cabin, cabin);
+  const quote = refitQuote(type, aircraft.cabin, cabin, priceLevelAt(state.time));
   if (quote.costUsd === 0 && quote.days === 0) return fail('cabinUnchanged');
   const layout = cabin.map((s) => ({ cls: s.cls, product: s.product, pitch: s.pitch, seats: s.seats }));
 

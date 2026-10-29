@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AIRLINE_LESSOR } from '../../engine/market';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
 import { Segmented } from '../components/Segmented';
@@ -9,7 +10,7 @@ import { usePlayer } from '../game/usePlayer';
 import { getAircraftType, type AircraftCategory } from '../../data/aircraft';
 import { aircraftHours } from '../../engine/commands';
 import { WEEKLY_AVAILABLE_HOURS } from '../../engine/economics';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from '../game/useEngineWorld';
 import type { CommandError } from '../../engine/commands';
 import { convert } from '../../engine/money';
 import type { Aircraft, Airline, GameState, LeaseOffer } from '../../engine/state';
@@ -40,7 +41,7 @@ export function FleetScreen() {
   const { game, airline } = usePlayer();
   const fleetSize = game && airline ? Object.values(game.aircraft).filter((a) => a.airlineId === airline.id).length : 0;
   const [tab, setTab] = useState<Tab>(fleetSize ? 'fleet' : 'market');
-  const world = useWorld();
+  const world = useGameWorld();
   const hubRunway = airline ? world?.airportById.get(airline.hubId)?.longestRunwayM : undefined;
 
   if (!game || !airline) {
@@ -95,7 +96,7 @@ export function FleetScreen() {
 function MyFleet({ game, airline, onMarket }: { game: GameState; airline: Airline; onMarket: () => void }) {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const world = useWorld();
+  const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const [open, setOpen] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
@@ -199,7 +200,7 @@ function Market({ game, airline }: { game: GameState; airline: Airline }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [confirming, setConfirming] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ aircraftId: string } | { error: CommandError } | null>(null);
-  const world = useWorld();
+  const world = useGameWorld();
   const hub = world?.airportById.get(airline.hubId);
 
   const offers = useMemo(
@@ -325,7 +326,7 @@ function OfferCard({
         <dt>{t('fleet.delivery')}</dt>
         <dd className="mono">{formatGameDate(language, deliveryDate, false)}</dd>
         <dt>{t('fleet.lessor')}</dt>
-        <dd>{offer.lessor}</dd>
+        <dd>{offer.lessor === AIRLINE_LESSOR ? t('fleet.airlineLessor') : offer.lessor}</dd>
       </dl>
       {shortRunway && (
         <p className="small text--caution">

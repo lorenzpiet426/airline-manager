@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from './useEngineWorld';
 import { toDate } from '../../engine/time';
 import { dismissAwayReport, useAwayReport, useCatchingUp } from '../../game/store';
 import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
@@ -27,7 +27,7 @@ export function CatchUpBanner() {
 export function AwayReportPanel() {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const world = useWorld();
+  const world = useGameWorld();
   const report = useAwayReport();
   if (!report) return null;
   const hours = (report.to - report.from) / 60;

@@ -2,6 +2,7 @@
 // registers (see src/data/generated/README.md). In 2.1a they fly their networks as they are; reacting to the player
 // (new routes, price wars, fleet changes) comes in 2.1b.
 import { AIRLINE_COLORS, generatedColors } from '../data/airlineColors';
+import { fromParts } from './era';
 
 export type BusinessModel = 'legacy' | 'lowcost' | 'regional' | 'charter';
 /** Where a number comes from (shown in the game). */
@@ -31,6 +32,9 @@ export interface RealAirline {
   /** Individual aircraft from official registers: [registration, type, build year]. */
   registered: [string, string, number | null][];
   colors: { primary: string; secondary: string; source: 'known' | 'generated' };
+  /** A modelled carrier of a historical start year (Phase 5.3): the state it belongs to and its kind
+   * (N = national carrier, C = charter airline, L = low-cost airline). Its name is made by the screens. */
+  modelled?: { state: string; kind: 'N' | 'C' | 'L' };
 }
 
 export interface RealRoute {
@@ -77,8 +81,6 @@ export function buildRealAirlines(
   const detail = new Map(details.airlines.map((d) => [d.id, d]));
   const byId = new Map<string, RealAirline>();
   const routesBy = new Map<string, RealRoute[]>();
-  const byPair = new Map<string, RealRoute[]>();
-  const byAirport = new Map<string, RealRoute[]>();
   const info = new Map(airlines.airlines.map((a) => [a.id, a]));
   for (const net of networks.airlines) {
     const a = info.get(net.id);
@@ -102,30 +104,7 @@ export function buildRealAirlines(
       registered: registers.aircraft[net.id] ?? [],
       colors: { primary, secondary, source: known ? 'known' : 'generated' },
     });
-    const routes = net.routes.map((r) => ({ ...r, airline: net.id }));
-    routesBy.set(net.id, routes);
-    for (const r of routes) {
-      const key = `${r.a}|${r.b}`;
-      byPair.set(key, [...(byPair.get(key) ?? []), r]);
-      for (const ap of [r.a, r.b]) {
-        const list = byAirport.get(ap);
-        if (list) list.push(r);
-        else byAirport.set(ap, [r]);
-      }
-    }
+    routesBy.set(net.id, net.routes.map((r) => ({ ...r, airline: net.id })));
   }
-  return {
-    season: networks.season,
-    byId,
-    routesOf: (id) => routesBy.get(id) ?? [],
-    observedWeeklyPax: (from, to) => observed.get(`${from}>${to}`) ?? null,
-    routesAt: (airport) => byAirport.get(airport) ?? [],
-    on(from, to) {
-      const [a, b] = from < to ? [from, to] : [to, from];
-      return (byPair.get(`${a}|${b}`) ?? []).flatMap((r) => {
-        const airline = byId.get(r.airline);
-        return airline ? [{ airline, weekly: from === r.a ? r.weeklyAB : r.weeklyBA, seasonal: r.seasonal, charter: r.charter }] : [];
-      });
-    },
-  };
+  return fromParts(networks.season, [...byId.values()], routesBy, (from, to) => observed.get(`${from}>${to}`) ?? null);
 }

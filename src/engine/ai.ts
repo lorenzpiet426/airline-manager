@@ -7,7 +7,8 @@
 // Our economics model is an approximation, so the AI judges *changes* against the real starting point: a real
 // route is only given up when it has become clearly worse than in reality (e.g. because of you) and loses money.
 import { conditionsOf } from './worldEvents';
-import { getAircraftType, isFreighter, type AircraftType } from '../data/aircraft';
+import { regulatedRange } from '../data/eras';
+import { AIRCRAFT_TYPES, getAircraftType, isFreighter, isInService, type AircraftType } from '../data/aircraft';
 import type { Airport } from '../data/types';
 import { postMessage } from './core';
 import {
@@ -27,7 +28,7 @@ import { fleetSize, type BusinessModel, type RealAirline } from './realAirlines'
 import { random } from './rng';
 import { plannedFlights } from './schedule';
 import type { AiRouteState, CabinLayout, GameState } from './state';
-import { MINUTES_PER_DAY, toDate } from './time';
+import { MINUTES_PER_DAY, toDate, yearOf } from './time';
 import type { EngineWorld } from './world';
 
 export interface Behaviour {
@@ -113,13 +114,32 @@ export function currentRoutes(world: EngineWorld, state: GameState, airline: Rea
 
 // ─── An airline's view of one route ─────────────────────────────────────────────
 
+/** The most common passenger type of a year that can fly the distance (for modelled carriers without a fleet list). */
+const eraTypes = new Map<string, AircraftType | null>();
+function typicalTypeOf(km: number, year: number): AircraftType | null {
+  const band = km < 2500 ? 0 : km < 5000 ? 1 : km < 9000 ? 2 : 3;
+  const key = `${band}|${year}`;
+  if (!eraTypes.has(key)) {
+    const need = [2500, 5000, 9000, 15000][band]!;
+    const pick = AIRCRAFT_TYPES.filter(
+      (t) => !isFreighter(t) && isInService(t, year) && t.rangeKm >= need * 1.05 && t.category !== 'turboprop' && (band === 0) === (t.category !== 'widebody'),
+    ).sort((x, y) => y.fleetWeight - x.fleetWeight)[0];
+    eraTypes.set(key, pick ?? null);
+  }
+  return eraTypes.get(key) ?? null;
+}
+
 /** The aircraft an airline would use: its most common type that can fly the distance. */
-function aircraftFor(airline: RealAirline, km: number): { type: AircraftType; seats: number } | null {
+function aircraftFor(airline: RealAirline, km: number, year: number): { type: AircraftType; seats: number } | null {
   const usable = airline.fleet
     .map((f) => ({ f, type: safeType(f.type) }))
     .filter((x): x is { f: (typeof airline.fleet)[number]; type: AircraftType } => !!x.type && !isFreighter(x.type) && x.type.rangeKm >= km * 1.05)
     .sort((x, y) => y.f.inService - x.f.inService);
   if (usable[0]) return { type: usable[0].type, seats: usable[0].f.seats ?? usable[0].type.seats.typical };
+  if (airline.modelled) {
+    const type = typicalTypeOf(km, year);
+    return type ? { type, seats: type.seats.typical } : null;
+  }
   const fallback = getAircraftType(km < 4000 ? 'A320' : km < 9000 ? 'B789' : 'A359');
   return fallback.rangeKm >= km ? { type: fallback, seats: fallback.seats.typical } : null;
 }
@@ -142,7 +162,8 @@ interface Evaluation {
 /** Weekly result of the airline on a route, including its aircraft costs (crew, lease). */
 function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A: Airport, B: Airport, weekly: number, fare: number, extra: RouteContext['extra'], date: Date, withChanges: boolean): Evaluation | null {
   const km = market(world, A, B).distanceKm;
-  const ac = aircraftFor(airline, km);
+  const ac = aircraftFor(airline, km, date.getUTCFullYear());
+  const conditions = conditionsOf(state, world);
   if (!ac || weekly <= 0) return null;
   const cabin = airlineCabin(ac.type, airline.model, km, ac.seats);
   const w = routeWeek(
@@ -153,10 +174,10 @@ function evaluate(world: EngineWorld, state: GameState, airline: RealAirline, A:
     date,
     // Both sums (today and the real starting point) see the same world (fuel, recessions, pandemics), so an AI airline
     // compares like with like and only reacts to the competition.
-    { ai: withChanges ? state.ai : undefined, exclude: airline.id, extra, brand: { reputation: MODEL_REPUTATION[airline.model], awareness: 1 }, conditions: conditionsOf(state, world) },
+    { ai: withChanges ? state.ai : undefined, exclude: airline.id, extra, brand: { reputation: MODEL_REPUTATION[airline.model], awareness: 1 }, conditions },
   );
   const ownPerBlockHour =
-    (crewCostPerDayUsd(world, ac.type, ac.seats, airline.country ?? 'US') * 7 + (typicalRentUsd(ac.type, 10) * 12) / 52) /
+    ((crewCostPerDayUsd(world, ac.type, ac.seats, airline.country ?? 'US') * conditions.levels.costs) * 7 + (typicalRentUsd(ac.type, 10, date.getUTCFullYear()) * 12) / 52) /
     (WEEKLY_AVAILABLE_HOURS[ac.type.category] * 0.75);
   const profit = w.revenue - totalCosts(w.costs) - w.blockHours * ownPerBlockHour;
   return { margin: profit / Math.max(1, w.revenue), profit, revenue: w.revenue, loadFactor: w.loadFactor };
@@ -329,6 +350,9 @@ function reviewAirline(ctx: Ctx, airline: RealAirline): void {
         let target = fare - b.priceMatch * (fare - playerFare);
         if (b.undercut > 0) target = playerFare * (1 - b.undercut);
         target = Math.max(FARE_FLOOR, Math.round(target * 100) / 100);
+        // Before deregulation fares were fixed: no price wars, only the small discounts the tariff allowed.
+        const regulated = regulatedRange(A.country, B.country, ctx.date);
+        if (regulated) target = Math.max(target, regulated[0]);
         if (fare - target >= 0.03) {
           edit().fare = target;
           message(ctx, 'aiFare', true, { airline: airline.name, from, to, value: Math.round((target / fare - 1) * 100) });
@@ -412,7 +436,7 @@ function openNewRoute(ctx: Ctx, airline: RealAirline): void {
     const B = world.airportById.get(id);
     if (!B) continue;
     const m = market(world, A, B);
-    if (!aircraftFor(airline, m.distanceKm)) continue;
+    if (!aircraftFor(airline, m.distanceKm, yearOf(state.time))) continue;
     const others = competitorsOn(world, A, B, m, state.ai)?.length ?? 0;
     const score = m.weeklyPax / (others + 1);
     if (!best || score > best.pax / (best.others + 1)) best = { ap: B, pax: m.weeklyPax, others };
@@ -445,7 +469,7 @@ function watchPlayerRoutes(ctx: Ctx): void {
     const candidates = [...real.byId.values()]
       .filter((a) => !present.has(a.id) && state.ai.airlines[a.id]?.status !== 'bankrupt')
       .filter((a) => [...a.hubs, ...a.bases].some((h) => h === A.id || h === B.id))
-      .filter((a) => aircraftFor(a, market(world, A, B).distanceKm))
+      .filter((a) => aircraftFor(a, market(world, A, B).distanceKm, yearOf(state.time)))
       .sort((x, y) => behaviourOf(y, ctx.playerHubs).entryChance - behaviourOf(x, ctx.playerHubs).entryChance || x.id.localeCompare(y.id));
     const entrant = candidates[0];
     if (!entrant || random(state) >= behaviourOf(entrant, ctx.playerHubs).entryChance) continue;

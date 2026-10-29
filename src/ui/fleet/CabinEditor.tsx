@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { priceLevelAt } from '../../engine/era';
 import { useTranslation } from 'react-i18next';
 import { getAircraftType, type AircraftType } from '../../data/aircraft';
 import {
@@ -63,7 +64,8 @@ export function CabinEditor({ game, airline, aircraft, onDone }: { game: GameSta
   const classes = classesFor(type);
 
   const error = validateCabin(type, cabin);
-  const quote = useMemo(() => refitQuote(type, aircraft.cabin, cabin), [type, aircraft.cabin, cabin]);
+  const level = priceLevelAt(game.time);
+  const quote = useMemo(() => refitQuote(type, aircraft.cabin, cabin, level), [type, aircraft.cabin, cabin, level]);
   const unchanged = quote.costUsd === 0 && quote.days === 0;
   const delivering = aircraft.status === 'delivering';
   const cost = convert(money(quote.costUsd, 'USD'), airline.currency, game.fx);

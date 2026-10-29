@@ -13,12 +13,15 @@ import type { GameState, ScheduledEvent } from './state';
 import { daysInMonth, MINUTES_PER_DAY, startOfNextMonth, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
+/** The world a game sees at its current time (historical games: the airports and carriers of that date). */
+export type WorldProvider = (state: GameState) => EngineWorld;
+
 /** Processes every scheduled event up to `until` (in time order), then sets the clock to `until`. */
-export function advance(state: GameState, world: EngineWorld, until: SimTime): void {
+export function advance(state: GameState, world: EngineWorld | WorldProvider, until: SimTime): void {
   while (state.queue.length && state.queue[0]!.at <= until) {
     const event = state.queue.shift()!;
     state.time = Math.max(state.time, event.at);
-    handle(state, world, event);
+    handle(state, typeof world === 'function' ? world(state) : world, event);
   }
   state.time = Math.max(state.time, until);
 }
@@ -30,7 +33,7 @@ function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): vo
       schedule(state, { at: state.time + MINUTES_PER_DAY, kind: 'dayStart' });
       break;
     case 'monthStart':
-      worldMonthlyStep(state);
+      worldMonthlyStep(state, world);
       payMonthlyRents(state);
       refreshMarket(state);
       schedule(state, { at: startOfNextMonth(state.time), kind: 'monthStart' });

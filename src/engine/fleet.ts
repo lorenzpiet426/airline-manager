@@ -51,7 +51,7 @@ export function dailyDepreciation(o: Ownership, time: SimTime): number {
 /** Ownership for a price paid now (book currency): written off to 10 % of the new value over its remaining life. */
 export function newOwnership(state: GameState, aircraft: Pick<Aircraft, 'typeId' | 'builtYear'>, price: number, currency: string): Ownership {
   const type = getAircraftType(aircraft.typeId);
-  const residual = Math.min(price, convert(money(newPriceUsd(type) * RESIDUAL_SHARE, 'USD'), currency, state.fx).amount);
+  const residual = Math.min(price, convert(money(newPriceUsd(type, 1, yearOf(state.time)) * RESIDUAL_SHARE, 'USD'), currency, state.fx).amount);
   const years = Math.max(MIN_DEPRECIATION_YEARS, USEFUL_LIFE_YEARS - ageOf(aircraft, state.time));
   return { price, boughtAt: state.time, residual, writtenOffAt: state.time + Math.round(years * YEAR_MIN) };
 }
@@ -87,7 +87,7 @@ export function deliverySlots(state: GameState, airlineId: string, typeId: strin
   const type = getAircraftType(typeId);
   const now = state.time;
   // A type that hasn't flown yet can't come before it enters service.
-  let first = Math.max(addMonths(startOfDay(now), Math.round(backlogYears(type) * 12)), simTime(type.eis, 7, 1));
+  let first = Math.max(addMonths(startOfDay(now), Math.round(backlogYears(type, yearOf(now)) * 12)), simTime(type.eis, 7, 1));
   // Earlier orders of the same type for this airline come first.
   const earlier = Object.values(state.aircraft).filter((a) => a.airlineId === airlineId && a.typeId === typeId && a.order).map((a) => a.deliveryAt);
   if (earlier.length) first = Math.max(first, addMonths(Math.max(...earlier), 1));
@@ -126,7 +126,7 @@ export function orderAircraft(
   const type = getAircraftType(p.typeId);
   if (orderBlock(type, yearOf(state.time))) return fail('notOrderable');
   if (!Number.isInteger(p.count) || p.count < 1 || p.count > 20) return fail('countInvalid');
-  const priceUsd = newPriceUsd(type, p.count);
+  const priceUsd = newPriceUsd(type, p.count, yearOf(state.time));
   const slots = deliverySlots(state, airlineId, p.typeId, p.count);
   // Payments due on signing (deposit, and pre-delivery payments already due for early slots).
   const plans = slots.map((at) =>
@@ -262,7 +262,7 @@ export function disposeAircraft(state: GameState, world: EngineWorld, airlineId:
   if ((a.refitUntil ?? 0) > state.time) return fail('inRefit');
   if ((a.maint?.inCheck?.until ?? 0) > state.time) return fail('inCheck');
   const type = getAircraftType(a.typeId);
-  const usd = how === 'sell' ? Math.round(aircraftMarketValueUsd(a, state.time) * 0.97) : partsValueUsd(type);
+  const usd = how === 'sell' ? Math.round(aircraftMarketValueUsd(a, state.time) * 0.97) : partsValueUsd(type, yearOf(state.time));
   const got = book(state, airlineId, 'sale', money(usd, 'USD'), a.id).amount;
   bookPnl(state, airlineId, 'disposals', bookValue(a.owned, state.time) - got);
   removeAircraft(state, world, aircraftId);
@@ -311,7 +311,7 @@ export function returnLeased(state: GameState, world: EngineWorld, airlineId: st
 
 /** Rent for an extension: what the market pays today for an aircraft of this age. */
 export const extensionRentUsd = (a: Aircraft, time: SimTime): number =>
-  Math.round(typicalRentUsd(getAircraftType(a.typeId), ageOf(a, time)) / 1000) * 1000;
+  Math.round(typicalRentUsd(getAircraftType(a.typeId), ageOf(a, time), yearOf(time)) / 1000) * 1000;
 
 export function extendLease(state: GameState, airlineId: string, aircraftId: string, years: number): Result {
   const a = state.aircraft[aircraftId];

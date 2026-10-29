@@ -275,13 +275,92 @@ fuel week and the ECB rates) the game uses the real data and real events (Phase 
 - Ukrainian airports are not in today's airport data (no scheduled service since 2022), so Ukrainian closures only matter
   once historical airports exist (5.3).
 
+## Historical start years (Phase 5.3, 2026-10-29)
+- **Airports per year** (`src/data/generated/airport-history.json`, built by `tools/build-airport-history.ts`):
+  - **Replaced airports** (12, dates from each airport's Wikipedia article): before the move, today's airport is shown
+    as the old one. Location, name and runways come from OurAirports' closed airports (public domain). Fornebu's and
+    Stapleton's runways are hand-entered from Wikipedia because OurAirports has none. The airports: Kai Tak → HKG
+    1998, Munich-Riem → MUC 1992, Ellinikon → ATH 2001, Fornebu → OSL 1998, Stapleton → DEN 1995, Atatürk → IST 2019,
+    Tegel → BER 2020, HAL → BLR 2008, Begumpet → HYD 2008, Paya Lebar → SIN 1981, old Riyadh → RUH 1983, and
+    Nicosia (closed July 1974) → Larnaca (Feb 1975).
+  - **Closed airports with a successor**: Tempelhof (until 30 Oct 2008) and Schönefeld (until 25 Oct 2020). On the day
+    they close, the player's hub, routes and hangars there move to BER.
+  - **Opening dates** of today's airports: hand-checked dates for 21 airports first, then Wikidata (CC0: official
+    opening P1619, else inception P571). An airport opened after 1970 is hidden before its opening day only when another
+    airport in the same country within 60 km had the flights instead (104 airports, e.g. DFW → Love Field, CDG → Orly,
+    NRT → Haneda, ICN → Gimpo). The other 454 dates are treated as relocations of an airport with the same code and
+    ignored; 7 such cases are listed in the script by hand.
+- **Modelled carriers** (real airlines of past years come in Phase 6), rebuilt for every game year from today's
+  networks:
+  - Each country's (state's) network and regional airlines become its national carrier. Former states get their own
+    carriers: the Soviet Union until 26 Dec 1991, Yugoslavia, Czechoslovakia until 1993, East and West Germany until
+    3 Oct 1990.
+  - Charter airlines become the country's charter airline.
+  - Low-cost airlines become a low-cost carrier where that model existed: USA from 1979, Europe from 1995,
+    Oceania 2000, Latin America 2001, Asia 2002, Africa 2004, then a growing share over 15 years.
+  - Before that, a low-cost route survives only as a holiday charter: one end in a southern holiday country, flown
+    by the charter airline of the travellers' country. Its other routes didn't exist yet.
+  - Planned economies (the Soviet Union until 1992, the Eastern bloc and China until 1990) have one state airline and
+    no charter or low-cost airlines.
+  - A country whose flag carrier no longer exists (e.g. Czech Airlines) gets its biggest airline of today as a
+    stand-in.
+  - Routes too thin for the year's economy are left out:
+    - routes with official numbers: fewer than 2 flights a week at today's frequency × the year's demand index;
+    - routes without official numbers: by airport size.
+  - Modelled carriers fly the most common passenger type of the year that has the range.
+- **Money of the time**:
+  - Exchange rates follow the real monthly history (Phase 5.2) until the real data ends.
+  - Books are kept in the hub country's currency of the time: legacy euro currencies until their changeover date,
+    then the euro at the fixed rate.
+  - Re-based currencies use their old units with the official factors: TRL ÷ 10⁶ 2005, PLZ ÷ 10⁴ 1995, ROL ÷ 10⁴
+    2005, MXP ÷ 1,000 1993, BGL ÷ 1,000 1999, ISJ ÷ 100 1981, Israeli pound and old shekel.
+  - In countries whose money wasn't usable, the books are in US dollars: planned economies before 1990, new states
+    before their own currency, Brazil before the real (1994).
+  - At a changeover, the airline restates cash, assets and all past accounts at the fixed rate.
+- **Prices**: the engine's prices are 2025 dollars.
+  - In a historical year, aircraft, checks, refits, repaints, hangars and compensation are multiplied by the US CPI
+    ratio (BLS).
+  - Fares are multiplied by the CPI ratio × a real fare level: 4.4 in 1970, 4.2 (1975), 3.6 (1980), 3.0 (1985), 2.5
+    (1990), 2.0 (1995), 1.6 (2000), 1.3 (2005), 1.15 (2010), 1.0 from 2019. This is modelled from:
+    - IATA: real yields fell nearly 6× per tonne-km since 1970;
+    - ICAO's world passenger yield: roughly 7–8 US cents per passenger-km in the mid-1970s vs 8–9 in 2019, nominal;
+    - A4A/DOT: US real fares about 40 % lower in 2015 than in 1979.
+  - Crew, airport, handling, navigation, sales, service and overhead costs follow the real fare level to the power
+    0.8 (IATA: real unit costs fell about 4×).
+  - Fuel is the real then-year price; maintenance per hour comes from each aircraft type.
+  - Check: a Vienna startup in its first half year, as a weekly margin:
+
+    | Year | Aircraft | Margin |
+    |---|---|---|
+    | 1975 | DC-9 | −2 % |
+    | 1985 | 737-300 | −5 % |
+    | 1995 | A320 | −22 % |
+    | 2005 | A320 | −37 % |
+    | 2026 | A320, same plan as 2005 | −26 % |
+
+  - New aircraft: discounts grew from about 12 % (1970s) to today's ~50 %. Order waits were about 2 years before
+    2015.
+  - Lease rents in historical years ≈ 0.8 % of the aircraft's value a month, + 0.04 % per year of age.
+  - Lessors appear with their real years of business (ILFC 1973–2014, GPA 1975–1993, GECAS 1993–2021 …). Before 1990,
+    other airlines also sublease.
+  - Soviet types are neither sold nor leased to Western startups before 1992.
+- **Regulated fares**: before deregulation the player's fares may only differ ±10 % from the market fare, and AI
+  airlines don't start price wars. Fares became free on these dates:
+  - US domestic: 24 Oct 1978;
+  - EU single market: 1993; EEA members 1994; Switzerland 2002; later members on joining;
+  - domestic markets of other big countries: their reform years (Wikipedia);
+  - everything else from 1995 (modelled).
+- **EU 261** compensation only from 17 Feb 2005; care for passengers (meals, hotels) always.
+- **Real clock** only for games starting today.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH
 npm run data:download   # raw files → tools/raw/ (not in git)
 npm run data:build      # → src/data/generated/*.json (in git)
 npm test                # sanity checks in src/data/world.test.ts
-npm run data:history    # Phase 5.2: EIA fuel, Fed + World Bank exchange rates, World Bank economy → *-history.json
+npm run data:history    # Phase 5.2/5.3: EIA fuel, Fed + World Bank exchange rates, World Bank economy, Wikidata airport
+                        # dates → *-history.json, airport-history.json
 ```
 
 ## Known simplifications (to improve later)
@@ -290,7 +369,9 @@ npm run data:history    # Phase 5.2: EIA fuel, Fed + World Bank exchange rates, 
 - **Airport selection**: OurAirports `scheduled_service = yes` and type large/medium/small (heliports, seaplane bases
   and closed airports dropped) → 4,135 airports.
 - **Time zone** via nearest city: correct for virtually all airports; a few near time-zone borders could be off.
-- Wealth is **today's** value; historical start years (Phase 5) will need historical series.
+- Wealth for fares and wages is **today's** value per country; demand in past years uses the Phase 5.2 index.
+- **Historical games**: modelled carriers instead of real ones (Phase 6); the Ukrainian airports closed since 2022 are
+  missing in all years; non-fuel costs follow one world price level (no per-country history of wages or fees).
 - **Aircraft values** are rounded and were entered from manufacturer published figures, not yet cross-checked document
   by document. Ranges are "typical payload" figures; real range depends on payload and winds (modelled in Phase 4).
 - **Lease rates** are rough market estimates; there is no free public database of lease rates.

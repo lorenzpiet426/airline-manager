@@ -5,7 +5,7 @@ import { Segmented } from '../components/Segmented';
 import { usePlayer } from '../game/usePlayer';
 import { ResultChart, type ChartPeriod } from '../components/ResultChart';
 import { lfClass } from './NetworkScreen';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from '../game/useEngineWorld';
 import { sumPeriods, type PnlPeriod } from '../../engine/finance';
 import { pnlCosts, type AirlineFinance, type PnlLines } from '../../engine/state';
 import { MINUTES_PER_DAY, simTime, toDate } from '../../engine/time';
@@ -73,7 +73,7 @@ export function FinanceScreen() {
   const { t } = useTranslation();
   const { language } = useSettings();
   const { game, airline } = usePlayer();
-  const world = useWorld();
+  const world = useGameWorld();
   const [granularity, setGranularity] = useState<Granularity>('month');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 

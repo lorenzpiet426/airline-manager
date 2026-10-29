@@ -19,6 +19,9 @@ export interface GameOptions {
   scheduling: Scheduling;
   /** Real clock: game time = real UTC time + this many minutes (a game that was ahead of today when it switched). */
   clockOffset?: number;
+  /** Historical games (Phase 5.3): the start year. The world then has the airports of each date and modelled carriers
+   * instead of today's real airlines; prices, fares and exchange rates are those of the time. Unset = started in 2026. */
+  startYear?: number;
 }
 
 export interface Airline {
@@ -479,6 +482,8 @@ export interface GameMessage {
     // Buying and selling (Phase 4.1).
     | 'ordered' | 'orderPayment' | 'orderCancelled' | 'bought' | 'sold' | 'scrapped' | 'leaseEnding' | 'leaseEnded' | 'leaseExtended'
     | 'leaseReturned'
+    // Historical games (Phase 5.3): the euro or a re-based currency, an airport closing.
+    | 'currencyChanged' | 'airportMoved'
     // Maintenance (Phase 4.2).
     | 'checkPlanned' | 'checkMoved' | 'checkStarted' | 'checkDone' | 'aCheckGrounded' | 'failure' | 'hangarOrdered' | 'hangarReady'
     // Liveries (Phase 4.3).

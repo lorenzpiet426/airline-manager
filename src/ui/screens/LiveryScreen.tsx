@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type PointerEvent } from 'react';
+import { priceLevelAt } from '../../engine/era';
 import { useTranslation } from 'react-i18next';
 import { getAircraftType } from '../../data/aircraft';
 import {
@@ -213,7 +214,7 @@ export function LiveryScreen() {
             old.length > 0 && (
               <>
                 <p className="small muted">
-                  {t('livery.oldFleet', { count: old.length, price: local(repaintQuote(old[0]!).usd), days: repaintQuote(old[0]!).days })}
+                  {t('livery.oldFleet', { count: old.length, price: local(repaintQuote(old[0]!, priceLevelAt(game!.time)).usd), days: repaintQuote(old[0]!).days })}
                 </p>
                 <div className="button-row">
                   <button type="button" className="button" onClick={() => void repaintAll()}>

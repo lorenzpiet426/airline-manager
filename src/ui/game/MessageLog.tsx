@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import type { GameMessage } from '../../engine/state';
 import { toDate } from '../../engine/time';
 import type { World } from '../../data/world';
-import { countryName, formatGameDate, formatMoney, formatZulu } from '../../i18n/format';
+import { countryName, formatGameDate, formatMoney, formatNumber, formatZulu } from '../../i18n/format';
+import { airlineName } from './airlineName';
 import { useSettings } from '../../settings/settings';
 
 /** The ops message log (like ACARS messages in a cockpit), newest first. */
@@ -23,7 +24,8 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
           .map((x) => (area === 'continents' ? t(`world.continent.${x}`) : area === 'countries' ? countryName(language, x, world?.countries[x]?.name ?? x) : x))
           .join(', ');
   const text = (m: GameMessage) => {
-    const p = m.params;
+    // Modelled carriers of historical games are named in the player's language.
+    const p = typeof m.params.airline === 'string' ? { ...m.params, airline: airlineName(t, language, m.params.airline) } : m.params;
     switch (m.kind) {
       case 'founded':
         return t('msg.founded', { name: p.name, hub: p.hub, capital: formatMoney(language, { amount: Number(p.capital), currency: String(p.currency) }) });
@@ -61,6 +63,10 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.aiNewRoute', { ...p, count: Number(p.value) });
       case 'aiBankrupt':
         return t('msg.aiBankrupt', { ...p, count: Number(p.routes) });
+      case 'currencyChanged':
+        return t('msg.currencyChanged', { ...p, rate: formatNumber(language, Number(p.rate), 6) });
+      case 'airportMoved':
+        return t('msg.airportMoved', p);
       case 'cabinChanged':
         return t('msg.cabinChanged', p);
       case 'refitStarted':

@@ -2,12 +2,13 @@
 // Offers appear and expire every month. Rents depend on type and age, like in reality.
 import { AIRCRAFT_TYPES, isFreighter, isInService, PRICE_YEAR, type AircraftType } from '../data/aircraft';
 import { usdInYear } from '../data/inflation';
+import { priceLevel } from '../data/eras';
 import { standardCabin, stylesFor, totalSeats, type CabinStyle } from './cabins';
 import { nextId } from './core';
 import { money } from './money';
 import { pick, random, randomInt } from './rng';
 import type { GameState, LeaseOffer, SaleOffer } from './state';
-import { marketValueUsd } from '../data/factory';
+import { behindIronCurtain, marketValueUsd } from '../data/factory';
 import { startOfNextMonth, yearOf, type SimTime } from './time';
 
 /** How many offers the market holds after each monthly refresh. */
@@ -19,21 +20,51 @@ const NEW_LEASE_SHARE = 0.15;
 /** Lessors rarely place aircraft older than this with a new airline. */
 const MAX_AGE_YEARS = 20;
 
-// The world's biggest aircraft lessors (public companies; names used as facts only).
-const LESSORS = [
-  'AerCap', 'SMBC Aviation Capital', 'Avolon', 'Air Lease', 'BOC Aviation', 'Aviation Capital Group',
-  'CDB Aviation', 'Carlyle Aviation', 'ICBC Leasing', 'Jackson Square Aviation',
+// The world's biggest aircraft lessors with the years they did business under that name (public companies; names
+// used as facts only; years from their Wikipedia articles). Before the leasing companies of the 1970s, used aircraft
+// came from other airlines.
+const LESSOR_LIST: { name: string; weight: number; from: number; to?: number }[] = [
+  { name: 'AerCap', weight: 10, from: 2005 },
+  { name: 'SMBC Aviation Capital', weight: 7, from: 2012 },
+  { name: 'Avolon', weight: 6, from: 2010 },
+  { name: 'Air Lease', weight: 6, from: 2010 },
+  { name: 'BOC Aviation', weight: 5, from: 1993 },
+  { name: 'Aviation Capital Group', weight: 3, from: 1989 },
+  { name: 'CDB Aviation', weight: 3, from: 2006 },
+  { name: 'Carlyle Aviation', weight: 3, from: 2015 },
+  { name: 'ICBC Leasing', weight: 3, from: 2007 },
+  { name: 'Jackson Square Aviation', weight: 2, from: 2010 },
+  { name: 'ILFC', weight: 10, from: 1973, to: 2014 },
+  { name: 'GPA Group', weight: 8, from: 1975, to: 1993 },
+  { name: 'Polaris Aircraft Leasing', weight: 4, from: 1974, to: 1997 },
+  { name: 'GECAS', weight: 9, from: 1993, to: 2021 },
+  { name: 'AWAS', weight: 4, from: 1985, to: 2017 },
+  { name: 'Boullioun Aviation Services', weight: 2, from: 1984, to: 2005 },
+  { name: 'debis AirFinance', weight: 3, from: 1990, to: 2005 },
+  { name: 'Pegasus Aviation', weight: 2, from: 1988, to: 2011 },
+  { name: 'Babcock & Brown Aircraft Management', weight: 2, from: 1990, to: 2009 },
+  { name: 'RBS Aviation Capital', weight: 4, from: 2001, to: 2012 },
 ];
-const LESSOR_WEIGHTS = [10, 7, 6, 6, 5, 3, 3, 3, 3, 2];
+/** Before 1975 few leasing companies existed: other airlines sold or leased their used aircraft. */
+export const AIRLINE_LESSOR = 'Airline (sublease)';
+function lessorsIn(year: number): { names: string[]; weights: number[] } {
+  const list = LESSOR_LIST.filter((l) => year >= l.from && year < (l.to ?? 9999));
+  const names = [...list.map((l) => l.name), ...(year < 1990 ? [AIRLINE_LESSOR] : [])];
+  const weights = [...list.map((l) => l.weight), ...(year < 1990 ? [year < 1975 ? 20 : 6] : [])];
+  return { names, weights };
+}
 
 /** Lease value relative to a new aircraft: loses ~4 % of the new rent per year, floor 30 %. */
 const ageFactor = (age: number) => Math.max(0.3, 1 - 0.04 * age);
 
-/** Typical monthly rent in USD for an aircraft of this type and age. */
-export function typicalRentUsd(type: AircraftType, age: number): number {
+/** Typical monthly rent in USD (of `year`, default today's dollars) for an aircraft of this type and age. */
+export function typicalRentUsd(type: AircraftType, age: number, year = PRICE_YEAR): number {
+  // Historical games: rent from the aircraft's value then (lease rate ≈ 0.8 % of the value a month, more for older
+  // aircraft), since the lease data describes today's market (a 737-200 today is a 40-year-old aircraft).
+  if (year < PRICE_YEAR) return marketValueUsd(type, age, year) * (0.008 + 0.0004 * age);
   // Historical types store their rate in the money of their time.
   const usd = usdInYear(type.lease.usdK * 1000, type.priceYear ?? PRICE_YEAR, PRICE_YEAR);
-  return (usd * ageFactor(age)) / ageFactor(type.lease.ageYears);
+  return ((usd * ageFactor(age)) / ageFactor(type.lease.ageYears)) * priceLevel(year);
 }
 
 /** Build years a used aircraft of this type could have in `year` (at least one year old). */
@@ -51,7 +82,7 @@ function makeOffer(state: GameState, type: AircraftType, now: SimTime): LeaseOff
   const freshDays = fresh ? randomInt(state, 180, 900) : 0;
   const builtYear = fresh ? yearOf(now + freshDays * 1440) : randomInt(state, from, to);
   const age = Math.max(0, year - builtYear);
-  const rent = Math.round((typicalRentUsd(type, age) * (0.92 + random(state) * 0.16)) / 1000) * 1000;
+  const rent = Math.round((typicalRentUsd(type, age, year) * (0.92 + random(state) * 0.16)) / 1000) * 1000;
   const wide = type.category === 'widebody';
   // Deposit: usually 2–3 months of rent, held by the lessor until the aircraft is returned.
   const depositMonths = wide ? 3 : 2;
@@ -65,7 +96,7 @@ function makeOffer(state: GameState, type: AircraftType, now: SimTime): LeaseOff
   return {
     id: nextId(state, 'L'),
     typeId: type.id,
-    lessor: pick(state, LESSORS, LESSOR_WEIGHTS),
+    lessor: pick(state, lessorsIn(year).names, lessorsIn(year).weights),
     builtYear,
     seats: totalSeats(cabin),
     cabin,
@@ -85,7 +116,7 @@ function lessorStyle(state: GameState, type: AircraftType): CabinStyle {
 }
 
 // Aircraft traders and lessors selling used aircraft (company names used as facts only).
-const SELLERS = [...LESSORS, 'GA Telesis', 'AerSale', 'Willis Lease'];
+const SELLERS = (year: number) => [...lessorsIn(year).names, ...(year >= 1996 ? ['GA Telesis'] : []), ...(year >= 2008 ? ['AerSale'] : []), ...(year >= 1985 ? ['Willis Lease'] : [])];
 
 /** A used aircraft for sale: priced around its market value. */
 function makeSale(state: GameState, type: AircraftType, now: SimTime): SaleOffer {
@@ -99,7 +130,7 @@ function makeSale(state: GameState, type: AircraftType, now: SimTime): SaleOffer
   return {
     id: nextId(state, 'S'),
     typeId: type.id,
-    seller: pick(state, SELLERS),
+    seller: pick(state, SELLERS(year)),
     builtYear,
     seats: totalSeats(cabin),
     cabin,
@@ -115,7 +146,7 @@ export function refreshMarket(state: GameState): void {
   const year = yearOf(now);
   state.market.offers = state.market.offers.filter((o) => o.expiresAt > now);
   // Passenger aircraft only: cargo operations come in a later phase.
-  const types = AIRCRAFT_TYPES.filter((t) => !isFreighter(t) && isInService(t, year) && buildYears(t, year));
+  const types = AIRCRAFT_TYPES.filter((t) => !isFreighter(t) && isInService(t, year) && buildYears(t, year) && !behindIronCurtain(t, year));
   if (!types.length) return;
   // Common types show up more often, but rare ones still appear (square root of fleet size).
   const weights = types.map((t) => Math.sqrt(t.fleetWeight));

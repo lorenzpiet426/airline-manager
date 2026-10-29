@@ -211,7 +211,7 @@ export interface RefitQuote {
  * What changing the layout costs: new seats where a class gets a different product or more seats, moving seat
  * tracks otherwise, plus engineering and certification work. Wide-bodies take weeks, narrow-bodies days.
  */
-export function refitQuote(type: AircraftType, from: CabinLayout, to: CabinLayout): RefitQuote {
+export function refitQuote(type: AircraftType, from: CabinLayout, to: CabinLayout, level = 1): RefitQuote {
   const same = JSON.stringify(from) === JSON.stringify(to);
   if (same) return { costUsd: 0, days: 0, newSeats: 0 };
   const wide = isWide(type);
@@ -234,7 +234,8 @@ export function refitQuote(type: AircraftType, from: CabinLayout, to: CabinLayou
   const moved = totalSeats(to) - newSeats;
   cost += moved * 150 + (wide ? 150_000 : 40_000);
   const days = newSeats === 0 ? (wide ? 4 : 2) : Math.min(45, Math.ceil((wide ? 10 : 4) + newSeats / (wide ? 25 : 40) + (premiumWork ? (wide ? 4 : 1) : 0)));
-  return { costUsd: Math.round(cost / 1000) * 1000, days, newSeats };
+  // `level`: prices of the time in historical games (then-year dollars per today's dollar).
+  return { costUsd: Math.round((cost * level) / 1000) * 1000, days, newSeats };
 }
 
 /** Refits are written off over this many years (or until the lease ends, if sooner). */

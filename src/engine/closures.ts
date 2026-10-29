@@ -6,6 +6,7 @@ import { careEur } from '../data/maintenance';
 import { postMessage } from './core';
 import { bookPnl } from './fleet';
 import { convert, money } from './money';
+import { priceLevelAt } from './era';
 import { pairDepartureUtc, pairsOfAircraft } from './schedule';
 import type { FlightPair, GameState, Route } from './state';
 import { MINUTES_PER_DAY, startOfDay, type SimTime } from './time';
@@ -47,7 +48,7 @@ export function bookClosures(state: GameState, world: EngineWorld): void {
       }
     }
     if (!flights) continue;
-    const cost = convert(money(eur, 'EUR'), airline.currency, state.fx).amount;
+    const cost = convert(money(eur * priceLevelAt(state.time), 'EUR'), airline.currency, state.fx).amount;
     bookPnl(state, airline.id, 'disruption', cost);
     airline.cash = { amount: airline.cash.amount - Math.round(cost), currency: airline.currency };
     postMessage(state, {

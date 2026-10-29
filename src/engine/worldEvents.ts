@@ -7,6 +7,9 @@
 import { demandIndex, worldDemandIndex } from '../data/economyHistory';
 import { jetFuelSpot } from '../data/fuel';
 import { HISTORIC_EVENTS } from '../data/history';
+import { LEGACY_CURRENCIES, OLD_UNITS } from '../data/currencyHistory';
+import { ratesPerEurAt } from '../data/fxHistory';
+import { eraLevels } from '../data/eras';
 import type { Airport } from '../data/types';
 import { postMessage } from './core';
 import { random } from './rng';
@@ -267,6 +270,9 @@ export interface Conditions {
   growth: (a: Airport, b: Airport) => number;
   /** Demand multiplier for travellers between two airports (recessions, pandemics). */
   demand: (a: Airport, b: Airport, segment: 'business' | 'leisure') => number;
+  /** Money of the time (Phase 5.3), as multipliers for amounts in 2025 dollars: consumer prices, fares, the airline's
+   * own operating costs (all 1 from 2025 on). */
+  levels: { prices: number; fares: number; costs: number };
 }
 
 /** Calendar year as a fraction (e.g. 1985.5 = 1 July 1985). */
@@ -284,6 +290,7 @@ export function conditionsOf(state: GameState, world: EngineWorld, time = state.
   const past = year < 2025;
   return {
     fuelSpot: time < REAL_DATA_END || !w ? jetFuelSpot(toDate(time)) : w.fuel,
+    levels: eraLevels(year),
     trend: past ? worldDemandIndex(year) : after,
     growth: past ? (a, b) => Math.sqrt(demandIndex(a.country, year) * demandIndex(b.country, year)) : () => after,
     demand: active.length
@@ -384,10 +391,22 @@ function spawnEvents(state: GameState, world: EngineWorld, smallOnly: boolean): 
   }
 }
 
-/** Monthly: floating currencies move against the US dollar; the dollar moves against the euro. */
-export function worldMonthlyStep(state: GameState): void {
+/** Monthly: floating currencies move against the US dollar; the dollar moves against the euro. Historical games
+ * follow the real monthly rates until the real data ends. */
+export function worldMonthlyStep(state: GameState, world?: EngineWorld): void {
   const w = state.world;
-  if (!w || state.time < REAL_DATA_END) return;
+  if (!w) return;
+  if (state.time < REAL_DATA_END) {
+    if (state.options.startYear === undefined || !world?.fxHistory) return;
+    state.fx = Object.fromEntries(Object.entries(ratesPerEurAt(world.fxHistory, toDate(state.time))).map(([c, r]) => [c, Math.round(r * 1e6) / 1e6]));
+    state.fxDate = toDate(state.time).toISOString().slice(0, 10);
+    // The simulated rates after the real data start from the last real ones.
+    const usd = state.fx.USD ?? 1;
+    w.fxBase = Object.fromEntries(Object.entries(state.fx).map(([c, r]) => [c, r / usd]));
+    w.fxHistory.push([state.time, usd]);
+    if (w.fxHistory.length > 600) w.fxHistory.splice(0, w.fxHistory.length - 600);
+    return;
+  }
   const normal = () => (random(state) + random(state) + random(state) - 1.5) * 2;
   const years = (state.time - REAL_DATA_END) / YEAR;
   const walk = (now: number, base: number, sigma: number, drift: number) =>
@@ -402,6 +421,9 @@ export function worldMonthlyStep(state: GameState): void {
     else if (PEG_EUR.has(c)) fx[c] = rate;
     else fx[c] = walk(vsUsd, w.fxBase[c] ?? vsUsd, FX_VOLATILITY[c] ?? 0.022, FX_DRIFT[c] ?? 0) * usdPerEur;
   }
+  // Currencies replaced by the euro or re-based keep their fixed conversion rates.
+  for (const l of LEGACY_CURRENCIES) if (fx[l.code] !== undefined) fx[l.code] = l.perEur;
+  for (const u of OLD_UNITS) if (fx[u.code] !== undefined && fx[u.next] !== undefined) fx[u.code] = fx[u.next]! * u.perNew;
   state.fx = Object.fromEntries(Object.entries(fx).map(([c, r]) => [c, Math.round(r * 10_000) / 10_000]));
   state.fxDate = toDate(state.time).toISOString().slice(0, 10);
   w.fxHistory.push([state.time, state.fx.USD!]);

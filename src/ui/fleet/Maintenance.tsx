@@ -1,8 +1,9 @@
 import { Fragment, useState } from 'react';
+import { priceLevelAt } from '../../engine/era';
 import { useTranslation } from 'react-i18next';
 import { getAircraftType } from '../../data/aircraft';
 import { HANGAR_BUILD_MONTHS, HANGAR_FIRST_PAYMENT, HANGARS, TYPICAL_FH_PER_YEAR, type HangarSize } from '../../data/maintenance';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from '../game/useEngineWorld';
 import type { CommandError } from '../../engine/commands';
 import { checkOffer, checksDue, dueOf, initialMaint } from '../../engine/maintenance';
 import { convert, money } from '../../engine/money';
@@ -230,7 +231,7 @@ function PlanRow({ game, aircraft, due, f }: { game: GameState; aircraft: Aircra
 function Hangars({ game, airline }: { game: GameState; airline: Airline }) {
   const { t } = useTranslation();
   const f = useFormat(game, airline);
-  const world = useWorld();
+  const world = useGameWorld();
   const code = (id: string) => world?.airportById.get(id)?.iata ?? id;
   const [asking, setAsking] = useState<HangarSize | null>(null);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
@@ -258,7 +259,9 @@ function Hangars({ game, airline }: { game: GameState; airline: Airline }) {
       {notice && <p className={`notice notice--${notice.ok ? 'ok' : 'error'} small`}>{notice.text}</p>}
       <dl className="facts">
         {(Object.keys(HANGARS) as HangarSize[]).map((size) => {
-          const spec = HANGARS[size];
+          // Prices of the time in historical games.
+          const level = priceLevelAt(game.time);
+          const spec = { ...HANGARS[size], usd: HANGARS[size].usd * level, runningUsdPerDay: HANGARS[size].runningUsdPerDay * level };
           return (
             <Fragment key={size}>
               <dt>{t(`maint.size.${size}`)}</dt>

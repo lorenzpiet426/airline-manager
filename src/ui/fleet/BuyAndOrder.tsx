@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AIRLINE_LESSOR } from '../../engine/market';
 import { useTranslation } from 'react-i18next';
 import { AIRCRAFT_TYPES, getAircraftType, type AircraftCategory, type AircraftType } from '../../data/aircraft';
 import { newPriceUsd, orderBlock, PAYMENT_PLAN } from '../../data/factory';
@@ -92,7 +93,7 @@ function SaleCard({
         <dd className="mono">{formatGameDate(language, delivery, false)}</dd>
         <SaleCheckFact game={game} offer={offer} />
         <dt>{t('fleet.seller')}</dt>
-        <dd>{offer.seller}</dd>
+        <dd>{offer.seller === AIRLINE_LESSOR ? t('fleet.airlineLessor') : offer.seller}</dd>
       </dl>
       {asking ? (
         <div className="confirm">
@@ -156,7 +157,7 @@ function OrderCard({ type, game, airline }: { type: AircraftType; game: GameStat
   const [style, setStyle] = useState<CabinStyle>(styles.includes(preferred) ? preferred : 'single');
   const [asking, setAsking] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
-  const price = newPriceUsd(type, count);
+  const price = newPriceUsd(type, count, yearOf(game.time));
   const slots = deliverySlots(game, airline.id, type.id, count);
   const local = (usd: number) => formatMoney(language, convert(money(usd, 'USD'), airline.currency, game.fx), false);
   const date = (time: number) => formatGameDate(language, toDate(time), false);

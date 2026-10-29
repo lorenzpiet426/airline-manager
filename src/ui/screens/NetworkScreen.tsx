@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { airlineName } from '../game/airlineName';
 import { conditionsOf } from '../../engine/worldEvents';
+import { faresFreeFrom } from '../../data/eras';
 import { Segmented } from '../components/Segmented';
 import { DeparturesBoard } from '../network/DeparturesBoard';
 import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
@@ -12,12 +14,13 @@ import { AirportSearch } from '../map/AirportSearch';
 import { usePlayer } from '../game/usePlayer';
 import { useEngineWorld } from '../game/useEngineWorld';
 import { getAircraftType } from '../../data/aircraft';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from '../game/useEngineWorld';
 import {
   aircraftHours,
   applyCommand,
   draftRoute,
   FARE_FACTOR_RANGE,
+  fareRange,
   MAX_FREQUENCY,
   validateRoute,
   type Command,
@@ -46,7 +49,7 @@ import type { Airline, CabinClass, ClassFares, GameState, Route } from '../../en
 import { CLASSES, classFareRatio, DEFAULT_CLASS_FARES, haul } from '../../engine/cabins';
 import { fromDate, toDate } from '../../engine/time';
 import { sendCommand } from '../../game/store';
-import { formatMoney, formatNumber } from '../../i18n/format';
+import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 
@@ -64,7 +67,7 @@ type Editing = { mode: 'new' } | { mode: 'edit'; routeId: string } | null;
 export function NetworkScreen() {
   const { t } = useTranslation();
   const { game, airline } = usePlayer();
-  const world = useWorld();
+  const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const [editing, setEditing] = useState<Editing>(null);
   const [tab, setTab] = useState<'routes' | 'timetable'>('routes');
@@ -165,7 +168,7 @@ export function NetworkScreen() {
 function RouteCard({ game, airline, route, onEdit }: { game: GameState; airline: Airline; route: Route; onEdit: () => void }) {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const world = useWorld();
+  const world = useGameWorld();
   const to = world?.airportById.get(route.destinationId);
   const from = world?.airportById.get(route.originId);
   const pairs = pairsOfRoute(game, route.id);
@@ -252,7 +255,7 @@ function RouteCard({ game, airline, route, onEdit }: { game: GameState; airline:
 function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airline: Airline; route?: Route; onDone: () => void }) {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const world = useWorld();
+  const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const fleet = Object.values(game.aircraft).filter((a) => a.airlineId === airline.id);
   const detailed = game.options.scheduling === 'detailed';
@@ -271,6 +274,14 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
 
   const hub = world?.airportById.get(airline.hubId);
   const dest = destinationId ? world?.airportById.get(destinationId) : undefined;
+  // Before deregulation fares could only move a little around the regulated fare (historical games).
+  const fares = hub && dest ? fareRange(game, hub, dest) : FARE_FACTOR_RANGE;
+  const regulated = fares !== FARE_FACTOR_RANGE;
+  useEffect(() => {
+    const clamp = (v: number) => Math.min(fares[1], Math.max(fares[0], v));
+    setFareFactor(clamp);
+    setClassFares((f) => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, clamp(v)])) as ClassFares);
+  }, [fares]);
   const aircraft = game.aircraft[aircraftId];
   const draft = useMemo(() => (hub && dest ? (route ?? draftRoute(airline.id, hub, dest)) : null), [hub, dest, route, airline.id]);
   const settings = detailed
@@ -308,25 +319,28 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     if (!simRoute || !plan) return null;
     const date = toDate(game.time);
     const rep = game.reputation[airline.id];
+    const conditions = conditionsOf(game, engineWorld);
     const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, {
       ai: game.ai,
       brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
       checksSeparate: true,
-      conditions: conditionsOf(game, engineWorld),
+      conditions,
     });
     const pairs = pairsOfRoute(sim, simRoute.id).filter((p) => sim.aircraft[p.aircraftId]);
     const used = [...new Set(pairs.map((p) => p.aircraftId))].map((id) => game.aircraft[id]!).filter(Boolean);
     const type = aircraft ? getAircraftType(aircraft.typeId) : null;
     return {
       market: market(engineWorld, hub, dest),
-      competitors: competitorsOn(engineWorld, hub, dest, undefined, game.ai),
-      marketFare: marketFareUsd(engineWorld, hub, dest, date),
+      growth: conditions.growth(hub, dest),
+      // Competitors' flights grow with the market (historical games: far fewer flights than today).
+      competitors: competitorsOn(engineWorld, hub, dest, undefined, game.ai)?.map((c) => ({ ...c, weekly: Math.max(1, Math.round(c.weekly * conditions.growth(hub, dest))) })) ?? null,
+      marketFare: marketFareUsd(engineWorld, hub, dest, date, conditions.fuelSpot / conditions.levels.prices) * conditions.levels.fares,
       week,
       flightNumbers: week.timetable.map((f, i) => pairs[i >> 1]!.flightNumber + f.dir),
       aircraftWeekUsd: used.reduce(
         (sum, a) =>
           sum +
-          crewCostPerDayUsd(engineWorld, getAircraftType(a.typeId), a.seats, hub.country, a.cabin) * 7 +
+          crewCostPerDayUsd(engineWorld, getAircraftType(a.typeId), a.seats, hub.country, a.cabin) * conditions.levels.costs * 7 +
           (a.lease
             ? convert(a.lease.monthlyRent, 'USD', game.fx).amount * (12 / 52)
             : a.owned
@@ -433,6 +447,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
               <span className="muted small">{t('network.maxFrequency', { count: maxFrequency })}</span>
             </div>
           )}
+          {regulated && <p className="muted small">{t('network.regulatedFares', { date: formatGameDate(language, new Date(`${faresFreeFrom(hub!.country, dest!.country)}T00:00:00Z`), false) })}</p>}
           {(offered.length ? offered : (['Y'] as CabinClass[])).map((cls) => {
             const value = cls === 'Y' ? fareFactor : classFares[cls];
             const set = (v: number) => (cls === 'Y' ? setFareFactor(v) : setClassFares((f) => ({ ...f, [cls]: v })));
@@ -445,8 +460,8 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                 <input
                   type="range"
                   className="slider"
-                  min={FARE_FACTOR_RANGE[0] * 100}
-                  max={FARE_FACTOR_RANGE[1] * 100}
+                  min={fares[0] * 100}
+                  max={fares[1] * 100}
                   step={5}
                   value={Math.round(value * 100)}
                   onChange={(e) => set(Number(e.target.value) / 100)}
@@ -485,8 +500,9 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
           <dl className="facts">
             <dt>{t('network.market')}</dt>
             <dd className="mono">
-              {t('network.marketValue', { pax: formatNumber(language, Math.round(forecast.market.annualPax / 1000) * 1000) })}{' '}
-              <SourceTag tag={forecast.market.observed ? 'official' : 'modelled'} />
+              {t('network.marketValue', { pax: formatNumber(language, Math.round((forecast.market.annualPax * forecast.growth) / 1000) * 1000) })}{' '}
+              {/* Measured today; in other years scaled by the economy of the time (an estimate). */}
+              <SourceTag tag={forecast.market.observed && Math.abs(forecast.growth - 1) < 0.01 ? 'official' : 'modelled'} />
             </dd>
             <dt>{t('network.competition')}</dt>
             <dd>
@@ -499,7 +515,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                       <li key={c.airlineId} className="competitor">
                         {other && <TailFin primary={other.colors.primary} secondary={other.colors.secondary} size={22} />}
                         <a href={hrefFor('airlines', { id: c.airlineId })} className="competitor__name">
-                          {c.name}
+                          {airlineName(t, language, c.name)}
                         </a>
                         <span className="mono">{t('network.perWeek', { count: c.weekly })}</span>
                         <span className="muted small">

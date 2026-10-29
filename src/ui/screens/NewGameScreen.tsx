@@ -5,12 +5,16 @@ import { Segmented } from '../components/Segmented';
 import { TailFin } from '../components/TailFin';
 import { AirportSearch } from '../map/AirportSearch';
 import { useWorld } from '../../data/world';
-import { bookCurrencyFor, ECB_RATES } from '../../data/currencies';
+import { ECB_RATES } from '../../data/currencies';
+import { currencyAt, ratesPerEurAt } from '../../data/fxHistory';
+import { priceLevel } from '../../data/eras';
+import { FIRST_START_YEAR, REAL_AIRLINES_FROM } from '../../engine/era';
+import { screenWorld, useEngineWorldAt } from '../game/useEngineWorld';
 import type { Airport } from '../../data/types';
 import { CAPITAL_OPTIONS_EUR, startingCapital, type CommandError } from '../../engine/commands';
 import type { Scheduling, TimeMode } from '../../engine/state';
 import { startNewGame, useGame } from '../../game/store';
-import { countryName, formatMoney, formatNumber } from '../../i18n/format';
+import { countryName, formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 import { fromDate } from '../../engine/time';
@@ -26,6 +30,8 @@ const LIVERY_PRESETS: [string, string][] = [
 ];
 
 const CAPITAL_KEYS = ['tight', 'standard', 'funded'] as const;
+/** Quick choices for the start year (any year from 1970 can be typed). */
+const YEAR_PRESETS = [1970, 1980, 1990, 2000, 2010] as const;
 
 /** Suggested designators from the name: "Danube Air" → DA / DAN. */
 function suggestCodes(name: string): { iata: string; icao: string } {
@@ -38,8 +44,14 @@ function suggestCodes(name: string): { iata: string; icao: string } {
 export function NewGameScreen() {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const world = useWorld();
+  const base = useWorld();
   const existingGame = useGame();
+  const [startYear, setStartYear] = useState(REAL_AIRLINES_FROM);
+  const historical = startYear < REAL_AIRLINES_FROM;
+  const startDate = new Date(Date.UTC(startYear, 0, 1));
+  // The world of the start year: its airports (Kai Tak, Riem …) and exchange rates.
+  const engine = useEngineWorldAt(historical ? startYear : undefined, startDate);
+  const world = base && engine ? screenWorld(base, engine) : null;
 
   const [name, setName] = useState('');
   const [codes, setCodes] = useState({ iata: '', icao: '' });
@@ -53,7 +65,11 @@ export function NewGameScreen() {
   const [busy, setBusy] = useState(false);
 
   const hub: Airport | undefined = world?.airportById.get(hubId);
-  const currency = hub ? bookCurrencyFor(hub.country) : 'EUR';
+  const currency = hub ? currencyAt(hub.country, historical ? startDate : new Date()) : 'EUR';
+  const fx = historical && engine?.fxHistory ? ratesPerEurAt(engine.fxHistory, startDate) : ECB_RATES;
+  const shownCurrency = fx[currency] ? currency : 'USD';
+  const capitalOf = (eur: number) => startingCapital(fx, eur, shownCurrency, historical ? priceLevel(startYear) : 1);
+  const mode: TimeMode = historical && timeMode === 'realclock' ? 'realtime' : timeMode;
   const { iata, icao } = codesEdited ? codes : suggestCodes(name);
 
   const found = async () => {
@@ -62,10 +78,10 @@ export function NewGameScreen() {
     const result = await startNewGame(
       {
         seed: crypto.getRandomValues(new Uint32Array(1))[0]!,
-        startYear: 2026,
+        startYear,
         // A real-clock game starts now; the others on 1 January.
-        ...(timeMode === 'realclock' ? { startTime: fromDate(new Date()) } : {}),
-        timeMode,
+        ...(mode === 'realclock' ? { startTime: fromDate(new Date()) } : {}),
+        timeMode: mode,
         realism: 'realistic',
         scheduling,
       },
@@ -84,7 +100,33 @@ export function NewGameScreen() {
       <h1 className="screen__title">{t('newGame.title')}</h1>
       <p className="muted">{t('newGame.intro')}</p>
 
-      <Panel title={t('newGame.identity')} code="1">
+      <Panel title={t('newGame.era')} code="1">
+        <div className="choices choices--years" role="radiogroup" aria-label={t('newGame.era')}>
+          {[...YEAR_PRESETS, REAL_AIRLINES_FROM].map((y) => (
+            <button key={y} type="button" role="radio" aria-checked={startYear === y} className="choice" onClick={() => setStartYear(y)}>
+              <span className="choice__value mono">{y === REAL_AIRLINES_FROM ? t('newGame.today') : y}</span>
+              <span className="muted small">{t(`newGame.eraHint.${y}`)}</span>
+            </button>
+          ))}
+        </div>
+        <label className="field">
+          <span className="field__label">{t('newGame.startYear')}</span>
+          <input
+            className="input mono"
+            type="number"
+            min={FIRST_START_YEAR}
+            max={REAL_AIRLINES_FROM}
+            value={startYear}
+            onChange={(e) => {
+              const y = Math.round(Number(e.target.value));
+              if (y >= FIRST_START_YEAR && y <= REAL_AIRLINES_FROM) setStartYear(y);
+            }}
+          />
+        </label>
+        <p className="muted small">{historical ? t('newGame.historicalHint') : t('newGame.todayHint')}</p>
+      </Panel>
+
+      <Panel title={t('newGame.identity')} code="2">
         <div className="identity">
           <TailFin primary={colors[0]} secondary={colors[1]} code={iata || '··'} size={96} />
           <div className="identity__fields">
@@ -154,7 +196,7 @@ export function NewGameScreen() {
         </div>
       </Panel>
 
-      <Panel title={t('newGame.hub')} code="2">
+      <Panel title={t('newGame.hub')} code="3">
         {hub ? (
           <div className="hubcard">
             <span className="hubcard__code mono">{hub.iata ?? hub.id}</span>
@@ -166,14 +208,16 @@ export function NewGameScreen() {
               </span>
             </span>
           </div>
+        ) : world ? (
+          <p className="notice notice--error">{t('newGame.hubNotYet', { year: startYear })}</p>
         ) : (
           <p className="muted">{t('map.loading')}</p>
         )}
         {world && <AirportSearch world={world} onPick={(a) => setHubId(a.id)} />}
-        <p className="muted small">{t('newGame.hubHint', { currency })}</p>
+        <p className="muted small">{t('newGame.hubHint', { currency: shownCurrency })}</p>
       </Panel>
 
-      <Panel title={t('newGame.capital')} code="3">
+      <Panel title={t('newGame.capital')} code="4">
         <div className="choices" role="radiogroup" aria-label={t('newGame.capital')}>
           {CAPITAL_OPTIONS_EUR.map((eur, i) => (
             <button
@@ -184,7 +228,7 @@ export function NewGameScreen() {
               className="choice"
               onClick={() => setCapitalEur(eur)}
             >
-              <span className="choice__value mono">{formatMoney(language, startingCapital(ECB_RATES, eur, currency))}</span>
+              <span className="choice__value mono">{formatMoney(language, capitalOf(eur))}</span>
               <span className="choice__title">{t(`newGame.capitalOption.${CAPITAL_KEYS[i]}`)}</span>
               <span className="muted small">{t(`newGame.capitalHint.${CAPITAL_KEYS[i]}`)}</span>
             </button>
@@ -192,19 +236,20 @@ export function NewGameScreen() {
         </div>
       </Panel>
 
-      <Panel title={t('newGame.mode')} code="4">
+      <Panel title={t('newGame.mode')} code="5">
         <span className="field__label">{t('newGame.timeMode')}</span>
         <Segmented
           label={t('newGame.timeMode')}
-          value={timeMode}
+          value={mode}
           options={[
             { value: 'realtime', label: t('ops.mode.realtime') },
             { value: 'weekly', label: t('ops.mode.weekly') },
-            { value: 'realclock', label: t('ops.mode.realclock') },
+            // The real clock means "today": not for games in the past.
+            ...(historical ? [] : [{ value: 'realclock' as const, label: t('ops.mode.realclock') }]),
           ]}
           onChange={setTimeMode}
         />
-        <p className="muted small">{t(`ops.modeHint.${timeMode}`)}</p>
+        <p className="muted small">{t(`ops.modeHint.${mode}`)}</p>
         <span className="field__label">{t('newGame.scheduling')}</span>
         <Segmented
           label={t('newGame.scheduling')}
@@ -220,7 +265,9 @@ export function NewGameScreen() {
           <dt>{t('newGame.scenario')}</dt>
           <dd>{t('newGame.scenarioStartup')}</dd>
           <dt>{t('newGame.startDate')}</dt>
-          <dd>{timeMode === 'realclock' ? t('newGame.startDateNow') : t('newGame.startDateValue')}</dd>
+          <dd>{mode === 'realclock' ? t('newGame.startDateNow') : formatGameDate(language, startDate, false)}</dd>
+          <dt>{t('newGame.competitors')}</dt>
+          <dd>{historical ? t('newGame.competitorsModelled') : t('newGame.competitorsReal')}</dd>
           <dt>{t('newGame.realism')}</dt>
           <dd>{t('newGame.realismRealistic')}</dd>
         </dl>

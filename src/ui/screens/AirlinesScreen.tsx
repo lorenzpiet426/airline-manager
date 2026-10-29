@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { airlineName } from '../game/airlineName';
 import { Panel } from '../components/Panel';
 import { SourceTag } from '../components/SourceTag';
 import { TailFin } from '../components/TailFin';
@@ -10,7 +11,7 @@ import { toDate } from '../../engine/time';
 import { formatGameDate } from '../../i18n/format';
 import { hrefFor, useRouteParam } from '../navigation';
 import { aircraftTypeById } from '../../data/aircraft';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from '../game/useEngineWorld';
 import type { RealAirline, RealAirlines } from '../../engine/realAirlines';
 import { countryName, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
@@ -42,18 +43,19 @@ function AirlineList({ real }: { real: RealAirlines }) {
   const { t } = useTranslation();
   const game = useGame();
   const { language } = useSettings();
-  const world = useWorld();
+  const world = useGameWorld();
   const [query, setQuery] = useState('');
+  const nameOf = (n: string) => airlineName(t, language, n);
   const all = useMemo(() => [...real.byId.values()].sort((a, b) => fleetSize(b) - fleetSize(a) || real.routesOf(b.id).length - real.routesOf(a.id).length), [real]);
   const q = normalize(query.trim());
   const shown = (q
-    ? all.filter((a) => normalize(a.name).includes(q) || a.iata?.toLowerCase() === q || a.icao?.toLowerCase() === q || a.hubs.some((h) => world?.airportById.get(h)?.iata?.toLowerCase() === q))
+    ? all.filter((a) => normalize(nameOf(a.name)).includes(q) || a.iata?.toLowerCase() === q || a.icao?.toLowerCase() === q || a.hubs.some((h) => world?.airportById.get(h)?.iata?.toLowerCase() === q))
     : all
   ).slice(0, 100);
 
   return (
     <>
-      <p className="muted">{t('airlines.intro', { count: all.length })}</p>
+      <p className="muted">{game?.options.startYear !== undefined ? t('airlines.introModelled', { count: all.length }) : t('airlines.intro', { count: all.length })}</p>
       <input
         type="search"
         className="input"
@@ -68,17 +70,20 @@ function AirlineList({ real }: { real: RealAirlines }) {
             <a href={hrefFor('airlines', { id: a.id })} className="airline-row">
               <TailFin primary={a.colors.primary} secondary={a.colors.secondary} size={32} />
               <span className="airline-row__name">
-                {a.name}
+                {nameOf(a.name)}
                 {game?.ai.airlines[a.id]?.status === 'bankrupt' && <span className="chip chip--warning"> {t('airlines.statusBankrupt')}</span>}
                 <span className="muted small">
                   {' '}
-                  · {[a.iata, a.icao].filter(Boolean).join(' / ')} · {a.country ? countryName(language, a.country, a.country) : ''}
+                  {[[a.iata, a.icao].filter(Boolean).join(' / '), a.modelled ? '' : a.country ? countryName(language, a.country, a.country) : '']
+                    .filter(Boolean)
+                    .map((x) => ` · ${x}`)
+                    .join('')}
                 </span>
               </span>
               <span className="airline-row__facts mono small">
                 {a.hubs.slice(0, 2).map((h) => world?.airportById.get(h)?.iata ?? h).join(' ')}
               </span>
-              <span className="airline-row__facts mono small">{t('airlines.aircraftShort', { count: fleetSize(a) })}</span>
+              <span className="airline-row__facts mono small">{a.modelled ? t(`airlines.model.${a.model}`) : t('airlines.aircraftShort', { count: fleetSize(a) })}</span>
               <span className="airline-row__facts mono small">{t('airlines.routesShort', { count: real.routesOf(a.id).length })}</span>
             </a>
           </li>
@@ -92,8 +97,9 @@ function AirlineList({ real }: { real: RealAirlines }) {
 function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: RealAirline }) {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const world = useWorld();
+  const world = useGameWorld();
   const [showRegs, setShowRegs] = useState(false);
+  const name = airlineName(t, language, a.name);
   const code = (icao: string) => world?.airportById.get(icao)?.iata ?? icao;
   const game = useGame();
   const engineWorld = useEngineWorld();
@@ -129,11 +135,11 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
         <p className="notice notice--error">{t('airlines.bankrupt', { date: formatGameDate(language, toDate(status.since ?? 0), false) })}</p>
       )}
       <div className="grid">
-        <Panel title={a.name} code={[a.iata, a.icao].filter(Boolean).join(' / ')}>
+        <Panel title={name} code={[a.iata, a.icao].filter(Boolean).join(' / ')}>
           <div className="airline-card">
             <TailFin primary={a.colors.primary} secondary={a.colors.secondary} code={a.iata ?? undefined} size={72} />
             <div className="airline-card__text">
-              <span className="airline-card__name">{a.name}</span>
+              <span className="airline-card__name">{name}</span>
               <span className="muted">
                 {t(`airlines.model.${a.model}`)}
                 {a.country ? ` · ${countryName(language, a.country, a.country)}` : ''}
@@ -155,6 +161,14 @@ function AirlineDetail({ real, airline: a }: { real: RealAirlines; airline: Real
               <>
                 <dt>{t('airlines.parent')}</dt>
                 <dd>{a.parent}</dd>
+              </>
+            )}
+            {a.modelled && (
+              <>
+                <dt>{t('airlines.source')}</dt>
+                <dd className="small">
+                  <SourceTag tag="modelled" /> {t('airlines.modelledNote')}
+                </dd>
               </>
             )}
             <dt>{t('airlines.colors')}</dt>

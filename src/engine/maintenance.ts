@@ -34,15 +34,18 @@ import { book, nextId, postMessage, schedule } from './core';
 import { bookPnl } from './fleet';
 import { weeklyLegs } from './flights';
 import { convert, money } from './money';
+import { priceLevelAt } from './era';
 import { random } from './rng';
 import { addExperience } from './reputation';
 import { aogCancels, busyIntervals, grounded, pairBlocks, pairDepartureUtc, pairsOfAircraft } from './schedule';
 import type { Aircraft, CheckRecord, GameState, Hangar, MaintState } from './state';
-import { addMonths, MINUTES_PER_DAY, MINUTES_PER_WEEK, startOfDay, startOfWeek, toDate, yearOf, type SimTime } from './time';
+import { addMonths, MINUTES_PER_DAY, MINUTES_PER_WEEK, simTime, startOfDay, startOfWeek, toDate, yearOf, type SimTime } from './time';
 import { hasDay, seedOf } from './timetable';
 import type { EngineWorld } from './world';
 
 const YEAR_MIN = 365.25 * MINUTES_PER_DAY;
+/** EU 261 (passenger compensation for cancellations) applies from this day. */
+const EU261_FROM = simTime(2005, 2, 17);
 const DAY = MINUTES_PER_DAY;
 
 const ageOf = (a: Pick<Aircraft, 'builtYear'>, time: SimTime) => Math.max(0, yearOf(time) - a.builtYear);
@@ -79,7 +82,7 @@ export function initialMaint(key: string, type: AircraftType, builtYear: number,
 function startReserves(type: AircraftType, m: MaintState, now: SimTime): number {
   const p = PROGRAMME[type.category];
   const age = Math.max(0, (now - m.d.at) / YEAR_MIN);
-  return Math.round(checkQuote(type, 'D', 10).usd * Math.min(1, age / p.dYears));
+  return Math.round(checkQuote(type, 'D', 10).usd * priceLevelAt(now) * Math.min(1, age / p.dYears));
 }
 
 /** Gives an aircraft its maintenance state when it enters service (and leases their reserve rate). */
@@ -90,7 +93,7 @@ export function ensureMaint(state: GameState, a: Aircraft): MaintState {
     a.maint = initialMaint(a.id, type, a.builtYear, state.time, how);
   }
   if (a.lease && a.lease.reserveUsdPerFh === undefined) {
-    a.lease.reserveUsdPerFh = reserveRateUsd(type);
+    a.lease.reserveUsdPerFh = reserveRateUsd(type) * priceLevelAt(state.time);
     a.maint.reserves ??= startReserves(type, a.maint, state.time);
   }
   return a.maint;
@@ -181,7 +184,8 @@ export function checkOffer(state: GameState, a: Aircraft, kind: 'A' | HeavyCheck
   const q = checkQuote(type, kind, ageOf(a, start));
   const where = freeHangar(state, a, kind !== 'A') ? 'hangar' : 'mro';
   const shortNotice = where === 'mro' && kind !== 'A' && start - bookedAt < SHORT_NOTICE_DAYS * DAY;
-  const usd = Math.round(q.usd * (where === 'hangar' ? OWN_HANGAR_PRICE_SHARE : 1) * (shortNotice ? 1 + SHORT_NOTICE_PREMIUM : 1));
+  // Prices of the time in historical games (the quote is in today's dollars).
+  const usd = Math.round(q.usd * priceLevelAt(start) * (where === 'hangar' ? OWN_HANGAR_PRICE_SHARE : 1) * (shortNotice ? 1 + SHORT_NOTICE_PREMIUM : 1));
   const fromReserves = a.lease && kind !== 'A' ? Math.min(usd, a.maint?.reserves ?? 0) : 0;
   return { kind, usd, days: q.days, where, shortNotice, fromReserves };
 }
@@ -402,6 +406,7 @@ export function failureStarts(state: GameState, world: EngineWorld, aircraftId: 
   const hub = world.airportById.get(airline.hubId);
   const euCarrier = EU261_COUNTRIES.has(hub?.country ?? '');
   const last = state.finance[airline.id]?.history.at(-1);
+  const level = priceLevelAt(state.time);
 
   // The aircraft's flights departing while it is grounded.
   let cancelled = 0;
@@ -422,11 +427,12 @@ export function failureStarts(state: GameState, world: EngineWorld, aircraftId: 
         const covered = euCarrier || EU261_COUNTRIES.has(world.airportById.get(fromId)?.country ?? '');
         cancelled++;
         pax += people;
-        eur += people * (careEur(aog.hours) + (covered ? CLAIM_SHARE * eu261Eur(route.distanceKm) : 0));
+        // EU 261 compensation exists since 17 February 2005; care (meals, hotels) was always paid.
+        eur += people * (careEur(aog.hours) + (covered && aog.from >= EU261_FROM ? CLAIM_SHARE * eu261Eur(route.distanceKm) : 0)) * level;
       }
     }
   }
-  const repairUsd = Math.round(REPAIR_USD[type.category] * (1 + aog.hours / 24) / 100) * 100;
+  const repairUsd = Math.round((REPAIR_USD[type.category] * (1 + aog.hours / 24) * level) / 100) * 100;
   const repair = -book(state, a.airlineId, 'repair', money(-repairUsd, 'USD'), a.id).amount;
   bookPnl(state, a.airlineId, 'maintenance', repair);
   const compensation = eur > 0 ? -book(state, a.airlineId, 'compensation', money(-Math.round(eur), 'EUR'), a.id).amount : 0;
@@ -451,7 +457,7 @@ export function buildHangar(state: GameState, airlineId: string, size: HangarSiz
   const airline = state.airlines[airlineId];
   if (!airline || !(size in HANGARS)) return { ok: false, error: 'airlineUnknown' };
   if (Object.values(state.hangars).some((h) => h.airlineId === airlineId && h.size === size && !h.ready)) return { ok: false, error: 'hangarExists' };
-  const usd = HANGARS[size].usd;
+  const usd = HANGARS[size].usd * priceLevelAt(state.time);
   const first = usdToBook(state, usd * HANGAR_FIRST_PAYMENT, airline.currency);
   if (airline.cash.amount < first) return { ok: false, error: 'insufficientCash' };
   const id = nextId(state, 'H');
@@ -467,7 +473,7 @@ export function buildHangar(state: GameState, airlineId: string, size: HangarSiz
 export function hangarReady(state: GameState, hangarId: string): void {
   const h = state.hangars[hangarId];
   if (!h || h.ready || !state.airlines[h.airlineId]) return;
-  const usd = HANGARS[h.size].usd * (1 - HANGAR_FIRST_PAYMENT);
+  const usd = HANGARS[h.size].usd * priceLevelAt(h.orderedAt) * (1 - HANGAR_FIRST_PAYMENT);
   h.price += -book(state, h.airlineId, 'hangar', money(-usd, 'USD'), h.id).amount;
   h.ready = true;
   postMessage(state, { airlineId: h.airlineId, kind: 'hangarReady', level: 'normal', params: { size: h.size, airport: h.airportId } });
@@ -478,7 +484,7 @@ function hangarDailyStep(state: GameState): void {
   for (const h of Object.values(state.hangars)) {
     const airline = state.airlines[h.airlineId];
     if (!h.ready || !airline) continue;
-    pay(state, h.airlineId, 'maintenance', usdToBook(state, HANGARS[h.size].runningUsdPerDay, airline.currency));
+    pay(state, h.airlineId, 'maintenance', usdToBook(state, HANGARS[h.size].runningUsdPerDay * priceLevelAt(state.time), airline.currency));
     pay(state, h.airlineId, 'depreciation', h.price / (HANGAR_LIFE_YEARS * 365.25));
   }
 }

@@ -3,9 +3,10 @@ import type { Feature, FeatureCollection, LineString } from 'geojson';
 import { greatCirclePoints } from '../../engine/geo';
 import { hrefFor, useRouteParam } from '../navigation';
 import { useRealAirlines } from '../game/useEngineWorld';
+import { airlineName } from '../game/airlineName';
 import { unwrap } from '../map/useNetworkOverlay';
 import { useTranslation } from 'react-i18next';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from '../game/useEngineWorld';
 import { updateSettings, useSettings } from '../../settings/settings';
 import { useResolvedTheme } from '../hooks/useApplyTheme';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -22,7 +23,7 @@ const EMPTY_POINTS: FeatureCollection<import('geojson').Point> = { type: 'Featur
 
 export default function MapScreen() {
   const { t } = useTranslation();
-  const world = useWorld();
+  const world = useGameWorld();
   const settings = useSettings();
   const theme = useResolvedTheme();
   const isWide = useMediaQuery('(min-width: 768px)');
@@ -98,7 +99,7 @@ export default function MapScreen() {
         {shown && (
           <div className="mapview__shown">
             <span className="mapview__swatch" style={{ background: shown.colors.primary }} />
-            <span>{t('map.showing', { name: shown.name, count: real?.routesOf(shown.id).length ?? 0 })}</span>
+            <span>{t('map.showing', { name: airlineName(t, settings.language, shown.name), count: real?.routesOf(shown.id).length ?? 0 })}</span>
             <a href={hrefFor('map')} className="muted small">
               {t('common.close')}
             </a>

@@ -14,7 +14,7 @@ import { AwayReportPanel } from '../game/AwayReport';
 import { MessageLog } from '../game/MessageLog';
 import { usePlayer } from '../game/usePlayer';
 import { useBooting } from '../../game/store';
-import { useWorld } from '../../data/world';
+import { useGameWorld } from '../game/useEngineWorld';
 import { useSettings } from '../../settings/settings';
 import { formatMoney } from '../../i18n/format';
 import { useResolvedTheme } from '../hooks/useApplyTheme';
@@ -46,7 +46,7 @@ export function OpsScreen() {
   const isWide = useMediaQuery('(min-width: 768px)');
   const booting = useBooting();
   const { game, airline } = usePlayer();
-  const world = useWorld();
+  const world = useGameWorld();
   const engineWorld = useEngineWorld();
 
   // Status lines use cockpit (ECAM) colours: green = normal, amber = caution, cyan = info.

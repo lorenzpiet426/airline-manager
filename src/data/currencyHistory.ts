@@ -38,3 +38,43 @@ export const LEGACY_CURRENCIES: readonly LegacyCurrency[] = [
 
 /** Before the euro existed, its exchange rate is calculated from the Deutsche Mark ("synthetic euro"). */
 export const SYNTHETIC_EUR_FROM = 'DEM';
+
+/**
+ * Currencies that were re-based ("redenominated") since 1970: the exchange-rate history stores them in today's units,
+ * so an old unit is worth `perNew` of them (e.g. 1 new Turkish lira = 1,000,000 old lira). Phase 5.3 keeps the books of
+ * historical airlines in the old unit until the day of the change. Sources: the central banks' redenomination laws
+ * (Wikipedia articles on each currency).
+ */
+export interface OldUnit {
+  code: string;
+  /** Today's currency code it was converted into. */
+  next: string;
+  countries: string[];
+  /** Units of the old currency per unit of `next`. */
+  perNew: number;
+  /** First day of the new unit (YYYY-MM-DD). */
+  until: string;
+}
+
+export const OLD_UNITS: readonly OldUnit[] = [
+  // Israeli pound → (old) shekel 1980 (÷10) → new shekel 1985 (÷1,000).
+  { code: 'ILP', next: 'ILS', countries: ['IL'], perNew: 10_000, until: '1980-02-24' },
+  { code: 'ILR', next: 'ILS', countries: ['IL'], perNew: 1_000, until: '1985-09-04' },
+  { code: 'ISJ', next: 'ISK', countries: ['IS'], perNew: 100, until: '1981-01-01' },
+  { code: 'MXP', next: 'MXN', countries: ['MX'], perNew: 1_000, until: '1993-01-01' },
+  { code: 'PLZ', next: 'PLN', countries: ['PL'], perNew: 10_000, until: '1995-01-01' },
+  { code: 'BGL', next: 'BGN', countries: ['BG'], perNew: 1_000, until: '1999-07-05' },
+  { code: 'TRL', next: 'TRY', countries: ['TR'], perNew: 1_000_000, until: '2005-01-01' },
+  { code: 'ROL', next: 'RON', countries: ['RO'], perNew: 10_000, until: '2005-07-01' },
+];
+
+/**
+ * Countries whose airlines can't have kept their books in a usable currency on a date: the planned economies'
+ * currencies weren't convertible before 1990, the new states' currencies didn't exist yet, Brazil had several currencies
+ * and hyperinflation until the real (July 1994). Airlines there accounted in US dollars for international business.
+ */
+export const DOLLAR_BOOKS_UNTIL: Readonly<Record<string, string>> = {
+  PL: '1990-01-01', HU: '1990-01-01', RO: '1990-01-01', BG: '1990-01-01', CN: '1981-01-01',
+  CZ: '1993-01-01', SK: '1993-01-01', SI: '1992-01-01', HR: '1994-06-01', EE: '1992-07-01',
+  LV: '1993-03-05', LT: '1993-06-25', BR: '1994-07-01',
+};

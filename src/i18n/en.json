@@ -200,11 +200,13 @@
     "worldEvent": "{{what}}: {{where}} (until {{date}}).",
     "eventAffects": "{{what}} affects your network: {{where}}, until {{date}}. Flights there may be cancelled.",
     "eventCancellations_one": "Yesterday {{count}} flight was cancelled ({{why}}): {{pax}} passengers looked after (meals, hotels) for {{amount}}. No compensation is due: extraordinary circumstances.",
-    "eventCancellations_other": "Yesterday {{count}} flights were cancelled ({{why}}): {{pax}} passengers looked after (meals, hotels) for {{amount}}. No compensation is due: extraordinary circumstances."
+    "eventCancellations_other": "Yesterday {{count}} flights were cancelled ({{why}}): {{pax}} passengers looked after (meals, hotels) for {{amount}}. No compensation is due: extraordinary circumstances.",
+    "currencyChanged": "Your books now run in {{to}}: everything held in {{from}} – cash, aircraft values and all past accounts – was converted at the fixed rate of {{rate}} {{from}} per {{to}}.",
+    "airportMoved": "{{from}} has closed: your flights, hub and hangars there moved to {{to}}."
   },
   "newGame": {
     "title": "Found your airline",
-    "intro": "A startup in 2026. Choose your identity, home base and money – then lease your first aircraft.",
+    "intro": "A startup in 2026 – or in any year since 1970. Choose your era, identity, home base and money, then lease your first aircraft.",
     "identity": "Name & livery",
     "name": "Airline name",
     "namePlaceholder": "e.g. Danube Air",
@@ -233,14 +235,30 @@
     "scenario": "Scenario",
     "scenarioStartup": "Startup airline",
     "startDate": "Start",
-    "startDateValue": "1 January 2026",
     "realism": "Realism",
     "realismRealistic": "Realistic",
-    "laterHint": "Hardcore realism, historical start years, the Austrian Airlines takeover and competitors arrive in later phases.",
+    "laterHint": "Hardcore realism, real airlines of past years and the Austrian Airlines takeover arrive in later phases.",
     "found": "Found airline",
     "replaceWarning": "You already have a game running. Founding a new airline replaces it.",
     "scheduling": "Scheduling",
-    "startDateNow": "Today (real date and time)"
+    "startDateNow": "Today (real date and time)",
+    "era": "Start year",
+    "today": "Today",
+    "startYear": "Or type any year (1970–2026)",
+    "eraHint": {
+      "1970": "Jumbo jets arrive, flying is a luxury, IATA fixes the fares.",
+      "1980": "Oil crisis, sky-high fuel; US airlines just deregulated.",
+      "1990": "The Iron Curtain is gone, Europe still regulated, the Gulf War looms.",
+      "2000": "Low-cost airlines rise, the euro is coming – then 9/11.",
+      "2010": "Ash cloud, debt crisis, low-cost carriers everywhere.",
+      "2026": "Today's real airlines and networks."
+    },
+    "todayHint": "Today's world: real airlines with their networks, today's prices.",
+    "historicalHint": "A historical game: airports, aircraft types, fuel prices, exchange rates and real events of that time. Your books are kept in the money of the time (e.g. schilling until 1999), prices and fares are those of the year. Your rivals are modelled national carriers (real airlines of past years come in Phase 6). Before deregulation fares are fixed by the IATA tariff. The real clock is only available for today.",
+    "hubNotYet": "This airport didn't exist yet in {{year}}. Please choose another home airport.",
+    "competitors": "Competitors",
+    "competitorsReal": "Today's real airlines",
+    "competitorsModelled": "Modelled national carriers of the time"
   },
   "errors": {
     "nameLength": "The name needs 2 to 40 characters.",
@@ -395,7 +413,8 @@
       "chinaOnly": "only for Chinese airlines so far",
       "notBuilt": "no longer built",
       "freighter": "freighter",
-      "notInService": "not yet available"
+      "notInService": "not yet available",
+      "eastBloc": "Soviet type: not for sale to Western airlines before 1992"
     },
     "orderNote": "Backlog years and prices are modelled from public news reports (manufacturers' order files may not be reused). Leasing (also new aircraft from lessors) and buying used are the quick ways to grow.",
     "boughtNotice": "{{type}} bought.",
@@ -408,7 +427,8 @@
     "inCheck": "{{check}}-check until {{date}}",
     "aog": "AOG until {{date}}",
     "nextHeavy": "Next heavy check",
-    "nextHeavyValue": "{{check}}-check due in {{months}} months"
+    "nextHeavyValue": "{{check}}-check due in {{months}} months",
+    "airlineLessor": "Another airline (sublease)"
   },
   "network": {
     "title": "Network",
@@ -460,7 +480,8 @@
     "introDetailed": "Your routes from the hub with your own timetable: every flight has a departure time, days of operation and an aircraft.",
     "fixedNoteDetailed": "Not included: crew salaries and leases of {{registration}} ({{cost}} per week together), which they share with their other routes, and the airline's overheads. The route uses {{hours}} block hours per week.",
     "classFare": "{{cls}} fare",
-    "classLf": "Load factor per class"
+    "classLf": "Load factor per class",
+    "regulatedFares": "Regulated route: until {{date}} governments and the IATA tariff fix the fares here, so you can only charge ±10 % around the official fare. No price wars."
   },
   "finance": {
     "title": "Finance",
@@ -549,7 +570,10 @@
     "newRoute": "new",
     "closedRoutes_one": "{{count}} route given up in this game.",
     "closedRoutes_other": "{{count}} routes given up in this game.",
-    "statusBankrupt": "bankrupt"
+    "statusBankrupt": "bankrupt",
+    "introModelled": "Your game starts in the past: these {{count}} airlines are modelled national, charter and low-cost carriers of the time, built from today's networks and scaled to that year's economy. Real airlines of past years come in Phase 6.",
+    "source": "Source",
+    "modelledNote": "Modelled for your historical game: the routes of today's airlines from this country, only where the economy of the year could fill them."
   },
   "sources": {
     "title": "Data sources",
@@ -570,13 +594,13 @@
       "modelled": "Estimated by the game's demand model where no real number is available."
     },
     "use": {
-      "ourairports": "All airports with scheduled flights: position, runways, size.",
+      "ourairports": "All airports with scheduled flights: position, runways, size. Also the closed airports of historical games (Kai Tak, Munich-Riem, Berlin Tegel, Tempelhof, Schönefeld, Athens Ellinikon, Oslo Fornebu, Denver Stapleton …).",
       "geonames": "City populations (catchment and market size) and time zones.",
       "worldbank": "Wealth (GDP per person) and tourism per country. Since Phase 5.2 also population, GDP per person, exchange rates and air passengers carried since 1960, for demand in the past.",
       "naturalearth": "Coastlines and borders of the map.",
       "openfreemap": "Fonts for the airport codes on the map.",
       "wikipedia": "Which airline flies where (airport articles), airline business models, hubs, bases, fleets and seat layouts (airline articles). The real event timeline since 1970 links each event to the article its facts come from.",
-      "wikidata": "Airline names, codes, countries, alliances and parent companies; links between articles and airports.",
+      "wikidata": "Airline names, codes, countries, alliances and parent companies; links between articles and airports. Opening dates of airports (which airports existed in a historical year).",
       "eurostat": "Real passenger numbers, seats and flights per route in Europe (summer 2024), used for demand and for the airlines' weekly flights.",
       "eia": "The real jet fuel price, week by week in 2026. Monthly history since 1974 (estimated from crude oil before mid-1975).",
       "ecb": "Exchange rates between currencies.",
@@ -1046,7 +1070,7 @@
     "orderable": "Can be ordered new from the factory (Fleet → Order new).",
     "marketOnly": "No longer built, but still flying: used aircraft can show up on the lease and used markets.",
     "freighterLater": "A freighter: cargo flights come in a later phase.",
-    "historical": "Historical type: it becomes available with historical start years (Phase 5), in the years it really flew.",
+    "historical": "Not built or flown in your game's year. Start a game in the years it flew (New game → start year) to lease or buy it.",
     "source": "Specs are rounded manufacturer and encyclopedic figures, typed in by hand; retirement years are approximate."
   },
   "world": {
@@ -1096,7 +1120,9 @@
     "recent": "Last three months",
     "openLine": "now {{share}} % · no end in sight",
     "openEnd": "no end in sight",
-    "openClosureLine": "{{share}} % of flights cancelled · no end in sight"
+    "openClosureLine": "{{share}} % of flights cancelled · no end in sight",
+    "trafficToday": "Air travel compared with today",
+    "trafficTodayHint": "How many people flew then, compared with 2024 (from each country's population and wealth, calibrated on the World Bank's passenger figures). Markets and your competitors' flights are this much smaller."
   },
   "history": {
     "title": "World history",
@@ -1778,6 +1804,20 @@
     "iranWarDemand2026": {
       "name": "Travellers avoid the Middle East",
       "text": "Demand for travel to the Gulf region falls sharply (estimated)."
+    }
+  },
+  "era": {
+    "state": {
+      "SU": "Soviet Union",
+      "YU": "Yugoslavia",
+      "CS": "Czechoslovakia",
+      "DD": "East Germany",
+      "DW": "West Germany"
+    },
+    "carrier": {
+      "N": "{{country}} · national carrier",
+      "C": "{{country}} · charter airline",
+      "L": "{{country}} · low-cost airline"
     }
   }
 }
