@@ -2888,3 +2888,14 @@ a.button {
   border-radius: 2px;
   vertical-align: middle;
 }
+
+/* Hub gates (Phase 7.3): the contact gates rented, as a line over the gate need per hour; hours with aircraft on remote
+   stands in amber. */
+.hub__over {
+  fill: var(--amber);
+}
+.hub__line {
+  stroke: var(--amber);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}

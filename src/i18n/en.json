@@ -219,7 +219,10 @@
     "startupFounded_other": "New airline: {{airline}} (fictional) starts flying from {{base}} with {{count}} routes.",
     "slotsBought_one": "Bought {{count}} slot at {{airport}}.",
     "slotsBought_other": "Bought {{count}} slots at {{airport}}.",
-    "slotSeason": "New season at {{airport}}: {{granted}} of {{asked}} slots asked for were granted; {{lost}} unused slots went back to the coordinator (use it or lose it)."
+    "slotSeason": "New season at {{airport}}: {{granted}} of {{asked}} slots asked for were granted; {{lost}} unused slots went back to the coordinator (use it or lose it).",
+    "gatesRented": "Rented {{remote}} more remote stands at your hub (now {{total}} gates) for the new timetable.",
+    "loungeOrdered": "Your new lounge at {{airport}} ({{seats}} seats) is being built.",
+    "loungeReady": "Your lounge at {{airport}} is open."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -363,7 +366,13 @@
     "curfewHub": "A take-off or landing at your hub falls into its night curfew.",
     "curfewDestination": "A take-off or landing at the destination falls into its night curfew.",
     "noSlot": "The slot coordinator has no free slots for this plan.",
-    "notTradable": "Slots can't be bought at this airport (trading isn't allowed there)."
+    "notTradable": "Slots can't be bought at this airport (trading isn't allowed there).",
+    "noGate": "There are not enough gates free at your hub for this plan: spread your flights out or rent contact gates.",
+    "gatesUnavailable": "The airport doesn't have that many gates free.",
+    "gatesNeeded": "Your timetable needs more gates than that at its busiest moment.",
+    "loungeInvalid": "Choose between 50 and 800 seats and a quality.",
+    "loungeExists": "You already have a lounge at your hub.",
+    "loungeUnknown": "There is no lounge there."
   },
   "fleet": {
     "title": "Fleet",
@@ -864,7 +873,8 @@
     "crowd": "Crowding",
     "noRatings": "No ratings yet: they come in with your first passengers.",
     "note": "Last week's passengers: points compared with what they expect of the class. Seat = seat product and pitch; aircraft = age (new is nicer); price = value for money; crowding = very full cabins; cancellations = passengers whose flight was cancelled. Punctuality and service join in Phase 9.",
-    "disruption": "Cancellations"
+    "disruption": "Cancellations",
+    "ground": "Ground"
   },
   "away": {
     "title": "While you were away",
@@ -1938,5 +1948,46 @@
     "buy": "Buy them for {{price}}",
     "request": "Ask for them for {{date}}",
     "requested": "Asked for (decided on {{date}})"
+  },
+  "hub": {
+    "tab": "Hub",
+    "gatesTitle": "Gates at {{hub}}",
+    "gatesIntro": "Every aircraft on the ground at your hub needs a gate: from landing until 30 minutes later and from 60 minutes before take-off (longer stays are towed to parking in between). Flights take your contact gates (jet bridge) in order of time; the others stand remote: a bus ride, a worse passenger rating and 10 more minutes to change planes. New flights rent the remote stands they need automatically.",
+    "rented": "Rented",
+    "rentedValue": "{{contact}} contact gates · {{remote}} remote stands",
+    "peak": "Most aircraft at the gates",
+    "peakValue_one": "{{count}} ({{time}})",
+    "peakValue_other": "{{count}} ({{time}})",
+    "contactShare": "Turnarounds at a contact gate",
+    "airportGates": "At the airport",
+    "airportGatesValue": "{{contact}} contact gates, {{remote}} stands · still free: {{freeContact}} / {{freeRemote}}",
+    "rent": "Rent per year",
+    "rentValue": "contact gate {{contact}} · remote stand {{remote}}",
+    "chartLabel": "Aircraft at your gates per hour of the day",
+    "chartNote": "Most aircraft at the gates in each hour of the week's days (cyan: within your contact gates, amber: some stand remote). Dashed line: contact gates rented.",
+    "contactGates": "Contact gates",
+    "remoteStands": "Remote stands",
+    "applyGates": "Rent / give back",
+    "loungeTitle": "Your lounge at {{hub}}",
+    "loungeIntro": "Without an own lounge you pay a contract lounge for every business and first class passenger. An own lounge costs building and running, saves those fees and is rated by your premium passengers (by its quality; too small, it gets crowded and the rating falls). At outstations where a partner has its hub your passengers use the partner's lounge.",
+    "lounge": "Lounge",
+    "loungeValue": "{{seats}} seats · {{quality}}",
+    "status": "Status",
+    "building": "being built, opens {{date}}",
+    "open": "open",
+    "visitors": "Visitors at the busiest time",
+    "visitorsValue": "≈ {{peak}} ({{load}} % of the seats)",
+    "running": "Running cost per year",
+    "close": "Close lounge",
+    "closeConfirm": "Close your lounge? What you paid to build it is lost.",
+    "seats": "Seats",
+    "qualityLabel": "Quality",
+    "quality": {
+      "standard": "standard",
+      "premium": "premium",
+      "flagship": "flagship"
+    },
+    "buildCost": "Building: {{cost}} · running: {{run}} a year · opens in {{months}} months.",
+    "build": "Build lounge"
   }
 }

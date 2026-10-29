@@ -23,6 +23,7 @@ import { newReputation } from './reputation';
 import { MODEL_REPUTATION } from './cabins';
 import { busyIntervals, curfewProblem, freeFlightNumber, pairBlocks, pairsOfRoute, setRoutePairs, type FlightSpec } from './schedule';
 import { grantHistoricSlots } from './slots';
+import { grantHistoricGates, hubGates, LOUNGE_SEATS } from './hub';
 import type { Aircraft, GameState, Route } from './state';
 import { addMonths, MINUTES_PER_DAY, MINUTES_PER_WEEK, simTime, startOfDay, toDate, yearOf, type SimTime } from './time';
 import { DAYS_ALL, hasDay, homeDepartures, isEastbound, seedOf, spreadDays } from './timetable';
@@ -153,8 +154,13 @@ export function takeOver(state: GameState, world: EngineWorld, realId: string): 
     postMessage(state, { airlineId: id, kind: 'takeoverRoutes', level: 'caution', params: { seasonal: result.seasonalSkipped, unplanned: result.unplanned, other: result.notFromHub } });
   }
   absorbSubsidiaries(state, world);
-  // The airline's flights keep their slots (historic rights, Phase 7.2).
+  // The airline's flights keep their slots (historic rights, Phase 7.2) and its gates at the hub (7.3).
   grantHistoricSlots(state, world, id);
+  grantHistoricGates(state, world, id);
+  // Its own lounges at the hub (today's size, smaller with a smaller fleet in past years; already open).
+  const scale = past ? Math.min(1, takeoverCashEur(scenario, yearOf(state.time)) / scenario.cashEur) : 1;
+  const seats = Math.max(LOUNGE_SEATS[0], Math.min(LOUNGE_SEATS[1], Math.round((scenario.hubLounge.seats * scale) / 10) * 10));
+  airline.lounges = [{ airportId: hub.id, seats, quality: scenario.hubLounge.quality, readyAt: state.time - ESTABLISHED_DAYS * MINUTES_PER_DAY, builtUsd: 0 }];
   return { ok: true, result: { ...result, airlineId: id } };
 }
 
@@ -211,8 +217,12 @@ export function absorbSubsidiaries(state: GameState, world: EngineWorld): void {
         }
       }
       const result = added.size ? addNetwork(state, world, airline.id, sub, hub, added) : { routes: 0 };
-      // The subsidiary's slots come with its flights.
+      // The subsidiary's slots and gates come with its flights.
       if (state.slots) grantHistoricSlots(state, world, airline.id);
+      if (airline.gates) {
+        const need = hubGates(state, world, airline.id).peak;
+        airline.gates.remote = Math.max(airline.gates.remote, need - airline.gates.contact);
+      }
       postMessage(state, { airlineId: airline.id, kind: 'subsidiaryJoined', level: 'info', params: { airline: sub.name, aircraft: added.size, routes: result.routes } });
     }
   }

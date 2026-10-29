@@ -219,7 +219,10 @@
     "startupFounded_other": "Neue Airline: {{airline}} (erfunden) startet in {{base}} mit {{count}} Strecken.",
     "slotsBought_one": "{{count}} Slot in {{airport}} gekauft.",
     "slotsBought_other": "{{count}} Slots in {{airport}} gekauft.",
-    "slotSeason": "Neue Saison in {{airport}}: {{granted}} von {{asked}} beantragten Slots wurden zugeteilt; {{lost}} ungenutzte Slots gingen an den Koordinator zurück (Use it or lose it)."
+    "slotSeason": "Neue Saison in {{airport}}: {{granted}} von {{asked}} beantragten Slots wurden zugeteilt; {{lost}} ungenutzte Slots gingen an den Koordinator zurück (Use it or lose it).",
+    "gatesRented": "{{remote}} weitere Außenpositionen an deinem Drehkreuz gemietet (jetzt {{total}} Gates) für den neuen Flugplan.",
+    "loungeOrdered": "Deine neue Lounge in {{airport}} ({{seats}} Plätze) wird gebaut.",
+    "loungeReady": "Deine Lounge in {{airport}} ist offen."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -363,7 +366,13 @@
     "curfewHub": "Ein Start oder eine Landung an deinem Drehkreuz fällt in dessen Nachtflugverbot.",
     "curfewDestination": "Ein Start oder eine Landung am Ziel fällt in dessen Nachtflugverbot.",
     "noSlot": "Der Slot-Koordinator hat für diesen Plan keine freien Slots.",
-    "notTradable": "An diesem Flughafen können keine Slots gekauft werden (Handel ist dort nicht erlaubt)."
+    "notTradable": "An diesem Flughafen können keine Slots gekauft werden (Handel ist dort nicht erlaubt).",
+    "noGate": "An deinem Drehkreuz sind nicht genug Gates für diesen Plan frei: verteile deine Flüge oder miete Gates mit Brücke.",
+    "gatesUnavailable": "So viele Gates hat der Flughafen nicht frei.",
+    "gatesNeeded": "Dein Flugplan braucht zur vollsten Zeit mehr Gates.",
+    "loungeInvalid": "Wähle 50 bis 800 Plätze und eine Qualität.",
+    "loungeExists": "Du hast an deinem Drehkreuz schon eine Lounge.",
+    "loungeUnknown": "Dort gibt es keine Lounge."
   },
   "fleet": {
     "title": "Flotte",
@@ -864,7 +873,8 @@
     "crowd": "Enge",
     "noRatings": "Noch keine Bewertungen: Sie kommen mit deinen ersten Passagieren.",
     "note": "Passagiere der letzten Woche: Punkte im Vergleich zu dem, was sie von der Klasse erwarten. Sitz = Sitzprodukt und Sitzabstand; Flugzeug = Alter (neu ist schöner); Preis = Preis-Leistung; Enge = sehr volle Kabinen; Ausfälle = Passagiere, deren Flug gestrichen wurde. Pünktlichkeit und Service kommen in Phase 9 dazu.",
-    "disruption": "Ausfälle"
+    "disruption": "Ausfälle",
+    "ground": "Boden"
   },
   "away": {
     "title": "Während du weg warst",
@@ -1938,5 +1948,46 @@
     "buy": "Für {{price}} kaufen",
     "request": "Für {{date}} beantragen",
     "requested": "Beantragt (Entscheidung am {{date}})"
+  },
+  "hub": {
+    "tab": "Drehkreuz",
+    "gatesTitle": "Gates in {{hub}}",
+    "gatesIntro": "Jedes Flugzeug am Boden deines Drehkreuzes braucht ein Gate: ab der Landung 30 Minuten lang und ab 60 Minuten vor dem Start (längere Aufenthalte werden dazwischen auf eine Parkposition geschleppt). Flüge bekommen deine Gates mit Fluggastbrücke in zeitlicher Reihenfolge; die anderen stehen auf Außenpositionen: Busfahrt, schlechtere Bewertung und 10 Minuten mehr zum Umsteigen. Neue Flüge mieten die nötigen Außenpositionen automatisch.",
+    "rented": "Gemietet",
+    "rentedValue": "{{contact}} Gates mit Brücke · {{remote}} Außenpositionen",
+    "peak": "Meiste Flugzeuge an den Gates",
+    "peakValue_one": "{{count}} ({{time}})",
+    "peakValue_other": "{{count}} ({{time}})",
+    "contactShare": "Abfertigungen am Gate mit Brücke",
+    "airportGates": "Am Flughafen",
+    "airportGatesValue": "{{contact}} Gates mit Brücke, {{remote}} Positionen · noch frei: {{freeContact}} / {{freeRemote}}",
+    "rent": "Miete pro Jahr",
+    "rentValue": "Gate mit Brücke {{contact}} · Außenposition {{remote}}",
+    "chartLabel": "Flugzeuge an deinen Gates pro Stunde",
+    "chartNote": "Meiste Flugzeuge an den Gates in jeder Stunde der Wochentage (cyan: innerhalb deiner Gates mit Brücke, gelb: einige stehen außen). Strichlinie: gemietete Gates mit Brücke.",
+    "contactGates": "Gates mit Brücke",
+    "remoteStands": "Außenpositionen",
+    "applyGates": "Mieten / zurückgeben",
+    "loungeTitle": "Deine Lounge in {{hub}}",
+    "loungeIntro": "Ohne eigene Lounge zahlst du für jeden Business- und First-Passagier eine Vertragslounge. Eine eigene Lounge kostet Bau und Betrieb, spart diese Gebühren und wird von deinen Premium-Passagieren bewertet (nach ihrer Qualität; zu klein wird sie voll und die Bewertung sinkt). An Außenstationen, wo ein Partner sein Drehkreuz hat, nutzen deine Passagiere dessen Lounge.",
+    "lounge": "Lounge",
+    "loungeValue": "{{seats}} Plätze · {{quality}}",
+    "status": "Stand",
+    "building": "im Bau, öffnet am {{date}}",
+    "open": "offen",
+    "visitors": "Gäste zur vollsten Zeit",
+    "visitorsValue": "≈ {{peak}} ({{load}} % der Plätze)",
+    "running": "Betriebskosten pro Jahr",
+    "close": "Lounge schließen",
+    "closeConfirm": "Lounge schließen? Was der Bau gekostet hat, ist verloren.",
+    "seats": "Plätze",
+    "qualityLabel": "Qualität",
+    "quality": {
+      "standard": "Standard",
+      "premium": "Premium",
+      "flagship": "Flagship"
+    },
+    "buildCost": "Bau: {{cost}} · Betrieb: {{run}} pro Jahr · öffnet in {{months}} Monaten.",
+    "build": "Lounge bauen"
   }
 }

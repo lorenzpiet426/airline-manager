@@ -22,7 +22,7 @@ export function ReputationPanel({ rep }: { rep: Reputation }) {
   const history = rep.history.slice(-26);
   const before = history.at(-2)?.score;
   const shown = hover !== null && history[hover] ? history[hover] : null;
-  const parts = (e: ExperienceSums) => [...(['product', 'age', 'value', 'crowd'] as const).map((k) => e[k]), e.disruption ?? 0].map((v) => v / Math.max(1e-9, e.pax));
+  const parts = (e: ExperienceSums) => [...(['product', 'age', 'value', 'crowd'] as const).map((k) => e[k]), e.disruption ?? 0, e.ground ?? 0].map((v) => v / Math.max(1e-9, e.pax));
   const rated = CLASSES.filter((cls) => rep.classes[cls] !== undefined);
 
   return (
@@ -64,6 +64,7 @@ export function ReputationPanel({ rep }: { rep: Reputation }) {
                 <th className="num">{t('reputation.value')}</th>
                 <th className="num">{t('reputation.crowd')}</th>
                 <th className="num">{t('reputation.disruption')}</th>
+                <th className="num">{t('reputation.ground')}</th>
               </tr>
             </thead>
             <tbody>
@@ -77,7 +78,7 @@ export function ReputationPanel({ rep }: { rep: Reputation }) {
                     </td>
                     <td className={`num mono text--${level(score)}`}>{formatNumber(language, score, 1)}</td>
                     <td className="num mono">{e && e.pax > 0 ? formatNumber(language, ratingOf(e), 1) : '—'}</td>
-                    {(e && e.pax > 0 ? parts(e) : [null, null, null, null, null]).map((v, i) => (
+                    {(e && e.pax > 0 ? parts(e) : [null, null, null, null, null, null]).map((v, i) => (
                       <td key={i} className={`num mono ${v === null ? 'muted' : v >= 0.05 ? 'text--normal' : v <= -0.05 ? 'text--caution' : 'muted'}`}>
                         {v === null ? '—' : signedPoints(language, v)}
                       </td>

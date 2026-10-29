@@ -50,6 +50,21 @@ export interface Airline {
   partners?: string[];
   /** Subsidiaries at the hub whose aircraft and routes became this airline's (Phase 6.4). */
   absorbed?: string[];
+  /** Gates rented at the hub (Phase 7.3): contact gates (jet bridge) and remote stands (bus). */
+  gates?: { contact: number; remote: number };
+  /** Own lounges (Phase 7.3). */
+  lounges?: Lounge[];
+}
+
+export type LoungeQuality = 'standard' | 'premium' | 'flagship';
+
+/** An own lounge: size in seats, quality, open from `readyAt` (built for `builtUsd`, prices of its year). */
+export interface Lounge {
+  airportId: string;
+  seats: number;
+  quality: LoungeQuality;
+  readyAt: SimTime;
+  builtUsd: number;
 }
 
 /** Colour of a livery part: one of the three livery colours, white or dark grey. */
@@ -347,6 +362,8 @@ export interface ExperienceSums {
   crowd: number;
   /** Cancelled flights (Phase 4.2; missing in older weeks). */
   disruption?: number;
+  /** On the ground (Phase 7.3): gate or bus, lounge (missing in older weeks). */
+  ground?: number;
 }
 
 /** What passengers think of an airline (Phase 2): reputation from experience, awareness from being seen. */
@@ -488,7 +505,8 @@ export type ScheduledEvent =
   | { at: SimTime; seq: number; kind: 'checkDone'; aircraftId: string }
   | { at: SimTime; seq: number; kind: 'failure'; aircraftId: string }
   | { at: SimTime; seq: number; kind: 'hangarReady'; hangarId: string }
-  | { at: SimTime; seq: number; kind: 'repaintDone'; aircraftId: string };
+  | { at: SimTime; seq: number; kind: 'repaintDone'; aircraftId: string }
+  | { at: SimTime; seq: number; kind: 'loungeReady'; airlineId: string; airportId: string };
 
 /** A line in the ops message log. The screen translates `kind` and fills in `params`. */
 export interface GameMessage {
@@ -496,7 +514,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -523,7 +541,9 @@ export type LedgerKind =
   | 'orderPayment' | 'purchase' | 'sale' | 'leaseReturnFee' | 'depositBack'
   | 'check' | 'repair' | 'compensation' | 'hangar' | 'repaint'
   // Slots bought at airports where trading is allowed (Phase 7.2): an asset, not a cost of the year.
-  | 'slotPurchase';
+  | 'slotPurchase'
+  // Building an own lounge (Phase 7.3).
+  | 'lounge';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {

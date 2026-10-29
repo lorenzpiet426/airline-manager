@@ -66,6 +66,11 @@ function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): vo
     case 'repaintDone':
       repaintDone(state, event.aircraftId);
       break;
+    case 'loungeReady':
+      if (state.airlines[event.airlineId]?.lounges?.some((l) => l.airportId === event.airportId)) {
+        postMessage(state, { airlineId: event.airlineId, kind: 'loungeReady', level: 'info', params: { airport: world.airportById.get(event.airportId)?.iata ?? event.airportId } });
+      }
+      break;
   }
 }
 

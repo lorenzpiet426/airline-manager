@@ -7,6 +7,7 @@ import { DeparturesBoard } from '../network/DeparturesBoard';
 import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
 import { ConnectionsView } from '../network/ConnectionsView';
 import { SlotsView } from '../network/SlotsView';
+import { HubView } from '../network/HubView';
 import { daysText, hhmmText, weekdayNames } from '../game/timetableText';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
@@ -55,6 +56,7 @@ import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 import { routeTransfers } from '../../engine/transfers';
+import { groundContext } from '../../engine/hub';
 import { nextSeasonStart, slotPriceUsd, type SlotShortfall } from '../../engine/slots';
 
 /** Load factor colours (ECAM logic): green good, amber weak, red poor. */
@@ -74,7 +76,7 @@ export function NetworkScreen() {
   const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const [editing, setEditing] = useState<Editing>(null);
-  const [tab, setTab] = useState<'routes' | 'timetable' | 'connections' | 'slots'>('routes');
+  const [tab, setTab] = useState<'routes' | 'timetable' | 'connections' | 'slots' | 'hub'>('routes');
 
   if (!game || !airline) {
     return (
@@ -135,6 +137,7 @@ export function NetworkScreen() {
                 { value: 'timetable', label: t('timetable.board') },
                 { value: 'connections', label: t('connections.tab') },
                 { value: 'slots', label: t('slots.tab') },
+                { value: 'hub', label: t('hub.tab') },
               ]}
               onChange={setTab}
             />
@@ -158,6 +161,8 @@ export function NetworkScreen() {
             <ConnectionsView game={game} world={engineWorld} airline={airline} code={code} />
           ) : tab === 'slots' && engineWorld ? (
             <SlotsView game={game} world={engineWorld} airline={airline} code={code} />
+          ) : tab === 'hub' && engineWorld ? (
+            <HubView game={game} world={engineWorld} airline={airline} />
           ) : routes.length === 0 ? (
             <Panel title={t('network.routes')}>
               <p className="muted">{t('network.empty')}</p>
@@ -343,12 +348,14 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     const conditions = conditionsOf(game, engineWorld);
     // Passengers connecting between your own flights at the hub, with this route as planned (Phase 6.1).
     const transfer = routeTransfers(engineWorld, sim, simRoute);
+    const ground = groundContext(sim, engineWorld, airline.id);
     const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, {
       transfer,
       ai: game.ai,
       brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
       checksSeparate: true,
       conditions,
+      ...(ground ? { ground } : {}),
     });
     const pairs = pairsOfRoute(sim, simRoute.id).filter((p) => sim.aircraft[p.aircraftId]);
     const used = [...new Set(pairs.map((p) => p.aircraftId))].map((id) => game.aircraft[id]!).filter(Boolean);

@@ -1,6 +1,7 @@
 // Daily operations and accounting: every day at 00:00 UTC each route earns its ticket revenue and
 // pays its costs, crews are paid and lease costs accrue. Monday closes last week's profit-and-loss report.
 import { ensureSlots, isSeasonStart, recordSlotUse, seasonChange } from './slots';
+import { ensureHubFacilities, gateRentPerDayUsd, groundContext, loungeRunPerDayUsd } from './hub';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -52,8 +53,9 @@ const usdTo = (fx: FxRates, currency: string) => (fx[currency] ?? 1) / (fx.USD ?
 
 /** Called at 00:00 UTC every day: books the day that just ended, and closes the week on Mondays. */
 export function dailyStep(state: GameState, world: EngineWorld): void {
-  // Games from before slots existed (Phase 7.2): today's timetable keeps its slots.
+  // Games from before slots and gates existed (Phases 7.2, 7.3): today's timetable keeps its slots and gates.
   ensureSlots(state, world);
+  ensureHubFacilities(state, world);
   bookDay(state, world);
   // Historical games: the euro and re-based currencies arrive, closed airports hand over to their successors.
   currencyChangeStep(state);
@@ -96,7 +98,8 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const rep = state.reputation[airline.id];
     const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
     const transfer = routeTransfers(world, state, route);
-    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer });
+    const ground = groundContext(state, world, airline.id);
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer, ...(ground ? { ground } : {}) });
     if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
     const lines = dayOf(airline.id).lines;
@@ -158,7 +161,12 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const active = Object.values(state.aircraft).filter((a) => a.airlineId === airline.id && a.status === 'active').length;
     const overhead = overheadPerDayUsd(world, hub.country, active) * usdTo(state.fx, airline.currency) * levels.costs;
     dayOf(airline.id).lines.overhead += overhead;
-    cashChange[airline.id] = (cashChange[airline.id] ?? 0) - overhead;
+    // Gates rented at the hub and own lounges (Phase 7.3).
+    const gates = gateRentPerDayUsd(airline, state.time - 1) * usdTo(state.fx, airline.currency);
+    const lounges = loungeRunPerDayUsd(airline, state.time - 1) * usdTo(state.fx, airline.currency);
+    dayOf(airline.id).lines.airport += gates;
+    dayOf(airline.id).lines.service += lounges;
+    cashChange[airline.id] = (cashChange[airline.id] ?? 0) - overhead - gates - lounges;
   }
 
   for (const [airlineId, day] of Object.entries(days)) {

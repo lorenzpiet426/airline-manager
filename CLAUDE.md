@@ -297,7 +297,7 @@ in past years + fictional startups. Phase 6 complete.
 Connecting traffic and O&D flows through hubs, connection waves (timetables themselves come in step 2.2),
 slots (LHR, JFK…), curfews, gates, lounges, bases.
 Split (2026-10-29): **7.1** ✅ connection waves (flight-by-flight connections, minimum connecting times); **7.2** ✅ slots +
-night curfews; **7.3** gates + own lounges; **7.4** bases (routes not from the hub).
+night curfews; **7.3** ✅ gates + own lounges; **7.4** bases (routes not from the hub).
 
 ### Phase 8 — People
 Pilots and cabin crew, type ratings and training, crew shortages, strikes; hireable managers with skills,
@@ -474,6 +474,8 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 6.3: fleets = **real types per year** from Wikipedia's historical fleet tables, counts modelled; else typical types of the time | Owner choice |
 | 2026-10-29 | 6.3: **real dates**: airlines start/stop flying on their real days, with news; the AI can still bankrupt them earlier | Owner choice |
 | 2026-10-29 | 6.3: in past years every airline's frequency is its share of that time's demand (today's measured frequencies dropped) | Measured 2024 frequencies plus added closed airlines over-supplied busy routes (2005 VIE startup −59 %) |
+| 2026-10-29 | 7.3: **realistic gate capacity** at the hub (contact gates + remote stands, peak of aircraft on the ground, remote = bus, worse rating, +10 min MCT; remote stands rented automatically, contact gates on purpose) | Owner choice |
+| 2026-10-29 | 7.3: **own lounges of any size and quality** at the hub (bases with 7.4); otherwise contract lounge per passenger; partners' lounges at their hubs | Owner choice |
 | 2026-10-29 | Phase 7 order: **7.1 waves → 7.2 slots + curfews → 7.3 gates + lounges → 7.4 bases** | Owner choice |
 | 2026-10-29 | 7.1: **connections flight by flight** (MCT, waits up to 2½ h good, max 7 h / 12 h long journeys), connecting passengers booked on the connecting flights; Connections view with waves and missed connections | Owner choice |
 | 2026-10-29 | 7.2 (planned): **realistic slots** (IATA Level 3 airports, seasonal allocation with newcomer priority, 80/20 use-it-or-lose-it, slot purchases at Heathrow) | Owner choice |
@@ -1096,6 +1098,27 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: slot holdings are per hour (not exact minutes); AI airlines aren't slot-limited; delays and late arrivals into
   curfews come with Phase 9; slots can't be sold yet.
 - **Next:** 7.3 gates + own lounges.
+
+### 2026-10-29 — Session 24 (Phase 7.3: gates and lounges) ✅
+- Owner decisions (recommended): realistic gate capacity, own lounges any size (§7).
+- Engine `src/engine/hub.ts`: `gatesAt`, `freeGates`, `hubGates` (visits, 5-minute load, peak, contact-first assignment),
+  `hubGatesCached`, `ensureGates` (auto-rent remote stands), `grantHistoricGates`/`ensureHubFacilities`, `setGates`,
+  `gateRentPerDayUsd`; lounges `buildLounge`/`closeLounge`, `loungeAt`, `loungeCrowding`, `loungeExperience`,
+  `loungeRunPerDayUsd`, `groundContext`. `Airline.gates/lounges`, `Lounge`, `ExperienceSums.ground`, ledger kind
+  `lounge`, event `loungeReady`, messages `gatesRented`/`loungeOrdered`/`loungeReady`. `routeWeek` ctx `ground` (bus cost,
+  remote −3, lounge bonus/visitor cost instead of contract fee, partner lounges); reputation counts `ground`;
+  connections +10 min MCT for remote stands; daily gate rent (airport line) and lounge running costs (service line).
+  Commands `RentGates`, `BuildLounge`, `CloseLounge`; timetable changes refused with `noGate` when no stands are left.
+  Takeover keeps its gates and gets its Vienna lounges (`hubLounge` in takeovers.ts).
+- UI: Network → **Hub** tab (`HubView.tsx`: gates rented/free/rent, peak, share at contact gates, chart of aircraft at the
+  gates per hour with the contact-gate line, rent/give back; lounge build form with cost, status, visitors, close);
+  reputation panel "Ground" column; planner forecast includes the hub on the ground; EN/DE.
+- Tests: 191 (`hub.test.ts`: gate supply, auto-rented stands + contact first + refused give-back, bus cost/rating,
+  lounge build rules/cost/rating).
+- Verified in browser (Austrian save): Hub tab, 30 + 11 gates, peak 41 at Mon 06:30, lounge built (opens in 6 months),
+  give-back below need refused, phone 375 px without sideways scrolling, no console errors.
+- Known: gates only at the hub (bases in 7.4); AI airlines don't compete for gates explicitly; one lounge per airport.
+- **Next:** 7.4 bases (routes that don't start at the hub; lounges and gates there).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

@@ -632,6 +632,34 @@ timetables and the AI airlines' generated departures avoid bans.
 Heathrow full at 08:00 for a newcomer but buyable (≈ $60 m+ a peak pair in today's money), not tradable in Lisbon,
 use it or lose it and requests at the season start, IATA season dates.
 
+## Gates and lounges (Phase 7.3, 2026-10-29)
+Owner decisions: realistic gate capacity at the hub; own lounges of any size (hub now, bases with 7.4).
+
+**Gates** (`src/engine/hub.ts`, all modelled):
+- Gates at an airport: slot-coordinated airports 0.5 × capacity per hour contact gates (jet bridge) and 0.9 × remote
+  stands (Vienna 74/h → 37 and 67); others by size (large 25/45, medium 9/16, small 0/5). Free for the player: contact
+  × (1 − how full the airport is), stands × (1 − 0.6 × how full); the rest is the other airlines' (Heathrow: no contact
+  gate free).
+- Need: an aircraft uses a gate from landing until 30 min later and from 60 min before take-off; turnarounds up to 3 h
+  keep the gate throughout (longer: towed to parking in between). Peak = most aircraft at once in the week (5-minute
+  steps). Flights take contact gates in time order, the others stand remote. New timetables rent the missing remote
+  stands automatically (refused when the airport has none left); contact gates are rented in the Hub tab.
+- Rent per year (2025 USD, × price level of the year): contact gate $350,000, remote stand $60,000 — standing for
+  boarding-bridge and stand charges that European airports bill per use; booked in the "airport" P&L line. Remote stand:
+  buses $140 per flight (handling), −3 experience points per passenger, +10 min minimum connecting time.
+- Takeovers and older games keep the gates their timetable uses (contact up to 80 % of the hub's contact gates).
+  Austrian at Vienna today: 30 contact gates + 11 remote stands, peak 41 aircraft (Monday 06:30), 97 % of turnarounds
+  at a contact gate; November margin −5.3 % (−4.7 % before gates, ≈ €10 m rent a year).
+
+**Lounges** (modelled from published lounge projects; a 300-seat flagship lounge ≈ $15–20 m):
+- Build per seat $15,000 / $30,000 / $55,000 (standard / premium / flagship), 6 months; running per seat and year
+  $4,000 / $7,000 / $12,000 (service line); food per visitor $10 / $18 / $32 instead of the contract lounge fee
+  ($30 business, $55 first, part of the service cost per passenger).
+- Business and first class passengers leaving the hub rate it +3 / +6 / +9 experience points; crowded (visitors at the
+  busiest time ≈ 18 % of a day's departing premium passengers, over the seats): −12 points per 100 % over. Partners'
+  lounges at their hubs: +2.
+- Austrian takeover: its Vienna lounges (≈ 600 premium seats today, smaller with the fleet in past years).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

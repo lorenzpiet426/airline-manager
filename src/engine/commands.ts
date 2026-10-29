@@ -1,5 +1,7 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
+import type { LoungeQuality } from './state';
+import { buildLounge, closeLounge, ensureGates, ensureHubFacilities, setGates } from './hub';
 import { acquireSlots, buySlots, ensureSlots, requestSlots, type SlotShortfall } from './slots';
 import { takeOver, type TakeoverError } from './takeover';
 import { defaultLivery, repaint, setLivery, type LiveryError, type RepaintError } from './livery';
@@ -182,7 +184,24 @@ export interface RequestSlots {
   payload: { airportId: string; hours: number[] };
 }
 
-export type Command = BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** The hub on the ground (Phase 7.3): gates rented (totals), building or closing the hub lounge. */
+export interface RentGates {
+  type: 'RentGates';
+  airlineId: string;
+  payload: { contact: number; remote: number };
+}
+export interface BuildLounge {
+  type: 'BuildLounge';
+  airlineId: string;
+  payload: { seats: number; quality: LoungeQuality };
+}
+export interface CloseLounge {
+  type: 'CloseLounge';
+  airlineId: string;
+  payload: { airportId: string };
+}
+
+export type Command = RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -227,7 +246,13 @@ export type CommandError =
   | ScheduleError
   | TakeoverError
   | 'noSlot'
-  | 'notTradable';
+  | 'notTradable'
+  | 'noGate'
+  | 'gatesUnavailable'
+  | 'gatesNeeded'
+  | 'loungeInvalid'
+  | 'loungeExists'
+  | 'loungeUnknown';
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -240,16 +265,32 @@ const fail = (error: CommandError): CommandResult => ({ ok: false, error });
  */
 function withSlots(state: GameState, world: EngineWorld, airlineId: string, change: () => CommandResult): CommandResult {
   ensureSlots(state, world);
-  const before = { routes: structuredClone(state.routes), flights: structuredClone(state.flights), messages: state.messages.length, next: state.nextId };
+  ensureHubFacilities(state, world);
+  const airline = state.airlines[airlineId];
+  const before = {
+    routes: structuredClone(state.routes),
+    flights: structuredClone(state.flights),
+    slots: structuredClone(state.slots),
+    gates: airline?.gates ? { ...airline.gates } : undefined,
+    messages: state.messages.length,
+    next: state.nextId,
+  };
+  const undo = (result: CommandResult): CommandResult => {
+    state.routes = before.routes;
+    state.flights = before.flights;
+    state.slots = before.slots;
+    if (airline && before.gates) airline.gates = before.gates;
+    state.messages.length = before.messages;
+    state.nextId = before.next;
+    return result;
+  };
   const result = change();
   if (!result.ok) return result;
   const shortfall = acquireSlots(state, world, airlineId);
-  if (!shortfall) return result;
-  state.routes = before.routes;
-  state.flights = before.flights;
-  state.messages.length = before.messages;
-  state.nextId = before.next;
-  return { ok: false, error: 'noSlot', slots: shortfall };
+  if (shortfall) return undo({ ok: false, error: 'noSlot', slots: shortfall });
+  // Enough gates at the hub for the busiest moment (remote stands are rented as needed, Phase 7.3).
+  if (!ensureGates(state, world, airlineId)) return undo(fail('noGate'));
+  return result;
 }
 
 export function applyCommand(state: GameState, world: EngineWorld, command: Command): CommandResult {
@@ -269,6 +310,22 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
     case 'BuySlots': {
       if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
       const error = buySlots(state, world, command.airlineId, command.payload.airportId, command.payload.hours);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'RentGates': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      ensureHubFacilities(state, world);
+      const error = setGates(state, world, command.airlineId, command.payload.contact, command.payload.remote);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'BuildLounge': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const error = buildLounge(state, world, command.airlineId, command.payload.seats, command.payload.quality);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'CloseLounge': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const error = closeLounge(state, command.airlineId, command.payload.airportId);
       return error ? fail(error) : { ok: true };
     }
     case 'RequestSlots':

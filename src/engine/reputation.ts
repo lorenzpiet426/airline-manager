@@ -40,13 +40,14 @@ export function addExperience(rep: Reputation, experience: Partial<Record<CabinC
     w.value += e.value;
     w.crowd += e.crowd;
     if (e.disruption) w.disruption = (w.disruption ?? 0) + e.disruption;
+    if (e.ground) w.ground = (w.ground ?? 0) + e.ground;
   }
 }
 
 /** Average rating (0–100) of a week's passengers in one class: 60 = as expected. */
 export function ratingOf(e: ExperienceSums): number {
   if (e.pax <= 0) return START_REPUTATION;
-  return Math.min(100, Math.max(0, START_REPUTATION + (e.product + e.age + e.value + e.crowd + (e.disruption ?? 0)) / e.pax));
+  return Math.min(100, Math.max(0, START_REPUTATION + (e.product + e.age + e.value + e.crowd + (e.disruption ?? 0) + (e.ground ?? 0)) / e.pax));
 }
 
 /** Where awareness is heading with this many passengers a week (0.25 for a tiny airline, 1 for a big one). */

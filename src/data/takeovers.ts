@@ -45,6 +45,8 @@ export interface TakeoverScenario {
   alliances: readonly (readonly Membership[])[];
   /** Phase 6.4: the airline's own fleet over the years (takeovers in past years). */
   fleetHistory: readonly FleetEra[];
+  /** Phase 7.3: its own lounges at the hub today (seats in all of them, quality); past years scaled with the fleet. */
+  hubLounge: { seats: number; quality: 'standard' | 'premium' | 'flagship' };
 }
 
 export const TAKEOVERS: Record<string, TakeoverScenario> = {
@@ -87,6 +89,8 @@ export const TAKEOVERS: Record<string, TakeoverScenario> = {
       { id: 'Q1807298', from: '2001-01-01', until: '2013-04-15' },
     ],
     alliances: [QUALIFLYER, STAR_ALLIANCE],
+    // Austrian's business and Senator lounges at Vienna (several, ≈ 600 seats in all; modelled from the airport's plans).
+    hubLounge: { seats: 600, quality: 'premium' },
     // Wikipedia (EN "Austrian Airlines" history + historical fleet table, DE "Austrian Airlines" Geschichte/Flotte):
     // years from the historical fleet table, counts where the text states them, otherwise modelled.
     fleetHistory: [

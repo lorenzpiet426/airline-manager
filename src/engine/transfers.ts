@@ -13,6 +13,7 @@ import type { AiState, FlightPair, GameState, Route } from './state';
 import { getAircraftType } from '../data/aircraft';
 import { pairTimes, pairsOfRoute } from './schedule';
 import { hasDay, LONG_HAUL_MIN } from './timetable';
+import { hubGatesCached, REMOTE_MCT_EXTRA } from './hub';
 import type { EngineWorld } from './world';
 
 /** Share of the travellers between two places that fly with a change of planes when no non-stop flight exists
@@ -402,7 +403,8 @@ export function playerConnections(world: EngineWorld, state: GameState, airlineI
     .filter((p) => p.airlineId === airlineId)
     .map((p) => `${p.id}${p.dep}${p.days}${p.groundMin}${p.aircraftId}`)
     .join('');
-  const key = `${airlineId}@${hubId}#${Math.floor(state.time / 1440)}#${signature.length}#${hashOf(signature)}`;
+  const g = state.airlines[airlineId]?.gates;
+  const key = `${airlineId}@${hubId}#${Math.floor(state.time / 1440)}#${signature.length}#${hashOf(signature)}#${g?.contact ?? '-'}/${g?.remote ?? '-'}`;
   const hit = playerCache.get(state);
   if (hit?.key === key) return hit.result;
 
@@ -411,6 +413,7 @@ export function playerConnections(world: EngineWorld, state: GameState, airlineI
   const feed = airline?.partners?.length ? dailyFeed(world, state, airlineId, hubId) : new Map<string, number>();
   const H = world.airportById.get(hubId);
   const flights = hubFlights(world, state, airlineId, hubId);
+  const gateOf = state.airlines[airlineId]?.gates ? hubGatesCached(state, world, airlineId).gateOf : null;
   const dests = [...new Set([...flights.out.keys(), ...flights.in.keys()])].map((id) => world.airportById.get(id)).filter((a): a is Airport => !!a);
   const feeders = [...feed.keys()].filter((id) => !flights.out.has(id)).map((id) => world.airportById.get(id)).filter((a): a is Airport => !!a && a.id !== hubId);
   const per = new Map<string, number[]>();
@@ -461,7 +464,9 @@ export function playerConnections(world: EngineWorld, state: GameState, airlineI
           let top: [HubFlight, number, number] | null = null;
           for (const d of departures) {
             const wait = (((d.at - a.at) % WEEK) + WEEK) % WEEK;
-            const q = connectionQuality(wait, mctAt(H, a.longHaul || d.longHaul), km);
+            // A remote stand (bus) at either end of the change takes longer (Phase 7.3).
+            const bus = gateOf && (gateOf.get(a.key) === 'remote' || gateOf.get(d.key) === 'remote') ? REMOTE_MCT_EXTRA : 0;
+            const q = connectionQuality(wait, mctAt(H, a.longHaul || d.longHaul) + bus, km);
             if (q > 0 && (!top || q > top[1] || (q === top[1] && wait < top[2]))) top = [d, q, wait];
           }
           if (top) {

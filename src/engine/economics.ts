@@ -4,6 +4,7 @@
 // Calibration notes and sources: docs/DATA_SOURCES.md ("Economics model").
 import { CHECK_SHARE } from '../data/maintenance';
 import { curfewAtTime } from '../data/curfews';
+import { BUS_USD_PER_FLIGHT, CONTRACT_LOUNGE_USD, PARTNER_LOUNGE_EXPERIENCE, REMOTE_EXPERIENCE } from './hub';
 import { getAircraftType, TURNAROUND_MIN, type AircraftCategory, type AircraftType } from '../data/aircraft';
 import { fuelUsdPerKg, INTO_PLANE_USD_PER_GAL, jetFuelSpot, KG_PER_GALLON } from '../data/fuel';
 import type { Conditions } from './worldEvents';
@@ -520,6 +521,17 @@ export interface RouteContext {
   conditions?: Conditions;
   /** Transfer passengers at the calculated airline's hub (Phase 6.1), per direction (0 = from → to). */
   transfer?: readonly [LegTransfers | null, LegTransfers | null];
+  /** The player on the ground (Phase 7.3): contact gate or bus per hub flight, own lounge at the hub, partners' lounges. */
+  ground?: GroundContext;
+}
+
+export interface GroundContext {
+  hubId: string;
+  gateOf?: ReadonlyMap<string, 'contact' | 'remote'>;
+  /** Own lounge at the hub: what it adds to a premium passenger's experience, and its food and drinks per visitor (USD). */
+  lounge?: { experience: number; visitorUsd: number };
+  /** Airports where a partner's lounge is used. */
+  partnerLounges?: ReadonlySet<string>;
 }
 
 /** Cruise speed assumed for other airlines' jets when generating their timetables. */
@@ -845,6 +857,19 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         costs.service += p * serviceCostUsd(s.cls, t) * lv.costs;
         // What these passengers will tell others: their seat, the aircraft's age, the price and how full it was.
         const e = (experience[s.cls] ??= { pax: 0, product: 0, age: 0, value: 0, crowd: 0 });
+        // On the ground (Phase 7.3): a bus to a remote stand at the hub; an own or a partner's lounge for business and first.
+        const g = ctx.ground;
+        if (g) {
+          let ground = g.gateOf && f.key && g.gateOf.get(f.key) === 'remote' ? REMOTE_EXPERIENCE : 0;
+          if (s.cls === 'J' || s.cls === 'F') {
+            const from = ends[f.dir].id;
+            if (from === g.hubId && g.lounge) {
+              ground += g.lounge.experience;
+              costs.service += p * (g.lounge.visitorUsd * lv.prices - CONTRACT_LOUNGE_USD[s.cls] * lv.costs);
+            } else if (g.partnerLounges?.has(from)) ground += PARTNER_LOUNGE_EXPERIENCE;
+          }
+          if (ground) e.ground = (e.ground ?? 0) + p * ground;
+        }
         const lf = p / seatsToday;
         e.pax += p;
         e.product += p * (seatScore(s.product, s.pitch, t) - expectedScore(s.cls, t));
@@ -865,6 +890,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
     const night = curfewAtTime(A.id, f.dep, year)?.kind === 'quota' || curfewAtTime(B.id, info[i]!.arr, year)?.kind === 'quota' ? 2 : 1;
     costs.airport += ((6 * mtowT * n * airportFactor(world, B) * night) + 13 * result.pax * airportFactor(world, A)) * lv.costs;
     costs.handling += ((250 + 7 * f.seats) * wageFactor(world, B.country) * n + result.pax * (1.5 + 0.0025 * m.distanceKm)) * lv.costs;
+    // Buses to and from a remote stand at the hub (Phase 7.3).
+    if (ctx.ground?.gateOf && f.key && ctx.ground.gateOf.get(f.key) === 'remote') costs.handling += BUS_USD_PER_FLIGHT * n * lv.costs;
     const navKey = `${f.type.id}|${f.dir}`;
     if (!nav.has(navKey)) nav.set(navKey, navigationChargeUsd(world, f.type, A, B, m.distanceKm));
     costs.navigation += nav.get(navKey)! * n * lv.costs;
