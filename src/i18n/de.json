@@ -254,7 +254,14 @@
     "proposalsWaiting_one": "{{count}} neuer Vorschlag deiner Manager wartet auf dein OK (siehe Management).",
     "proposalsWaiting_other": "{{count}} neue Vorschläge deiner Manager warten auf dein OK (siehe Management).",
     "flightDiverted": "Flug {{flight}} {{from}}–{{to}} nach {{alt}} umgeleitet ({{cause}}). Die Passagiere fahren mit dem Bus weiter; das Flugzeug kommt am nächsten Morgen zurück.",
-    "loyaltyMilestone": "{{name}} hat mehr als {{members}} aktive Mitglieder."
+    "loyaltyMilestone": "{{name}} hat mehr als {{members}} aktive Mitglieder.",
+    "loanTaken_one": "{{kind}} über {{amount}} zu {{rate}} % für {{count}} Jahr: Das Geld ist auf deinem Konto.",
+    "loanTaken_other": "{{kind}} über {{amount}} zu {{rate}} % für {{count}} Jahre: Das Geld ist auf deinem Konto.",
+    "loanRepaid": "{{kind}} über {{amount}} zurückgezahlt.",
+    "insolvencyWarning_one": "Kontostand unter null: noch {{count}} Tag bis zur Zahlungsunfähigkeit.",
+    "insolvencyWarning_other": "Kontostand unter null: noch {{count}} Tage bis zur Zahlungsunfähigkeit.",
+    "bankrupt": "{{name}} ist zahlungsunfähig: Das Spiel ist vorbei.",
+    "saleLeaseback": "{{registration}} für {{amount}} an einen Leasinggeber verkauft und für {{rent}} im Monat zurückgeleast."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -431,7 +438,13 @@
     "loyaltyExists": "Du hast schon ein Programm.",
     "loyaltyNone": "Du hast kein Programm.",
     "loyaltyPartner": "Die Regeln dieses Programms legt der Konzern fest.",
-    "loyaltyInvalid": "Prüfe die Regeln: ein Name, 1–10 Punkte pro Euro, Silber < Gold < Platin (200–50.000 EUR), 0–15 % Prämiensitze, 0–60 Monate."
+    "loyaltyInvalid": "Prüfe die Regeln: ein Name, 1–10 Punkte pro Euro, Silber < Gold < Platin (200–50.000 EUR), 0–15 % Prämiensitze, 0–60 Monate.",
+    "loanRefused": "Geldgeber bieten deiner Airline diesen Kredit jetzt nicht an.",
+    "loanAmount": "Wähle einen Betrag innerhalb des Angebots.",
+    "loanTerm": "Wähle eine der angebotenen Laufzeiten.",
+    "loanUnknown": "Diesen Kredit gibt es nicht.",
+    "bondNoEarly": "Anleihen können nicht vorzeitig zurückgezahlt werden.",
+    "aircraftPledged": "Dieses Flugzeug sichert einen Kredit: Zahle zuerst den Kredit zurück."
   },
   "fleet": {
     "title": "Flotte",
@@ -624,7 +637,8 @@
       "depreciation": "Abschreibungen (eigene Flugzeuge, Kabinenumbauten)",
       "disposals": "Flugzeugverkäufe, Verschrottung & verlorene Anzahlungen",
       "disruption": "Entschädigung & Betreuung von Passagieren (gestrichene Flüge)",
-      "loyalty": "Vielfliegerprogramm (netto)"
+      "loyalty": "Vielfliegerprogramm (netto)",
+      "interest": "Zinsen (für Kredite bezahlt minus auf Kassa erhalten)"
     },
     "result": "Ergebnis",
     "margin": "Marge",
@@ -748,7 +762,8 @@
       "plex": "Die Schriftarten des Spiels.",
       "bls": "US-Verbraucherpreise seit 1913, um historische Flugzeugpreise im Geld jedes Jahres zu zeigen.",
       "fed": "Tägliche Wechselkurse seit 1971 (inkl. Schilling und der anderen alten Euro-Währungen), für den Geschichte-Bildschirm und historische Startjahre.",
-      "slots": "Welche Flughäfen slot-koordiniert sind, ihre erklärten Kapazitäten und Auslastung (IATA Worldwide Airport Slot Guidelines, Kapazitätsberichte der Koordinatoren); Slotpreise aus berichteten Verkäufen (Heathrow)."
+      "slots": "Welche Flughäfen slot-koordiniert sind, ihre erklärten Kapazitäten und Auslastung (IATA Worldwide Airport Slot Guidelines, Kapazitätsberichte der Koordinatoren); Slotpreise aus berichteten Verkäufen (Heathrow).",
+      "bis": "Leitzinsen seit 1970 für jede Währung: die Basis der Zinsen für Kredite, Anleihen und Guthaben (Quelle: BIZ). Keine offizielle Übersetzung der BIZ."
     }
   },
   "timetable": {
@@ -1371,6 +1386,71 @@
     "partnerRules": "Die Regeln von {{name}} legt der Konzern fest. Du kannst es verlassen und ein eigenes Programm starten, aber seine Mitglieder (und ihre Vorliebe für deine Flüge) sind dann weg.",
     "leave": "{{name}} verlassen",
     "leaveConfirm": "{{name}} verlassen? Seine Mitglieder bevorzugen deine Flüge dann nicht mehr; danach kannst du ein eigenes Programm starten."
+  },
+  "debt": {
+    "troubleTitle": "Kontostand unter null",
+    "negative_one": "Dein Kontostand ist unter null: Der Überziehungsrahmen der Bank ist teuer, und wenn er in {{count}} Tag noch unter null ist, ist die Airline zahlungsunfähig. Leih dir Geld, verkaufe Flugzeuge oder senke Kosten.",
+    "negative_other": "Dein Kontostand ist unter null: Der Überziehungsrahmen der Bank ist teuer, und wenn er in {{count}} Tagen noch unter null ist, ist die Airline zahlungsunfähig. Leih dir Geld, verkaufe Flugzeuge oder senke Kosten.",
+    "bankrupt": "Deine Airline ist zahlungsunfähig: Das Spiel ist vorbei. Du kannst dich noch umsehen oder ein neues Spiel starten.",
+    "balanceTitle": "Bilanz",
+    "cash": "Kassa",
+    "aircraft": "Eigene Flugzeuge (Buchwert)",
+    "prepayments": "Anzahlungen auf Flugzeugbestellungen",
+    "deposits": "Leasing-Kautionen",
+    "other": "Hangars",
+    "assets": "Summe Vermögen",
+    "loans": "Kredite und Anleihen",
+    "leases": "Leasingverpflichtungen",
+    "loyalty": "Unbenutzte Punkte der Mitglieder",
+    "overdraft": "Überziehung",
+    "equity": "Eigenkapital (was den Eigentümern gehört)",
+    "balanceNote": "Leasingverpflichtungen sind die bis zum Ende jedes Vertrags noch zu zahlenden Mieten (etwas abgezinst), wie Airlines sie seit IFRS 16 ausweisen. Eigenkapital unter null heißt: Die Airline schuldet mehr, als sie besitzt.",
+    "ratingTitle": "Bonität (Rating)",
+    "investmentGrade": "Investment Grade",
+    "speculative": "spekulativ („Junk\")",
+    "leverage": "Nettoschulden ÷ EBITDAR",
+    "years": "{{value}} Jahre",
+    "liquidity": "Kassa ÷ Umsatz (ein Jahr)",
+    "margin": "Ergebnismarge (12 Monate)",
+    "baseRate": "Leitzins jetzt",
+    "spread": "Aufschlag für dein Rating",
+    "ratingNote": "Wie Ratingagenturen: Schulden inklusive Leasing gegenüber dem Ergebnis vor Zinsen, Abschreibungen und Mieten (EBITDAR), Kassa, Gewinn und Größe. Airlines unter 500 Mio. € Umsatz im Jahr oder mit weniger als einem Jahr Abschlüssen bekommen höchstens BB. Zins = Leitzins (BIZ) + Aufschlag für das Rating + etwas mehr für längere Laufzeiten.",
+    "loansTitle": "Deine Kredite und Anleihen",
+    "noLoans": "Noch keine Kredite.",
+    "kind": "Art",
+    "outstanding": "Noch offen",
+    "rate": "Zins",
+    "until": "Bis",
+    "repay": "Jetzt zurückzahlen",
+    "kinds": {
+      "bank": "Bankkredit",
+      "aircraft": "Flugzeugfinanzierung",
+      "bond": "Anleihe"
+    },
+    "loansNote": "Kredite werden in gleichen Monatsraten mit den Zinsen getilgt, Anleihen in einer Summe am Ende. Eine vorzeitige Rückzahlung kostet 1 % des Betrags; Anleihen können nicht vorzeitig zurückgezahlt werden.",
+    "borrowTitle": "Geld leihen",
+    "borrowIntro": "Was dir Geldgeber heute anbieten. Der Zins ist für die ganze Laufzeit fest.",
+    "refusal": {
+      "rating": "bei deinem Rating nicht angeboten",
+      "size": "nur für Airlines mit mindestens 1 Milliarde € Umsatz im Jahr",
+      "limit": "deine Schulden sind schon so hoch, wie Geldgeber akzeptieren (etwa vier Jahre Ergebnis)"
+    },
+    "amount": "Betrag ({{min}} – {{max}})",
+    "term": "Laufzeit",
+    "yearsAt_one": "{{count}} Jahr zu {{rate}}",
+    "yearsAt_other": "{{count}} Jahre zu {{rate}}",
+    "monthly": "Zinsen anfangs etwa {{value}} im Monat, sinkend mit der Tilgung.",
+    "bondNote": "Zinsen jeden Monat; der ganze Betrag wird am Ende zurückgezahlt.",
+    "take": {
+      "bank": "Kredit aufnehmen",
+      "aircraft": "Flugzeug finanzieren",
+      "bond": "Anleihe begeben"
+    },
+    "aircraftTitle": "Deine eigenen Flugzeuge: finanzieren oder verkaufen und zurückleasen",
+    "marketValue": "Marktwert {{value}}",
+    "pledged": "sichert einen Kredit",
+    "slb": "An einen Leasinggeber verkaufen und zurückleasen",
+    "slbConfirm": "{{registration}} zum Marktwert an einen Leasinggeber verkaufen und für 8 Jahre zurückleasen?"
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

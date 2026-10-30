@@ -315,6 +315,8 @@ connections); **9.2** ✅ click any flight for full detail; **9.3** ✅ booking 
 ### Phase 10 — Finance and corporate
 Loans, bonds, fuel hedging, currency effects; stock market, IPO, share price, buying competitor shares,
 takeovers and mergers; board of directors, shareholder expectations, getting fired.
+Split (2026-10-30): **10.1** ✅ balance sheet + loans and bonds; **10.2** fuel and currency hedging; **10.3** shares: IPO,
+share price, shareholders; **10.4** board, targets, getting fired; **10.5** buying other airlines' shares, takeovers, mergers.
 
 ### Phase 11 — Business models and partnerships
 Low-cost, regional, charter + tour operator contracts, cargo (freighters + belly), subsidiaries; alliances
@@ -520,6 +522,9 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | 9.3: willingness to pay calibrated so the default buckets keep Austrian's margins; AI airlines keep average fares | Default settings give no free advantage; good settings earn more |
 | 2026-10-30 | 9.4: points **per euro spent** (status bonus), **award seats on own flights** (share of economy, taken from sale), points as a liability with breakage | Owner choice |
 | 2026-10-30 | 9.4: taken-over airlines **stay in their group's programme** (Austrian: Miles & More; fee per point, paid for the group's award seats; can leave) | Owner choice |
+| 2026-10-30 | Phase 10 order: **10.1 balance sheet + loans/bonds → 10.2 hedging → 10.3 shares/IPO → 10.4 board/fired → 10.5 takeovers** | Owner choice |
+| 2026-10-30 | 10.1: **real central bank rates (BIS) + credit-rating spread**; bank loans, aircraft finance, bonds, sale-and-leaseback; interest on cash; insolvency after 60 days below zero | Owner choice |
+| 2026-10-30 | 10.3/10.4 (planned): **realistic owners per scenario** (startup: you + investors; Austrian: state, then Lufthansa Group) setting targets; replaced as CEO if missed badly | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1349,6 +1354,27 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: members are aggregate numbers (no individual members); no co-branded credit card deals to negotiate; AI airlines'
   programmes are only part of their calibrated results; the programme's debt isn't on a balance sheet yet (Phase 10).
 - **Next:** Phase 10 (finance and corporate: loans, bonds, fuel hedging, stock market, board) — or what the owner prefers.
+
+### 2026-10-30 — Session 34 (Phase 10.1: balance sheet, loans and bonds) ✅
+- Owner decisions (recommended): money first, real rates + rating, realistic owners (§7). Phase 10 split into 10.1–10.5.
+- Data: BIS central bank policy rates (licence checked in the browser: free use with the BIS cited) via
+  `npm run data:rates` → `policy-rates.json` (49 areas, monthly since 1970); `src/data/rates.ts` `policyRate`.
+- Engine `src/engine/debt.ts`: `balanceSheet`, `creditView` (rating from leverage/liquidity/margin/size/history, parent
+  floor `Airline.parentRating`), `loanOffers` (bank, aircraft finance per owned aircraft, bond), `takeLoan`, `repayLoan`
+  (1 % fee; bonds not), `saleLeaseback`, `debtDailyStep` (daily interest accrual incl. cash and overdraft, monthly
+  interest + repayments, insolvency watch → `Airline.bankruptAt`). `Airline.loans` (`Loan`), `cashNegativeSince`,
+  `interestDue`; P&L line `interest`; ledger kinds `loan`/`interest`/`repayment`/`saleLeaseback`; messages `loanTaken`,
+  `loanRepaid`, `insolvencyWarning`, `bankrupt`, `saleLeaseback`. Commands `TakeLoan`, `RepayLoan`, `SaleLeaseback`;
+  pledged aircraft can't be sold. Euro changeover restates loans and interest owed. Austrian takeover: parent rating
+  (A until 2009, BBB after; backfilled for older saves).
+- UI: Finance → balance sheet, credit rating, loans with early repayment, borrowing offers (amount, term, rate),
+  owned aircraft finance and sale-and-leaseback, warning while cash is below zero; Data sources credit BIS; EN/DE.
+- Tests: 227 (`debt.test.ts`: BIS rates, startup balance sheet/rating/offers, loan life cycle, aircraft finance +
+  pledge + sale-and-leaseback, insolvency after 60 days). Euro test now allows December's interest on 1 January.
+- Verified in browser (Austrian save): BBB, equity +€152 m, bank loan €131.5 m at 4.44 % taken, phone 375 px.
+- Known: the model's balance sheet leaves out receivables, spare parts and the like (equity lower than real); bankruptcy
+  only stops the game logically (flag + messages), the world keeps running; no taxes yet.
+- **Next:** 10.2 fuel and currency hedging.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

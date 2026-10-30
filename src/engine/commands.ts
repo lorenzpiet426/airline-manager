@@ -3,6 +3,7 @@
 import type { CrewRole, LoungeQuality } from './state';
 import { setBucketLimits, setFareBuckets, type FareError } from './bookings';
 import { leaveProgramme, setProgramme, startProgramme, type LoyaltyError } from './loyalty';
+import { repayLoan, saleLeaseback, takeLoan, type DebtError } from './debt';
 import type { Tier } from '../data/loyalty';
 import type { FareBucket } from '../data/fares';
 import { approveProposal, declineProposal, ensureMgmt, fireManager, hireManager, setDelegation, type ManagerError } from './managers';
@@ -348,7 +349,24 @@ export interface LeaveLoyalty {
   payload: Record<string, never>;
 }
 
-export type Command = StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Loans, bonds and sale-and-leaseback (Phase 10.1). */
+export interface TakeLoan {
+  type: 'TakeLoan';
+  airlineId: string;
+  payload: { kind: 'bank' | 'aircraft' | 'bond'; amount: number; years: number; aircraftId?: string };
+}
+export interface RepayLoan {
+  type: 'RepayLoan';
+  airlineId: string;
+  payload: { loanId: string };
+}
+export interface SaleLeaseback {
+  type: 'SaleLeaseback';
+  airlineId: string;
+  payload: { aircraftId: string };
+}
+
+export type Command = TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -407,7 +425,8 @@ export type CommandError =
   | UnionError
   | ManagerError
   | FareError
-  | LoyaltyError;
+  | LoyaltyError
+  | DebtError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -514,6 +533,18 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
               ? (setDelegation(state, command.airlineId, command.payload.dept, command.payload.level) ??
                 (command.payload.dept === 'hr' && command.payload.level === 'auto' && airline.crew ? (planCrew(state, world, command.airlineId), null) : null))
               : declineProposal(state, command.airlineId, command.payload.id);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'TakeLoan':
+    case 'RepayLoan':
+    case 'SaleLeaseback': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const error =
+        command.type === 'TakeLoan'
+          ? takeLoan(state, command.airlineId, command.payload.kind, command.payload.amount, command.payload.years, command.payload.aircraftId)
+          : command.type === 'RepayLoan'
+            ? repayLoan(state, command.airlineId, command.payload.loanId)
+            : saleLeaseback(state, command.airlineId, command.payload.aircraftId);
       return error ? fail(error) : { ok: true };
     }
     case 'StartLoyalty':
@@ -623,6 +654,8 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
     case 'CancelOrder':
       return cancelOrder(state, world, command.airlineId, command.payload.aircraftId);
     case 'SellAircraft':
+      // An aircraft securing a loan can't be sold until the loan is repaid (Phase 10.1).
+      if (state.airlines[command.airlineId]?.loans?.some((l) => l.aircraftId === command.payload.aircraftId)) return fail('aircraftPledged');
       return disposeAircraft(state, world, command.airlineId, command.payload.aircraftId, command.payload.scrap ? 'scrap' : 'sell');
     case 'ReturnLease':
       return returnLeased(state, world, command.airlineId, command.payload.aircraftId, true);

@@ -171,6 +171,8 @@ export function takeOver(state: GameState, world: EngineWorld, realId: string): 
   appointHeads(state, world, id, { hr: 'auto', revenue: 'approve', network: 'advise', fleet: 'approve', maintenance: 'approve' });
   // Its group's frequent-flyer programme (Phase 9.4).
   if (scenario.loyalty && yearOf(state.time) >= scenario.loyalty.from) joinPartnerProgramme(state, id, scenario.loyalty.name);
+  // Its owner's backing for lenders (Phase 10.1).
+  if (scenario.parentRating) airline.parentRating = yearOf(state.time) >= scenario.parentRating.from ? scenario.parentRating.after : scenario.parentRating.before;
   // Its own lounges at the hub (today's size, smaller with a smaller fleet in past years; already open).
   const scale = past ? Math.min(1, takeoverCashEur(scenario, yearOf(state.time)) / scenario.cashEur) : 1;
   const seats = Math.max(LOUNGE_SEATS[0], Math.min(LOUNGE_SEATS[1], Math.round((scenario.hubLounge.seats * scale) / 10) * 10));

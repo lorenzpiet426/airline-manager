@@ -254,7 +254,14 @@
     "proposalsWaiting_one": "{{count}} new proposal from your managers is waiting for your OK (see Management).",
     "proposalsWaiting_other": "{{count}} new proposals from your managers are waiting for your OK (see Management).",
     "flightDiverted": "Flight {{flight}} {{from}}–{{to}} diverted to {{alt}} ({{cause}}). Passengers continue by bus; the aircraft returns the next morning.",
-    "loyaltyMilestone": "{{name}} has passed {{members}} active members."
+    "loyaltyMilestone": "{{name}} has passed {{members}} active members.",
+    "loanTaken_one": "{{kind}} of {{amount}} at {{rate}} % for {{count}} year: the money is in your account.",
+    "loanTaken_other": "{{kind}} of {{amount}} at {{rate}} % for {{count}} years: the money is in your account.",
+    "loanRepaid": "{{kind}} of {{amount}} repaid.",
+    "insolvencyWarning_one": "Cash below zero: {{count}} day left before the airline is insolvent.",
+    "insolvencyWarning_other": "Cash below zero: {{count}} days left before the airline is insolvent.",
+    "bankrupt": "{{name}} is insolvent: the game is over.",
+    "saleLeaseback": "{{registration}} sold to a lessor for {{amount}} and leased back at {{rent}} a month."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -431,7 +438,13 @@
     "loyaltyExists": "You already have a programme.",
     "loyaltyNone": "You have no programme.",
     "loyaltyPartner": "The group sets this programme's rules.",
-    "loyaltyInvalid": "Check the rules: a name, 1–10 points per euro, Silver < Gold < Platinum (200–50,000 EUR), 0–15 % award seats, 0–60 months."
+    "loyaltyInvalid": "Check the rules: a name, 1–10 points per euro, Silver < Gold < Platinum (200–50,000 EUR), 0–15 % award seats, 0–60 months.",
+    "loanRefused": "Lenders don't offer this loan to your airline now.",
+    "loanAmount": "Choose an amount within the offer.",
+    "loanTerm": "Choose one of the terms on offer.",
+    "loanUnknown": "That loan doesn't exist.",
+    "bondNoEarly": "Bonds can't be repaid early.",
+    "aircraftPledged": "This aircraft secures a loan: repay the loan first."
   },
   "fleet": {
     "title": "Fleet",
@@ -624,7 +637,8 @@
       "depreciation": "Depreciation (owned aircraft, cabin refits)",
       "disposals": "Aircraft sales, scrapping & lost deposits",
       "disruption": "Passenger compensation & care (cancelled flights)",
-      "loyalty": "Loyalty programme (net)"
+      "loyalty": "Loyalty programme (net)",
+      "interest": "Interest (paid on loans minus earned on cash)"
     },
     "result": "Result",
     "margin": "Margin",
@@ -748,7 +762,8 @@
       "plex": "The game's typefaces.",
       "bls": "US consumer prices since 1913, to show historical aircraft prices in the money of any year.",
       "fed": "Daily exchange rates since 1971 (incl. the Austrian schilling and the other old euro currencies), for the History screen and historical start years.",
-      "slots": "Which airports are slot-coordinated, their declared capacities and how full they are (IATA Worldwide Airport Slot Guidelines, coordinators' capacity reports); slot prices from reported sales (Heathrow)."
+      "slots": "Which airports are slot-coordinated, their declared capacities and how full they are (IATA Worldwide Airport Slot Guidelines, coordinators' capacity reports); slot prices from reported sales (Heathrow).",
+      "bis": "Central bank rates since 1970 for every currency: the base of the interest on loans, bonds and cash (Source: BIS)."
     }
   },
   "timetable": {
@@ -1371,6 +1386,71 @@
     "partnerRules": "The rules of {{name}} are set by the group. You can leave it and start your own programme, but its members (and their preference for your flights) are gone.",
     "leave": "Leave {{name}}",
     "leaveConfirm": "Leave {{name}}? Its members won't prefer your flights any more; you can start your own programme afterwards."
+  },
+  "debt": {
+    "troubleTitle": "Cash below zero",
+    "negative_one": "Your cash is below zero: the bank's overdraft is expensive, and if it is still below zero in {{count}} day the airline is insolvent. Borrow, sell aircraft or cut costs.",
+    "negative_other": "Your cash is below zero: the bank's overdraft is expensive, and if it is still below zero in {{count}} days the airline is insolvent. Borrow, sell aircraft or cut costs.",
+    "bankrupt": "Your airline is insolvent: the game is over. You can still look around, or start a new game.",
+    "balanceTitle": "Balance sheet",
+    "cash": "Cash",
+    "aircraft": "Aircraft owned (book value)",
+    "prepayments": "Payments on aircraft orders",
+    "deposits": "Lease deposits",
+    "other": "Hangars",
+    "assets": "Total assets",
+    "loans": "Loans and bonds",
+    "leases": "Lease obligations",
+    "loyalty": "Members' unused points",
+    "overdraft": "Overdraft",
+    "equity": "Equity (what belongs to the owners)",
+    "balanceNote": "Lease obligations are the rent still to pay until each lease ends (discounted a little), as airlines show them since IFRS 16. Equity below zero means the airline owes more than it owns.",
+    "ratingTitle": "Credit rating",
+    "investmentGrade": "investment grade",
+    "speculative": "speculative (\"junk\")",
+    "leverage": "Net debt ÷ EBITDAR",
+    "years": "{{value}} years",
+    "liquidity": "Cash ÷ revenue (a year)",
+    "margin": "Result margin (12 months)",
+    "baseRate": "Central bank rate now",
+    "spread": "Spread for your rating",
+    "ratingNote": "Like rating agencies: debt including leases against earnings before interest, depreciation and rent (EBITDAR), cash, profit and size. Airlines below €500 m revenue a year or with less than a year of accounts are rated BB at best. Interest = central bank rate (BIS) + spread for the rating + a little more for longer terms.",
+    "loansTitle": "Your loans and bonds",
+    "noLoans": "No loans yet.",
+    "kind": "Kind",
+    "outstanding": "Still owed",
+    "rate": "Interest",
+    "until": "Until",
+    "repay": "Repay now",
+    "kinds": {
+      "bank": "Bank loan",
+      "aircraft": "Aircraft finance",
+      "bond": "Bond"
+    },
+    "loansNote": "Loans are paid back in equal monthly parts with the interest; bonds in one sum at the end. Repaying a loan early costs 1 % of what is repaid; bonds can't be repaid early.",
+    "borrowTitle": "Borrow",
+    "borrowIntro": "What lenders offer you today. Interest is fixed for the whole term.",
+    "refusal": {
+      "rating": "not offered at your credit rating",
+      "size": "only for airlines with at least €1 billion revenue a year",
+      "limit": "your debt is already at what lenders accept (about four years of earnings)"
+    },
+    "amount": "Amount ({{min}} – {{max}})",
+    "term": "Term",
+    "yearsAt_one": "{{count}} year at {{rate}}",
+    "yearsAt_other": "{{count}} years at {{rate}}",
+    "monthly": "Interest at first: about {{value}} a month, falling as you repay.",
+    "bondNote": "Interest every month; the whole amount is paid back at the end.",
+    "take": {
+      "bank": "Take the loan",
+      "aircraft": "Finance the aircraft",
+      "bond": "Issue the bond"
+    },
+    "aircraftTitle": "Your owned aircraft: finance or sell and lease back",
+    "marketValue": "market value {{value}}",
+    "pledged": "secures a loan",
+    "slb": "Sell to a lessor and lease back",
+    "slbConfirm": "Sell {{registration}} to a lessor at its market value and lease it back for 8 years?"
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

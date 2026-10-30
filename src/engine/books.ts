@@ -25,6 +25,12 @@ export function restate(state: GameState, airlineId: string, to: string, factor:
   const scale = (n: number) => n * factor;
   airline.currency = to;
   airline.cash = { amount: Math.round(scale(airline.cash.amount)), currency: to };
+  // Loans and the interest owed since the last payment (Phase 10.1).
+  if (airline.interestDue) airline.interestDue = scale(airline.interestDue);
+  for (const l of airline.loans ?? []) {
+    l.original = Math.round(scale(l.original));
+    l.outstanding = Math.round(scale(l.outstanding));
+  }
   for (const entry of state.ledger) {
     if (entry.airlineId === airlineId && entry.amount.currency === from) entry.amount = { amount: Math.round(scale(entry.amount.amount)), currency: to };
   }

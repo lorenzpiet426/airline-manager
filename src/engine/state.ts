@@ -71,6 +71,33 @@ export interface Airline {
   fares?: Partial<Record<CabinClass, FareBucket[]>>;
   /** Frequent-flyer programme (Phase 9.4): own, a group's (partner), or none. */
   loyalty?: Loyalty;
+  /** Loans and bonds (Phase 10.1). */
+  loans?: Loan[];
+  /** Since when the cash has been below zero (insolvency after a grace period), and when the airline went bankrupt. */
+  cashNegativeSince?: SimTime;
+  bankruptAt?: SimTime;
+  /** Interest owed (or earned, negative) since the last monthly payment. */
+  interestDue?: number;
+  /** A parent's credit standing lenders count on (a group or the state; Phase 10.1), e.g. 'BBB'. */
+  parentRating?: string;
+}
+
+/** A loan or bond (Phase 10.1), in the airline's book currency. */
+export interface Loan {
+  id: string;
+  kind: 'bank' | 'aircraft' | 'bond';
+  lender: string;
+  /** Borrowed and still owed. */
+  original: number;
+  outstanding: number;
+  /** Fixed interest, per cent a year. */
+  rate: number;
+  startAt: SimTime;
+  endAt: SimTime;
+  /** Repaid in equal monthly parts (bank and aircraft loans) or all at the end (bonds). */
+  amortizing: boolean;
+  /** The aircraft securing it (aircraft loans: it can't be sold until the loan is repaid). */
+  aircraftId?: string;
 }
 
 export interface Loyalty {
@@ -510,6 +537,8 @@ export interface PnlLines {
   disruption: number;
   /** Frequent-flyer programme: running costs, status perks, group fees, minus partner income (Phase 9.4). */
   loyalty?: number;
+  /** Interest paid on loans and bonds minus interest earned on cash (Phase 10.1). */
+  interest?: number;
 }
 
 /** One flight of the day as it really goes (Phase 9.1): scheduled UTC times, delays, what happened. */
@@ -764,7 +793,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -801,7 +830,12 @@ export type LedgerKind =
   // Managers' salaries and severance (Phase 8.3).
   | 'management'
   // Frequent-flyer programme (Phase 9.4).
-  | 'loyalty';
+  | 'loyalty'
+  // Loans and bonds: money borrowed, interest, repayments; sale-and-leaseback (Phase 10.1).
+  | 'loan'
+  | 'interest'
+  | 'repayment'
+  | 'saleLeaseback';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {
@@ -879,9 +913,9 @@ export const MAX_PNL_WEEKS = 104;
 
 export const emptyPnl = (): PnlLines => ({
   revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0, overhead: 0,
-  service: 0, depreciation: 0, disposals: 0, disruption: 0, loyalty: 0,
+  service: 0, depreciation: 0, disposals: 0, disruption: 0, loyalty: 0, interest: 0,
 });
 
 export const pnlCosts = (l: PnlLines): number =>
   l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead +
-  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0) + (l.loyalty ?? 0);
+  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0) + (l.loyalty ?? 0) + (l.interest ?? 0);

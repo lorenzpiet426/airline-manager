@@ -112,6 +112,24 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
       case 'managerActions':
       case 'proposalsWaiting':
         return t(`msg.${m.kind}`, { count: Number(p.count) });
+      case 'loanTaken':
+      case 'loanRepaid':
+        return t(`msg.${m.kind}`, {
+          kind: t(`debt.kinds.${p.kind}`),
+          amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }),
+          rate: formatNumber(language, Number(p.rate ?? 0), 2),
+          count: Number(p.years ?? 0),
+        });
+      case 'insolvencyWarning':
+        return t('msg.insolvencyWarning', { count: Number(p.days) });
+      case 'bankrupt':
+        return t('msg.bankrupt', { name: p.name });
+      case 'saleLeaseback':
+        return t('msg.saleLeaseback', {
+          registration: p.registration,
+          amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }),
+          rent: formatMoney(language, { amount: Number(p.rent), currency: 'USD' }),
+        });
       case 'loyaltyMilestone':
         return t('msg.loyaltyMilestone', { name: p.name, members: formatNumber(language, Number(p.members)) });
       case 'flightDiverted':

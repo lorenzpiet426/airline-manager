@@ -47,6 +47,8 @@ export interface TakeoverScenario {
   fleetHistory: readonly FleetEra[];
   /** Phase 7.3: its own lounges at the hub today (seats in all of them, quality); past years scaled with the fleet. */
   hubLounge: { seats: number; quality: 'standard' | 'premium' | 'flagship' };
+  /** Lenders' view of the owner behind the airline (Phase 10.1): before and from a year (state, then group). */
+  parentRating?: { before: string; from: number; after: string };
   /** The group's frequent-flyer programme the airline belongs to, from a year (Phase 9.4). */
   loyalty?: { name: string; from: number };
 }
@@ -96,6 +98,8 @@ export const TAKEOVERS: Record<string, TakeoverScenario> = {
     // Austrian's passengers earn and burn Miles & More (the Lufthansa Group's programme; certain at least since Austrian
     // joined the group in 2009).
     loyalty: { name: 'Miles & More', from: 2009 },
+    // Largely owned by the Republic of Austria (ÖIAG) until 2009, then the Lufthansa Group (rated BBB− by S&P).
+    parentRating: { before: 'A', from: 2009, after: 'BBB' },
     // Wikipedia (EN "Austrian Airlines" history + historical fleet table, DE "Austrian Airlines" Geschichte/Flotte):
     // years from the historical fleet table, counts where the text states them, otherwise modelled.
     fleetHistory: [

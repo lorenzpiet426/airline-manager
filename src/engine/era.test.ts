@@ -184,8 +184,8 @@ describe('money of the time', () => {
     advance(state, provider, simTime(1999, 1, 2));
     const airline = state.airlines[airlineId]!;
     expect(airline.currency).toBe('EUR');
-    // (one more day of overheads was paid in between)
-    expect(airline.cash.amount / (before / 13.7603)).toBeCloseTo(1, 3);
+    // (one more day of overheads was paid in between, and December's interest on the cash came in on 1 January)
+    expect(airline.cash.amount / (before / 13.7603)).toBeCloseTo(1, 2);
     const restated = state.finance[airlineId]!.months.slice(0, -1).reduce((s, m) => s + pnlCosts(m.lines), 0);
     expect(restated).toBeCloseTo(pastRevenue / 13.7603, -2);
     expect(state.messages.some((m) => m.kind === 'currencyChanged')).toBe(true);

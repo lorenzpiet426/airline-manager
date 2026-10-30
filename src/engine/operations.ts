@@ -9,6 +9,7 @@ import { ensureMgmt, managersDailyStep } from './managers';
 import { opsDailyStep } from './delays';
 import { applyBookings, bookingsDailyStep } from './bookings';
 import { loyaltyPull, loyaltyWeeklyStep } from './loyalty';
+import { debtDailyStep } from './debt';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -109,6 +110,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   managersDailyStep(state, world);
   // Yesterday's flights settled (delays, diversions, missed connections), today's played through (Phase 9.1).
   opsDailyStep(state, world);
+  // Interest, repayments, insolvency (Phase 10.1).
+  debtDailyStep(state);
   // Flights open for sale and today's bookings (Phase 9.3).
   bookingsDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {

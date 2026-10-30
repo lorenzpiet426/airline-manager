@@ -2944,3 +2944,8 @@ a.button {
 .booking-curve__dot {
   fill: var(--accent);
 }
+
+/* ---------- Loans (Phase 10.1) ---------- */
+.loan-offer {
+  margin-bottom: 12px;
+}

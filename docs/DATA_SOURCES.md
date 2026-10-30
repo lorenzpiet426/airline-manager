@@ -828,6 +828,30 @@ Owner decisions: points per euro spent, award seats on own flights, taken-over a
   (3 % of economy). Austrian (Miles & More from 2009) stays as calibrated: November −7.0 % (−7.2 % before), June −1.8 %
   (−2.2 %).
 
+## Central bank rates, balance sheet, loans and bonds (Phase 10.1, 2026-10-30)
+Owner decisions: Phase 10 money first; real rates + credit rating; realistic owners per scenario (from 10.3).
+
+- **Central bank policy rates**: Bank for International Settlements (BIS), "Central bank policy rates" (WS_CBPOL),
+  data.bis.org bulk download `WS_CBPOL_csv_flat.zip`, downloaded 2026-10-30 (`npm run data:rates`:
+  `tools/download-policy-rates.ts` → `tools/raw/bis/`, `tools/build-policy-rates.ts` → `src/data/generated/policy-rates.json`:
+  end-of-month rates per country from January 1970, 49 areas, euro area "XM" from 1999). **Licence** (BIS "Terms of
+  permitted use of BIS statistics", data.bis.org/help/legal, read 2026-10-30): use is unrestricted provided the BIS is
+  cited as the source, translations are marked as not official BIS translations, nothing implies BIS endorsement, and
+  no charge is added. Credited on the in-game Data sources screen (German text: "Keine offizielle Übersetzung der BIZ").
+  Currencies map to their central bank (`src/data/rates.ts`; old euro currencies to their national bank before 1999,
+  Germany as stand-in; others without a series: US rate + 2 points); after the data ends the last rate is kept.
+- **Credit rating** (modelled after how S&P/Moody's look at airlines): net debt incl. leases ÷ EBITDAR (< 1 → AA … ≥ 6 →
+  CCC), cash ÷ revenue (< 8 % one notch worse, > 25 % one better), margin (< 0 worse, > 10 % better), at best BB below
+  €500 m revenue or with less than 12 months of accounts, CCC with cash below zero; a parent's backing as a floor
+  (Austrian: state-owned "A" until 2009, then the Lufthansa Group "BBB", S&P rates Lufthansa BBB−).
+- **Interest** = policy rate + spread (AAA 0.6 … BBB 1.7 … B 5 … CCC 9 points) + 0.12 points per year of term (≤ 1.2);
+  aircraft-secured loans: half the spread + 0.6, up to 75 % of the market value, 5–12 years; bonds (≥ €1 bn revenue,
+  ≥ BB, from €250 m, 3–10 years, repaid at the end) 0.9 × the spread. Lenders' limit: debt incl. leases ≤ 4 × EBITDAR
+  (no earnings: a third of the assets). Cash earns the policy rate − 0.5; an overdraft costs the policy rate + 9.
+  Sale-and-leaseback at market value, 8 years at 1.05 × the typical rent. Insolvent after 60 days below zero.
+- **Balance sheet**: cash, owned aircraft at book value, order payments, lease deposits, hangars; loans, lease
+  obligations of delivered aircraft (rent still to pay × 0.85, like IFRS 16), own programmes' points.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH
