@@ -78,7 +78,7 @@ export function fundamentalValue(state: GameState, airline: Airline): number {
   const margin = view.margin ?? 0;
   const multiple = clamp(BASE_MULTIPLE * (1 + growth(state, airline)) * (1 + 2 * margin), MIN_MULTIPLE, MAX_MULTIPLE);
   const enterprise = multiple * Math.max(0, view.ebitdar);
-  const fromEarnings = enterprise - (b.loans + b.leases - b.cash);
+  const fromEarnings = enterprise - (b.loans + b.leases - b.cash) + b.investments;
   const floor = Math.max(0.25 * Math.max(0, b.equity), 0.02 * (e?.paidIn ?? 0), 1);
   if (airline.bankruptAt) return 1;
   // A young airline: valued around the money put in and its book value until it has a year of accounts.

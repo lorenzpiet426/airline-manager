@@ -909,6 +909,31 @@ Owner decisions: targets by owner, confidence score with warnings, career contin
   −7.5 % margin, 40 % transfers, 78 % punctuality; confidence 60 → 53 after a year, owner capital in November 2027
   (margin −13 % by then), warning at the January 2028 review. A passive CEO is warned after about 14 months.
 
+## Listed airlines, takeovers and mergers (Phase 10.5, 2026-10-30)
+- **What:** `src/data/listedAirlines.ts`, hand-entered: 44 airline companies on stock exchanges (Europe, Americas,
+  Asia-Pacific, Middle East), including former listings (British Airways 1987–2010, Iberia 2001–2010, Air France
+  1999–2004, KLM to 2004, Aer Lingus 2006–2014, Vueling 2006–2012, SAS 2001–2024). Per company: member airlines
+  (with years), listing years, one fiscal year's revenue, operating margin and market value (rounded, from annual
+  reports and exchange prices of that time; approximate), share count, and big shareholders by period (governments,
+  founders, other airlines, investors, e.g. Qatar Airways 25 % of IAG, French and Dutch states in Air France-KLM,
+  Ryanair 29.8 % of Aer Lingus 2006–2015, Temasek 53 % of Singapore Airlines). Facts, no licence needed.
+- **Rules:** EU Regulation 1008/2008 (EU airlines majority-owned and controlled by EU nationals; no limit for EU owners
+  inside the single market), US 49 USC 40102 (25 % of voting shares), Japan's Civil Aeronautics Act (one third),
+  Canada (25 %, 49 % since 2018), else 49 % (modelled); EU Transparency Directive 2004/109/EC (disclosure at 5, 10,
+  15, 20, 25, 30, 50, 75 %); EU Takeover Directive 2004/25/EC (mandatory bid at 30 % as in Austria/Germany; offer price
+  at least the highest paid in 6 months and the 3-month average); EU Merger Regulation 139/2004 (phase 1 25 working
+  days, phase 2 up to 90 more; remedies such as giving up routes/slots, prohibitions such as Ryanair/Aer Lingus 2007
+  and 2013); a merger resolution needs 75 % of the votes (Austrian/German company law).
+- **Model:** value = revenue × (margin + 8 %) × 4 × (1 + 3 × margin) − the debt implied by the real market value in the
+  fiscal year; revenue moves with world air travel (World Bank index) and price levels; margin = real margin + the AI's
+  health of its airlines + 0.8 × (economy − 1). Price moves weekly towards value × market mood. Acceptance of an offer:
+  free float 0.15 + 1.6 × premium over value (max 95 %), investors from 25 % premium, airlines from 35 %, founders from
+  40 %, governments never; a government with 25 % or more blocks takeovers. Subsidiaries pass on 70 % of their operating
+  result (after interest/taxes, roughly) times the stake each month; smaller stakes get 35 % of profits as dividends.
+  Merged airlines' aircraft are leased (the debt that financed them), integration costs 3 % of their revenue. AI
+  takeovers: about 0.4 a year worldwide, a strong group (margin > 4 %, twice the revenue) in the same market buying
+  the weakest airline (margin < −2 %) at a 30 % premium.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

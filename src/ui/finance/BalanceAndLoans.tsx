@@ -63,6 +63,12 @@ export function BalanceAndLoans({ game, airline }: { game: GameState; airline: A
               <dd className="mono">{m(b.collateral)}</dd>
             </>
           )}
+          {b.investments > 0 && (
+            <>
+              <dt>{t('debt.investments')}</dt>
+              <dd className="mono">{m(b.investments)}</dd>
+            </>
+          )}
           {b.hedges > 0 && (
             <>
               <dt>{t('debt.hedgesAsset')}</dt>

@@ -144,6 +144,24 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.capitalInjection', { amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }), owner: p.owner });
       case 'ceoDismissed':
         return t(p.reason === 'bankrupt' ? 'msg.ceoBankrupt' : 'msg.ceoDismissed');
+      // Other airlines' shares and takeovers (Phase 10.5).
+      case 'stakeNews':
+        return t(Number(p.share) === -1 ? 'msg.stakeNewsOffer' : Number(p.share) === -2 ? 'msg.stakeNewsProhibited' : Number(p.share) === -3 ? 'msg.stakeNewsDone' : 'msg.stakeNews', p);
+      case 'stakeDisclosed':
+      case 'takeoverOffered':
+      case 'offerFailed':
+      case 'reviewPhase2':
+      case 'takeoverProhibited':
+      case 'takeoverDone':
+      case 'aiTakeover':
+      case 'stakeTendered':
+      case 'delisted':
+      case 'bidReceived':
+      case 'bidFailed':
+      case 'airlineSold':
+        return t(`msg.${m.kind}`, { ...p, count: Number(p.routes ?? p.weeks ?? 0) });
+      case 'airlineMerged':
+        return t('msg.airlineMerged', { ...p, count: Number(p.aircraft) });
       case 'ceoGrant':
         return t('msg.ceoGrant', { shares: formatNumber(language, Number(p.shares)) });
       case 'ownTrade':

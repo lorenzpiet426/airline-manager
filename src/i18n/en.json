@@ -24,7 +24,8 @@
     "flights": "Flights",
     "loyalty": "Loyalty",
     "shares": "Shares",
-    "board": "Board"
+    "board": "Board",
+    "investments": "Other airlines"
   },
   "status": {
     "sim": "SIM",
@@ -279,7 +280,24 @@
     "boardTargets": "The owners have set your targets for {{year}}.",
     "ceoDismissed": "The supervisory board has dismissed you as CEO.",
     "ceoBankrupt": "The airline is bankrupt: your job as CEO ends.",
-    "capitalInjection": "{{owner}} puts {{amount}} of fresh capital into the airline to cover its losses. The board is not pleased."
+    "capitalInjection": "{{owner}} puts {{amount}} of fresh capital into the airline to cover its losses. The board is not pleased.",
+    "stakeDisclosed": "Stake announced: your airline now owns {{share}} % of {{company}}.",
+    "stakeNews": "{{airline}} now holds {{share}} % of {{company}}.",
+    "stakeNewsOffer": "{{airline}} makes a takeover offer for {{company}}.",
+    "stakeNewsProhibited": "The competition authority forbids {{airline}}'s takeover of {{company}}.",
+    "stakeNewsDone": "{{airline}} takes over {{company}}.",
+    "takeoverOffered": "Takeover offer for {{company}} published: shareholders have {{count}} weeks to accept.",
+    "offerFailed": "The offer for {{company}} failed: only {{share}} % of the shares (needed {{needed}} %). Nothing was bought.",
+    "reviewPhase2": "The competition authority opens an in-depth review of the {{company}} takeover: you both fly {{count}} of the same routes.",
+    "takeoverProhibited": "The competition authority forbids the takeover of {{company}} ({{count}} routes flown by both). The offer lapses.",
+    "takeoverDone": "Takeover done: your airline owns {{share}} % of {{company}}. Its airlines are now your partners. Routes given up as a condition: {{count}}.",
+    "airlineMerged": "{{airline}} merged into your airline: {{count}} aircraft, {{routes}} routes.",
+    "aiTakeover": "{{buyer}} takes over {{company}}.",
+    "stakeTendered": "Your stake in {{company}} was sold in a takeover (paid out at the offer price).",
+    "delisted": "{{company}} leaves the stock exchange.",
+    "bidReceived": "Takeover bid: {{bidder}} offers your shareholders a {{premium}} % premium. The offer runs {{count}} weeks (Other airlines).",
+    "bidFailed": "The bid of {{bidder}} failed: only {{share}} % of the shares were offered.",
+    "airlineSold": "{{bidder}} now owns {{share}} % of your airline. Your board has a new owner."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -671,7 +689,8 @@
       "disruption": "Passenger compensation & care (cancelled flights)",
       "loyalty": "Loyalty programme (net)",
       "interest": "Interest (paid on loans minus earned on cash)",
-      "hedging": "Hedging (losses minus gains, option premiums)"
+      "hedging": "Hedging (losses minus gains, option premiums)",
+      "investments": "Other airlines (dividends, subsidiaries' results, integration; income negative)"
     },
     "result": "Result",
     "margin": "Margin",
@@ -796,7 +815,8 @@
       "bls": "US consumer prices since 1913, to show historical aircraft prices in the money of any year.",
       "fed": "Daily exchange rates since 1971 (incl. the Austrian schilling and the other old euro currencies), for the History screen and historical start years.",
       "slots": "Which airports are slot-coordinated, their declared capacities and how full they are (IATA Worldwide Airport Slot Guidelines, coordinators' capacity reports); slot prices from reported sales (Heathrow).",
-      "bis": "Central bank rates since 1970 for every currency: the base of the interest on loans, bonds and cash (Source: BIS)."
+      "bis": "Central bank rates since 1970 for every currency: the base of the interest on loans, bonds and cash (Source: BIS).",
+      "listed": "Which airline companies are listed when, their members, size, margin, market value and big shareholders; ownership limits and takeover rules (Phase 10.5)."
     }
   },
   "timetable": {
@@ -1500,7 +1520,8 @@
     "slbConfirm": "Sell {{registration}} to a lessor at its market value and lease it back for 8 years?",
     "collateral": "Collateral for hedges",
     "hedgesAsset": "Hedges (value)",
-    "hedgesLiability": "Hedges (losses at today's prices)"
+    "hedgesLiability": "Hedges (losses at today's prices)",
+    "investments": "Shares of other airlines (market value)"
   },
   "hedge": {
     "marketTitle": "Fuel and dollar market",
@@ -1688,6 +1709,87 @@
     "opsDismissed": "The board has dismissed you. See the Board screen for what happens next.",
     "opsWarned": "The board has given you a formal warning (confidence {{confidence}}). Meet the targets at the next review.",
     "open": "Open the board"
+  },
+  "invest": {
+    "title": "Other airlines",
+    "bidTitle": "Takeover bid for your airline",
+    "bidText": "{{bidder}} offers {{price}} per share to all shareholders until {{date}}. If it gets more than half of the shares, it owns your airline: you stay CEO, but with a new owner and new targets.",
+    "bidNote": "Shareholders decide for themselves: the higher the premium over what they think the airline is worth, the more sell. You decide only about your own shares.",
+    "tender": "Sell my own shares too",
+    "holdingsTitle": "Your stakes",
+    "holdingsIntro": "Shares of other airline companies your airline owns. Small stakes earn dividends; a company you control (more than half) is a subsidiary: its airlines become partners that don't compete with you and feed you passengers, and its whole result is passed on to you every month (profit transfer agreement), losses too.",
+    "noHoldings": "No stakes yet. Pick a company on the stock market below.",
+    "offerRunning": "Takeover offer for {{company}} at {{price}} per share: shareholders can accept until {{date}}.",
+    "reviewRunning": "{{company}}: {{share}} of the shares were offered. The competition authority decides by {{date}}.",
+    "reviewPhase2": "{{company}}: {{share}} of the shares were offered. You both fly {{routes}} of the same routes, so the competition authority checks in depth until {{date}}; it may forbid the takeover or make the airline give those routes up.",
+    "company": "Company",
+    "stake": "Stake",
+    "value": "Worth",
+    "cost": "Cost",
+    "status": "Status",
+    "state": {
+      "stake": "stake",
+      "big": "big stake",
+      "subsidiary": "subsidiary (you control it)",
+      "merged": "merged"
+    },
+    "marketTitle": "Airline stock market",
+    "marketIntro": "The airline companies on the stock exchange this year. Their value follows their size, their results in the game and the market's mood (starting from their real market value). State-owned and private airlines aren't for sale.",
+    "marketValue": "Market value",
+    "price": "Share price",
+    "change": "52 weeks",
+    "yours": "Yours",
+    "takenOver": "Taken over during the game:",
+    "revenue": "Revenue a year",
+    "margin": "Operating margin now",
+    "float": "Traded freely",
+    "yourStake": "Your stake",
+    "yourLimit": "Most you may own",
+    "noLimit": "no limit (same single aviation market)",
+    "blockHolders": "Big shareholders (they don't sell on the market)",
+    "kind": {
+      "state": "government",
+      "airline": "airline",
+      "founder": "founder/family",
+      "investor": "investor"
+    },
+    "tradeTitle": "Buy or sell on the market",
+    "tradeNote": "With your airline's money. At most {{week}} of the company a week; buying pushes the price up. Stakes must be announced at 5, 10, 15, 20, 25, 30, 50 and 75 % (next: {{next}}). Above {{bid}} you must make a takeover offer to everyone.",
+    "tradeShare": "Share of the company (%)",
+    "tradeCost": "≈ {{amount}} at today's price",
+    "buy": "Buy",
+    "sell": "Sell",
+    "offerTitle": "Takeover offer",
+    "offerNote": "An offer to all shareholders at a premium over the price (at least the highest price you paid in the last 6 months and the 3-month average). Shareholders have 4 weeks; then the competition authority checks it (5 weeks, months if you fly the same routes). You must have the money for every share that could be sold to you.",
+    "premium": "Premium over the price (%)",
+    "minAcceptance": "Only if I get at least",
+    "offerQuote": "Offer {{price}} per share · money needed {{funds}} · expected to own ≈ {{expected}}",
+    "offerButton": "Make the offer",
+    "offerConfirm": "Make a takeover offer for {{company}}? It is binding: if enough shareholders accept and the authority agrees, you pay.",
+    "stateBlocks": "A government holds a blocking minority (25 % or more) and won't let its airline be taken over. You can only buy a stake.",
+    "notListedNow": "Not on the stock exchange now.",
+    "membersTitle": "Its airlines",
+    "membersNote": "Subsidiaries keep their brand and fly on as your partners. With {{min}} of the votes you can merge one into your airline: its aircraft (leased), routes from its hub (a base of yours unless it's your hub), crews, slots and gates become yours; the other shareholders are paid out at the share price, and integration costs a few per cent of its revenue.",
+    "merge": "Merge into my airline",
+    "mergeConfirm": "Merge {{airline}} into your airline? Its brand disappears; this can't be undone.",
+    "err": {
+      "notListed": "This company isn't on the stock exchange now.",
+      "ownGroup": "That's your own group.",
+      "weeklyLimit": "You can't buy more of it this week (about 3 % a week trade without moving the price too far).",
+      "ownershipCap": "Ownership rules: you may not own that much of a foreign airline.",
+      "mandatoryBid": "Above 30 % you must make a takeover offer to all shareholders.",
+      "notEnoughShares": "Not that many shares are for sale (or you don't own that many).",
+      "insufficientCash": "Your airline doesn't have the money (a loan in Finance can help).",
+      "bidRunning": "A takeover offer is under way.",
+      "offerTooLow": "The offer must be at least the 3-month average price and the highest price you paid in the last 6 months.",
+      "stateBlocks": "The government's blocking minority stops a takeover.",
+      "noControl": "You don't control this company.",
+      "needMoreShares": "A merger needs 75 % of the votes.",
+      "cannotMerge": "This airline can't be merged into yours (its hub is outside your market).",
+      "alreadyMerged": "Already merged.",
+      "noBid": "There is no bid.",
+      "shareInvalid": "Choose a share within the limits."
+    }
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

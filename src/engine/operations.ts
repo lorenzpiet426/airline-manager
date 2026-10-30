@@ -11,7 +11,8 @@ import { applyBookings, bookingsDailyStep } from './bookings';
 import { loyaltyPull, loyaltyWeeklyStep } from './loyalty';
 import { debtDailyStep } from './debt';
 import { hedgingDailyStep } from './hedging';
-import { sharesDailyStep } from './shares';
+import { fundamentalValue, sharesDailyStep } from './shares';
+import { investmentsDailyStep } from './investments';
 import { boardDailyStep } from './board';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
@@ -119,6 +120,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   hedgingDailyStep(state, world);
   // Owners, share price, CEO pay (Phase 10.3).
   sharesDailyStep(state, world);
+  // Other airlines' shares, takeover offers, subsidiaries, AI takeovers (Phase 10.5).
+  investmentsDailyStep(state, world, (a) => fundamentalValue(state, a) / Math.max(1, a.equity?.shares ?? 1));
   // Flights open for sale and today's bookings (Phase 9.3).
   bookingsDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {

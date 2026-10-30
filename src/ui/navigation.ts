@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import type { IconName } from './components/Icon';
 
-export type Route = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'new' | 'livery' | 'aircraft' | 'history' | 'management' | 'flight' | 'flights' | 'loyalty' | 'shares' | 'board';
+export type Route = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'new' | 'livery' | 'aircraft' | 'history' | 'management' | 'flight' | 'flights' | 'loyalty' | 'shares' | 'board' | 'investments';
 
 export interface NavItem {
   route: Route;
@@ -22,6 +22,7 @@ const NAV: Record<Route, NavItem> = {
   loyalty: { route: 'loyalty', icon: 'star', labelKey: 'nav.loyalty' },
   shares: { route: 'shares', icon: 'shares', labelKey: 'nav.shares' },
   board: { route: 'board', icon: 'board', labelKey: 'nav.board' },
+  investments: { route: 'investments', icon: 'stakes', labelKey: 'nav.investments' },
   aircraft: { route: 'aircraft', icon: 'types', labelKey: 'nav.aircraft' },
   history: { route: 'history', icon: 'history', labelKey: 'nav.history' },
   saves: { route: 'saves', icon: 'saves', labelKey: 'nav.saves' },
@@ -38,13 +39,13 @@ const NAV: Record<Route, NavItem> = {
 };
 
 /** Sidebar on computers and tablets. */
-export const DESKTOP_NAV: NavItem[] = [NAV.ops, NAV.map, NAV.network, NAV.fleet, NAV.finance, NAV.shares, NAV.board, NAV.management, NAV.loyalty, NAV.airlines, NAV.aircraft, NAV.history];
+export const DESKTOP_NAV: NavItem[] = [NAV.ops, NAV.map, NAV.network, NAV.fleet, NAV.finance, NAV.shares, NAV.investments, NAV.board, NAV.management, NAV.loyalty, NAV.airlines, NAV.aircraft, NAV.history];
 export const DESKTOP_NAV_BOTTOM: NavItem[] = [NAV.saves, NAV.sources, NAV.settings];
 
 /** Bottom tab bar on phones (max. 5 tabs, thumb-friendly). */
 export const MOBILE_TABS: NavItem[] = [NAV.ops, NAV.map, NAV.network, NAV.fleet, NAV.more];
 /** Entries listed on the phone's "More" screen. */
-export const MOBILE_MORE: NavItem[] = [NAV.finance, NAV.shares, NAV.board, NAV.management, NAV.loyalty, NAV.airlines, NAV.aircraft, NAV.history, NAV.saves, NAV.sources, NAV.settings];
+export const MOBILE_MORE: NavItem[] = [NAV.finance, NAV.shares, NAV.investments, NAV.board, NAV.management, NAV.loyalty, NAV.airlines, NAV.aircraft, NAV.history, NAV.saves, NAV.sources, NAV.settings];
 
 /** Routes reachable from the phone's "More" tab: the tab stays highlighted there. */
 export const MORE_ROUTES: Route[] = ['more', ...MOBILE_MORE.map((item) => item.route)];

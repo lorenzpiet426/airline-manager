@@ -75,7 +75,8 @@ export function partnersAt(world: EngineWorld, scenario: TakeoverScenario, date:
 export function refreshPartners(state: GameState, world: EngineWorld): void {
   for (const airline of Object.values(state.airlines)) {
     const scenario = airline.realId ? takeoverScenario(airline.realId) : undefined;
-    if (scenario) airline.partners = partnersAt(world, scenario, toDate(state.time));
+    // Airlines of companies the player controls stay partners (Phase 10.5).
+    if (scenario) airline.partners = [...new Set([...partnersAt(world, scenario, toDate(state.time)), ...(airline.subsidiaryPartners ?? [])])];
   }
   absorbSubsidiaries(state, world);
 }
@@ -423,7 +424,7 @@ const HOLIDAY_COUNTRY = 1.5;
 /** Winter sun (Canaries, Egypt, Gulf): warm enough to fly to in winter. */
 const isWarmInWinter = (a: Airport) => Math.abs(a.lat) < 30;
 /** How long the airline has flown its routes already (for the ramp-up of new routes). */
-const ESTABLISHED_DAYS = 365;
+export const ESTABLISHED_DAYS = 365;
 
 interface Unit {
   route: Route;
@@ -469,7 +470,7 @@ function waveMisfit(dep: number, arrival: number): number {
 /** Share of an aircraft's weekly hours the timetable fills at least, with extra frequencies if needed. */
 const IDLE_FILL_SHARE = 0.6;
 
-function addNetwork(
+export function addNetwork(
   state: GameState,
   world: EngineWorld,
   airlineId: string,
@@ -480,7 +481,7 @@ function addNetwork(
   const date = toDate(state.time);
   const conditions = conditionsOf(state, world);
   // A subsidiary joining later: its aircraft fly its routes, as extra flights where the airline already flies.
-  const existing = new Map(Object.values(state.routes).filter((r) => r.airlineId === airlineId).map((r) => [r.destinationId, r]));
+  const existing = new Map(Object.values(state.routes).filter((r) => r.airlineId === airlineId && r.originId === hub.id).map((r) => [r.destinationId, r]));
   const fleet = Object.values(state.aircraft).filter((a) => a.airlineId === airlineId && a.status === 'active' && (!only || only.has(a.id)));
   const types = [...new Set(fleet.map((a) => a.typeId))].map(getAircraftType);
   let seasonalSkipped = 0;

@@ -24,7 +24,8 @@
     "flights": "Flüge",
     "loyalty": "Vielflieger",
     "shares": "Aktien",
-    "board": "Aufsichtsrat"
+    "board": "Aufsichtsrat",
+    "investments": "Andere Airlines"
   },
   "status": {
     "sim": "SIM",
@@ -279,7 +280,24 @@
     "boardTargets": "Die Eigentümer haben deine Ziele für {{year}} festgelegt.",
     "ceoDismissed": "Der Aufsichtsrat hat dich als CEO abberufen.",
     "ceoBankrupt": "Die Airline ist pleite: Dein Job als CEO endet.",
-    "capitalInjection": "{{owner}} schießt {{amount}} frisches Kapital zu, um die Verluste zu decken. Der Aufsichtsrat ist nicht erfreut."
+    "capitalInjection": "{{owner}} schießt {{amount}} frisches Kapital zu, um die Verluste zu decken. Der Aufsichtsrat ist nicht erfreut.",
+    "stakeDisclosed": "Beteiligung gemeldet: Deine Airline besitzt jetzt {{share}} % von {{company}}.",
+    "stakeNews": "{{airline}} hält jetzt {{share}} % von {{company}}.",
+    "stakeNewsOffer": "{{airline}} macht ein Übernahmeangebot für {{company}}.",
+    "stakeNewsProhibited": "Die Wettbewerbsbehörde verbietet die Übernahme von {{company}} durch {{airline}}.",
+    "stakeNewsDone": "{{airline}} übernimmt {{company}}.",
+    "takeoverOffered": "Übernahmeangebot für {{company}} veröffentlicht: Die Aktionäre haben {{count}} Wochen Zeit.",
+    "offerFailed": "Das Angebot für {{company}} ist gescheitert: nur {{share}} % der Aktien (nötig {{needed}} %). Es wurde nichts gekauft.",
+    "reviewPhase2": "Die Wettbewerbsbehörde prüft die Übernahme von {{company}} vertieft: Ihr fliegt beide {{count}} gleiche Strecken.",
+    "takeoverProhibited": "Die Wettbewerbsbehörde verbietet die Übernahme von {{company}} ({{count}} gemeinsam geflogene Strecken). Das Angebot verfällt.",
+    "takeoverDone": "Übernahme abgeschlossen: Deiner Airline gehören {{share}} % von {{company}}. Ihre Airlines sind jetzt deine Partner. Als Auflage abgegebene Strecken: {{count}}.",
+    "airlineMerged": "{{airline}} mit deiner Airline verschmolzen: {{count}} Flugzeuge, {{routes}} Strecken.",
+    "aiTakeover": "{{buyer}} übernimmt {{company}}.",
+    "stakeTendered": "Deine Beteiligung an {{company}} wurde bei einer Übernahme verkauft (zum Angebotspreis ausgezahlt).",
+    "delisted": "{{company}} verlässt die Börse.",
+    "bidReceived": "Übernahmeangebot: {{bidder}} bietet deinen Aktionären {{premium}} % Aufschlag. Das Angebot läuft {{count}} Wochen (Andere Airlines).",
+    "bidFailed": "Das Angebot von {{bidder}} ist gescheitert: Nur {{share}} % der Aktien wurden angedient.",
+    "airlineSold": "{{bidder}} besitzt jetzt {{share}} % deiner Airline. Dein Aufsichtsrat hat einen neuen Eigentümer."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -671,7 +689,8 @@
       "disruption": "Entschädigung & Betreuung von Passagieren (gestrichene Flüge)",
       "loyalty": "Vielfliegerprogramm (netto)",
       "interest": "Zinsen (für Kredite bezahlt minus auf Kassa erhalten)",
-      "hedging": "Absicherung (Verluste minus Gewinne, Optionsprämien)"
+      "hedging": "Absicherung (Verluste minus Gewinne, Optionsprämien)",
+      "investments": "Andere Airlines (Dividenden, Ergebnisse der Töchter, Integration; Erträge negativ)"
     },
     "result": "Ergebnis",
     "margin": "Marge",
@@ -796,7 +815,8 @@
       "bls": "US-Verbraucherpreise seit 1913, um historische Flugzeugpreise im Geld jedes Jahres zu zeigen.",
       "fed": "Tägliche Wechselkurse seit 1971 (inkl. Schilling und der anderen alten Euro-Währungen), für den Geschichte-Bildschirm und historische Startjahre.",
       "slots": "Welche Flughäfen slot-koordiniert sind, ihre erklärten Kapazitäten und Auslastung (IATA Worldwide Airport Slot Guidelines, Kapazitätsberichte der Koordinatoren); Slotpreise aus berichteten Verkäufen (Heathrow).",
-      "bis": "Leitzinsen seit 1970 für jede Währung: die Basis der Zinsen für Kredite, Anleihen und Guthaben (Quelle: BIZ). Keine offizielle Übersetzung der BIZ."
+      "bis": "Leitzinsen seit 1970 für jede Währung: die Basis der Zinsen für Kredite, Anleihen und Guthaben (Quelle: BIZ). Keine offizielle Übersetzung der BIZ.",
+      "listed": "Welche Airline-Unternehmen wann an der Börse sind, ihre Airlines, Größe, Marge, Börsenwert und Großaktionäre; Eigentumsgrenzen und Übernahmeregeln (Phase 10.5)."
     }
   },
   "timetable": {
@@ -1500,7 +1520,8 @@
     "slbConfirm": "{{registration}} zum Marktwert an einen Leasinggeber verkaufen und für 8 Jahre zurückleasen?",
     "collateral": "Sicherheiten für Absicherungen",
     "hedgesAsset": "Absicherungen (Wert)",
-    "hedgesLiability": "Absicherungen (Verluste zu heutigen Preisen)"
+    "hedgesLiability": "Absicherungen (Verluste zu heutigen Preisen)",
+    "investments": "Aktien anderer Airlines (Börsenwert)"
   },
   "hedge": {
     "marketTitle": "Treibstoff- und Dollarmarkt",
@@ -1688,6 +1709,87 @@
     "opsDismissed": "Der Aufsichtsrat hat dich abberufen. Auf dem Aufsichtsrat-Bildschirm siehst du, wie es weitergeht.",
     "opsWarned": "Der Aufsichtsrat hat dich formell abgemahnt (Vertrauen {{confidence}}). Erreiche die Ziele bei der nächsten Sitzung.",
     "open": "Aufsichtsrat öffnen"
+  },
+  "invest": {
+    "title": "Andere Airlines",
+    "bidTitle": "Übernahmeangebot für deine Airline",
+    "bidText": "{{bidder}} bietet allen Aktionären bis {{date}} {{price}} je Aktie. Bekommt sie mehr als die Hälfte der Aktien, gehört ihr deine Airline: Du bleibst CEO, aber mit neuem Eigentümer und neuen Zielen.",
+    "bidNote": "Die Aktionäre entscheiden selbst: Je höher der Aufschlag auf das, was sie für den Wert halten, desto mehr verkaufen. Du entscheidest nur über deine eigenen Aktien.",
+    "tender": "Auch meine eigenen Aktien verkaufen",
+    "holdingsTitle": "Deine Beteiligungen",
+    "holdingsIntro": "Aktien anderer Airline-Unternehmen, die deine Airline besitzt. Kleine Beteiligungen bringen Dividenden; ein Unternehmen, das du kontrollierst (mehr als die Hälfte), ist eine Tochter: Ihre Airlines werden Partner, die dir keine Konkurrenz machen und dir Passagiere zubringen, und ihr ganzes Ergebnis wird dir jeden Monat überwiesen (Ergebnisabführungsvertrag), auch Verluste.",
+    "noHoldings": "Noch keine Beteiligungen. Wähle unten an der Börse ein Unternehmen.",
+    "offerRunning": "Übernahmeangebot für {{company}} zu {{price}} je Aktie: Die Aktionäre können bis {{date}} annehmen.",
+    "reviewRunning": "{{company}}: {{share}} der Aktien wurden angedient. Die Wettbewerbsbehörde entscheidet bis {{date}}.",
+    "reviewPhase2": "{{company}}: {{share}} der Aktien wurden angedient. Ihr fliegt beide {{routes}} gleiche Strecken, deshalb prüft die Wettbewerbsbehörde vertieft bis {{date}}; sie kann die Übernahme verbieten oder verlangen, dass die Airline diese Strecken abgibt.",
+    "company": "Unternehmen",
+    "stake": "Anteil",
+    "value": "Wert",
+    "cost": "Kosten",
+    "status": "Status",
+    "state": {
+      "stake": "Beteiligung",
+      "big": "große Beteiligung",
+      "subsidiary": "Tochter (du kontrollierst sie)",
+      "merged": "verschmolzen"
+    },
+    "marketTitle": "Airline-Börse",
+    "marketIntro": "Die Airline-Unternehmen, die in diesem Jahr an der Börse sind. Ihr Wert folgt ihrer Größe, ihren Ergebnissen im Spiel und der Stimmung am Markt (ausgehend von ihrem echten Börsenwert). Staatliche und private Airlines sind nicht zu kaufen.",
+    "marketValue": "Börsenwert",
+    "price": "Aktienkurs",
+    "change": "52 Wochen",
+    "yours": "Deins",
+    "takenOver": "Im Spiel übernommen:",
+    "revenue": "Umsatz pro Jahr",
+    "margin": "Operative Marge jetzt",
+    "float": "Frei gehandelt",
+    "yourStake": "Dein Anteil",
+    "yourLimit": "Höchstens erlaubt",
+    "noLimit": "keine Grenze (gleicher Luftverkehrs-Binnenmarkt)",
+    "blockHolders": "Große Aktionäre (sie verkaufen nicht an der Börse)",
+    "kind": {
+      "state": "Staat",
+      "airline": "Airline",
+      "founder": "Gründer/Familie",
+      "investor": "Investor"
+    },
+    "tradeTitle": "An der Börse kaufen oder verkaufen",
+    "tradeNote": "Mit dem Geld deiner Airline. Höchstens {{week}} des Unternehmens pro Woche; Käufe treiben den Kurs. Beteiligungen müssen bei 5, 10, 15, 20, 25, 30, 50 und 75 % gemeldet werden (nächste: {{next}}). Über {{bid}} musst du allen ein Übernahmeangebot machen.",
+    "tradeShare": "Anteil am Unternehmen (%)",
+    "tradeCost": "≈ {{amount}} zum heutigen Kurs",
+    "buy": "Kaufen",
+    "sell": "Verkaufen",
+    "offerTitle": "Übernahmeangebot",
+    "offerNote": "Ein Angebot an alle Aktionäre mit Aufschlag auf den Kurs (mindestens der höchste Preis, den du in den letzten 6 Monaten bezahlt hast, und der Durchschnitt der letzten 3 Monate). Die Aktionäre haben 4 Wochen; dann prüft die Wettbewerbsbehörde (5 Wochen, Monate, wenn ihr gleiche Strecken fliegt). Du brauchst das Geld für alle Aktien, die dir verkauft werden könnten.",
+    "premium": "Aufschlag auf den Kurs (%)",
+    "minAcceptance": "Nur wenn ich mindestens bekomme",
+    "offerQuote": "Angebot {{price}} je Aktie · nötiges Geld {{funds}} · erwarteter Anteil ≈ {{expected}}",
+    "offerButton": "Angebot abgeben",
+    "offerConfirm": "Übernahmeangebot für {{company}} abgeben? Es ist bindend: Nehmen genug Aktionäre an und stimmt die Behörde zu, zahlst du.",
+    "stateBlocks": "Ein Staat hält eine Sperrminorität (25 % oder mehr) und lässt seine Airline nicht übernehmen. Du kannst nur eine Beteiligung kaufen.",
+    "notListedNow": "Derzeit nicht an der Börse.",
+    "membersTitle": "Seine Airlines",
+    "membersNote": "Töchter behalten ihre Marke und fliegen als deine Partner weiter. Mit {{min}} der Stimmen kannst du eine mit deiner Airline verschmelzen: Ihre Flugzeuge (geleast), Strecken von ihrem Drehkreuz (eine Basis von dir, außer es ist dein Drehkreuz), Crews, Slots und Gates gehören dann dir; die übrigen Aktionäre werden zum Kurs ausgezahlt, und die Integration kostet einige Prozent ihres Umsatzes.",
+    "merge": "Mit meiner Airline verschmelzen",
+    "mergeConfirm": "{{airline}} mit deiner Airline verschmelzen? Ihre Marke verschwindet; das lässt sich nicht rückgängig machen.",
+    "err": {
+      "notListed": "Dieses Unternehmen ist derzeit nicht an der Börse.",
+      "ownGroup": "Das ist dein eigener Konzern.",
+      "weeklyLimit": "Diese Woche kannst du nicht mehr davon kaufen (etwa 3 % pro Woche lassen sich handeln, ohne den Kurs zu stark zu bewegen).",
+      "ownershipCap": "Eigentumsregeln: So viel einer ausländischen Airline darfst du nicht besitzen.",
+      "mandatoryBid": "Über 30 % musst du allen Aktionären ein Übernahmeangebot machen.",
+      "notEnoughShares": "So viele Aktien sind nicht zu haben (oder du besitzt nicht so viele).",
+      "insufficientCash": "Deine Airline hat das Geld nicht (ein Kredit unter Finanzen kann helfen).",
+      "bidRunning": "Ein Übernahmeangebot läuft.",
+      "offerTooLow": "Das Angebot muss mindestens dem Durchschnittskurs der letzten 3 Monate und dem höchsten Preis entsprechen, den du in den letzten 6 Monaten bezahlt hast.",
+      "stateBlocks": "Die Sperrminorität des Staates verhindert eine Übernahme.",
+      "noControl": "Du kontrollierst dieses Unternehmen nicht.",
+      "needMoreShares": "Eine Verschmelzung braucht 75 % der Stimmen.",
+      "cannotMerge": "Diese Airline kann nicht mit deiner verschmolzen werden (ihr Drehkreuz liegt außerhalb deines Marktes).",
+      "alreadyMerged": "Schon verschmolzen.",
+      "noBid": "Es gibt kein Angebot.",
+      "shareInvalid": "Wähle einen Anteil innerhalb der Grenzen."
+    }
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

@@ -316,7 +316,7 @@ connections); **9.2** ✅ click any flight for full detail; **9.3** ✅ booking 
 Loans, bonds, fuel hedging, currency effects; stock market, IPO, share price, buying competitor shares,
 takeovers and mergers; board of directors, shareholder expectations, getting fired.
 Split (2026-10-30): **10.1** ✅ balance sheet + loans and bonds; **10.2** ✅ fuel and currency hedging; **10.3** ✅ shares: IPO,
-share price, shareholders; **10.4** ✅ board, targets, getting fired; **10.5** buying other airlines' shares, takeovers, mergers.
+share price, shareholders; **10.4** ✅ board, targets, getting fired; **10.5** ✅ buying other airlines' shares, takeovers, mergers. Phase 10 complete.
 
 ### Phase 11 — Business models and partnerships
 Low-cost, regional, charter + tour operator contracts, cargo (freighters + belly), subsidiaries; alliances
@@ -533,6 +533,10 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | 10.4: a group or the state **puts in capital** instead of letting its airline go bankrupt (−8 confidence) | Lufthansa/ÖIAG aid 2009, Covid aid 2020; passive Austrian went bankrupt within 14 months otherwise |
 | 2026-10-30 | **Fare per flight**: each flight pair carries its own fare level (−30 … +30 % of the route's fares; regulated years only inside the official band), set in Network → Fares; passengers compare each flight's price, cheaper flights stimulate their own travellers | Owner request; real revenue managers price flights by time of day |
 | 2026-10-30 | Long simulation tests get **4× their time limits on GitHub** (`src/testing/slow.ts`, `CI` env; default 20 s there) | Deploys had failed since 8.2 on time limits only, so the live site was stuck at 8.1 |
+| 2026-10-30 | 10.5: **listed airlines only** (44 real companies with their listing years, members, size, big shareholders); state-owned and private airlines not for sale | Owner choice (recommended) |
+| 2026-10-30 | 10.5: after control **choose each time**: subsidiary (brand kept, partner, monthly profit transfer) or merge one of its airlines (needs 75 %; aircraft leased, routes from its hub as a base, crews/slots/gates) | Owner choice (recommended) |
+| 2026-10-30 | 10.5: **realistic process**: ≤ 3 %/week on the market, disclosure at 5…75 %, mandatory offer above 30 %, 4-week acceptance, competition review (phase 2 with overlapping routes; remedies or prohibition), foreign ownership caps (EU single market none, US 25 %, Japan ⅓, else 49 %), governments with ≥ 25 % block takeovers | Owner choice (recommended) |
+| 2026-10-30 | 10.5: **AI takeovers rarely** (≈ 0.4/year worldwide, strong group buys weak airline in its market) and **bids for the player's cheap listed airline** (new owner → group targets) | Owner choice (recommended) |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1468,6 +1472,35 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: in regulated years, route fare × flight fare can slightly exceed the official band; the revenue head doesn't
   propose flight fares yet.
 - **Next:** 10.5 buying other airlines' shares, takeovers, mergers.
+
+### 2026-10-30 — Session 39 (Phase 10.5: other airlines' shares, takeovers, mergers) ✅ — Phase 10 complete
+- Owner decisions (all recommended): listed airlines only, choose subsidiary or merger, realistic process, rare AI
+  mergers (§7).
+- Data `src/data/listedAirlines.ts` (44 companies 1966–today incl. former listings, members with years, fiscal-year
+  revenue/margin/market value, share counts, big shareholders by period; `foreignCap`; rule constants).
+- Engine `src/engine/investments.ts`: `isListed`/`listedNow`, `membersNow`, `revenueNow` (world traffic + price level),
+  `marginNow` (real margin + AI health + economy), `companyValue` (calibrated to the real market value), weekly prices in
+  `state.stocks.listed` (`ListedState`), `tradeStake` (weekly limit, price impact, disclosure messages + news, mandatory
+  bid, ownership cap), `offerTakeover` (minimum price, funds, `stateBlocks`), `acceptance`, `overlapping`, review with
+  phase 2 / remedies (target's overlapping routes closed) / prohibition, `refreshSubsidiaries` (controlled companies'
+  airlines become partners; `Airline.subsidiaryPartners`, kept by `refreshPartners`), `mergeAirline` (squeeze-out at the
+  price, integration cost, leased aircraft, base at its hub, `addNetwork` (now exported, existing routes keyed by
+  origin), slots/crews/gates), monthly dividends / profit transfer (P&L line `investments`, ledger `investment`),
+  delistings, AI takeovers, hostile bids for the player's listed airline (`Equity.bid`, `AnswerBid`; new 'group' owner).
+  `Airline.holdings/takeover`; balance sheet `investments`; `fundamentalValue` includes them. Commands `TradeStake`,
+  `OfferTakeover`, `MergeAirline`, `AnswerBid`. No save version change.
+- UI: **Other airlines** screen (`#/investments`, rail + More, pie icon): bid for your airline, your stakes, company
+  detail (members, revenue, margin, value, float, big shareholders, your limit, buy/sell, takeover offer with quote,
+  merge buttons), stock market list; Finance P&L + balance-sheet lines; message texts; Data sources credit; EN/DE.
+- Tests: 250 (`investments.test.ts`: listings per year and values, market buying rules, Aegean takeover → review →
+  subsidiary → Olympic merged with a base at Athens, hostile bid, rare deterministic AI takeovers). Full suite passes
+  with `CI=1`.
+- Verified in browser (Austrian save): market list (values ≈ real market values), Aegean 1 % bought (Lufthansa blocked
+  as own parent), phone 375 px without sideways scrolling.
+- Known: merged airlines' debt modelled as aircraft leases; subsidiaries' results are a modelled share of revenue
+  (not their simulated routes); AI-bought airlines keep flying under their own name (rescued); no minority stakes
+  between AI airlines change behaviour; Austrian (LH Group) can't buy Lufthansa.
+- **Next:** Phase 11 (business models: low-cost, regional, charter, cargo, subsidiaries; alliances and codeshares).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

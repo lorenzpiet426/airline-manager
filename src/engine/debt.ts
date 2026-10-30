@@ -4,6 +4,7 @@
 // unsecured bank loans, cheaper loans secured on owned aircraft, and — for big, sound airlines — bonds; an owned aircraft
 // can also be sold to a lessor and leased back. Interest is a cost of every day (P&L "interest", together with what the
 // cash earns); the cash goes out monthly. An airline whose cash stays below zero for 60 days is insolvent.
+import { investmentsValue } from './investments';
 import { getAircraftType } from '../data/aircraft';
 import { POINT_VALUE_EUR } from '../data/loyalty';
 import { policyRate } from '../data/rates';
@@ -44,6 +45,8 @@ export interface BalanceSheet {
   /** Cash held as collateral for hedges, and the hedges' value at today's prices (Phase 10.2). */
   collateral: number;
   hedges: number;
+  /** Stakes in other airlines at market prices (Phase 10.5). */
+  investments: number;
   aircraft: number;
   prepayments: number;
   deposits: number;
@@ -84,9 +87,10 @@ export function balanceSheet(state: GameState, airline: Airline): BalanceSheet {
   const loyalty = airline.loyalty?.kind === 'own' ? airline.loyalty.points * POINT_VALUE_EUR * eurToBook(state, airline.currency) : 0;
   const collateral = airline.hedging?.collateral ?? 0;
   const hedges = airline.hedging?.value ?? 0;
-  const totalAssets = Math.max(0, cash) + aircraft + prepayments + deposits + other + collateral + Math.max(0, hedges);
+  const investments = investmentsValue(state, undefined, airline);
+  const totalAssets = Math.max(0, cash) + aircraft + prepayments + deposits + other + collateral + Math.max(0, hedges) + investments;
   const totalLiabilities = loans + leases + loyalty + Math.max(0, -cash) + Math.max(0, -hedges);
-  return { cash, collateral, hedges, aircraft, prepayments, deposits, other, totalAssets, loans, leases, loyalty, totalLiabilities, equity: totalAssets - totalLiabilities };
+  return { cash, collateral, hedges, investments, aircraft, prepayments, deposits, other, totalAssets, loans, leases, loyalty, totalLiabilities, equity: totalAssets - totalLiabilities };
 }
 
 // ─── Credit rating ──────────────────────────────────────────────────────────────

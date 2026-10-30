@@ -15,7 +15,7 @@ import { formatGameDate, formatMoney, formatNumber, localeFor } from '../../i18n
 import { useSettings, type Language } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 
-const COST_LINES: (keyof PnlLines)[] = ['fuel', 'crew', 'maintenance', 'airport', 'handling', 'service', 'navigation', 'distribution', 'lease', 'depreciation', 'disposals', 'disruption', 'loyalty', 'overhead', 'interest', 'hedging'];
+const COST_LINES: (keyof PnlLines)[] = ['fuel', 'crew', 'maintenance', 'airport', 'handling', 'service', 'navigation', 'distribution', 'lease', 'depreciation', 'disposals', 'disruption', 'loyalty', 'overhead', 'interest', 'hedging', 'investments'];
 
 type Granularity = 'week' | 'month' | 'quarter' | 'year';
 

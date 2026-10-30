@@ -55,6 +55,8 @@ export interface Airline {
   realId?: string;
   /** Real airlines of the same group (Phase 6.2): they leave this airline's routes alone and feed it passengers. */
   partners?: string[];
+  /** Partners that are airlines of companies the player controls (Phase 10.5). */
+  subsidiaryPartners?: string[];
   /** Subsidiaries at the hub whose aircraft and routes became this airline's (Phase 6.4). */
   absorbed?: string[];
   /** Gates rented at the hub (Phase 7.3): contact gates (jet bridge) and remote stands (bus). */
@@ -84,6 +86,9 @@ export interface Airline {
   parentRating?: string;
   /** Fuel and currency hedging (Phase 10.2). */
   hedging?: Hedging;
+  /** Stakes in other airline companies (Phase 10.5), by listed id; a takeover offer under way. */
+  holdings?: Record<string, Holding>;
+  takeover?: TakeoverBid;
   /** Shares, shareholders and the share price (Phase 10.3). */
   equity?: Equity;
   /** The board: owners' targets, its confidence in the CEO, reviews (Phase 10.4). */
@@ -153,7 +158,58 @@ export interface Shareholder {
   shares: number;
 }
 
+/** A stake in another listed airline company (Phase 10.5), as a share of all its shares. */
+export interface Holding {
+  share: number;
+  /** What it cost (book currency), for the gain or loss. */
+  cost: number;
+  since: SimTime;
+  /** The highest announced threshold (EU disclosure rules) and the highest price paid (euros per share, with when). */
+  disclosed: number;
+  highestPaid?: [number, SimTime];
+  /** Bought on the market this week (share; at most a few per cent a week). */
+  week?: [SimTime, number];
+  /** Member airlines merged into the player's airline (their part of the company is gone from it). */
+  merged?: string[];
+}
+
+/** A takeover offer for a listed airline company (Phase 10.5): acceptance period, then the competition authority. */
+export interface TakeoverBid {
+  listedId: string;
+  /** Euros per share. */
+  price: number;
+  /** The offer only goes through with at least this share of all shares (player's own included). */
+  minAcceptance: number;
+  stage: 'offer' | 'review';
+  until: SimTime;
+  /** Share the player will own once paid (after the acceptance period). */
+  accepted?: number;
+  /** Routes both airlines fly ("A|B"), and whether the authority opened an in-depth (phase 2) review. */
+  overlaps?: string[];
+  phase2?: boolean;
+}
+
+/** A takeover offer for the player's own listed airline (Phase 10.5). */
+export interface HostileBid {
+  bidder: string;
+  /** Price per share (book currency). */
+  price: number;
+  until: SimTime;
+  /** The player offers their own shares too. */
+  tender: boolean;
+}
+
+/** A listed airline company on the game's stock market (Phase 10.5): its price (euros per share) and who bought it. */
+export interface ListedState {
+  price: number;
+  history: [SimTime, number][];
+  /** Taken over by another company (listed id) or by the player's airline (airline id), and when. */
+  ownedBy?: string;
+  ownedAt?: SimTime;
+}
+
 export interface Equity {
+  bid?: HostileBid;
   shares: number;
   listed: boolean;
   listedAt?: SimTime;
@@ -659,6 +715,8 @@ export interface PnlLines {
   interest?: number;
   /** Losses minus gains on fuel and currency hedges, including option premiums (Phase 10.2). */
   hedging?: number;
+  /** Other airlines: dividends and subsidiaries' results (income negative), integration costs (Phase 10.5). */
+  investments?: number;
 }
 
 /** One flight of the day as it really goes (Phase 9.1): scheduled UTC times, delays, what happened. */
@@ -913,7 +971,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'boardReview' | 'boardWarning' | 'boardTargets' | 'ceoDismissed' | 'capitalInjection' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'stakeDisclosed' | 'stakeNews' | 'takeoverOffered' | 'offerFailed' | 'reviewPhase2' | 'takeoverProhibited' | 'takeoverDone' | 'airlineMerged' | 'investmentIncome' | 'aiTakeover' | 'stakeTendered' | 'delisted' | 'bidReceived' | 'bidFailed' | 'airlineSold' | 'boardReview' | 'boardWarning' | 'boardTargets' | 'ceoDismissed' | 'capitalInjection' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -958,6 +1016,8 @@ export type LedgerKind =
   | 'saleLeaseback'
   // Hedging: option premiums, settlements, collateral (Phase 10.2).
   | 'hedge'
+  // Shares of other airlines: buying, selling, dividends, takeovers, integration (Phase 10.5).
+  | 'investment'
   | 'collateral'
   // Shares: money raised, dividends, buybacks (Phase 10.3).
   | 'shares'
@@ -1002,7 +1062,7 @@ export interface GameState {
   /** The player was dismissed (or the airline went bankrupt): the game stands still from here. */
   dismissed?: SimTime;
   /** The stock market's mood (1 = normal) and its weekly history (Phase 10.3). */
-  stocks?: { mood: number; history: [SimTime, number][] };
+  stocks?: { mood: number; history: [SimTime, number][]; listed?: Record<string, ListedState> };
   /** Upcoming flights' bookings by "pairId:dir:dep" (Phase 9.3; absent in older games until used). */
   bookings?: Record<string, BookingRecord>;
   /** Today's and yesterday's flights of the player with their delays (Phase 9.1; absent in older games until used). */
@@ -1050,4 +1110,4 @@ export const emptyPnl = (): PnlLines => ({
 
 export const pnlCosts = (l: PnlLines): number =>
   l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead +
-  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0) + (l.loyalty ?? 0) + (l.interest ?? 0) + (l.hedging ?? 0);
+  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0) + (l.loyalty ?? 0) + (l.interest ?? 0) + (l.hedging ?? 0) + (l.investments ?? 0);
