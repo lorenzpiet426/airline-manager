@@ -36,7 +36,7 @@ import { groundContext } from './hub';
 import { checkOffer } from './maintenance';
 import { convert, money } from './money';
 import { planFor } from './operations';
-import { aircraftHours, pairsOfAircraft, pairsOfRoute, validateSpecs, type FlightSpec } from './schedule';
+import { aircraftHours, pairsOfAircraft, pairsOfRoute, specFlights, validateSpecs, type FlightSpec } from './schedule';
 import type { Aircraft, Airline, ClassFares, GameState, Management, Manager, Proposal, Route, WageTalks } from './state';
 import { MINUTES_PER_DAY, toDate, yearOf, type SimTime } from './time';
 import { DAYS_ALL } from './timetable';
@@ -314,15 +314,34 @@ function recentResultUsd(state: GameState, airline: Airline, routeId: string, we
 }
 
 /** A free place in the aircraft's week for a new route: the first time from 06:00 on with valid flights. */
-function freeSpecs(state: GameState, world: EngineWorld, route: Route, a: Aircraft, perWeek: number): FlightSpec[] | null {
+/**
+ * The timetable a network planner proposes for a new route: every departure time the aircraft is free for (05:30–22:00,
+ * every 30 minutes) is tried in the market model — travellers' preferred times, the competitors' departures, arrival
+ * times — and the most profitable is chosen. The head of network judges each time with an error by skill (Phase 8.3).
+ */
+function bestSpecs(state: GameState, world: EngineWorld, route: Route, a: Aircraft, perWeek: number, m: Manager): FlightSpec[] | null {
   const order = [0, 2, 4, 6, 1, 3, 5];
-  const days = perWeek >= 7 ? DAYS_ALL : order.slice(0, perWeek).reduce((m, d) => m | (1 << d), 0);
-  const turn = TURNAROUND_MIN[getAircraftType(a.typeId).category];
-  for (let dep = 6 * 60; dep <= 20 * 60; dep += 30) {
-    const specs = [{ aircraftId: a.id, dep, days, groundMin: turn }];
-    if (!validateSpecs(state, world, route, specs)) return specs;
+  const days = perWeek >= 7 ? DAYS_ALL : order.slice(0, perWeek).reduce((mask, d) => mask | (1 << d), 0);
+  const type = getAircraftType(a.typeId);
+  const turn = TURNAROUND_MIN[type.category];
+  const from = world.airportById.get(route.originId);
+  const to = world.airportById.get(route.destinationId);
+  if (!from || !to) return null;
+  const date = toDate(state.time);
+  const conditions = conditionsOf(state, world);
+  const age = Math.max(0, yearOf(state.time) - a.builtYear);
+  const sigma = noiseOf(m, m.specialty === (type.category === 'widebody' ? 'longHaul' : 'shortHaul'));
+  let best: { specs: FlightSpec[]; score: number } | null = null;
+  for (let dep = 5 * 60 + 30; dep <= 22 * 60; dep += 30) {
+    const specs: FlightSpec[] = [{ aircraftId: a.id, dep, days, groundMin: turn }];
+    if (validateSpecs(state, world, route, specs)) continue;
+    const flights = specFlights(world, route, a, age, specs[0]!, state.time);
+    const w = routeWeek(world, from, to, { type, seats: a.seats, cabin: a.cabin, frequency: perWeek, fareFactor: 1, ageYears: age, rampUp: 1, flights }, date, { ai: state.ai, conditions });
+    const result = w.revenue - totalCosts(w.costs);
+    const score = result + gauss(`time|${route.destinationId}|${dep}|${state.time}`) * sigma * 0.05 * w.revenue;
+    if (!best || score > best.score) best = { specs, score };
   }
-  return null;
+  return best?.specs ?? null;
 }
 
 function networkReview(state: GameState, world: EngineWorld, airline: Airline, m: Manager): void {
@@ -389,7 +408,7 @@ function networkReview(state: GameState, world: EngineWorld, airline: Airline, m
   let freq = best.freq;
   if (detailed) {
     freq = Math.min(7, freq);
-    const specs = freeSpecs(state, world, draftRoute(airline.id, origin, best.d), a, freq);
+    const specs = bestSpecs(state, world, draftRoute(airline.id, origin, best.d), a, freq, m);
     if (!specs) return;
     command = { type: 'OpenRoute', airlineId: airline.id, payload: { destinationId: best.d.id, originId, aircraftId: a.id, frequency: freq, fareFactor: 1, flights: specs } };
   } else {

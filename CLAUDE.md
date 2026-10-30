@@ -1546,6 +1546,13 @@ education", forbid making the data available to others (§3 iii) and require a w
   the feed); AI airlines don't change alliances.
 - **Next:** 11.2 business model.
 
+### 2026-10-30 — Session 42 (fix: network head picks departure times) ✅
+- Owner report: the head of network planning set every new route to 06:00. Cause: `freeSpecs` took the first free time
+  from 06:00. Now `bestSpecs` (managers.ts) tries every free departure 05:30–22:00 (30-min steps) in `routeWeek` (time-of-day
+  demand, competitors, arrivals) and proposes the most profitable, judged with the head's skill error (5 % of revenue × σ).
+- Tests: 256 (network test checks the time isn't just the first free slot).
+- **Next:** 11.2 business model.
+
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.

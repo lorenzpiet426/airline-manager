@@ -132,6 +132,9 @@ describe('managers (8.3)', () => {
     const p = a().mgmt!.proposals.find((x) => x.kind === 'openRoute');
     expect(p).toBeDefined();
     expect(p!.params.registration).toBe('OE-LT2');
+    // The departure time is chosen by the forecast, not simply the first free slot of the day (05:30).
+    const flights = (p!.command as { payload: { flights?: { dep: number }[] } }).payload.flights;
+    if (flights) expect(flights[0]!.dep).not.toBe(5 * 60 + 30);
     expect(applyCommand(state, world, { type: 'ApproveProposal', airlineId, payload: { id: p!.id } }).ok).toBe(true);
     expect(Object.values(state.routes).length).toBe(2);
   }, slow(180_000));
