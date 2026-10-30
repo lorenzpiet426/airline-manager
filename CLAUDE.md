@@ -531,6 +531,8 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | 10.4: **confidence 0–100** moved by quarterly reviews (half weight in the first year, 40 % in crises), strikes and cash below zero; warning below 40, dismissal below 20 at a later review; majority shareholder can't be dismissed | Owner choice (recommended) |
 | 2026-10-30 | 10.4: **career continues**: after dismissal or bankruptcy the old game stands still (kept as a save); a new game the next day brings the career and wealth; Austrian offers a job after ≥ 3 years as CEO with ≥ −2 % average margin | Owner choice (recommended) |
 | 2026-10-30 | 10.4: a group or the state **puts in capital** instead of letting its airline go bankrupt (−8 confidence) | Lufthansa/ÖIAG aid 2009, Covid aid 2020; passive Austrian went bankrupt within 14 months otherwise |
+| 2026-10-30 | **Fare per flight**: each flight pair carries its own fare level (−30 … +30 % of the route's fares; regulated years only inside the official band), set in Network → Fares; passengers compare each flight's price, cheaper flights stimulate their own travellers | Owner request; real revenue managers price flights by time of day |
+| 2026-10-30 | Long simulation tests get **4× their time limits on GitHub** (`src/testing/slow.ts`, `CI` env; default 20 s there) | Deploys had failed since 8.2 on time limits only, so the live site was stuck at 8.1 |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1444,6 +1446,27 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: the model's Austrian still loses money (−8 … −13 % a year) so a passive CEO is warned after ~14 months; board
   approval for big decisions (orders, IPO) not modelled; old games' boards start at loading (no baseline from earlier
   months); only Austrian can offer jobs.
+- **Next:** 10.5 buying other airlines' shares, takeovers, mergers.
+
+### 2026-10-30 — Session 38 (fixes: deploys, managers, fare per flight) ✅
+- Owner report: "no managers tab, can't hire managers". Cause: **every deploy since 8.2 had failed** (long simulation
+  tests over their time limits on GitHub's slower machine), so the live site was still 8.1. Fix: `src/testing/slow.ts`
+  (`slow(ms)`, `CI_SLOWDOWN` = 4 when `CI` is set) on all explicit test time limits, `testTimeout` 20 s on CI, the AI
+  speed check × the same factor. Deploy succeeded; live site checked (Management screen there after the offline cache
+  updated). **Lesson: after each push, check `gh run list` that the deploy succeeded.**
+- Management: candidates are shown right away when a department has no head.
+- **Fare per flight** (owner request): `FlightPair.fares` / `FlightSpec.fares` ([outbound, return], kept by
+  `setRoutePairs` when a timetable changes), `PlannedFlight.fare`, `SetFares.flightFares` (range `FLIGHT_FARE_RANGE`
+  0.7–1.3 in `src/data/fares.ts`, inside the regulated band in old years); `routeWeek` uses each flight's own fare for
+  choice, stimulation (now per flight) and revenue; bookings' cache key includes it; the AI sees the player's flight fares.
+  With no flight fares set, results are unchanged. UI: Network → Fares → **Fare per flight** (per pair: outbound/return
+  time, last 7 days' load factor, ± % input; save / all at route fare; warning in Simple scheduling, whose re-planning
+  resets them); EN/DE.
+- Tests: 245 (new: dearer flight carries fewer but earns more per passenger, cheaper flight gains; command range; fares
+  kept through a timetable change). Full suite also passes with `CI=1`.
+- Verified in browser (Austrian save): VIE–FRA OS 409 +15 %, OS 413 −10 % saved.
+- Known: in regulated years, route fare × flight fare can slightly exceed the official band; the revenue head doesn't
+  propose flight fares yet.
 - **Next:** 10.5 buying other airlines' shares, takeovers, mergers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
