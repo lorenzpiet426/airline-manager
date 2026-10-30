@@ -56,5 +56,7 @@ export default defineConfig({
   worker: { format: 'es' },
   test: {
     include: ['src/**/*.test.ts'],
+    // GitHub's build machine is several times slower than a laptop (see src/testing/slow.ts).
+    testTimeout: process.env.CI ? 20_000 : 5_000,
   },
 });

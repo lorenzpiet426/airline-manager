@@ -21,6 +21,7 @@ import type { GameState, WageTalks } from './state';
 import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -73,7 +74,7 @@ describe('managers (8.3)', () => {
     expect(state.finance[airlineId]!.week.lines.overhead - overheadBefore).toBeGreaterThan(0);
     expect(state.messages.some((m) => m.kind === 'managerHired')).toBe(true);
     expect(reliabilityFactor(a(), false)).toBeLessThan(1);
-  }, 120_000);
+  }, slow(120_000));
 
   it('a head of revenue proposes fares; approving applies them and keeps forecast and real effect', () => {
     const { state, airlineId, a } = airline();
@@ -92,7 +93,7 @@ describe('managers (8.3)', () => {
     const d = a().mgmt!.decisions.at(-1)!;
     expect(d.by).toBe('player');
     expect(d.actualUsd).toBeGreaterThan(0);
-  }, 180_000);
+  }, slow(180_000));
 
   it('advice can only be read; a head who decides alone acts and says so', () => {
     const { state, airlineId, a } = airline();
@@ -112,7 +113,7 @@ describe('managers (8.3)', () => {
     expect(Object.values(state.routes)[0]!.fareFactor).toBeGreaterThan(0.6);
     expect(a().mgmt!.decisions.some((d) => d.by === 'manager')).toBe(true);
     expect(state.messages.some((m) => m.kind === 'managerActions')).toBe(true);
-  }, 180_000);
+  }, slow(180_000));
 
   it('skill decides how good the judgement is (wage offers close to what the union signs)', () => {
     const t: WageTalks = { opened: 0, round: 0, demand: 0.05, floor: 0.032, inflation: 0.025, nextRound: 0 };
@@ -133,7 +134,7 @@ describe('managers (8.3)', () => {
     expect(p!.params.registration).toBe('OE-LT2');
     expect(applyCommand(state, world, { type: 'ApproveProposal', airlineId, payload: { id: p!.id } }).ok).toBe(true);
     expect(Object.values(state.routes).length).toBe(2);
-  }, 180_000);
+  }, slow(180_000));
 
   it('a good head of HR finds more recruits; a taken-over airline brings its heads', () => {
     const { state, airlineId, a } = airline();

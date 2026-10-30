@@ -14,6 +14,7 @@ import { buildRealAirlines } from './realAirlines';
 import { simTime } from './time';
 import { connectionQuality, hubFlights, mctAt, playerConnections, routeTransfers } from './transfers';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -55,7 +56,7 @@ describe('connections at the hub (7.1)', () => {
         expect(sum).toBeCloseTo(leg.pax, 3);
       }
     }
-  }, 60_000);
+  }, slow(60_000));
 
   it('the takeover timetable flies in waves: most departures leave with a bank', () => {
     const { state, id } = austrian();
@@ -63,5 +64,5 @@ describe('connections at the hub (7.1)', () => {
     const waves = [420, 630, 810, 1020, 1230];
     const inWave = out.filter((f) => waves.some((w) => Math.abs((f.at % 1440) - w) <= 30)).length;
     expect(inWave / out.length).toBeGreaterThan(0.6);
-  }, 60_000);
+  }, slow(60_000));
 });

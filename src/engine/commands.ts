@@ -9,7 +9,7 @@ import { buyBack, ensureEquity, goPublic, issueShares, payDividend, tradeOwnShar
 import { ensureBoard } from './board';
 import type { HedgePolicy } from '../data/hedging';
 import type { Tier } from '../data/loyalty';
-import type { FareBucket } from '../data/fares';
+import { FLIGHT_FARE_RANGE, type FareBucket } from '../data/fares';
 import { approveProposal, declineProposal, ensureMgmt, fireManager, hireManager, setDelegation, type ManagerError } from './managers';
 import type { Delegation, Department } from '../data/managers';
 import { acceptDemand, answerProposal, callMediation, ensureLabour, offerWage, type UnionError } from './unions';
@@ -315,7 +315,8 @@ export interface DeclineProposal {
 export interface SetFares {
   type: 'SetFares';
   airlineId: string;
-  payload: { routeId: string; fareFactor: number; classFares?: ClassFares };
+  /** `flightFares`: per pair id, the outbound and return flight's fares relative to the route's (1 = route fare). */
+  payload: { routeId: string; fareFactor: number; classFares?: ClassFares; flightFares?: Record<string, [number, number]> };
 }
 /** The HR department's crew plan (hiring and training for the timetable). */
 export interface RunCrewPlan {
@@ -665,8 +666,20 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       const [low, high] = fareRange(state, from, to);
       const fares = [command.payload.fareFactor, ...Object.values(command.payload.classFares ?? {})];
       if (!fares.every((f) => Number.isFinite(f) && f >= Math.max(0.5, low) - 1e-9 && f <= Math.min(1.5, high) + 1e-9)) return fail('fareInvalid');
+      // Each flight's own level: −30 … +30 % (before deregulation only within the official band).
+      const flightFares = Object.entries(command.payload.flightFares ?? {});
+      const [fLow, fHigh] = [Math.max(FLIGHT_FARE_RANGE[0], low), Math.min(FLIGHT_FARE_RANGE[1], high)];
+      for (const [pairId, pf] of flightFares) {
+        if (state.flights[pairId]?.routeId !== route.id) return fail('routeUnknown');
+        if (!pf.every((f) => Number.isFinite(f) && f >= fLow - 1e-9 && f <= fHigh + 1e-9)) return fail('fareInvalid');
+      }
       route.fareFactor = command.payload.fareFactor;
       if (command.payload.classFares) route.classFares = { ...route.classFares, ...command.payload.classFares };
+      for (const [pairId, pf] of flightFares) {
+        const pair = state.flights[pairId]!;
+        if (pf[0] === 1 && pf[1] === 1) delete pair.fares;
+        else pair.fares = [pf[0], pf[1]];
+      }
       return { ok: true, id: route.id };
     }
     case 'RunCrewPlan': {

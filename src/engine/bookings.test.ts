@@ -20,6 +20,7 @@ import type { GameState } from './state';
 import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -80,7 +81,7 @@ describe('booking classes and live bookings (9.3)', () => {
     const flown = knownFlights(state).filter((f) => f.econ).at(-1)!;
     expect(flown.econ!.pax).toBeGreaterThan(50);
     expect(flown.econ!.pax).toBeLessThanOrEqual(flown.econ!.seats + 1e-6);
-  }, 180_000);
+  }, slow(180_000));
 
   it('the airline decides: no saver seats on a route, and its own buckets', () => {
     const { state, airlineId } = airline();
@@ -99,5 +100,5 @@ describe('booking classes and live bookings (9.3)', () => {
     advance(state, world, state.time + 4 * DAY);
     const r = Object.values(state.bookings!).find((x) => x.dep - state.time > 30 * DAY)!;
     expect(Object.keys(r.sold.Y ?? {})).toContain('early');
-  }, 180_000);
+  }, slow(180_000));
 });

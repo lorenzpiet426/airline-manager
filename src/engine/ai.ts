@@ -230,7 +230,7 @@ function playerSuppliers(state: GameState, world: EngineWorld, a: string, b: str
     .filter((r) => (r.originId === a && r.destinationId === b) || (r.originId === b && r.destinationId === a))
     .flatMap((r) => {
       // The player's real timetable and cabins, seen from airport a.
-      const flights = plannedFlights(state, world, r, state.time).map((f) => ({ dir: (r.originId === a ? f.dir : 1 - f.dir) as 0 | 1, days: f.days, dep: f.dep, cabin: f.cabin }));
+      const flights = plannedFlights(state, world, r, state.time).map((f) => ({ dir: (r.originId === a ? f.dir : 1 - f.dir) as 0 | 1, days: f.days, dep: f.dep, cabin: f.cabin, ...(f.fare ? { fare: f.fare } : {}) }));
       const rep = state.reputation[r.airlineId];
       const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
       return flights.length ? [{ weekly: r.frequency, fareFactor: r.fareFactor, classFares: r.classFares, flights, brand }] : [];

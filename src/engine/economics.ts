@@ -534,6 +534,8 @@ export interface PlannedFlight {
   ageYears: number;
   /** The saved flight ("pairId:dir"), for connecting passengers booked flight by flight (Phase 7.1). */
   key?: string;
+  /** This flight's fares relative to the route's fares (default 1). */
+  fare?: number;
 }
 
 export interface RoutePlan {
@@ -640,6 +642,8 @@ export interface TimedSupplierFlight {
   days: number;
   dep: number;
   cabin?: CabinLayout;
+  /** This flight's fares relative to the supplier's fares (default 1). */
+  fare?: number;
 }
 
 /** Brand reputation (0–100) and awareness (0–1) of an airline. */
@@ -885,7 +889,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
       if (x.flights) {
         for (const f of x.flights.filter((f) => f.dir === dir)) {
           const arr = f.dep - offsets[dir]! + blockMinutes(GENERIC_CRUISE_KMH, A, B, m.distanceKm) + offsets[1 - dir]!;
-          others.push({ dep: f.dep, arr, weight: 1, fare, speed: x.speed ?? 1, group: `extra${i}`, days: f.days, cabin: f.cabin ?? cabin, brand });
+          const own = f.fare ?? 1;
+          others.push({ dep: f.dep, arr, weight: 1, fare: own === 1 ? fare : (cls) => fare(cls) * own, speed: x.speed ?? 1, group: `extra${i}`, days: f.days, cabin: f.cabin ?? cabin, brand });
         }
       } else {
         for (const d of competitorDepartures(world, `extra${i}`, A, B, x.weekly, time)) others.push({ ...d, fare, speed: x.speed ?? 1, group: `extra${i}`, cabin, brand });
@@ -910,11 +915,13 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         const classShare = classDemandShare(segment, wanted, t);
         if (classShare < 1e-4) continue;
         // Each flight's best class for these travellers, and its appeal (class, seat, price, brand, speed).
-        const mine = mineIdx.map((i) => bestClass(timetable[i]!.cabin, wanted, segment, t, (c) => relative(myFactor(c)), pull));
+        // Each flight can be priced above or below the route's fares (by its time of day, Phase 9.3 per-flight fares).
+        const mine = mineIdx.map((i) => bestClass(timetable[i]!.cabin, wanted, segment, t, (c) => relative(myFactor(c) * (timetable[i]!.fare ?? 1)), pull));
         const theirs = others.map((o) => bestClass(o.cabin, wanted, segment, t, o.fare, pull)?.appeal ?? 0);
         const theirBrand = others.map((o) => brandAppeal(segment, o.brand.reputation, o.brand.awareness));
         const firstClass = mine.find(Boolean)?.cls ?? 'Y';
-        const stimulation = Math.max(0.3, myFactor(firstClass)) ** (segment === 'business' ? -0.6 : -1.6);
+        // Cheaper fares make more people fly at all, flight by flight (each flight's own fare level).
+        const stimulation = mineIdx.map((i) => Math.max(0.3, myFactor(firstClass) * (timetable[i]!.fare ?? 1)) ** (segment === 'business' ? -0.6 : -1.6));
         const cache = new Map<string, number[]>();
         for (let day = 0; day < 7; day++) {
           if (!hasDay(days, day)) continue;
@@ -938,10 +945,11 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
             cache.set(key, shares);
           }
           const world5 = cond ? cond.growth(A, B) * cond.demand(A, B, segment) : 1;
-          const travellers = (M.m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation * world5;
+          const travellers = (M.m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * world5;
           today.forEach((k, n) => {
-            demand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;
-            if (segment === 'business') businessDemand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;
+            const pax = travellers * stimulation[k]! * shares[n]!;
+            demand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += pax;
+            if (segment === 'business') businessDemand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += pax;
           });
         }
       }
@@ -1014,7 +1022,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
           freedRows = f.cabin.some((x) => x.cls === 'Y') ? rows - needed : 0;
           seatsToday = Math.min(s.seats, needed * per);
         }
-        const factor = myFactor(s.cls);
+        const factor = myFactor(s.cls) * (f.fare ?? 1);
         const fareUsd = marketFare(s.cls) * factor;
         // Transfer passengers pay their share of the through fare (usually less than a local fare on this leg).
         const transferShare = d > 0 ? transferDemand[i]![day]![CLASS_INDEX[s.cls]]! / d : 0;

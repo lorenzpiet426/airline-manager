@@ -19,6 +19,7 @@ import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { agreementKey, strikeShare } from './unions';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -82,7 +83,7 @@ describe('unions and strikes (8.2)', () => {
     expect(signed.pay).toBeGreaterThan(1);
     expect(signed.until).toBeGreaterThan(state.time + 700 * DAY);
     expect(state.messages.some((m) => m.kind === 'agreementSigned')).toBe(true);
-  }, 120_000);
+  }, slow(120_000));
 
   it('German pilots without a deal strike: flights cancelled, compensation paid (own staff, after 2021)', () => {
     const { state, airlineId, a } = airline('EDDV');
@@ -98,7 +99,7 @@ describe('unions and strikes (8.2)', () => {
     // The first action in Germany is a warning strike (part of the day).
     const first = state.messages.find((m) => m.kind === 'strikeAnnounced')!;
     expect(first.params.warning).toBe(1);
-  }, 180_000);
+  }, slow(180_000));
 
   it('a strike day cancels most flights; mediation brings peace and a proposal', () => {
     const { state, airlineId, a } = airline('EDDV');
@@ -117,7 +118,7 @@ describe('unions and strikes (8.2)', () => {
     expect(t.proposal).toBeGreaterThan(0);
     expect(applyCommand(state, world, { type: 'AnswerProposal', airlineId, payload: { key, accept: true } }).ok).toBe(true);
     expect(state.messages.some((m) => m.kind === 'agreementSigned' || m.kind === 'mediationRejected')).toBe(true);
-  }, 120_000);
+  }, slow(120_000));
 
   it('the HR department negotiates on its own when automatic planning is on', () => {
     const { state, a } = airline('LOWW');
@@ -128,5 +129,5 @@ describe('unions and strikes (8.2)', () => {
     // Signed without the player (the messages about it have long scrolled out of the log).
     expect(a().labour![key]!.talks).toBeUndefined();
     expect(a().labour![key]!.until).toBeGreaterThan(state.time + 300 * DAY);
-  }, 180_000);
+  }, slow(180_000));
 });

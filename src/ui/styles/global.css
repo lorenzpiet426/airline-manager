@@ -2986,3 +2986,9 @@ a.button {
   width: 2px;
   background: var(--text-muted, currentColor);
 }
+
+/* Fare per flight (Network → Fares) */
+.fares-flight-input {
+  width: 5.5em;
+  text-align: right;
+}

@@ -19,6 +19,7 @@ import { withStartups } from './startups';
 import type { GameState } from './state';
 import { simTime, toDate } from './time';
 import { worldCache } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson, historyJson as never);
 const worldAt = worldCache({ airports: airportsJson as Airport[], countries: countriesJson as unknown as Record<string, Country>, realAirlines: real, fxHistory: fxJson as never, airportHistory: airportHistoryJson as never });
@@ -55,10 +56,10 @@ describe('fictional startups (6.4)', () => {
     const [, a, b] = key.split('|');
     expect(competitorsOn(w, w.airportById.get(a!)!, w.airportById.get(b!)!, undefined, state.ai)!.some((c) => c.airlineId === s.id)).toBe(true);
     expect(state.messages.some((m) => m.kind === 'startupFounded')).toBe(true);
-  }, 300_000);
+  }, slow(300_000));
 
   it('none in 1975, when fares were still fixed everywhere', () => {
     const state = run(1975, 1975, 1976);
     expect(Object.keys(state.ai.startups ?? {})).toHaveLength(0);
-  }, 300_000);
+  }, slow(300_000));
 });

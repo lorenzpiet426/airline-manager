@@ -20,6 +20,7 @@ import { buildRealAirlines } from './realAirlines';
 import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -74,7 +75,7 @@ describe('crews (8.1)', () => {
     advance(state, world, simTime(2027, 2, 15));
     expect(crewShortages(state, world, airlineId).get('LOWW|A320') ?? 0).toBeLessThan(1);
     expect(state.messages.some((m) => m.kind === 'crewReady')).toBe(true);
-  }, 120_000);
+  }, slow(120_000));
 
   it('the job market: few pilots in a shortage, more for better pay', () => {
     expect(pilotMarket(2023)).toBeLessThan(0.6); // shortage

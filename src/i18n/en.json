@@ -1376,7 +1376,21 @@
     "useDefaults": "Use the default limits",
     "noSales": "No flights of this route on sale in the next two weeks yet.",
     "salesTitle": "Next two weeks: seats sold so far",
-    "booked": "Booked"
+    "booked": "Booked",
+    "flightTitle": "Fare per flight",
+    "flightIntro": "Airlines price every flight by its own demand: early-morning and evening business flights and Fridays and Sundays sell dearer, middle-of-the-day and late flights cheaper. Set each flight's fares in percent above or below the route's fares ({{min}} … +{{max}} %). The buckets' prices follow.",
+    "flightSimple": "Your game uses Simple scheduling: when the game re-plans an aircraft's times, its flights' own fares are reset. Switch to Detailed scheduling (Network → Timetable) to keep them.",
+    "days": "Days",
+    "outbound": "Outbound",
+    "return": "Return",
+    "lf7": "Load (7 days)",
+    "change": "Fare ±%",
+    "flightChange": "Fare change of {{flight}} in percent",
+    "saveFlights": "Save fares per flight",
+    "resetFlights": "All at the route fare",
+    "flightsSaved": "Saved: new sales use these fares.",
+    "flightNote": "Passengers compare each flight's price with the other flights that day (yours and your competitors'): a dearer peak flight loses some holidaymakers to cheaper times, business travellers mostly stay. Seats already sold keep their price.",
+    "noFlights": "This route has no flights yet."
   },
   "loyalty": {
     "title": "Loyalty programme",

@@ -18,6 +18,7 @@ import { buildRealAirlines } from './realAirlines';
 import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -61,7 +62,7 @@ describe('frequent-flyer programmes (9.4)', () => {
     const pull = loyaltyPull(state, a())!;
     expect(pull.business).toBeGreaterThan(pull.leisure);
     expect(pull.leisure).toBeGreaterThan(1);
-  }, 240_000);
+  }, slow(240_000));
 
   it('lower status thresholds make more status members; rules are checked', () => {
     const easy = tierShares({ silver: 500, gold: 1_500, platinum: 4_000 });
@@ -86,5 +87,5 @@ describe('frequent-flyer programmes (9.4)', () => {
     expect(p.name).toBe('Miles & More');
     const rules = { name: 'Mine', earn: 6, thresholds: { silver: 1_000, gold: 3_000, platinum: 8_000 }, awardShare: 0.05, expiryMonths: 36 };
     expect(applyCommand(state, world, { type: 'SetLoyalty', airlineId: id, payload: rules })).toMatchObject({ ok: false, error: 'loyaltyPartner' });
-  }, 120_000);
+  }, slow(120_000));
 });

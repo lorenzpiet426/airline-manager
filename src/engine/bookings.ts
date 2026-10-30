@@ -85,7 +85,7 @@ const forecastCache = new WeakMap<GameState, Map<string, { sig: string; data: Ma
 /** The market model's travellers per flight of a route this week (cached until the week, fares or timetable change). */
 export function routeForecast(state: GameState, world: EngineWorld, route: Route): Map<string, FlightDemand> {
   const pairs = pairsOfRoute(state, route.id);
-  const sig = `${startOfWeek(state.time)}|${route.fareFactor}|${JSON.stringify(route.classFares)}|${pairs.map((p) => `${p.id}/${p.dep}/${p.days}/${p.aircraftId}/${p.groundMin}`).join(',')}`;
+  const sig = `${startOfWeek(state.time)}|${route.fareFactor}|${JSON.stringify(route.classFares)}|${pairs.map((p) => `${p.id}/${p.dep}/${p.days}/${p.aircraftId}/${p.groundMin}/${p.fares ?? ''}`).join(',')}`;
   let cache = forecastCache.get(state);
   if (!cache) forecastCache.set(state, (cache = new Map()));
   const hit = cache.get(route.id);

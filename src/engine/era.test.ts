@@ -24,6 +24,7 @@ import { buildRealAirlines } from './realAirlines';
 import { pnlCosts, type GameState } from './state';
 import { simTime, toDate } from './time';
 import { worldCache } from './world';
+import { slow } from '../testing/slow';
 
 const airports = airportsJson as Airport[];
 const countries = countriesJson as unknown as Record<string, Country>;
@@ -121,7 +122,7 @@ describe('real airlines of past years (6.3)', () => {
     expect(has('UAE', '1985-03-30')).toBe(true); // Emirates: founded 25 March 1985
   });
 
-  it('are in the news when they stop flying', { timeout: 60_000 }, () => {
+  it('are in the news when they stop flying', { timeout: slow(60_000) }, () => {
     const state = createGame(
       { seed: 7, startYear: 1991, startTime: simTime(1991, 12, 1), timeMode: 'weekly', realism: 'realistic', scheduling: 'simple' },
       worldAt(1991, day('1991-12-01')),
@@ -176,7 +177,7 @@ describe('money of the time', () => {
     expect(currencyAt('IL', day('1978-01-01'))).toBe('ILP');
   });
 
-  it('switches to the euro on 1 January 1999 and restates the accounts', { timeout: 30_000 }, () => {
+  it('switches to the euro on 1 January 1999 and restates the accounts', { timeout: slow(30_000) }, () => {
     const { state, airlineId } = startup(1998);
     advance(state, provider, simTime(1998, 12, 31));
     const before = state.airlines[airlineId]!.cash.amount;
@@ -270,5 +271,5 @@ describe('historical economics', () => {
       expect(m, `${year} ${type}`).toBeGreaterThan(-0.45);
       expect(m, `${year} ${type}`).toBeLessThan(0.3);
     }
-  }, 60_000);
+  }, slow(60_000));
 });

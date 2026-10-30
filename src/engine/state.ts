@@ -627,6 +627,9 @@ export interface FlightPair {
   days: number;
   /** Minutes on the ground at the destination before the return flight. */
   groundMin: number;
+  /** Fares of the outbound and the return flight relative to the route's fares (1 = route fare): airlines price each
+   * flight by its time, e.g. a Friday-evening or early business flight dearer, a late or very early one cheaper. */
+  fares?: [number, number];
 }
 
 /** Profit-and-loss lines in the airline's book currency (costs are positive numbers). */

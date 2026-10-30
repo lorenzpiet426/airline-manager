@@ -1376,7 +1376,21 @@
     "useDefaults": "Standardgrenzen verwenden",
     "noSales": "Noch keine Flüge dieser Strecke in den nächsten zwei Wochen im Verkauf.",
     "salesTitle": "Nächste zwei Wochen: bisher verkaufte Sitze",
-    "booked": "Gebucht"
+    "booked": "Gebucht",
+    "flightTitle": "Preis pro Flug",
+    "flightIntro": "Airlines bepreisen jeden Flug nach seiner eigenen Nachfrage: Geschäftsflüge früh morgens und abends sowie Freitage und Sonntage verkaufen sich teurer, Flüge zur Mittagszeit und spät abends günstiger. Lege für jeden Flug fest, um wie viel Prozent er über oder unter den Preisen der Strecke liegt ({{min}} … +{{max}} %). Die Preise der Buchungsklassen folgen.",
+    "flightSimple": "Dein Spiel nutzt die einfache Flugplanung: Wenn das Spiel die Zeiten eines Flugzeugs neu plant, werden die eigenen Preise seiner Flüge zurückgesetzt. Wechsle zur detaillierten Planung (Netz → Flugplan), um sie zu behalten.",
+    "days": "Tage",
+    "outbound": "Hinflug",
+    "return": "Rückflug",
+    "lf7": "Auslastung (7 Tage)",
+    "change": "Preis ±%",
+    "flightChange": "Preisänderung von {{flight}} in Prozent",
+    "saveFlights": "Preise pro Flug speichern",
+    "resetFlights": "Alle zum Streckenpreis",
+    "flightsSaved": "Gespeichert: neue Verkäufe nutzen diese Preise.",
+    "flightNote": "Passagiere vergleichen den Preis jedes Flugs mit den anderen Flügen des Tages (deinen und denen der Konkurrenz): Ein teurerer Spitzenflug verliert einige Urlauber an günstigere Zeiten, Geschäftsreisende bleiben meistens. Bereits verkaufte Sitze behalten ihren Preis.",
+    "noFlights": "Diese Strecke hat noch keine Flüge."
   },
   "loyalty": {
     "title": "Vielfliegerprogramm",

@@ -18,6 +18,7 @@ import { simTime } from './time';
 import { buildRealAirlines } from './realAirlines';
 import { buildEngineWorld } from './world';
 import { slotHolding } from './slots';
+import { CI_SLOWDOWN, slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -97,8 +98,8 @@ describe('AI airlines react by type (2.1b)', () => {
     expect(Object.values(state.ai.routes).filter((r) => r.added).length).toBeGreaterThan(100); // airlines grow
     expect(JSON.stringify(state).length).toBeLessThan(1_500_000);
     // ≈ 6.5 s on a laptop (transfer passengers since 6.1); GitHub's small build machine runs other test files at the same time.
-    expect(seconds).toBeLessThan(25);
-  }, 60_000);
+    expect(seconds).toBeLessThan(25 * CI_SLOWDOWN);
+  }, slow(60_000));
 
   it('is deterministic', () => {
     const run = () => {
@@ -107,6 +108,6 @@ describe('AI airlines react by type (2.1b)', () => {
       return JSON.stringify(state.ai);
     };
     expect(run()).toBe(run());
-  }, 60_000);
+  }, slow(60_000));
 });
 

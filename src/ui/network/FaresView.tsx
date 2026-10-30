@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MAX_BUCKETS, type FareBucket } from '../../data/fares';
+import { FLIGHT_FARE_RANGE, MAX_BUCKETS, type FareBucket } from '../../data/fares';
 import { bucketsOf, limitOf } from '../../engine/bookings';
 import { CLASSES } from '../../engine/cabins';
-import type { CommandError } from '../../engine/commands';
+import { fareRange, type CommandError } from '../../engine/commands';
 import { flightId } from '../../engine/delays';
-import type { Airline, CabinClass, GameState, Route } from '../../engine/state';
+import { pairsOfRoute, specFlights } from '../../engine/schedule';
+import type { Airline, CabinClass, FlightPair, GameState, Route } from '../../engine/state';
 import { MINUTES_PER_DAY, startOfDay, toDate, utcOffsetMin } from '../../engine/time';
 import type { EngineWorld } from '../../engine/world';
 import { sendCommand } from '../../game/store';
@@ -13,7 +14,7 @@ import { formatGameDate, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
 import { Panel } from '../components/Panel';
 import { Segmented } from '../components/Segmented';
-import { hhmmText } from '../game/timetableText';
+import { daysText, hhmmText } from '../game/timetableText';
 import { hrefFor } from '../navigation';
 
 /** The cabin classes the airline's aircraft have (economy at least). */
@@ -57,6 +58,11 @@ export function FaresView({ game, world, airline, code }: { game: GameState; wor
           </label>
           <RouteLimits key={`${route.id}|${cls}|${JSON.stringify(route.bucketLimits?.[cls] ?? null)}|${JSON.stringify(airline.fares?.[cls] ?? null)}`} game={game} airline={airline} route={route} cls={cls} />
           <SalesTable game={game} world={world} airline={airline} route={route} cls={cls} code={code} />
+        </Panel>
+      )}
+      {route && (
+        <Panel title={t('fares.flightTitle')} code="FLT">
+          <FlightFares key={`${route.id}|${pairsOfRoute(game, route.id).map((p) => `${p.id}${p.fares ?? ''}`).join(',')}`} game={game} world={world} airline={airline} route={route} code={code} />
         </Panel>
       )}
     </>
@@ -284,6 +290,118 @@ function SalesTable({ game, world, airline, route, cls, code }: { game: GameStat
           </tbody>
         </table>
       </div>
+    </>
+  );
+}
+
+/** Each flight's fare above or below the route's (time-of-day pricing), with its load factor over the last 7 days. */
+function FlightFares({ game, world, airline, route, code }: { game: GameState; world: EngineWorld; airline: Airline; route: Route; code: (id: string) => string }) {
+  const { t } = useTranslation();
+  const { language } = useSettings();
+  const pairs = pairsOfRoute(game, route.id).sort((a, b) => a.dep - b.dep || a.flightNumber - b.flightNumber);
+  const [values, setValues] = useState<Record<string, [number, number]>>(() => Object.fromEntries(pairs.map((p) => [p.id, p.fares ?? [1, 1]])));
+  const [error, setError] = useState<CommandError | null>(null);
+  const [saved, setSaved] = useState(false);
+  const from = world.airportById.get(route.originId);
+  const to = world.airportById.get(route.destinationId);
+  if (!pairs.length || !from || !to) return <p className="muted small">{t('fares.noFlights')}</p>;
+  const [low, high] = fareRange(game, from, to);
+  const min = Math.round((Math.max(FLIGHT_FARE_RANGE[0], low) - 1) * 100);
+  const max = Math.round((Math.min(FLIGHT_FARE_RANGE[1], high) - 1) * 100);
+  // Load factor per flight over the flights flown in the last 7 days.
+  const lf = new Map<string, { pax: number; seats: number }>();
+  for (const f of game.ops?.history ?? []) {
+    if (f.routeId !== route.id || !f.econ) continue;
+    const k = `${f.pairId}:${f.dir}`;
+    const x = lf.get(k) ?? { pax: 0, seats: 0 };
+    x.pax += f.econ.pax;
+    x.seats += f.econ.seats;
+    lf.set(k, x);
+  }
+  const lfText = (pairId: string, dir: 0 | 1) => {
+    const x = lf.get(`${pairId}:${dir}`);
+    return x && x.seats > 0 ? `${formatNumber(language, (x.pax / x.seats) * 100, 0)} %` : '—';
+  };
+  const deps = (p: FlightPair) => {
+    const aircraft = game.aircraft[p.aircraftId];
+    return aircraft ? specFlights(world, route, aircraft, 0, p, game.time).map((f) => f.dep) : [p.dep, p.dep];
+  };
+  const set = (id: string, dir: 0 | 1, pct: number) => {
+    const v: [number, number] = [...(values[id] ?? [1, 1])];
+    v[dir] = 1 + Math.min(max, Math.max(min, Math.round(pct))) / 100;
+    setValues({ ...values, [id]: v });
+    setSaved(false);
+  };
+  const save = async (flightFares: Record<string, [number, number]>) => {
+    const r = await sendCommand({ type: 'SetFares', airlineId: airline.id, payload: { routeId: route.id, fareFactor: route.fareFactor, flightFares } });
+    setError(r.ok ? null : r.error);
+    setSaved(r.ok);
+  };
+  const cell = (p: FlightPair, dir: 0 | 1, dep: number | undefined) => (
+    <>
+      <td className="mono">
+        {airline.iata} {p.flightNumber + dir}{' '}
+        <span className="muted small">
+          {code(dir === 0 ? route.originId : route.destinationId)} {hhmmText(dep ?? 0)}
+        </span>
+      </td>
+      <td className="num mono">{lfText(p.id, dir)}</td>
+      <td className="num">
+        <input
+          className="input mono fares-flight-input"
+          type="number"
+          step={5}
+          min={min}
+          max={max}
+          aria-label={t('fares.flightChange', { flight: `${airline.iata} ${p.flightNumber + dir}` })}
+          value={Math.round(((values[p.id]?.[dir] ?? 1) - 1) * 100)}
+          onChange={(e) => set(p.id, dir, Number(e.target.value))}
+        />
+      </td>
+    </>
+  );
+  return (
+    <>
+      <p className="muted small">{t('fares.flightIntro', { min, max })}</p>
+      {game.options.scheduling === 'simple' && <p className="small text--caution">{t('fares.flightSimple')}</p>}
+      <div className="table-scroll">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{t('fares.days')}</th>
+              <th>{t('fares.outbound')}</th>
+              <th className="num">{t('fares.lf7')}</th>
+              <th className="num">{t('fares.change')}</th>
+              <th>{t('fares.return')}</th>
+              <th className="num">{t('fares.lf7')}</th>
+              <th className="num">{t('fares.change')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pairs.map((p) => {
+              const [d0, d1] = deps(p);
+              return (
+                <tr key={p.id}>
+                  <td className="mono small">{daysText(p.days)}</td>
+                  {cell(p, 0, d0)}
+                  {cell(p, 1, d1)}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className="toolbar-row">
+        <button type="button" className="button button--primary" onClick={() => void save(values)}>
+          {t('fares.saveFlights')}
+        </button>
+        <button type="button" className="button" onClick={() => void save(Object.fromEntries(pairs.map((p) => [p.id, [1, 1] as [number, number]])))}>
+          {t('fares.resetFlights')}
+        </button>
+      </div>
+      {saved && <p className="small text--normal">{t('fares.flightsSaved')}</p>}
+      <p className="small muted">{t('fares.flightNote')}</p>
+      {error && <p className="notice notice--error">{t(`errors.${error}`)}</p>}
     </>
   );
 }

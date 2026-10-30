@@ -26,6 +26,8 @@ export interface FlightSpec {
   days: number;
   /** Time on the ground at the destination before the return flight (minutes). */
   groundMin: number;
+  /** Fares of the two flights relative to the route's fares (kept from the existing pair when left out). */
+  fares?: [number, number];
 }
 
 export type ScheduleError = 'noFlights' | 'timeInvalid' | 'daysInvalid' | 'groundTooShort' | 'groundTooLong' | 'overlap' | 'aircraftBusy' | 'curfewHub' | 'curfewDestination' | 'aircraftElsewhere';
@@ -139,14 +141,14 @@ export function specFlights(
   route: Route,
   aircraft: Pick<Aircraft, 'typeId' | 'seats' | 'cabin'>,
   ageYears: number,
-  spec: Pick<FlightSpec, 'dep' | 'days' | 'groundMin'> & { id?: string },
+  spec: Pick<FlightSpec, 'dep' | 'days' | 'groundMin' | 'fares'> & { id?: string },
   time: SimTime,
 ): PlannedFlight[] {
   const times = pairTimes(world, aircraft.typeId, route, spec, time);
   const back = wrapDay(times.backDep);
   const common = { type: getAircraftType(aircraft.typeId), seats: aircraft.seats, cabin: aircraft.cabin, ageYears };
   // Saved flights carry their pair's id (connecting passengers are booked flight by flight, Phase 7.1).
-  const key = (dir: 0 | 1) => (spec.id ? { key: `${spec.id}:${dir}` } : {});
+  const key = (dir: 0 | 1) => ({ ...(spec.id ? { key: `${spec.id}:${dir}` } : {}), ...(spec.fares && spec.fares[dir] !== 1 ? { fare: spec.fares[dir] } : {}) });
   return [
     { dir: 0, days: spec.days, dep: spec.dep, ...common, ...key(0) },
     { dir: 1, days: shiftDays(spec.days, back.shift), dep: back.min, ...common, ...key(1) },
@@ -238,8 +240,10 @@ export function freeFlightNumber(state: GameState, airlineId: string, from = 101
 export function setRoutePairs(state: GameState, route: Route, specs: readonly FlightSpec[]): void {
   const old = new Map(pairsOfRoute(state, route.id).map((p) => [p.id, p]));
   for (const id of old.keys()) delete state.flights[id];
-  const add = (spec: FlightSpec, id: string, flightNumber: number) =>
-    (state.flights[id] = { id, airlineId: route.airlineId, routeId: route.id, aircraftId: spec.aircraftId, flightNumber, dep: spec.dep, days: spec.days, groundMin: spec.groundMin });
+  const add = (spec: FlightSpec, id: string, flightNumber: number) => {
+    const fares = spec.fares ?? old.get(id)?.fares;
+    state.flights[id] = { id, airlineId: route.airlineId, routeId: route.id, aircraftId: spec.aircraftId, flightNumber, dep: spec.dep, days: spec.days, groundMin: spec.groundMin, ...(fares ? { fares } : {}) };
+  };
   // Kept pairs first (they keep their numbers), then new ones get free numbers.
   for (const spec of specs) {
     const kept = spec.id ? old.get(spec.id) : undefined;

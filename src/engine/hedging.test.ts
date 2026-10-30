@@ -18,6 +18,7 @@ import { buildRealAirlines } from './realAirlines';
 import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -71,7 +72,7 @@ describe('fuel and currency hedging (10.2)', () => {
     expect(fuelIn('2026-05')).toBeGreaterThan(fuelIn('2027-12'));
     advance(state, world, simTime(2026, 6, 2));
     expect(a().hedging!.settled.length).toBeGreaterThan(0);
-  }, 240_000);
+  }, slow(240_000));
 
   it('margin calls: swaps far above the market need cash as collateral', () => {
     const { state, airlineId, a } = airline();
@@ -84,7 +85,7 @@ describe('fuel and currency hedging (10.2)', () => {
     expect(a().cash.amount).toBeLessThan(cash);
     expect(state.messages.some((m) => m.kind === 'marginCall')).toBe(true);
     expect(a().hedging!.value).toBeLessThan(0);
-  }, 120_000);
+  }, slow(120_000));
 
   it('Austrian hedges like the Lufthansa Group from the start', () => {
     const state = createGame({ seed: 3, startYear: 2026, startTime: simTime(2026, 11, 2), timeMode: 'weekly', realism: 'realistic', scheduling: 'detailed' }, world);
@@ -93,5 +94,5 @@ describe('fuel and currency hedging (10.2)', () => {
     expect(state.airlines[id]!.hedging!.policy.fuel[0]).toBeGreaterThan(0.5);
     advance(state, world, simTime(2026, 12, 2));
     expect(state.airlines[id]!.hedging!.contracts.length).toBeGreaterThan(20);
-  }, 300_000);
+  }, slow(300_000));
 });

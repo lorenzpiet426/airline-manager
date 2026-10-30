@@ -132,6 +132,31 @@ describe('Detailed scheduling', () => {
     expect(open(state, airlineId, 'EGLL', [spec('T1', 11 * 60)]).ok).toBe(true);
   });
 
+  it('prices each flight on its own: a dearer flight carries fewer, but earns more per passenger', () => {
+    const morning = flights([[7 * 60, DAYS_ALL]])[0]!;
+    const evening = flights([[18 * 60, DAYS_ALL]])[0]!;
+    const same = week('LOWW', 'EGLL', [morning, evening]);
+    const dear = week('LOWW', 'EGLL', [{ ...morning, fare: 1.25 }, evening]);
+    expect(dear.byFlight[0]!.pax).toBeLessThan(same.byFlight[0]!.pax);
+    expect(dear.byFlight[1]!.pax).toBeGreaterThan(same.byFlight[1]!.pax); // some move to the cheaper evening flight
+    expect(dear.byFlight[0]!.revenue / dear.byFlight[0]!.pax).toBeGreaterThan((same.byFlight[0]!.revenue / same.byFlight[0]!.pax) * 1.2);
+
+    const { state, airlineId } = startup('detailed');
+    const r = open(state, airlineId, 'EGLL', [spec('T1', 7 * 60), spec('T1', 17 * 60 + 30)]);
+    const route = state.routes[(r as { id: string }).id]!;
+    const [p1, p2] = pairsOfRoute(state, route.id);
+    const setFares = (flightFares: Record<string, [number, number]>) =>
+      applyCommand(state, world, { type: 'SetFares', airlineId, payload: { routeId: route.id, fareFactor: 1, flightFares } });
+    expect(setFares({ [p1!.id]: [1.4, 1] })).toEqual({ ok: false, error: 'fareInvalid' });
+    expect(setFares({ [p1!.id]: [1.2, 0.85] }).ok).toBe(true);
+    expect(state.flights[p1!.id]!.fares).toEqual([1.2, 0.85]);
+    // Changing the timetable keeps each pair's fares; back to the route fare removes them.
+    applyCommand(state, world, { type: 'UpdateRoute', airlineId, payload: { routeId: route.id, aircraftId: '', frequency: 0, fareFactor: 1, flights: [{ ...spec('T1', 7 * 60 + 15), id: p1!.id }, { ...spec('T1', 17 * 60 + 30), id: p2!.id }] } });
+    expect(state.flights[p1!.id]!.fares).toEqual([1.2, 0.85]);
+    expect(setFares({ [p1!.id]: [1, 1] }).ok).toBe(true);
+    expect(state.flights[p1!.id]!.fares).toBeUndefined();
+  });
+
   it('only books the weekdays that are flown', () => {
     const { state, airlineId } = startup('detailed');
     const r = open(state, airlineId, 'EGLL', [spec('T1', 7 * 60, 0b0011111)]); // Monday–Friday

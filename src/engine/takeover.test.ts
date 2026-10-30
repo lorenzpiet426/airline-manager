@@ -23,6 +23,7 @@ import { getAircraftType } from '../data/aircraft';
 import { buildEngineWorld, worldCache } from './world';
 import type { GameState } from './state';
 import { toDate } from './time';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -62,7 +63,7 @@ describe('taking over Austrian Airlines (6.2)', () => {
     expect(airline.partners).toEqual(expect.arrayContaining(['DLH', 'SWR', 'BEL', 'EWG', 'EDW']));
     // Austrian no longer flies as an AI airline: the player's flights are the supply.
     expect(competitorsOn(world, ap('LOWW'), ap('EGLL'), undefined, state.ai)!.some((c) => c.airlineId === 'AUA')).toBe(false);
-  }, 60_000);
+  }, slow(60_000));
 
   it('repairs cabins that are too long in saves from before the fix', () => {
     const { state } = austrian();
@@ -72,7 +73,7 @@ describe('taking over Austrian Airlines (6.2)', () => {
     const fixed = loaded.aircraft[a.id]!;
     expect(validateCabin(getAircraftType('A320'), fixed.cabin)).toBeNull();
     expect(fixed.seats).toBe(fixed.cabin.reduce((s, c) => s + c.seats, 0));
-  }, 60_000);
+  }, slow(60_000));
 
   it('runs realistically: about break-even in the first winter month', () => {
     const { state, id } = austrian(simTime(2026, 11, 2));
@@ -90,7 +91,7 @@ describe('taking over Austrian Airlines (6.2)', () => {
     }
     expect(pax).toBeGreaterThan(600_000); // real: ≈ 1 m passengers in November
     expect(transfer / pax).toBeGreaterThan(0.25);
-  }, 60_000);
+  }, slow(60_000));
 
   it('group partners leave the player alone', () => {
     const { state, id } = austrian();
@@ -101,7 +102,7 @@ describe('taking over Austrian Airlines (6.2)', () => {
     expect(state.ai.routes[aiRouteKey('DLH', 'EDDF', 'LOWW')]?.fare ?? 1.05).toBeGreaterThan(1);
     const entries = state.messages.filter((m) => m.kind === 'aiEnter' && ['Lufthansa', 'Swiss International Air Lines', 'Eurowings'].includes(String(m.params.airline)));
     expect(entries).toHaveLength(0);
-  }, 60_000);
+  }, slow(60_000));
 });
 
 // Phase 6.4: Austrian in past years.
@@ -146,7 +147,7 @@ describe('taking over Austrian Airlines in past years (6.4)', () => {
     expect(in2001).toEqual(expect.arrayContaining(['DLH', 'UAL', 'Q660191', 'Q1807298'])); // Star + Tyrolean + Lauda Air
     expect(in2001).not.toContain('Q694098');
     expect(austrianIn(2012).airline.partners).toEqual(expect.arrayContaining(['DLH', 'SWR', 'EWG']));
-  }, 60_000);
+  }, slow(60_000));
 
   it('subsidiaries at Vienna fly for Austrian: in 2001 Tyrolean and Lauda Air join with their aircraft and routes', () => {
     const { state, fleet } = austrianIn(2001);
@@ -159,7 +160,7 @@ describe('taking over Austrian Airlines in past years (6.4)', () => {
     expect(fleet.some((a) => a.typeId === 'B763')).toBe(true);
     const w = provider(state);
     for (const r of Object.values(state.routes)) expect(validateSpecs(state, w, r, pairsOfRoute(state, r.id))).toBeNull();
-  }, 60_000);
+  }, slow(60_000));
 
   it('1985 runs about like the real Austrian of the time (small profit or loss)', () => {
     const { state, id } = austrianIn(1985);
@@ -170,5 +171,5 @@ describe('taking over Austrian Airlines in past years (6.4)', () => {
     // Real: a small profit (≈ 3 % over 1985); the model's whole year 1985: ≈ +3 %, March alone a little more.
     expect(margin).toBeGreaterThan(-0.15);
     expect(margin).toBeLessThan(0.2);
-  }, 120_000);
+  }, slow(120_000));
 });

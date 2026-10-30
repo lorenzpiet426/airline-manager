@@ -29,6 +29,9 @@ export const DEFAULT_BUCKETS: readonly FareBucket[] = [
   { id: 'flex', name: 'Flex', factor: 1.5, flexible: true, closeDays: 0, share: null },
 ];
 export const MAX_BUCKETS = 6;
+/** One flight's fares relative to its route's (per-flight pricing by time of day): −30 % … +30 %. Revenue managers
+ * price each flight by its own demand; peak and off-peak fares on the same route commonly differ by this much. */
+export const FLIGHT_FARE_RANGE = [0.7, 1.3] as const;
 
 /**
  * What travellers would pay at most, relative to the class's fare: log-normal around a median. Business travellers pay

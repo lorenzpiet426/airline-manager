@@ -21,6 +21,7 @@ import type { GameState } from './state';
 import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -97,7 +98,7 @@ describe('balance sheet, loans and bonds (10.1)', () => {
     const owed = a().loans![0]!.outstanding;
     expect(applyCommand(state, world, { type: 'RepayLoan', airlineId, payload: { loanId: loan.id } }).ok).toBe(true);
     expect(before - a().cash.amount).toBeCloseTo(owed * 1.01, -1);
-  }, 120_000);
+  }, slow(120_000));
 
   it('aircraft finance: an owned aircraft secures a cheaper loan and can’t be sold meanwhile; sale-and-leaseback', () => {
     const { state, airlineId, a } = airline();
@@ -126,5 +127,5 @@ describe('balance sheet, loans and bonds (10.1)', () => {
     expect(state.messages.some((m) => m.kind === 'insolvencyWarning')).toBe(true);
     advance(state, world, state.time + 35 * DAY);
     expect(a().bankruptAt).toBeDefined();
-  }, 120_000);
+  }, slow(120_000));
 });

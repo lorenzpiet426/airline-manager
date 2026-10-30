@@ -18,6 +18,7 @@ import { buildRealAirlines } from './realAirlines';
 import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -63,7 +64,7 @@ describe('shares and shareholders (10.3)', () => {
     expect(e.history.length).toBeGreaterThan(3);
     expect(e.playerCash).toBeGreaterThan(0);
     expect(state.stocks!.history.length).toBeGreaterThan(3);
-  }, 120_000);
+  }, slow(120_000));
 
   it('a listed airline: new shares, dividends, buybacks; the player trades outside the blackout', () => {
     const { state, airlineId, a } = airline();
@@ -94,12 +95,12 @@ describe('shares and shareholders (10.3)', () => {
     expect(e.holders.map((h) => h.kind)).toEqual(['group']);
     expect(e.listed).toBe(false);
     expect(ipoReady(today, today.airlines[(r as { id: string }).id]!)).toBe('groupOwned');
-  }, 120_000);
+  }, slow(120_000));
 
   it('valuation: earnings times a multiple minus debt (leases included)', () => {
     const { state, a } = airline();
     advance(state, world, state.time + 10 * DAY);
     expect(fundamentalValue(state, a())).toBeGreaterThan(0);
     expect(playerWealth(a().equity)).toBeGreaterThan(0);
-  }, 120_000);
+  }, slow(120_000));
 });

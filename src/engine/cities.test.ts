@@ -19,6 +19,7 @@ import { buildRealAirlines } from './realAirlines';
 import { simTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -73,5 +74,5 @@ describe('cities with several airports', () => {
     const vie = world.airportById.get('LOWW')!;
     const ory = world.airportById.get('LFPO')!;
     expect(nearbyCompetitors(world, vie, ory).some((n) => n.to.id === 'LFPG' && n.competitors.some((c) => c.airlineId === 'AUA'))).toBe(true);
-  }, 120_000);
+  }, slow(120_000));
 });

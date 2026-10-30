@@ -17,6 +17,7 @@ import { createGame } from './game';
 import { buildRealAirlines } from './realAirlines';
 import { realHubLegs, realLegTransfers, transferTable } from './transfers';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -55,7 +56,7 @@ describe('real airlines earn about what they really earn (6.1)', () => {
     expect(aua.loadFactor).toBeGreaterThan(0.55);
     expect(aua.margin).toBeGreaterThan(-0.02); // before overheads (≈ 3 % of revenue)
     expect(aua.margin).toBeLessThan(0.14);
-  }, 60_000);
+  }, slow(60_000));
 
   it('Ryanair: full planes, low fares, a healthy margin', () => {
     const ryr = year('RYR');
@@ -64,7 +65,7 @@ describe('real airlines earn about what they really earn (6.1)', () => {
     expect(ryr.revenuePerPax).toBeLessThan(110);
     expect(ryr.margin).toBeGreaterThan(0.05);
     expect(ryr.margin).toBeLessThan(0.25);
-  }, 60_000);
+  }, slow(60_000));
 
   it('about half of Austrian\'s passengers can change planes in Vienna', () => {
     const aua = real.byId.get('AUA')!;

@@ -144,7 +144,7 @@ function DepartmentPanel({ game, world, airline, dept }: { game: GameState; worl
   const { t } = useTranslation();
   const { fmt } = useMoney(game, airline);
   const [error, setError] = useState<CommandError | null>(null);
-  const [showCandidates, setShowCandidates] = useState(false);
+  const [showCandidates, setShowCandidates] = useState(!airline.mgmt?.heads[dept]);
   const mg = airline.mgmt!;
   const head = mg.heads[dept];
   const candidates = mg.candidates.filter((c) => c.dept === dept);

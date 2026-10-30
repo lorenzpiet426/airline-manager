@@ -18,6 +18,7 @@ import { buildRealAirlines } from './realAirlines';
 import { simTime, startOfDay } from './time';
 import { DAYS_ALL } from './timetable';
 import { buildEngineWorld } from './world';
+import { slow } from '../testing/slow';
 
 const real = buildRealAirlines(airlinesJson as never, networksJson as never, detailsJson as never, registersJson as never, eurostatJson);
 const world = buildEngineWorld(airportsJson as Airport[], countriesJson as unknown as Record<string, Country>, real);
@@ -75,7 +76,7 @@ describe('delays and punctuality (9.1)', () => {
       const total = Object.values(p.causes).reduce((a, b) => a + b, 0);
       expect(p.causes.reactionary! / total).toBeGreaterThan(0.25);
     }
-  }, 300_000);
+  }, slow(300_000));
 
   it('the airline pays compensation for its own long delays, not for the weather', () => {
     const cost = (cause: 'airline' | 'weather') => {
@@ -110,7 +111,7 @@ describe('delays and punctuality (9.1)', () => {
     const a = run();
     expect(a.length).toBeGreaterThan(0);
     expect(run()).toBe(a);
-  }, 120_000);
+  }, slow(120_000));
 
   it('single flights (9.2): each one’s passengers and money add up to the route, kept for seven days', () => {
     const { state, airlineId } = airline();
@@ -131,5 +132,5 @@ describe('delays and punctuality (9.1)', () => {
     expect(f.econ!.pax).toBeGreaterThan(0);
     expect(Object.keys(f.econ!.classes).length).toBeGreaterThan(0);
     expect(flightResult(f)).not.toBeNull();
-  }, 120_000);
+  }, slow(120_000));
 });
