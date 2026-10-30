@@ -310,7 +310,7 @@ Fare classes, booking curves, dynamic pricing; loyalty program; on-time performa
 incidents (diversions, technical problems); click-any-flight drill-down.
 Split (2026-10-29): **9.1** ✅ delays and on-time performance (knock-on through rotations, causes, diversions, missed
 connections); **9.2** ✅ click any flight for full detail; **9.3** ✅ booking classes, booking curves, live bookings;
-**9.4** own loyalty programme with tiers.
+**9.4** ✅ own loyalty programme with tiers. Phase 9 complete.
 
 ### Phase 10 — Finance and corporate
 Loans, bonds, fuel hedging, currency effects; stock market, IPO, share price, buying competitor shares,
@@ -518,6 +518,8 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 9.2: single flights kept **7 days**; flight pages reachable **everywhere** (departures board, map aircraft, timetable, route cards, fleet cards) | Owner choice |
 | 2026-10-30 | 9.3: **live bookings day by day** for every upcoming flight (on sale 60–120 days ahead), **own fare buckets** (name, price %, flexible, advance purchase, default seat share), **seats per bucket by hand** per route and class | Owner choice (not the recommended options) |
 | 2026-10-30 | 9.3: willingness to pay calibrated so the default buckets keep Austrian's margins; AI airlines keep average fares | Default settings give no free advantage; good settings earn more |
+| 2026-10-30 | 9.4: points **per euro spent** (status bonus), **award seats on own flights** (share of economy, taken from sale), points as a liability with breakage | Owner choice |
+| 2026-10-30 | 9.4: taken-over airlines **stay in their group's programme** (Austrian: Miles & More; fee per point, paid for the group's award seats; can leave) | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1328,6 +1330,25 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: no overbooking/no-shows; the revenue head's proposals still only change the base fare (not bucket limits);
   the route planner's forecast is at class fares; AI airlines don't sell by buckets.
 - **Next:** 9.4 own loyalty programme with tiers.
+
+### 2026-10-30 — Session 33 (Phase 9.4: frequent-flyer programme) ✅ — Phase 9 complete
+- Owner decisions (recommended): earn per euro, award seats on own flights, group programme for takeovers (§7).
+- Data `src/data/loyalty.ts`; engine `src/engine/loyalty.ts`: `Airline.loyalty` (`Loyalty`: own/partner, rules, member
+  share, points, award rate, 26 weeks of `LoyaltyWeek`; optional, no save version change), `programmeValue`,
+  `loyaltyPull` (new `RouteContext.loyalty` multiplies the brand appeal per segment in `routeWeek`; passed by the daily
+  booking, the booking forecast, the planner and the revenue manager), `tierShares`, `startProgramme`,
+  `joinPartnerProgramme`, `setProgramme`, `leaveProgramme`, `loyaltyWeeklyStep` (Mondays after the week closes). P&L line
+  `loyalty` (optional, in `pnlCosts` and the Finance screen), ledger kind `loyalty`, message `loyaltyMilestone`. Bookings:
+  award seats taken out of economy when a flight opens (`BookingRecord.awards`), flown as passengers without revenue.
+  Commands `StartLoyalty`, `SetLoyalty`, `LeaveLoyalty`; Austrian takeover joins Miles & More (from 2009).
+- UI: **Loyalty** screen (`#/loyalty`, rail + More, star icon): start, overview (members, tiers, member share,
+  attractiveness, pull, points and debt, last week, net cost), own rules or the group's (leave); EN/DE.
+- Tests: 222 (`loyalty.test.ts`: own programme growing with points and award seats, tier thresholds and rule checks,
+  Austrian in Miles & More).
+- Verified in browser (Austrian save): programme started, first week 77,000 members, points and debt, rules form, phone 375 px.
+- Known: members are aggregate numbers (no individual members); no co-branded credit card deals to negotiate; AI airlines'
+  programmes are only part of their calibrated results; the programme's debt isn't on a balance sheet yet (Phase 10).
+- **Next:** Phase 10 (finance and corporate: loans, bonds, fuel hedging, stock market, board) — or what the owner prefers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

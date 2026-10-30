@@ -112,6 +112,8 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
       case 'managerActions':
       case 'proposalsWaiting':
         return t(`msg.${m.kind}`, { count: Number(p.count) });
+      case 'loyaltyMilestone':
+        return t('msg.loyaltyMilestone', { name: p.name, members: formatNumber(language, Number(p.members)) });
       case 'flightDiverted':
         return t('msg.flightDiverted', {
           flight: p.flight,

@@ -7,6 +7,7 @@ import type { Command } from './commands';
 import type { Delegation, Department } from '../data/managers';
 import type { DelayCause } from '../data/delays';
 import type { FareBucket } from '../data/fares';
+import type { Tier } from '../data/loyalty';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
 export const SAVE_VERSION = 11;
@@ -68,6 +69,40 @@ export interface Airline {
   mgmt?: Management;
   /** Fare buckets per cabin class (Phase 9.3; absent until first used: the default buckets). */
   fares?: Partial<Record<CabinClass, FareBucket[]>>;
+  /** Frequent-flyer programme (Phase 9.4): own, a group's (partner), or none. */
+  loyalty?: Loyalty;
+}
+
+export interface Loyalty {
+  kind: 'own' | 'partner';
+  name: string;
+  startedAt: SimTime;
+  /** Own programmes: points per euro, status thresholds (EUR spend a year), award seats per flight, expiry. */
+  earn: number;
+  thresholds: Record<Tier, number>;
+  awardShare: number;
+  expiryMonths: number;
+  /** Share of passengers who are members (grows towards its target). */
+  memberShare: number;
+  /** Members' points not yet redeemed or expired (own programmes). */
+  points: number;
+  /** Share of economy seats taken by award passengers this week (used when flights open for sale). */
+  awardRate: number;
+  /** The last 26 weeks (newest last). */
+  weeks: LoyaltyWeek[];
+}
+
+export interface LoyaltyWeek {
+  start: SimTime;
+  members: number;
+  memberShare: number;
+  tiers: Record<Tier, number>;
+  earned: number;
+  redeemed: number;
+  expired: number;
+  awards: number;
+  /** Net cost of the programme that week (EUR; negative = it earned money). */
+  costEur: number;
 }
 
 export interface Manager {
@@ -473,6 +508,8 @@ export interface PnlLines {
   disposals: number;
   /** Compensation and care for passengers of cancelled flights (Phase 4.2). */
   disruption: number;
+  /** Frequent-flyer programme: running costs, status perks, group fees, minus partner income (Phase 9.4). */
+  loyalty?: number;
 }
 
 /** One flight of the day as it really goes (Phase 9.1): scheduled UTC times, delays, what happened. */
@@ -727,7 +764,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -762,7 +799,9 @@ export type LedgerKind =
   // Type ratings, upgrades, cabin training, severance (Phase 8.1).
   | 'training'
   // Managers' salaries and severance (Phase 8.3).
-  | 'management';
+  | 'management'
+  // Frequent-flyer programme (Phase 9.4).
+  | 'loyalty';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {
@@ -787,6 +826,8 @@ export interface BookingRecord {
   sold: Partial<Record<CabinClass, Record<string, number>>>;
   /** Of them transfer passengers, per class. */
   transfer: Partial<Record<CabinClass, number>>;
+  /** Economy seats kept for award passengers (frequent flyers paying with points; Phase 9.4). */
+  awards?: number;
   /** Seats sold × the bucket's price factor at the time of sale, per class (revenue = this × the class's fare). */
   value: Partial<Record<CabinClass, number>>;
   /** Total sold at the booking-curve marks (days before departure → seats). */
@@ -838,9 +879,9 @@ export const MAX_PNL_WEEKS = 104;
 
 export const emptyPnl = (): PnlLines => ({
   revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0, overhead: 0,
-  service: 0, depreciation: 0, disposals: 0, disruption: 0,
+  service: 0, depreciation: 0, disposals: 0, disruption: 0, loyalty: 0,
 });
 
 export const pnlCosts = (l: PnlLines): number =>
   l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead +
-  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0);
+  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0) + (l.loyalty ?? 0);

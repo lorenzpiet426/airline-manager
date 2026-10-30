@@ -663,6 +663,8 @@ export interface RouteContext {
   days?: number;
   /** The calculated airline's reputation and awareness (default: neutral and well known). */
   brand?: Brand;
+  /** Its frequent-flyer programme's pull on business travellers and holidaymakers (Phase 9.4; default none). */
+  loyalty?: { business: number; leisure: number };
   /** The player's aircraft pay their airframe checks separately (Phase 4.2): hourly maintenance without them. */
   checksSeparate?: boolean;
   /** The world's state (Phase 5.1): fuel price, traffic growth, recessions and pandemics. Default: the real 2026 data. */
@@ -903,7 +905,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
       // Holidaymakers react much more strongly to price than business travellers; cheaper fares also make more
       // people fly at all ("stimulation").
       const pull = (x: number) => Math.max(0.3, x) ** (segment === 'business' ? -1.2 : -2.6);
-      const myBrandAppeal = brandAppeal(segment, myBrand.reputation, myBrand.awareness);
+      const myBrandAppeal = brandAppeal(segment, myBrand.reputation, myBrand.awareness) * (ctx.loyalty?.[segment] ?? 1);
       for (const wanted of CLASSES) {
         const classShare = classDemandShare(segment, wanted, t);
         if (classShare < 1e-4) continue;

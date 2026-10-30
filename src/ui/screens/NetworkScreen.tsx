@@ -6,6 +6,7 @@ import { Segmented } from '../components/Segmented';
 import { DeparturesBoard } from '../network/DeparturesBoard';
 import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
 import { FaresView } from '../network/FaresView';
+import { loyaltyPull } from '../../engine/loyalty';
 import { ConnectionsView } from '../network/ConnectionsView';
 import { SlotsView } from '../network/SlotsView';
 import { HubView } from '../network/HubView';
@@ -382,6 +383,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
     // Passengers connecting between your own flights at the hub, with this route as planned (Phase 6.1).
     const transfer = routeTransfers(engineWorld, sim, simRoute);
     const ground = groundContext(sim, engineWorld, airline.id);
+    const loyalty = loyaltyPull(sim, sim.airlines[airline.id]);
     const week = routeWeek(engineWorld, hub, dest, { ...plan, rampUp: 1 }, date, {
       transfer,
       ai: game.ai,
@@ -389,6 +391,7 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
       checksSeparate: true,
       conditions,
       ...(ground ? { ground } : {}),
+      ...(loyalty ? { loyalty } : {}),
     });
     const pairs = pairsOfRoute(sim, simRoute.id).filter((p) => sim.aircraft[p.aircraftId]);
     const used = [...new Set(pairs.map((p) => p.aircraftId))].map((id) => game.aircraft[id]!).filter(Boolean);

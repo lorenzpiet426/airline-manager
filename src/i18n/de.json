@@ -21,7 +21,8 @@
     "history": "Geschichte",
     "management": "Management",
     "flight": "Flug",
-    "flights": "Flüge"
+    "flights": "Flüge",
+    "loyalty": "Vielflieger"
   },
   "status": {
     "sim": "SIM",
@@ -252,7 +253,8 @@
     "managerActions_other": "Deine Manager haben heute {{count}} Entscheidungen getroffen (siehe Management).",
     "proposalsWaiting_one": "{{count}} neuer Vorschlag deiner Manager wartet auf dein OK (siehe Management).",
     "proposalsWaiting_other": "{{count}} neue Vorschläge deiner Manager warten auf dein OK (siehe Management).",
-    "flightDiverted": "Flug {{flight}} {{from}}–{{to}} nach {{alt}} umgeleitet ({{cause}}). Die Passagiere fahren mit dem Bus weiter; das Flugzeug kommt am nächsten Morgen zurück."
+    "flightDiverted": "Flug {{flight}} {{from}}–{{to}} nach {{alt}} umgeleitet ({{cause}}). Die Passagiere fahren mit dem Bus weiter; das Flugzeug kommt am nächsten Morgen zurück.",
+    "loyaltyMilestone": "{{name}} hat mehr als {{members}} aktive Mitglieder."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -425,7 +427,11 @@
     "delegationInvalid": "Wähle beraten, nach meinem OK oder selbst entscheiden.",
     "bucketsInvalid": "Prüfe die Klassen: 1–6, jede mit Namen, einem Preis von 20–400 % und 0–90 Tagen.",
     "bucketsNeedOpen": "Mindestens eine Klasse muss bis zum Abflug (0 Tage) ohne Sitzgrenze verkaufen.",
-    "limitsInvalid": "Sitzgrenzen müssen zwischen 0 und der Zahl der Sitze der Kabine liegen."
+    "limitsInvalid": "Sitzgrenzen müssen zwischen 0 und der Zahl der Sitze der Kabine liegen.",
+    "loyaltyExists": "Du hast schon ein Programm.",
+    "loyaltyNone": "Du hast kein Programm.",
+    "loyaltyPartner": "Die Regeln dieses Programms legt der Konzern fest.",
+    "loyaltyInvalid": "Prüfe die Regeln: ein Name, 1–10 Punkte pro Euro, Silber < Gold < Platin (200–50.000 EUR), 0–15 % Prämiensitze, 0–60 Monate."
   },
   "fleet": {
     "title": "Flotte",
@@ -617,7 +623,8 @@
       "service": "Bordservice & Lounges",
       "depreciation": "Abschreibungen (eigene Flugzeuge, Kabinenumbauten)",
       "disposals": "Flugzeugverkäufe, Verschrottung & verlorene Anzahlungen",
-      "disruption": "Entschädigung & Betreuung von Passagieren (gestrichene Flüge)"
+      "disruption": "Entschädigung & Betreuung von Passagieren (gestrichene Flüge)",
+      "loyalty": "Vielfliegerprogramm (netto)"
     },
     "result": "Ergebnis",
     "margin": "Marge",
@@ -1322,6 +1329,48 @@
     "noSales": "Noch keine Flüge dieser Strecke in den nächsten zwei Wochen im Verkauf.",
     "salesTitle": "Nächste zwei Wochen: bisher verkaufte Sitze",
     "booked": "Gebucht"
+  },
+  "loyalty": {
+    "title": "Vielfliegerprogramm",
+    "startTitle": "Eigenes Vielfliegerprogramm starten",
+    "intro": "Mitglieder sammeln für jeden Euro, den sie für deine Tickets ausgeben, Punkte (Statuskunden mehr) und bezahlen damit Prämiensitze auf deinen Flügen. Mitglieder bevorzugen deine Flüge, Geschäftsreisende viel stärker als Urlauber; je größer dein Netz und je großzügiger deine Regeln, desto mehr Passagiere machen mit. Es kostet Geld im Betrieb, Partner (Kreditkarten, Hotels) kaufen Punkte, Prämiensitze belegen Sitze, die du verkaufen könntest, und unbenutzte Punkte sind eine Schuld gegenüber deinen Mitgliedern.",
+    "name": "Name",
+    "start": "Programm starten",
+    "own": "{{name}} (dein eigenes Programm)",
+    "partner": "{{name}} (das Programm deines Konzerns)",
+    "since": "Seit",
+    "memberShare": "Passagiere, die Mitglied sind",
+    "value": "Attraktivität",
+    "pull": "Wirkung auf Reisende",
+    "pullValue": "Geschäftsreisende +{{business}} · Urlauber +{{leisure}}",
+    "members": "Mitglieder (aktiv)",
+    "tier": {
+      "silver": "Silber",
+      "gold": "Gold",
+      "platinum": "Platin"
+    },
+    "points": "Noch nicht genutzte Punkte",
+    "liability": "eine Schuld von etwa {{value}}",
+    "lastWeek": "Letzte Woche",
+    "weekOwn": "{{earned}} Punkte gesammelt, {{redeemed}} eingelöst, {{expired}} verfallen · {{awards}} Prämiensitze geflogen",
+    "weekPartner": "{{earned}} Punkte von deinen Passagieren gesammelt · {{awards}} Prämiensitze von Mitgliedern des Konzerns auf deinen Flügen",
+    "cost": "Nettokosten letzte Woche",
+    "firstWeek": "Zahlen erscheinen nach der ersten vollen Woche.",
+    "howOwn": "Kosten = Betrieb des Programms + Lounges für Gold- und Platin-Mitglieder in der Economy − an Partner verkaufte Punkte. Prämiensitze kosten kein Geld, belegen aber Sitze, die nicht verkauft werden (siehe Buchungsklassen). Die Mitgliederzahl wächst über etwa ein Jahr auf ihr Niveau.",
+    "howPartner": "Du zahlst dem Konzern für die Punkte, die deine Passagiere sammeln, und bekommst Geld für die Prämiensitze seiner Mitglieder auf deinen Flügen; Lounges für Statuskunden zahlst du.",
+    "rules": "Regeln",
+    "earn": "Punkte pro Euro (Basismitglieder)",
+    "threshold": "{{tier}} ab (EUR pro Jahr)",
+    "awardShare": "Prämiensitze pro Flug (% der Economy)",
+    "expiry": "Punkte verfallen nach (Monaten, 0 = nie)",
+    "rulesNote": "Mehr Punkte pro Euro (üblich: {{earn}}), niedrigere Statusgrenzen, mehr Prämiensitze und kein Verfall machen das Programm attraktiver und teurer. Statuskunden sammeln 25 / 50 / 100 % mehr Punkte; Gold und Platin nutzen Lounges.",
+    "save": "Regeln speichern",
+    "saved": "Gespeichert.",
+    "close": "Programm schließen",
+    "closeConfirm": "Programm schließen? Mitglieder verlieren ihren Status; ihre Punkte werden als Gutscheine ausbezahlt (einmalige Kosten).",
+    "partnerRules": "Die Regeln von {{name}} legt der Konzern fest. Du kannst es verlassen und ein eigenes Programm starten, aber seine Mitglieder (und ihre Vorliebe für deine Flüge) sind dann weg.",
+    "leave": "{{name}} verlassen",
+    "leaveConfirm": "{{name}} verlassen? Seine Mitglieder bevorzugen deine Flüge dann nicht mehr; danach kannst du ein eigenes Programm starten."
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

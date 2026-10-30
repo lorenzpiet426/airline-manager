@@ -2,6 +2,8 @@
 // send a command; the engine checks it against the rules and either applies it or explains why not.
 import type { CrewRole, LoungeQuality } from './state';
 import { setBucketLimits, setFareBuckets, type FareError } from './bookings';
+import { leaveProgramme, setProgramme, startProgramme, type LoyaltyError } from './loyalty';
+import type { Tier } from '../data/loyalty';
 import type { FareBucket } from '../data/fares';
 import { approveProposal, declineProposal, ensureMgmt, fireManager, hireManager, setDelegation, type ManagerError } from './managers';
 import type { Delegation, Department } from '../data/managers';
@@ -329,7 +331,24 @@ export interface SetBucketLimits {
   payload: { routeId: string; cls: CabinClass; limits: Record<string, number | null> };
 }
 
-export type Command = SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Frequent-flyer programme (Phase 9.4): start an own one, change its rules, leave or close it. */
+export interface StartLoyalty {
+  type: 'StartLoyalty';
+  airlineId: string;
+  payload: { name: string };
+}
+export interface SetLoyalty {
+  type: 'SetLoyalty';
+  airlineId: string;
+  payload: { name: string; earn: number; thresholds: Record<Tier, number>; awardShare: number; expiryMonths: number };
+}
+export interface LeaveLoyalty {
+  type: 'LeaveLoyalty';
+  airlineId: string;
+  payload: Record<string, never>;
+}
+
+export type Command = StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -387,7 +406,8 @@ export type CommandError =
   | CrewError
   | UnionError
   | ManagerError
-  | FareError;
+  | FareError
+  | LoyaltyError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -494,6 +514,18 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
               ? (setDelegation(state, command.airlineId, command.payload.dept, command.payload.level) ??
                 (command.payload.dept === 'hr' && command.payload.level === 'auto' && airline.crew ? (planCrew(state, world, command.airlineId), null) : null))
               : declineProposal(state, command.airlineId, command.payload.id);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'StartLoyalty':
+    case 'SetLoyalty':
+    case 'LeaveLoyalty': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const error =
+        command.type === 'StartLoyalty'
+          ? startProgramme(state, command.airlineId, command.payload.name)
+          : command.type === 'SetLoyalty'
+            ? setProgramme(state, command.airlineId, command.payload)
+            : leaveProgramme(state, command.airlineId);
       return error ? fail(error) : { ok: true };
     }
     case 'SetFareBuckets':

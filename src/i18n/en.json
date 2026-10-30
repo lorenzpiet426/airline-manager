@@ -21,7 +21,8 @@
     "history": "History",
     "management": "Management",
     "flight": "Flight",
-    "flights": "Flights"
+    "flights": "Flights",
+    "loyalty": "Loyalty"
   },
   "status": {
     "sim": "SIM",
@@ -252,7 +253,8 @@
     "managerActions_other": "Your managers made {{count}} decisions today (see Management).",
     "proposalsWaiting_one": "{{count}} new proposal from your managers is waiting for your OK (see Management).",
     "proposalsWaiting_other": "{{count}} new proposals from your managers are waiting for your OK (see Management).",
-    "flightDiverted": "Flight {{flight}} {{from}}–{{to}} diverted to {{alt}} ({{cause}}). Passengers continue by bus; the aircraft returns the next morning."
+    "flightDiverted": "Flight {{flight}} {{from}}–{{to}} diverted to {{alt}} ({{cause}}). Passengers continue by bus; the aircraft returns the next morning.",
+    "loyaltyMilestone": "{{name}} has passed {{members}} active members."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -425,7 +427,11 @@
     "delegationInvalid": "Choose advise, after my OK, or decide alone.",
     "bucketsInvalid": "Check the buckets: 1–6, each with a name, a price of 20–400 % and 0–90 days.",
     "bucketsNeedOpen": "At least one bucket must sell until departure (0 days) without a seat limit.",
-    "limitsInvalid": "Seat limits must be between 0 and the seats in the cabin."
+    "limitsInvalid": "Seat limits must be between 0 and the seats in the cabin.",
+    "loyaltyExists": "You already have a programme.",
+    "loyaltyNone": "You have no programme.",
+    "loyaltyPartner": "The group sets this programme's rules.",
+    "loyaltyInvalid": "Check the rules: a name, 1–10 points per euro, Silver < Gold < Platinum (200–50,000 EUR), 0–15 % award seats, 0–60 months."
   },
   "fleet": {
     "title": "Fleet",
@@ -617,7 +623,8 @@
       "service": "In-flight service & lounges",
       "depreciation": "Depreciation (owned aircraft, cabin refits)",
       "disposals": "Aircraft sales, scrapping & lost deposits",
-      "disruption": "Passenger compensation & care (cancelled flights)"
+      "disruption": "Passenger compensation & care (cancelled flights)",
+      "loyalty": "Loyalty programme (net)"
     },
     "result": "Result",
     "margin": "Margin",
@@ -1322,6 +1329,48 @@
     "noSales": "No flights of this route on sale in the next two weeks yet.",
     "salesTitle": "Next two weeks: seats sold so far",
     "booked": "Booked"
+  },
+  "loyalty": {
+    "title": "Loyalty programme",
+    "startTitle": "Start your own frequent-flyer programme",
+    "intro": "Members collect points for every euro they spend on your tickets (status members more) and pay with them for award seats on your flights. Members prefer your flights, business travellers much more than holidaymakers, and the bigger your network and the more generous your rules, the more passengers join. It costs money to run, partners (credit cards, hotels) buy points, award seats take seats you could have sold, and unused points are a debt to your members.",
+    "name": "Name",
+    "start": "Start programme",
+    "own": "{{name}} (your own programme)",
+    "partner": "{{name}} (your group's programme)",
+    "since": "Since",
+    "memberShare": "Passengers who are members",
+    "value": "Attractiveness",
+    "pull": "Pull on travellers",
+    "pullValue": "business +{{business}} · holidaymakers +{{leisure}}",
+    "members": "Members (active)",
+    "tier": {
+      "silver": "Silver",
+      "gold": "Gold",
+      "platinum": "Platinum"
+    },
+    "points": "Points not yet used",
+    "liability": "a debt of about {{value}}",
+    "lastWeek": "Last week",
+    "weekOwn": "{{earned}} points earned, {{redeemed}} redeemed, {{expired}} expired · {{awards}} award seats flown",
+    "weekPartner": "{{earned}} points earned by your passengers · {{awards}} award seats of the group's members on your flights",
+    "cost": "Net cost last week",
+    "firstWeek": "Numbers appear after the first full week.",
+    "howOwn": "Cost = running the programme + lounges for Gold and Platinum members in economy − points sold to partners. Award seats cost no cash but take seats from sale (see the fare buckets). Members grow towards their level over about a year.",
+    "howPartner": "You pay the group for the points your passengers earn and get paid for its members' award seats on your flights; lounges for status members are yours.",
+    "rules": "Rules",
+    "earn": "Points per euro (base members)",
+    "threshold": "{{tier}} from (EUR a year)",
+    "awardShare": "Award seats per flight (% of economy)",
+    "expiry": "Points expire after (months, 0 = never)",
+    "rulesNote": "More points per euro (usual: {{earn}}), lower status thresholds, more award seats and no expiry make the programme more attractive and more expensive. Status members earn 25 / 50 / 100 % more points; Gold and Platinum use lounges.",
+    "save": "Save rules",
+    "saved": "Saved.",
+    "close": "Close the programme",
+    "closeConfirm": "Close the programme? Members lose their status; their points are paid off as vouchers (a one-off cost).",
+    "partnerRules": "The rules of {{name}} are set by the group. You can leave it and start your own programme, but its members (and their preference for your flights) are gone.",
+    "leave": "Leave {{name}}",
+    "leaveConfirm": "Leave {{name}}? Its members won't prefer your flights any more; you can start your own programme afterwards."
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

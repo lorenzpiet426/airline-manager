@@ -47,6 +47,8 @@ export interface TakeoverScenario {
   fleetHistory: readonly FleetEra[];
   /** Phase 7.3: its own lounges at the hub today (seats in all of them, quality); past years scaled with the fleet. */
   hubLounge: { seats: number; quality: 'standard' | 'premium' | 'flagship' };
+  /** The group's frequent-flyer programme the airline belongs to, from a year (Phase 9.4). */
+  loyalty?: { name: string; from: number };
 }
 
 export const TAKEOVERS: Record<string, TakeoverScenario> = {
@@ -91,6 +93,9 @@ export const TAKEOVERS: Record<string, TakeoverScenario> = {
     alliances: [QUALIFLYER, STAR_ALLIANCE],
     // Austrian's business and Senator lounges at Vienna (several, ≈ 600 seats in all; modelled from the airport's plans).
     hubLounge: { seats: 600, quality: 'premium' },
+    // Austrian's passengers earn and burn Miles & More (the Lufthansa Group's programme; certain at least since Austrian
+    // joined the group in 2009).
+    loyalty: { name: 'Miles & More', from: 2009 },
     // Wikipedia (EN "Austrian Airlines" history + historical fleet table, DE "Austrian Airlines" Geschichte/Flotte):
     // years from the historical fleet table, counts where the text states them, otherwise modelled.
     fleetHistory: [

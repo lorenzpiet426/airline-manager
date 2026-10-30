@@ -8,6 +8,7 @@ import { ensureLabour, labourDailyStep } from './unions';
 import { ensureMgmt, managersDailyStep } from './managers';
 import { opsDailyStep } from './delays';
 import { applyBookings, bookingsDailyStep } from './bookings';
+import { loyaltyPull, loyaltyWeeklyStep } from './loyalty';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -113,6 +114,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   if (startOfWeek(state.time) === state.time) {
     closeWeek(state);
     recordSlotUse(state, world);
+    // Frequent-flyer programmes: members, points, award seats, costs (Phase 9.4).
+    loyaltyWeeklyStep(state);
   }
   // A new IATA season: use it or lose it, and the slots asked for.
   if (isSeasonStart(state.time)) seasonChange(state, world);
@@ -144,7 +147,8 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const brand = rep ? { reputation: rep.score, awareness: rep.awareness } : undefined;
     const transfer = routeTransfers(world, state, route);
     const ground = groundContext(state, world, airline.id);
-    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer, ...(ground ? { ground } : {}) });
+    const loyalty = loyaltyPull(state, airline);
+    const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer, ...(ground ? { ground } : {}), ...(loyalty ? { loyalty } : {}) });
     // The player's flights carried what was really booked (Phase 9.3).
     if (airline.controller === 'human') applyBookings(state, world, route, week, state.time - 1);
     if (rep) addExperience(rep, week.experience);

@@ -27,6 +27,7 @@ import type { Airline, BookingRecord, CabinClass, GameState, Route } from './sta
 import { MINUTES_PER_DAY, startOfDay, startOfWeek, toDate, utcOffsetMin, type SimTime } from './time';
 import { routeTransfers } from './transfers';
 import { conditionsOf } from './worldEvents';
+import { loyaltyPull } from './loyalty';
 import type { EngineWorld } from './world';
 
 const DAY = MINUTES_PER_DAY;
@@ -96,7 +97,9 @@ export function routeForecast(state: GameState, world: EngineWorld, route: Route
   if (plan && from && to) {
     const rep = state.reputation[route.airlineId];
     const ground = groundContext(state, world, route.airlineId);
+    const loyalty = loyaltyPull(state, state.airlines[route.airlineId]);
     const week = routeWeek(world, from, to, { ...plan, rampUp: 1 }, toDate(state.time), {
+      ...(loyalty ? { loyalty } : {}),
       ai: state.ai,
       brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
       checksSeparate: true,
@@ -122,7 +125,7 @@ export function routeForecast(state: GameState, world: EngineWorld, route: Route
 // ─── Selling ────────────────────────────────────────────────────────────────────
 
 /** Seats per class of an aircraft cabin, economy with the curtain's spare business rows (European business). */
-function capacity(state: GameState, aircraftId: string, demand: FlightDemand): number[] {
+function capacity(state: GameState, aircraftId: string, demand: FlightDemand, awardRate = 0): number[] {
   const cap = [0, 0, 0, 0];
   const a = state.aircraft[aircraftId];
   for (const s of a?.cabin ?? []) cap[CLASS_INDEX[s.cls]] = (cap[CLASS_INDEX[s.cls]] ?? 0) + s.seats;
@@ -132,6 +135,8 @@ function capacity(state: GameState, aircraftId: string, demand: FlightDemand): n
     const expected = j ? j.leisure * willingToPay('leisure', 1) + j.business + j.transfer : 0;
     cap[3] = cap[3]! + Math.max(0, euro.seats - 1.1 * expected) * CURTAIN_ECONOMY_PER_SEAT;
   }
+  // Award seats for frequent flyers (Phase 9.4) are taken out of economy before sales start.
+  cap[3] = cap[3]! * (1 - awardRate);
   return cap;
 }
 
@@ -225,7 +230,12 @@ export function bookingsDailyStep(state: GameState, world: EngineWorld): void {
           const fd = demand.get(key);
           if (!fd) continue;
           const id = `${key}:${dep}`;
-          const rec = (all[id] ??= { airlineId: airline.id, routeId: route.id, key, dep, cap: capacity(state, aircraft.id, fd), sold: {}, transfer: {}, value: {}, curve: {}, last: 0 });
+          const awardRate = airline.loyalty?.awardRate ?? 0;
+          const rec = (all[id] ??= (() => {
+            const cap = capacity(state, aircraft.id, fd, awardRate);
+            const full = capacity(state, aircraft.id, fd);
+            return { airlineId: airline.id, routeId: route.id, key, dep, cap, awards: full[3]! - cap[3]!, sold: {}, transfer: {}, value: {}, curve: {}, last: 0 };
+          })());
           // Far from departure only every third day (the bookings in between are counted together).
           const far = dep - today > FAR_DAYS * DAY && rec.last > 0 && today - rec.last < 3 * DAY;
           if (rec.last !== today && !far) processDay(state, world, rec, route, fd, today);
@@ -271,7 +281,8 @@ export function applyBookings(state: GameState, world: EngineWorld, route: Route
       const c = r.classes[cls];
       if (!c) continue;
       const sold = rec.sold[cls] ?? {};
-      const n = Object.values(sold).reduce((a, b) => a + b, 0);
+      // Economy also carries the award passengers (no ticket revenue; Phase 9.4).
+      const n = Object.values(sold).reduce((a, b) => a + b, 0) + (cls === 'Y' ? (rec.awards ?? 0) : 0);
       const tr = Math.min(n, rec.transfer[cls] ?? 0);
       const trShare = n > 0 ? tr / n : 0;
       const money = (rec.value?.[cls] ?? 0) * c.fareUsd * (1 - trShare + trShare * c.transferYield);

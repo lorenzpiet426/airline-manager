@@ -806,6 +806,28 @@ Owner decisions: live bookings day by day, the player's own fare buckets, seats 
   average fare falls accordingly. AI airlines keep their calibrated average fares (their real results include revenue
   management). A simulated month for Austrian ≈ 50 % slower (≈ 20,000 flights on sale).
 
+## Frequent-flyer programmes (Phase 9.4, 2026-10-30)
+Owner decisions: points per euro spent, award seats on own flights, taken-over airlines stay in their group's programme.
+
+- **Model** (`src/data/loyalty.ts`, `src/engine/loyalty.ts`), after today's revenue-based programmes (Miles & More from
+  2024, BA Executive Club, United MileagePlus: points per euro/dollar, more for status members) and IFRS 15 (points are a
+  liability until redeemed or expired; airlines value a point at roughly 0.5–1.5 cents). All numbers are modelled orders
+  of magnitude, not one programme's.
+- **Members**: share of passengers 10 % + 40 % × the programme's attractiveness (own; grows 2 points a week), 55 % in a
+  group programme; members spend 1.3× the average. Attractiveness of an own programme from the network (routes/60) and
+  generosity (earn rate, award seats, Gold threshold, expiry). Pull on choice: business +12 %, holidaymakers +3 % at full
+  attractiveness and membership.
+- **Tiers**: Silver/Gold/Platinum shares of member revenue 45 / 25 / 8 % at 1,500 / 4,000 / 10,000 EUR a year, falling
+  exponentially with higher thresholds; status bonus 25 / 50 / 100 %; Gold and Platinum in economy use lounges (25 % of
+  trips, €25).
+- **Points**: default 4 per euro; award seat 10,000 + 8 points per km (≈ 20,000 Vienna–London); 1.5 % of outstanding points
+  redeemed a week; 30 % breakage over the expiry period; award seats limited to a share of economy (default 5 %) and taken
+  out of sale when a flight opens.
+- **Costs**: own programme €3 per member a year to run, €4 per member a year earned by selling points to partners;
+  group programme €0.005 per point earned paid to the group, €50 + 0.03 per km received per award seat of the group's members
+  (3 % of economy). Austrian (Miles & More from 2009) stays as calibrated: November −7.0 % (−7.2 % before), June −1.8 %
+  (−2.2 %).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

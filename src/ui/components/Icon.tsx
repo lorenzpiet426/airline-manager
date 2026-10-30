@@ -1,5 +1,5 @@
 // Small line icons drawn for this game (24×24 grid, colour follows the text colour).
-export type IconName = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'chevron' | 'types' | 'history' | 'people';
+export type IconName = 'ops' | 'map' | 'network' | 'fleet' | 'finance' | 'airlines' | 'saves' | 'sources' | 'settings' | 'more' | 'chevron' | 'types' | 'history' | 'people' | 'star';
 
 const PATHS: Record<IconName, string[]> = {
   // Radar scope
@@ -35,6 +35,7 @@ const PATHS: Record<IconName, string[]> = {
   types: ['M2.5 14.5c0-1.2 1-2 2.5-2h11l3.5-5.5h1.5l-1 5.5h.5a1 1 0 0 1 0 2.5H5c-1.5 0-2.5-.3-2.5-.5z', 'M9 14.5l2.5 4h2l-1-4'],
   // Clock turning back: world history
   history: ['M4 12a8 8 0 1 0 2.4-5.7', 'M3.5 3.5v3.8h3.8', 'M12 7.5V12l3 2'],
+  star: ['M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z'],
   people: ['M9 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4', 'M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6', 'M16 4.8a3 3 0 0 1 0 5.9', 'M17.5 14.3c2.1.6 3.5 2.6 3.5 5.2'],
   chevron: ['M9 6l6 6-6 6'],
 };

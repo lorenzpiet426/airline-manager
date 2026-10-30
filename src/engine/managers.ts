@@ -42,6 +42,7 @@ import { MINUTES_PER_DAY, toDate, yearOf, type SimTime } from './time';
 import { DAYS_ALL } from './timetable';
 import { routeTransfers } from './transfers';
 import { closureAt, conditionsOf } from './worldEvents';
+import { loyaltyPull } from './loyalty';
 import type { EngineWorld } from './world';
 import { TURNAROUND_MIN } from '../data/aircraft';
 
@@ -255,7 +256,9 @@ export function routeOutlook(state: GameState, world: EngineWorld, route: Route,
   const classFares = Object.fromEntries(Object.entries(route.classFares ?? {}).map(([k, v]) => [k, Math.round(clamp((v ?? 1) * mult, Math.max(0.5, lo), Math.min(1.5, hi)) * 100) / 100])) as ClassFares;
   const rep = state.reputation[route.airlineId];
   const ground = groundContext(state, world, route.airlineId);
+  const loyalty = loyaltyPull(state, state.airlines[route.airlineId]);
   const week = routeWeek(world, from, to, { ...plan, fareFactor, classFares, ...(rampUp ? { rampUp } : {}) }, toDate(state.time), {
+    ...(loyalty ? { loyalty } : {}),
     ai: state.ai,
     brand: rep ? { reputation: rep.score, awareness: rep.awareness } : undefined,
     checksSeparate: true,
