@@ -2949,3 +2949,8 @@ a.button {
 .loan-offer {
   margin-bottom: 12px;
 }
+
+/* ---------- Hedging (Phase 10.2) ---------- */
+.hedge-row {
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+}

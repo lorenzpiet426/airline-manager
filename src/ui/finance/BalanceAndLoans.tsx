@@ -57,6 +57,18 @@ export function BalanceAndLoans({ game, airline }: { game: GameState; airline: A
           <dd className="mono">{m(b.deposits)}</dd>
           <dt>{t('debt.other')}</dt>
           <dd className="mono">{m(b.other)}</dd>
+          {b.collateral > 0 && (
+            <>
+              <dt>{t('debt.collateral')}</dt>
+              <dd className="mono">{m(b.collateral)}</dd>
+            </>
+          )}
+          {b.hedges > 0 && (
+            <>
+              <dt>{t('debt.hedgesAsset')}</dt>
+              <dd className="mono">{m(b.hedges)}</dd>
+            </>
+          )}
           <dt>
             <strong>{t('debt.assets')}</strong>
           </dt>
@@ -71,6 +83,12 @@ export function BalanceAndLoans({ game, airline }: { game: GameState; airline: A
             <>
               <dt>{t('debt.loyalty')}</dt>
               <dd className="mono">{m(b.loyalty)}</dd>
+            </>
+          )}
+          {b.hedges < 0 && (
+            <>
+              <dt>{t('debt.hedgesLiability')}</dt>
+              <dd className="mono text--warning">{m(-b.hedges)}</dd>
             </>
           )}
           {b.cash < 0 && (

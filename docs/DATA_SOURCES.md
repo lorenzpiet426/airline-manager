@@ -852,6 +852,22 @@ Owner decisions: Phase 10 money first; real rates + credit rating; realistic own
 - **Balance sheet**: cash, owned aircraft at book value, order payments, lease deposits, hangars; loans, lease
   obligations of delivered aircraft (rent still to pay × 0.85, like IFRS 16), own programmes' points.
 
+## Fuel and currency hedging (Phase 10.2, 2026-10-30)
+Owner decisions: swaps + call options + currency forwards, a rolling policy, collateral (margin calls).
+
+- **Practice** (annual reports, read 2026-10-30, figures as orders of magnitude): Lufthansa Group hedges up to ≈ 85 % of its
+  fuel up to 24 months ahead, mostly with options and collars; Ryanair and easyJet ≈ 60–85 % 12–18 months ahead, mainly
+  with swaps; dollar exposure (fuel, leases) is hedged with forwards. Margin calls hurt airlines when fuel collapsed in
+  late 2008 and spring 2020.
+- **Model** (`src/data/hedging.ts`, `src/engine/hedging.ts`): ladder 1–3 / 4–12 / 13–24 months; forward fuel = 12-month
+  average + (spot − average) × e^(−months/18) (real prices before 24 Oct 2026, the game's own after); forward dollars by
+  interest rate parity with the BIS central bank rates; call options on the monthly average by Black-76 (volatility 35 % ×
+  0.8 for averaging); bank margins 1 % on fuel swaps, 0.1 % on currency forwards, 10 % on option premiums. Expected spending
+  from the last booked month (fuel line ÷ (spot + into-plane fee); dollars = fuel + leases). Settlement against the
+  month's average price (P&L line "hedging"). Weekly valuation; collateral beyond 5 / 4 / 3 / 2 / 0.5 / 0 / 0 % of a
+  year's revenue for AAA … CCC. Austrian takeover: 85 / 70 / 30 % fuel (70 % options), 80 / 60 / 20 % dollars.
+- **Check**: a startup hedged before the March 2026 fuel spike gained ≈ €135–150 k a month on two aircraft in April–May.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

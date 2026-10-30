@@ -41,6 +41,9 @@ const usdToBook = (state: GameState, usd: number, currency: string) => convert(m
 
 export interface BalanceSheet {
   cash: number;
+  /** Cash held as collateral for hedges, and the hedges' value at today's prices (Phase 10.2). */
+  collateral: number;
+  hedges: number;
   aircraft: number;
   prepayments: number;
   deposits: number;
@@ -79,9 +82,11 @@ export function balanceSheet(state: GameState, airline: Airline): BalanceSheet {
   const cash = airline.cash.amount;
   const loans = (airline.loans ?? []).reduce((n, l) => n + l.outstanding, 0);
   const loyalty = airline.loyalty?.kind === 'own' ? airline.loyalty.points * POINT_VALUE_EUR * eurToBook(state, airline.currency) : 0;
-  const totalAssets = Math.max(0, cash) + aircraft + prepayments + deposits + other;
-  const totalLiabilities = loans + leases + loyalty + Math.max(0, -cash);
-  return { cash, aircraft, prepayments, deposits, other, totalAssets, loans, leases, loyalty, totalLiabilities, equity: totalAssets - totalLiabilities };
+  const collateral = airline.hedging?.collateral ?? 0;
+  const hedges = airline.hedging?.value ?? 0;
+  const totalAssets = Math.max(0, cash) + aircraft + prepayments + deposits + other + collateral + Math.max(0, hedges);
+  const totalLiabilities = loans + leases + loyalty + Math.max(0, -cash) + Math.max(0, -hedges);
+  return { cash, collateral, hedges, aircraft, prepayments, deposits, other, totalAssets, loans, leases, loyalty, totalLiabilities, equity: totalAssets - totalLiabilities };
 }
 
 // ─── Credit rating ──────────────────────────────────────────────────────────────

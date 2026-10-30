@@ -4,6 +4,8 @@ import type { CrewRole, LoungeQuality } from './state';
 import { setBucketLimits, setFareBuckets, type FareError } from './bookings';
 import { leaveProgramme, setProgramme, startProgramme, type LoyaltyError } from './loyalty';
 import { repayLoan, saleLeaseback, takeLoan, type DebtError } from './debt';
+import { hedgeDeal, setHedgePolicy, type HedgeError } from './hedging';
+import type { HedgePolicy } from '../data/hedging';
 import type { Tier } from '../data/loyalty';
 import type { FareBucket } from '../data/fares';
 import { approveProposal, declineProposal, ensureMgmt, fireManager, hireManager, setDelegation, type ManagerError } from './managers';
@@ -366,7 +368,19 @@ export interface SaleLeaseback {
   payload: { aircraftId: string };
 }
 
-export type Command = TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Hedging (Phase 10.2): the ladder policy, or a single deal by hand. */
+export interface SetHedgePolicy {
+  type: 'SetHedgePolicy';
+  airlineId: string;
+  payload: { policy: HedgePolicy };
+}
+export interface HedgeDeal {
+  type: 'HedgeDeal';
+  airlineId: string;
+  payload: { kind: 'fuelSwap' | 'fuelCall' | 'fxForward'; monthsAhead: number; amount: number };
+}
+
+export type Command = SetHedgePolicy | HedgeDeal | TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -426,7 +440,8 @@ export type CommandError =
   | ManagerError
   | FareError
   | LoyaltyError
-  | DebtError;
+  | DebtError
+  | HedgeError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -533,6 +548,15 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
               ? (setDelegation(state, command.airlineId, command.payload.dept, command.payload.level) ??
                 (command.payload.dept === 'hr' && command.payload.level === 'auto' && airline.crew ? (planCrew(state, world, command.airlineId), null) : null))
               : declineProposal(state, command.airlineId, command.payload.id);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'SetHedgePolicy':
+    case 'HedgeDeal': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const error =
+        command.type === 'SetHedgePolicy'
+          ? setHedgePolicy(state, world, command.airlineId, command.payload.policy)
+          : hedgeDeal(state, world, command.airlineId, command.payload.kind, command.payload.monthsAhead, command.payload.amount);
       return error ? fail(error) : { ok: true };
     }
     case 'TakeLoan':

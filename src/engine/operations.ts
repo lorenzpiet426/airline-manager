@@ -10,6 +10,7 @@ import { opsDailyStep } from './delays';
 import { applyBookings, bookingsDailyStep } from './bookings';
 import { loyaltyPull, loyaltyWeeklyStep } from './loyalty';
 import { debtDailyStep } from './debt';
+import { hedgingDailyStep } from './hedging';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -112,6 +113,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   opsDailyStep(state, world);
   // Interest, repayments, insolvency (Phase 10.1).
   debtDailyStep(state);
+  // Fuel and currency hedges: settlement, ladder, collateral (Phase 10.2).
+  hedgingDailyStep(state, world);
   // Flights open for sale and today's bookings (Phase 9.3).
   bookingsDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {

@@ -1,4 +1,5 @@
 import { BalanceAndLoans } from '../finance/BalanceAndLoans';
+import { HedgingPanel } from '../finance/Hedging';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
@@ -14,7 +15,7 @@ import { formatGameDate, formatMoney, formatNumber, localeFor } from '../../i18n
 import { useSettings, type Language } from '../../settings/settings';
 import { hrefFor } from '../navigation';
 
-const COST_LINES: (keyof PnlLines)[] = ['fuel', 'crew', 'maintenance', 'airport', 'handling', 'service', 'navigation', 'distribution', 'lease', 'depreciation', 'disposals', 'disruption', 'loyalty', 'overhead', 'interest'];
+const COST_LINES: (keyof PnlLines)[] = ['fuel', 'crew', 'maintenance', 'airport', 'handling', 'service', 'navigation', 'distribution', 'lease', 'depreciation', 'disposals', 'disruption', 'loyalty', 'overhead', 'interest', 'hedging'];
 
 type Granularity = 'week' | 'month' | 'quarter' | 'year';
 
@@ -148,6 +149,7 @@ export function FinanceScreen() {
       {selected && periodDetail({ period: selected, previous, currency: airline.currency, iata: airline.iata, m })}
 
       <BalanceAndLoans game={game} airline={airline} />
+      <HedgingPanel game={game} airline={airline} />
     </div>
   );
 

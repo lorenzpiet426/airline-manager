@@ -8,6 +8,7 @@ import type { Delegation, Department } from '../data/managers';
 import type { DelayCause } from '../data/delays';
 import type { FareBucket } from '../data/fares';
 import type { Tier } from '../data/loyalty';
+import type { HedgePolicy } from '../data/hedging';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
 export const SAVE_VERSION = 11;
@@ -80,6 +81,37 @@ export interface Airline {
   interestDue?: number;
   /** A parent's credit standing lenders count on (a group or the state; Phase 10.1), e.g. 'BBB'. */
   parentRating?: string;
+  /** Fuel and currency hedging (Phase 10.2). */
+  hedging?: Hedging;
+}
+
+/** A hedge contract for one future month (Phase 10.2). */
+export interface HedgeContract {
+  id: string;
+  kind: 'fuelSwap' | 'fuelCall' | 'fxForward';
+  /** The month it covers ("YYYY-MM"), settled against that month's average price. */
+  month: string;
+  /** US gallons of jet fuel, or US dollars bought. */
+  amount: number;
+  /** Fixed price or strike: USD per gallon, or book currency per US dollar. */
+  price: number;
+  /** Option premium paid (book currency). */
+  premium?: number;
+  tradedAt: SimTime;
+}
+
+export interface Hedging {
+  policy: HedgePolicy;
+  contracts: HedgeContract[];
+  /** Cash held by the banks as security for open losses. */
+  collateral: number;
+  /** Prices of the running month (sums of daily prices) and monthly averages (newest last, 13 months). */
+  running: { month: string; fuel: number; fx: number; days: number };
+  monthly: { month: string; fuel: number; fx: number }[];
+  /** Settled months (newest last, 24): result of fuel and currency hedges and option premiums (book currency). */
+  settled: { month: string; fuel: number; fx: number; premiums: number }[];
+  /** Value of the open contracts at today's prices (book currency) at the last weekly valuation. */
+  value: number;
 }
 
 /** A loan or bond (Phase 10.1), in the airline's book currency. */
@@ -539,6 +571,8 @@ export interface PnlLines {
   loyalty?: number;
   /** Interest paid on loans and bonds minus interest earned on cash (Phase 10.1). */
   interest?: number;
+  /** Losses minus gains on fuel and currency hedges, including option premiums (Phase 10.2). */
+  hedging?: number;
 }
 
 /** One flight of the day as it really goes (Phase 9.1): scheduled UTC times, delays, what happened. */
@@ -793,7 +827,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -835,7 +869,10 @@ export type LedgerKind =
   | 'loan'
   | 'interest'
   | 'repayment'
-  | 'saleLeaseback';
+  | 'saleLeaseback'
+  // Hedging: option premiums, settlements, collateral (Phase 10.2).
+  | 'hedge'
+  | 'collateral';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {
@@ -913,9 +950,9 @@ export const MAX_PNL_WEEKS = 104;
 
 export const emptyPnl = (): PnlLines => ({
   revenue: 0, fuel: 0, crew: 0, maintenance: 0, airport: 0, handling: 0, navigation: 0, distribution: 0, lease: 0, overhead: 0,
-  service: 0, depreciation: 0, disposals: 0, disruption: 0, loyalty: 0, interest: 0,
+  service: 0, depreciation: 0, disposals: 0, disruption: 0, loyalty: 0, interest: 0, hedging: 0,
 });
 
 export const pnlCosts = (l: PnlLines): number =>
   l.fuel + l.crew + l.maintenance + l.airport + l.handling + l.navigation + l.distribution + l.lease + l.overhead +
-  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0) + (l.loyalty ?? 0) + (l.interest ?? 0);
+  (l.service ?? 0) + (l.depreciation ?? 0) + (l.disposals ?? 0) + (l.disruption ?? 0) + (l.loyalty ?? 0) + (l.interest ?? 0) + (l.hedging ?? 0);

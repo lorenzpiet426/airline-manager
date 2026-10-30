@@ -261,7 +261,10 @@
     "insolvencyWarning_one": "Cash below zero: {{count}} day left before the airline is insolvent.",
     "insolvencyWarning_other": "Cash below zero: {{count}} days left before the airline is insolvent.",
     "bankrupt": "{{name}} is insolvent: the game is over.",
-    "saleLeaseback": "{{registration}} sold to a lessor for {{amount}} and leased back at {{rent}} a month."
+    "saleLeaseback": "{{registration}} sold to a lessor for {{amount}} and leased back at {{rent}} a month.",
+    "hedgeGain": "Hedges for {{month}} settled: {{amount}} gained.",
+    "hedgeLoss": "Hedges for {{month}} settled: {{amount}} lost (incl. option premiums).",
+    "marginCall": "Margin call: the banks want {{amount}} more collateral for your hedges ({{total}} held in all)."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -444,7 +447,9 @@
     "loanTerm": "Choose one of the terms on offer.",
     "loanUnknown": "That loan doesn't exist.",
     "bondNoEarly": "Bonds can't be repaid early.",
-    "aircraftPledged": "This aircraft secures a loan: repay the loan first."
+    "aircraftPledged": "This aircraft secures a loan: repay the loan first.",
+    "hedgePolicyInvalid": "Shares between 0 and 100 %, a strike of 0–50 %.",
+    "hedgeDealInvalid": "Choose a month 1–24 ahead and an amount above zero."
   },
   "fleet": {
     "title": "Fleet",
@@ -638,7 +643,8 @@
       "disposals": "Aircraft sales, scrapping & lost deposits",
       "disruption": "Passenger compensation & care (cancelled flights)",
       "loyalty": "Loyalty programme (net)",
-      "interest": "Interest (paid on loans minus earned on cash)"
+      "interest": "Interest (paid on loans minus earned on cash)",
+      "hedging": "Hedging (losses minus gains, option premiums)"
     },
     "result": "Result",
     "margin": "Margin",
@@ -1450,7 +1456,54 @@
     "marketValue": "market value {{value}}",
     "pledged": "secures a loan",
     "slb": "Sell to a lessor and lease back",
-    "slbConfirm": "Sell {{registration}} to a lessor at its market value and lease it back for 8 years?"
+    "slbConfirm": "Sell {{registration}} to a lessor at its market value and lease it back for 8 years?",
+    "collateral": "Collateral for hedges",
+    "hedgesAsset": "Hedges (value)",
+    "hedgesLiability": "Hedges (losses at today's prices)"
+  },
+  "hedge": {
+    "marketTitle": "Fuel and dollar market",
+    "fuelSpot": "Jet fuel now (USD per gallon)",
+    "fuelAverage": "Average of the last 12 months",
+    "fuelForward": "Forward price (months ahead)",
+    "fxSpot": "{{currency}} per US dollar now",
+    "fxForward": "Forward rate (months ahead)",
+    "exposure": "Your spending a month",
+    "exposureFuel": "{{gallons}} gallons of fuel",
+    "exposureBoth": "{{gallons}} gallons of fuel · {{usd}} US dollars (fuel and leases)",
+    "marketNote": "Forward fuel prices drift from today's price back towards the last year's average; forward dollars follow the two central banks' interest rates. Banks add a small margin.",
+    "statusTitle": "Hedged so far",
+    "months": "Months ahead",
+    "fuelHedged": "Fuel hedged · average price",
+    "fxHedged": "Dollars hedged · average rate",
+    "value": "Value of the hedges at today's prices",
+    "collateral": "Cash held by the banks as collateral",
+    "settledTitle": "Settled months",
+    "settledRow": "fuel {{fuel}}, dollars {{fx}}, option premiums {{premiums}}",
+    "statusNote": "Each month is settled against its average price: a swap pays you when fuel ends up above its price and costs you when it ends up below; a call option only pays when fuel is above its strike, for its premium. The result is the Finance line \"Hedging\". When your swaps and forwards lose more than the banks allow for your rating, they want cash as collateral until the contracts end.",
+    "policyTitle": "Hedging policy",
+    "policyIntro": "How much of your expected spending your treasury fixes for each period ahead. Every month it tops up to these shares at that day's prices (it never sells what is already hedged). 0 everywhere = no hedging.",
+    "periodShare": "{{what}}, months {{from}}–{{to}} (%)",
+    "fuel": "Fuel",
+    "dollars": "Dollars",
+    "optionShare": "Of the fuel: call options (%, the rest swaps)",
+    "strike": "Option strike above the forward price (%)",
+    "savePolicy": "Save policy and top up",
+    "saved": "Saved: the treasury has topped up.",
+    "dealTitle": "A single deal",
+    "kind": "Contract",
+    "kinds": {
+      "fuelSwap": "Fuel swap (fixed price)",
+      "fuelCall": "Fuel call option (price cap)",
+      "fxForward": "Dollar forward (fixed rate)"
+    },
+    "ahead": "For the month … ahead (1–24)",
+    "amountUsd": "US dollars",
+    "amountGallons": "Gallons of fuel",
+    "quoteFx": "Rate: {{rate}} {{currency}} per dollar.",
+    "quoteSwap": "Fixed price: ${{price}} per gallon.",
+    "quoteCall": "Price cap ${{strike}} per gallon, premium {{premium}} paid now.",
+    "deal": "Make the deal"
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

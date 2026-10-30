@@ -28,6 +28,8 @@ import { ensureCrew, grantCrewForNeeds } from './crews';
 import { ensureLabour } from './unions';
 import { appointHeads } from './managers';
 import { joinPartnerProgramme } from './loyalty';
+import { startHedging } from './hedging';
+import { GROUP_POLICY } from '../data/hedging';
 import type { Aircraft, GameState, Route } from './state';
 import { addMonths, MINUTES_PER_DAY, MINUTES_PER_WEEK, simTime, startOfDay, toDate, yearOf, type SimTime } from './time';
 import { DAYS_ALL, hasDay, homeDepartures, isEastbound, seedOf, spreadDays } from './timetable';
@@ -172,6 +174,8 @@ export function takeOver(state: GameState, world: EngineWorld, realId: string): 
   // Its group's frequent-flyer programme (Phase 9.4).
   if (scenario.loyalty && yearOf(state.time) >= scenario.loyalty.from) joinPartnerProgramme(state, id, scenario.loyalty.name);
   // Its owner's backing for lenders (Phase 10.1).
+  // Its treasury hedges fuel and dollars like the group does (Phase 10.2); the ladder fills as the first months are booked.
+  startHedging(state, world, id, GROUP_POLICY);
   if (scenario.parentRating) airline.parentRating = yearOf(state.time) >= scenario.parentRating.from ? scenario.parentRating.after : scenario.parentRating.before;
   // Its own lounges at the hub (today's size, smaller with a smaller fleet in past years; already open).
   const scale = past ? Math.min(1, takeoverCashEur(scenario, yearOf(state.time)) / scenario.cashEur) : 1;

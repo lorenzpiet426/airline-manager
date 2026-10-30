@@ -130,6 +130,13 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
           amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }),
           rent: formatMoney(language, { amount: Number(p.rent), currency: 'USD' }),
         });
+      case 'hedgeSettled':
+        return t(Number(p.result) >= 0 ? 'msg.hedgeGain' : 'msg.hedgeLoss', { month: p.month, amount: formatMoney(language, { amount: Math.abs(Number(p.result)), currency: String(p.currency) }) });
+      case 'marginCall':
+        return t('msg.marginCall', {
+          amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }),
+          total: formatMoney(language, { amount: Number(p.total), currency: String(p.currency) }),
+        });
       case 'loyaltyMilestone':
         return t('msg.loyaltyMilestone', { name: p.name, members: formatNumber(language, Number(p.members)) });
       case 'flightDiverted':

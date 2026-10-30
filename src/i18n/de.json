@@ -261,7 +261,10 @@
     "insolvencyWarning_one": "Kontostand unter null: noch {{count}} Tag bis zur Zahlungsunfähigkeit.",
     "insolvencyWarning_other": "Kontostand unter null: noch {{count}} Tage bis zur Zahlungsunfähigkeit.",
     "bankrupt": "{{name}} ist zahlungsunfähig: Das Spiel ist vorbei.",
-    "saleLeaseback": "{{registration}} für {{amount}} an einen Leasinggeber verkauft und für {{rent}} im Monat zurückgeleast."
+    "saleLeaseback": "{{registration}} für {{amount}} an einen Leasinggeber verkauft und für {{rent}} im Monat zurückgeleast.",
+    "hedgeGain": "Absicherungen für {{month}} abgerechnet: {{amount}} Gewinn.",
+    "hedgeLoss": "Absicherungen für {{month}} abgerechnet: {{amount}} Verlust (inkl. Optionsprämien).",
+    "marginCall": "Nachschussforderung: Die Banken wollen {{amount}} mehr Sicherheit für deine Absicherungen (insgesamt {{total}})."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -444,7 +447,9 @@
     "loanTerm": "Wähle eine der angebotenen Laufzeiten.",
     "loanUnknown": "Diesen Kredit gibt es nicht.",
     "bondNoEarly": "Anleihen können nicht vorzeitig zurückgezahlt werden.",
-    "aircraftPledged": "Dieses Flugzeug sichert einen Kredit: Zahle zuerst den Kredit zurück."
+    "aircraftPledged": "Dieses Flugzeug sichert einen Kredit: Zahle zuerst den Kredit zurück.",
+    "hedgePolicyInvalid": "Anteile zwischen 0 und 100 %, ein Ausübungspreis von 0–50 %.",
+    "hedgeDealInvalid": "Wähle einen Monat 1–24 voraus und eine Menge über null."
   },
   "fleet": {
     "title": "Flotte",
@@ -638,7 +643,8 @@
       "disposals": "Flugzeugverkäufe, Verschrottung & verlorene Anzahlungen",
       "disruption": "Entschädigung & Betreuung von Passagieren (gestrichene Flüge)",
       "loyalty": "Vielfliegerprogramm (netto)",
-      "interest": "Zinsen (für Kredite bezahlt minus auf Kassa erhalten)"
+      "interest": "Zinsen (für Kredite bezahlt minus auf Kassa erhalten)",
+      "hedging": "Absicherung (Verluste minus Gewinne, Optionsprämien)"
     },
     "result": "Ergebnis",
     "margin": "Marge",
@@ -1450,7 +1456,54 @@
     "marketValue": "Marktwert {{value}}",
     "pledged": "sichert einen Kredit",
     "slb": "An einen Leasinggeber verkaufen und zurückleasen",
-    "slbConfirm": "{{registration}} zum Marktwert an einen Leasinggeber verkaufen und für 8 Jahre zurückleasen?"
+    "slbConfirm": "{{registration}} zum Marktwert an einen Leasinggeber verkaufen und für 8 Jahre zurückleasen?",
+    "collateral": "Sicherheiten für Absicherungen",
+    "hedgesAsset": "Absicherungen (Wert)",
+    "hedgesLiability": "Absicherungen (Verluste zu heutigen Preisen)"
+  },
+  "hedge": {
+    "marketTitle": "Treibstoff- und Dollarmarkt",
+    "fuelSpot": "Kerosin jetzt (USD pro Gallone)",
+    "fuelAverage": "Durchschnitt der letzten 12 Monate",
+    "fuelForward": "Terminpreis (Monate voraus)",
+    "fxSpot": "{{currency}} pro US-Dollar jetzt",
+    "fxForward": "Terminkurs (Monate voraus)",
+    "exposure": "Deine Ausgaben pro Monat",
+    "exposureFuel": "{{gallons}} Gallonen Treibstoff",
+    "exposureBoth": "{{gallons}} Gallonen Treibstoff · {{usd}} US-Dollar (Treibstoff und Leasing)",
+    "marketNote": "Terminpreise für Treibstoff wandern vom heutigen Preis zurück zum Durchschnitt des letzten Jahres; Dollar-Terminkurse folgen den Zinsen der beiden Notenbanken. Banken verlangen eine kleine Marge.",
+    "statusTitle": "Bisher abgesichert",
+    "months": "Monate voraus",
+    "fuelHedged": "Treibstoff abgesichert · Durchschnittspreis",
+    "fxHedged": "Dollar abgesichert · Durchschnittskurs",
+    "value": "Wert der Absicherungen zu heutigen Preisen",
+    "collateral": "Von den Banken als Sicherheit gehaltenes Geld",
+    "settledTitle": "Abgerechnete Monate",
+    "settledRow": "Treibstoff {{fuel}}, Dollar {{fx}}, Optionsprämien {{premiums}}",
+    "statusNote": "Jeder Monat wird mit seinem Durchschnittspreis abgerechnet: Ein Swap bringt dir Geld, wenn Treibstoff am Ende über seinem Preis liegt, und kostet dich, wenn er darunter liegt; eine Call-Option zahlt nur über ihrem Ausübungspreis, gegen ihre Prämie. Das Ergebnis ist die Finanzzeile „Absicherung\". Verlieren deine Swaps und Termingeschäfte mehr, als die Banken bei deinem Rating erlauben, verlangen sie Geld als Sicherheit, bis die Verträge enden.",
+    "policyTitle": "Absicherungsstrategie",
+    "policyIntro": "Wie viel deiner erwarteten Ausgaben deine Treasury für jeden Zeitraum im Voraus fixiert. Jeden Monat stockt sie zu den Preisen des Tages auf diese Anteile auf (Abgesichertes verkauft sie nie). Überall 0 = keine Absicherung.",
+    "periodShare": "{{what}}, Monate {{from}}–{{to}} (%)",
+    "fuel": "Treibstoff",
+    "dollars": "Dollar",
+    "optionShare": "Vom Treibstoff: Call-Optionen (%, der Rest Swaps)",
+    "strike": "Ausübungspreis über dem Terminpreis (%)",
+    "savePolicy": "Strategie speichern und aufstocken",
+    "saved": "Gespeichert: Die Treasury hat aufgestockt.",
+    "dealTitle": "Ein einzelnes Geschäft",
+    "kind": "Vertrag",
+    "kinds": {
+      "fuelSwap": "Treibstoff-Swap (fester Preis)",
+      "fuelCall": "Treibstoff-Call-Option (Preisdeckel)",
+      "fxForward": "Dollar-Termingeschäft (fester Kurs)"
+    },
+    "ahead": "Für den Monat … voraus (1–24)",
+    "amountUsd": "US-Dollar",
+    "amountGallons": "Gallonen Treibstoff",
+    "quoteFx": "Kurs: {{rate}} {{currency}} pro Dollar.",
+    "quoteSwap": "Fester Preis: {{price}} $ pro Gallone.",
+    "quoteCall": "Preisdeckel {{strike}} $ pro Gallone, Prämie {{premium}} sofort bezahlt.",
+    "deal": "Geschäft abschließen"
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

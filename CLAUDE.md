@@ -315,7 +315,7 @@ connections); **9.2** ✅ click any flight for full detail; **9.3** ✅ booking 
 ### Phase 10 — Finance and corporate
 Loans, bonds, fuel hedging, currency effects; stock market, IPO, share price, buying competitor shares,
 takeovers and mergers; board of directors, shareholder expectations, getting fired.
-Split (2026-10-30): **10.1** ✅ balance sheet + loans and bonds; **10.2** fuel and currency hedging; **10.3** shares: IPO,
+Split (2026-10-30): **10.1** ✅ balance sheet + loans and bonds; **10.2** ✅ fuel and currency hedging; **10.3** shares: IPO,
 share price, shareholders; **10.4** board, targets, getting fired; **10.5** buying other airlines' shares, takeovers, mergers.
 
 ### Phase 11 — Business models and partnerships
@@ -525,6 +525,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | Phase 10 order: **10.1 balance sheet + loans/bonds → 10.2 hedging → 10.3 shares/IPO → 10.4 board/fired → 10.5 takeovers** | Owner choice |
 | 2026-10-30 | 10.1: **real central bank rates (BIS) + credit-rating spread**; bank loans, aircraft finance, bonds, sale-and-leaseback; interest on cash; insolvency after 60 days below zero | Owner choice |
 | 2026-10-30 | 10.3/10.4 (planned): **realistic owners per scenario** (startup: you + investors; Austrian: state, then Lufthansa Group) setting targets; replaced as CEO if missed badly | Owner choice |
+| 2026-10-30 | 10.2: **fuel swaps + call options + dollar forwards**, a **rolling hedging ladder** (1–3 / 4–12 / 13–24 months) plus single deals, **collateral / margin calls** by rating | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1375,6 +1376,25 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: the model's balance sheet leaves out receivables, spare parts and the like (equity lower than real); bankruptcy
   only stops the game logically (flag + messages), the world keeps running; no taxes yet.
 - **Next:** 10.2 fuel and currency hedging.
+
+### 2026-10-30 — Session 35 (Phase 10.2: fuel and currency hedging) ✅
+- Owner decisions (recommended): swaps + options + forwards, rolling policy, collateral (§7).
+- Data `src/data/hedging.ts` (ladder, reversion, volatility, margins, collateral thresholds, `NO_POLICY`, `GROUP_POLICY`).
+- Engine `src/engine/hedging.ts`: `Airline.hedging` (`Hedging`: policy, `HedgeContract`s, collateral, running/monthly
+  averages, settled months, value; optional, no save version change), `forwardFuel`, `forwardFx`, `callPremium`,
+  `market` (fuel average from real history / the game's weekly prices), `exposure`, `topUp`, `valuation`,
+  `hedgingDailyStep` (monthly settlement + top-up, weekly valuation + collateral), `setHedgePolicy`, `hedgeDeal`,
+  `startHedging` (Austrian takeover: the group's ladder). P&L line `hedging`, ledger kinds `hedge`/`collateral`, messages
+  `hedgeSettled`/`marginCall`; balance sheet shows collateral and the hedges' value. Commands `SetHedgePolicy`, `HedgeDeal`.
+- UI: Finance → hedging: market (fuel spot, average, forward curve, dollar forwards, monthly spending), hedged share and
+  average price per ladder period, value and collateral, settled months, policy form, single deal with quote; EN/DE.
+- Tests: 231 (`hedging.test.ts`: forward/option pricing, ladder fill + settlement through the 2026 spike, margin call,
+  Austrian group policy).
+- Verified in browser (Austrian save): policy 80/60/30 % fuel and 80/60/20 % dollars filled, forward curve $5.04 → $3.85,
+  phone 375 px.
+- Known: no collars or put options; the treasury never closes hedges early; AI airlines don't hedge (their calibrated
+  costs already include it).
+- **Next:** 10.3 shares: IPO, share price, shareholders.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
