@@ -29,7 +29,7 @@ import { applyCommand, draftRoute, fareRange, type Command } from './commands';
 import { book, postMessage } from './core';
 import { crewShortfall } from './crews';
 import { priceLevelAt } from './era';
-import { routeWeek, totalCosts, WEEKLY_AVAILABLE_HOURS, roundTripHours, wageFactor } from './economics';
+import { crewCostPerDayUsd, routeWeek, totalCosts, WEEKLY_AVAILABLE_HOURS, roundTripHours, wageFactor } from './economics';
 import { bookPnl, dailyDepreciation, earlyReturnFeeUsd, extensionRentUsd } from './fleet';
 import { distanceKm } from './geo';
 import { groundContext } from './hub';
@@ -39,9 +39,9 @@ import { planFor } from './operations';
 import { aircraftHours, pairsOfAircraft, pairsOfRoute, specFlights, validateSpecs, type FlightSpec } from './schedule';
 import type { Aircraft, Airline, ClassFares, GameState, Management, Manager, Proposal, Route, WageTalks } from './state';
 import { MINUTES_PER_DAY, toDate, yearOf, type SimTime } from './time';
-import { DAYS_ALL } from './timetable';
+import { dayCount } from './timetable';
 import { routeTransfers } from './transfers';
-import { preview, routeOptions, seasonAhead, waveRebuild, type PlanOption } from './networkPlanning';
+import { daysText, hhmm, preview, routeOptions, seasonAhead, waveRebuild, type PlanOption } from './networkPlanning';
 import { closureAt, conditionsOf } from './worldEvents';
 import { loyaltyPull } from './loyalty';
 import type { EngineWorld } from './world';
@@ -314,14 +314,18 @@ function recentResultUsd(state: GameState, airline: Airline, routeId: string, we
   return (rows.reduce((n, r) => n + r!.revenue - r!.directCosts, 0) / rows.length) * usdPerBook(state, airline.currency);
 }
 
+/** Day patterns a planner tries for a new route: daily, weekdays (business), Friday–Monday (leisure), three or four
+ * days a week (thin routes). Bit 0 = Monday. */
+const NEW_ROUTE_DAYS = [0b1111111, 0b0011111, 0b1110001, 0b0010101, 0b0101010, 0b1011001];
+
 /**
- * The timetable a network planner proposes for a new route: every departure time the aircraft is free for (05:30–22:00,
- * every 30 minutes) is tried in the market model — travellers' preferred times, the competitors' departures, arrival
- * times — and the most profitable is chosen. The head of network judges each time with an error by skill (Phase 8.3).
+ * The timetable a network planner proposes for a new route: day patterns (daily, weekdays, Friday–Monday, three or four
+ * days), departure times every hour from 05:30 to 22:00 and — when the aircraft has the hours — a morning and an evening
+ * flight. Each is tried in the market model (travellers' preferred times and days, competitors, arrivals) and weighed
+ * against the crew hours it takes; the head judges with an error by skill and picks the best timetable that fits the
+ * aircraft's week (Phase 8.3, reworked with network planning).
  */
-function bestSpecs(state: GameState, world: EngineWorld, route: Route, a: Aircraft, perWeek: number, m: Manager): FlightSpec[] | null {
-  const order = [0, 2, 4, 6, 1, 3, 5];
-  const days = perWeek >= 7 ? DAYS_ALL : order.slice(0, perWeek).reduce((mask, d) => mask | (1 << d), 0);
+function newRouteSpecs(state: GameState, world: EngineWorld, route: Route, a: Aircraft, maxRotations: number, m: Manager): FlightSpec[] | null {
   const type = getAircraftType(a.typeId);
   const turn = TURNAROUND_MIN[type.category];
   const from = world.airportById.get(route.originId);
@@ -331,17 +335,39 @@ function bestSpecs(state: GameState, world: EngineWorld, route: Route, a: Aircra
   const conditions = conditionsOf(state, world);
   const age = Math.max(0, yearOf(state.time) - a.builtYear);
   const sigma = noiseOf(m, m.specialty === (type.category === 'widebody' ? 'longHaul' : 'shortHaul'));
-  let best: { specs: FlightSpec[]; score: number } | null = null;
-  for (let dep = 5 * 60 + 30; dep <= 22 * 60; dep += 30) {
-    const specs: FlightSpec[] = [{ aircraftId: a.id, dep, days, groundMin: turn }];
-    if (validateSpecs(state, world, route, specs)) continue;
-    const flights = specFlights(world, route, a, age, specs[0]!, state.time);
-    const w = routeWeek(world, from, to, { type, seats: a.seats, cabin: a.cabin, frequency: perWeek, fareFactor: 1, ageYears: age, rampUp: 1, flights }, date, { ai: state.ai, conditions });
-    const result = w.revenue - totalCosts(w.costs);
-    const score = result + gauss(`time|${route.destinationId}|${dep}|${state.time}`) * sigma * 0.05 * w.revenue;
-    if (!best || score > best.score) best = { specs, score };
+  // Crews cost by the hour flown: a pattern with more flights must earn its crews.
+  const crewPerHour = (crewCostPerDayUsd(world, type, a.seats, from.country, a.cabin) * 7) / WEEKLY_AVAILABLE_HOURS[type.category];
+  const rotation = roundTripHours(type, route.distanceKm);
+  const candidates: { specs: FlightSpec[]; score: number }[] = [];
+  const consider = (specs: FlightSpec[]) => {
+    const flights = specs.flatMap((sp) => specFlights(world, route, a, age, sp, state.time));
+    const weekly = specs.reduce((n, sp) => n + dayCount(sp.days), 0);
+    if (weekly > maxRotations) return;
+    const w = routeWeek(world, from, to, { type, seats: a.seats, cabin: a.cabin, frequency: weekly, fareFactor: 1, ageYears: age, rampUp: 1, flights }, date, { ai: state.ai, conditions });
+    const result = w.revenue - totalCosts(w.costs) - crewPerHour * rotation * weekly;
+    const key = specs.map((sp) => `${sp.dep}/${sp.days}`).join('+');
+    candidates.push({ specs, score: result + gauss(`time|${route.destinationId}|${key}|${state.time}`) * sigma * 0.05 * Math.max(1, w.revenue) });
+  };
+  for (const days of NEW_ROUTE_DAYS) {
+    for (let dep = 5 * 60 + 30; dep <= 22 * 60; dep += 60) consider([{ aircraftId: a.id, dep, days, groundMin: turn }]);
   }
-  return best?.specs ?? null;
+  // Twice a day: a morning and an evening flight (daily or on weekdays).
+  for (const days of [NEW_ROUTE_DAYS[0]!, NEW_ROUTE_DAYS[1]!]) {
+    for (let am = 6 * 60; am <= 10 * 60; am += 60) {
+      for (let pm = 15 * 60; pm <= 20 * 60; pm += 60) {
+        consider([
+          { aircraftId: a.id, dep: am, days, groundMin: turn },
+          { aircraftId: a.id, dep: pm, days, groundMin: turn },
+        ]);
+      }
+    }
+  }
+  // The best one that fits the aircraft's week (and its other flights).
+  for (const c of candidates.sort((x, y) => y.score - x.score)) {
+    if (c.score <= 0) break;
+    if (!validateSpecs(state, world, route, c.specs)) return c.specs;
+  }
+  return null;
 }
 
 // ─── Network: the timetable of routes already flown ─────────────────────────────
@@ -471,11 +497,12 @@ function networkReview(state: GameState, world: EngineWorld, airline: Airline, m
   const detailed = state.options.scheduling === 'detailed';
   let command: Command;
   let freq = best.freq;
+  let planned: FlightSpec[] | null = null;
   if (detailed) {
-    freq = Math.min(7, freq);
-    const specs = bestSpecs(state, world, draftRoute(airline.id, origin, best.d), a, freq, m);
-    if (!specs) return;
-    command = { type: 'OpenRoute', airlineId: airline.id, payload: { destinationId: best.d.id, originId, aircraftId: a.id, frequency: freq, fareFactor: 1, flights: specs } };
+    planned = newRouteSpecs(state, world, draftRoute(airline.id, origin, best.d), a, best.freq, m);
+    if (!planned) return;
+    freq = planned.reduce((n, sp) => n + dayCount(sp.days), 0);
+    command = { type: 'OpenRoute', airlineId: airline.id, payload: { destinationId: best.d.id, originId, aircraftId: a.id, frequency: freq, fareFactor: 1, flights: planned } };
   } else {
     command = { type: 'OpenRoute', airlineId: airline.id, payload: { destinationId: best.d.id, originId, aircraftId: a.id, frequency: freq, fareFactor: 1 } };
   }
@@ -492,6 +519,10 @@ function networkReview(state: GameState, world: EngineWorld, airline: Airline, m
     command,
     forecastUsd: Math.round(best.est),
     actualUsd: Math.round(truth.result),
+    // The planned flights, as in a timetable package's preview.
+    ...(planned
+      ? { changes: planned.map((sp) => ({ route: `${code(world, originId)}–${code(world, best!.d.id)}`, flight: `${airline.iata} …`, before: '', after: `${hhmm(sp.dep)} ${daysText(sp.days)} ${a.registration}` })) }
+      : {}),
   });
 }
 

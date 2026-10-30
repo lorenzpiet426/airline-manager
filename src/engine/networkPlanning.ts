@@ -44,7 +44,7 @@ const DAY_SETS = [DAYS_ALL, WORKDAYS, (1 << 4) | (1 << 5) | (1 << 6)];
 const NEW_DEPS = [7 * 60, 13 * 60, 19 * 60];
 
 export const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
-const daysText = (days: number) => [0, 1, 2, 3, 4, 5, 6].map((d) => (days & (1 << d) ? String(d + 1) : '·')).join('');
+export const daysText = (days: number) => [0, 1, 2, 3, 4, 5, 6].map((d) => (days & (1 << d) ? String(d + 1) : '·')).join('');
 
 export const specsOf = (state: GameState, routeId: string): FlightSpec[] =>
   pairsOfRoute(state, routeId).map((p) => ({ id: p.id, aircraftId: p.aircraftId, dep: p.dep, days: p.days, groundMin: p.groundMin }));

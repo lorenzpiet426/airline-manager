@@ -132,9 +132,12 @@ describe('managers (8.3)', () => {
     const p = a().mgmt!.proposals.find((x) => x.kind === 'openRoute');
     expect(p).toBeDefined();
     expect(p!.params.registration).toBe('OE-LT2');
-    // The departure time is chosen by the forecast, not simply the first free slot of the day (05:30).
-    const flights = (p!.command as { payload: { flights?: { dep: number }[] } }).payload.flights;
-    if (flights) expect(flights[0]!.dep).not.toBe(5 * 60 + 30);
+    // The timetable is chosen by the forecast (days, times, once or twice a day), shown in the proposal.
+    const flights = (p!.command as { payload: { flights?: { dep: number; days: number }[] } }).payload.flights!;
+    expect(flights.length).toBeGreaterThan(0);
+    expect(p!.changes!.length).toBe(flights.length);
+    // Not simply one flight a day at the first free time.
+    expect(flights.length > 1 || flights[0]!.dep !== 5 * 60 + 30).toBe(true);
     expect(applyCommand(state, world, { type: 'ApproveProposal', airlineId, payload: { id: p!.id } }).ok).toBe(true);
     expect(Object.values(state.routes).length).toBe(2);
   }, slow(180_000));

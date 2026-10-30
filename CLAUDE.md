@@ -1607,6 +1607,16 @@ education", forbid making the data available to others (§3 iii) and require a w
   to Crews.
 - **Next:** 11.2 business model.
 
+### 2026-10-30 — Session 46 (fix: new-route proposals always daily at the earliest time) ✅
+- Owner report: the network head still proposed 7 flights a week at the earliest slot. Cause: new routes were capped at one
+  daily pair (`bestSpecs`). Now `newRouteSpecs` (managers.ts) tries 6 day patterns (daily, Mon–Fri, Fri–Mon, Mon/Wed/Fri,
+  Tue/Thu/Sat, 4 days) × departures every hour 05:30–22:00, plus twice daily (morning 06–10 × evening 15–20, daily or
+  weekdays), scored by the market model minus crew cost per block hour (`crewCostPerDayUsd` × 7 / weekly hours), with the
+  head's error; the best valid one is proposed with a preview of its flights. Simple scheduling still lets the game place
+  times (by design).
+- Example (test): VIE–ALG 08:00 + 15:00 daily on OE-LT2.
+- Tests: 260.
+
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.
