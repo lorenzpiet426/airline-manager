@@ -1553,6 +1553,22 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Tests: 256 (network test checks the time isn't just the first free slot).
 - **Next:** 11.2 business model.
 
+### 2026-10-30 — Session 43 (network head reworks timetables) ✅
+- Owner asked for retiming, frequency changes and connection-aware planning by the head of network.
+- `managers.ts` `timetableReview` (monthly with the network review, Detailed scheduling, 1–3 routes by skill, round
+  robin): candidates = moving one of the first two flights by ±30/60/120 min; if load ≥ 85 % (last 4 weeks) extra days
+  (Fri/Sun/Mon) or a daily pair on a free aircraft of the same category at the station; if load ≤ 55 % one weekday less
+  (Tue/Wed/Sat) or a whole pair. Each candidate is tried on the game (`setRoutePairs`, then restored) and scored by
+  `networkScore` = route result without its connecting passengers + value of all connecting passengers at its station
+  (`connectionsValue`: prorated yield × market fare). The head picks the best by their judgement (error by skill), proposes
+  `retime` / `addFlights` / `cutFlights` (an `UpdateRoute` with the whole timetable) when the gain is ≥ 1 % of revenue.
+- Cost: ≈ 1.4 s per review day for Austrian (124 routes, earlier measurement with 4 routes); limited to 1–3 routes a month.
+- Austrian January example: OS 123 VIE–YUL 13:00 → 15:00 (connections), VIE–BOS +1/week, VIE–DXB −1/week.
+- Tests: 257 (late flight moved earlier with a positive effect, approved).
+- Known: slots at slot-coordinated airports are only checked when the proposal is approved; Simple scheduling gets no
+  timetable proposals; competitors' reactions aren't part of the forecast.
+- **Next:** 11.2 business model.
+
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
   map toggle, in-game "Data sources" screen with all credits and source tags), save size → IndexedDB.

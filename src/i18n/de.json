@@ -1198,7 +1198,7 @@
       "hr": "Personal"
     },
     "does": {
-      "network": "Schaut jeden Monat auf Strecken, die seit zwei Monaten Verlust machen (schlägt vor, sie zu schließen), und auf Flugzeuge mit freien Stunden (schlägt eine neue Strecke vor, die in den Flugplan passt).",
+      "network": "Jeden Monat: überarbeitet den Flugplan einiger Strecken (mehr mit einem besseren Leiter) – verlegt Flüge auf Zeiten, die sich besser verkaufen und mehr Anschlüsse am Drehkreuz erreichen, fügt Flüge hinzu, wo sie voll sind, streicht Wochentage, wo sie leer fliegen (detaillierte Planung); schlägt vor, Strecken zu schließen, die seit zwei Monaten Geld verlieren, und eine neue Strecke für ein Flugzeug mit freien Stunden, zur Zeit, die sich am besten verkauft.",
       "revenue": "Prüft jede Woche ein paar Strecken (mehr mit einer besseren Leitung) und schlägt Preise vor, die mehr einbringen sollten.",
       "fleet": "Jeden Monat: Leasingverträge, die innerhalb eines Jahres enden (verlängern, wenn das Flugzeug mehr verdient als die neue Miete), und Flugzeuge, die seit sechs Wochen stehen (zurückgeben oder verkaufen).",
       "maintenance": "Schlägt einen eigenen Hangar vor, wenn er Geld spart. Eine gute Leitung verhindert auch technische Störungen (Zuverlässigkeitstechnik).",
@@ -1267,7 +1267,12 @@
       "sellAircraft_other": "{{registration}} verkaufen: steht seit {{count}} Wochen.",
       "buildHangar": "Eigenen {{size}}-Hangar am Drehkreuz bauen ({{cost}}).",
       "crewPlan": "Crewplan umsetzen: etwa {{pilots}} Piloten und {{cabin}} Flugbegleiter noch einzustellen oder zu schulen.",
-      "wageOffer": "{{union}} ({{group}}) {{offer}} pro Jahr anbieten (Forderung: {{demand}})."
+      "wageOffer": "{{union}} ({{group}}) {{offer}} pro Jahr anbieten (Forderung: {{demand}}).",
+      "retime": "{{flight}} ({{route}}) von {{from}} auf {{to}} verlegen: mehr Reisende und Anschlüsse am Drehkreuz.",
+      "addFlights_one": "{{route}} einmal mehr pro Woche fliegen: Die Flüge sind voll.",
+      "addFlights_other": "{{route}} {{count}}-mal mehr pro Woche fliegen: Die Flüge sind voll.",
+      "cutFlights_one": "{{route}} einmal weniger pro Woche fliegen: Die Flüge sind zu leer.",
+      "cutFlights_other": "{{route}} {{count}}-mal weniger pro Woche fliegen: Die Flüge sind zu leer."
     }
   },
   "board": {

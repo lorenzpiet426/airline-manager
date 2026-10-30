@@ -139,6 +139,24 @@ describe('managers (8.3)', () => {
     expect(Object.values(state.routes).length).toBe(2);
   }, slow(180_000));
 
+  it('the head of network planning reworks the timetable: a late flight is moved to a better time', () => {
+    const { state, airlineId, a } = airline();
+    // Vienna–Málaga at 21:30 (back in the middle of the night), flown for two months already.
+    const route = Object.values(state.routes)[0]!;
+    const pair = Object.values(state.flights).find((p) => p.routeId === route.id)!;
+    pair.dep = 21 * 60 + 30;
+    route.openedAt -= 60 * DAY;
+    hire(state, airlineId, 'network', 5);
+    advance(state, world, simTime(2026, 4, 4));
+    const p = a().mgmt!.proposals.find((x) => x.kind === 'retime');
+    expect(p).toBeDefined();
+    expect(p!.params.from).toBe('21:30');
+    expect(String(p!.params.to) < '21:30').toBe(true);
+    expect(p!.actualUsd!).toBeGreaterThan(0);
+    expect(applyCommand(state, world, { type: 'ApproveProposal', airlineId, payload: { id: p!.id } }).ok).toBe(true);
+    expect(state.flights[pair.id]!.dep).not.toBe(21 * 60 + 30);
+  }, slow(180_000));
+
   it('a good head of HR finds more recruits; a taken-over airline brings its heads', () => {
     const { state, airlineId, a } = airline();
     const before = hiringQuota(state, world, a(), 'LOWW').cabin;

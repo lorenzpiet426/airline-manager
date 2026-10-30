@@ -1198,7 +1198,7 @@
       "hr": "Human resources"
     },
     "does": {
-      "network": "Looks every month at routes that have lost money for two months (proposes closing them) and at aircraft with unused hours (proposes a new route that fits the timetable).",
+      "network": "Every month: reworks the timetable of a few routes (more with a better head) — moves flights to times that sell better and catch more connections at the hub, adds flights where they are full, drops weekdays where they fly empty (Detailed scheduling); proposes closing routes that have lost money for two months, and a new route for an aircraft with unused hours, at the time that sells best.",
       "revenue": "Reviews a few routes every week (more with a better head) and proposes fares that should earn more.",
       "fleet": "Every month: leases ending within a year (extend them if the aircraft earns more than the new rent) and aircraft standing idle for six weeks (give back or sell).",
       "maintenance": "Proposes an own hangar when it would save money. A good head also prevents technical failures (reliability engineering).",
@@ -1267,7 +1267,12 @@
       "sellAircraft_other": "Sell {{registration}}: idle for {{count}} weeks.",
       "buildHangar": "Build an own {{size}} hangar at the hub ({{cost}}).",
       "crewPlan": "Run the crew plan: about {{pilots}} pilots and {{cabin}} cabin crew still to hire or train.",
-      "wageOffer": "Offer {{union}} ({{group}}) {{offer}} a year (they ask for {{demand}})."
+      "wageOffer": "Offer {{union}} ({{group}}) {{offer}} a year (they ask for {{demand}}).",
+      "retime": "Move {{flight}} ({{route}}) from {{from}} to {{to}}: more travellers and connections at the hub.",
+      "addFlights_one": "Fly {{route}} once more a week: the flights are full.",
+      "addFlights_other": "Fly {{route}} {{count}} times more a week: the flights are full.",
+      "cutFlights_one": "Fly {{route}} once less a week: the flights are too empty.",
+      "cutFlights_other": "Fly {{route}} {{count}} times less a week: the flights are too empty."
     }
   },
   "board": {
