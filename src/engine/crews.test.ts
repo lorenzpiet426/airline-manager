@@ -13,7 +13,7 @@ import type { Airport, Country } from '../data/types';
 import { advance } from './advance';
 import { economyCabin } from './cabins';
 import { applyCommand } from './commands';
-import { crewNeeds, crewPayPerDayUsd, crewShortages, hiringQuota } from './crews';
+import { crewNeeds, crewPayPerDayUsd, crewShortages, ensureCrew, hiringQuota } from './crews';
 import { crewCostPerDayUsd } from './economics';
 import { createGame } from './game';
 import { buildRealAirlines } from './realAirlines';
@@ -77,6 +77,27 @@ describe('crews (8.1)', () => {
     expect(state.messages.some((m) => m.kind === 'crewReady')).toBe(true);
   }, slow(120_000));
 
+  it('hires ahead: an aircraft arriving in seven weeks gets its crews before it has a route', () => {
+    const { state, airlineId } = startup();
+    const T2 = state.aircraft.T2!;
+    T2.status = 'delivering';
+    T2.deliveryAt = state.time + 49 * 24 * 60;
+    delete state.aircraft.T1;
+    // Nothing flies yet: today's timetable needs nobody, the plan counts the arriving aircraft.
+    expect(crewNeeds(state, airlineId, world).size).toBe(0);
+    const plan = crewNeeds(state, airlineId, world, true).get('LOWW')!;
+    expect(plan.pilots.get('A320')!.captains).toBeGreaterThanOrEqual(4);
+    expect(plan.cabin).toBeGreaterThanOrEqual(12);
+    // The HR department starts hiring and training right away (after leasing, buying, ordering; and every Monday).
+    ensureCrew(state, world);
+    // Crews can also be hired by hand for a type without routes.
+    expect(applyCommand(state, world, { type: 'HireCrew', airlineId, payload: { station: 'LOWW', role: 'firstOfficer', family: 'A320', count: 1 } }).ok).toBe(true);
+    expect(applyCommand(state, world, { type: 'RunCrewPlan', airlineId, payload: {} }).ok).toBe(true);
+    const pipeline = state.airlines[airlineId]!.crew!.stations.LOWW!.pipeline;
+    expect(pipeline.some((b) => b.role === 'cabin')).toBe(true);
+    expect(pipeline.some((b) => b.family === 'A320')).toBe(true);
+  });
+
   it('the job market: few pilots in a shortage, more for better pay', () => {
     expect(pilotMarket(2023)).toBeLessThan(0.6); // shortage
     expect(pilotMarket(2021)).toBeGreaterThan(1.5); // after COVID
@@ -90,6 +111,7 @@ describe('crews (8.1)', () => {
 
   it('upgrades and type ratings take pilots off the line for weeks and cost money', () => {
     const { state, airlineId } = startup();
+    delete state.aircraft.T2; // only the A320 that flies (an idle one would get crews planned too)
     delete state.airlines[airlineId]!.crew; // the first timetable gets its crews (as in old games)
     expect(openMalaga(state, airlineId).ok).toBe(true);
     const s = state.airlines[airlineId]!.crew!.stations.LOWW!;
@@ -104,6 +126,7 @@ describe('crews (8.1)', () => {
 
   it('salaries stay about what crews cost before (calibration)', () => {
     const { state, airlineId } = startup();
+    delete state.aircraft.T2; // one A320, as the old formula
     delete state.airlines[airlineId]!.crew;
     expect(openMalaga(state, airlineId).ok).toBe(true);
     const airline = state.airlines[airlineId]!;

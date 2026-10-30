@@ -36,12 +36,12 @@ import { premiumCrew } from './cabins';
 import { book, postMessage } from './core';
 import { bookPnl } from './fleet';
 import { addExperience } from './reputation';
-import { CABIN_CREW_COST_USD, PILOT_COST_USD, wageFactor } from './economics';
+import { CABIN_CREW_COST_USD, PILOT_COST_USD, WEEKLY_AVAILABLE_HOURS, wageFactor } from './economics';
 import { priceLevelAt } from './era';
 import { money } from './money';
 import { random } from './rng';
 import { pairBlocks, pairDepartureUtc } from './schedule';
-import type { Airline, AirlineCrew, CrewBatch, CrewRole, FlightPair, GameState, Route, StationCrew } from './state';
+import type { Aircraft, Airline, AirlineCrew, CrewBatch, CrewRole, FlightPair, GameState, Route, StationCrew } from './state';
 import { MINUTES_PER_DAY, startOfDay, toDate, type SimTime } from './time';
 import { hasDay } from './timetable';
 import { groupMood, groupPay } from './unions';
@@ -71,17 +71,31 @@ export interface StationNeed {
   cabin: number;
 }
 
-/** Crew the timetable needs at each station (only aircraft in service), per licence family. */
-export function crewNeeds(state: GameState, airlineId: string, world: EngineWorld, includeDelivering = false): Map<string, StationNeed> {
+/** How far ahead crews are planned: the longest way into the cockpit (hiring + a type rating), so pilots are ready when
+ * an aircraft arrives, as airlines recruit for their deliveries. */
+export const PLAN_AHEAD_DAYS = (HIRE_WEEKS + TYPE_RATING_WEEKS) * 7;
+/** Aircraft without a timetable yet are planned at this share of their category's weekly hours. */
+const IDLE_PLAN_UTILISATION = 0.75;
+
+/**
+ * Crew needed at each station per licence family. Without `ahead`: what today's timetable needs (aircraft in service).
+ * With `ahead` (planning): also aircraft arriving within PLAN_AHEAD_DAYS, and aircraft without flights yet at a typical
+ * utilisation, so crews can be hired and trained before the aircraft flies.
+ */
+export function crewNeeds(state: GameState, airlineId: string, world: EngineWorld, ahead = false, idle = ahead): Map<string, StationNeed> {
   const airline = state.airlines[airlineId];
   const needs = new Map<string, StationNeed>();
   if (!airline) return needs;
   const hours = new Map<string, { capt: number; fo: number; cabin: number; long: boolean }>();
+  const horizon = state.time + PLAN_AHEAD_DAYS * MINUTES_PER_DAY;
+  const soon = (a: Aircraft) => a.status === 'delivering' && a.deliveryAt <= horizon;
+  const scheduled = new Set<string>();
   for (const pair of Object.values(state.flights)) {
     if (pair.airlineId !== airlineId) continue;
     const route = state.routes[pair.routeId];
     const aircraft = state.aircraft[pair.aircraftId];
-    if (!route || !aircraft || (aircraft.status !== 'active' && !(includeDelivering && aircraft.status === 'delivering'))) continue;
+    if (!route || !aircraft || (aircraft.status !== 'active' && !(ahead && soon(aircraft)))) continue;
+    scheduled.add(aircraft.id);
     const type = getAircraftType(aircraft.typeId);
     const { out, back } = pairBlocks(world, aircraft.typeId, route);
     const days = [0, 1, 2, 3, 4, 5, 6].filter((d) => hasDay(pair.days, d)).length;
@@ -96,6 +110,23 @@ export function crewNeeds(state: GameState, airlineId: string, world: EngineWorl
       h.cabin += (block / 60) * cabinCrewPerFlight(type, aircraft.seats, aircraft.cabin) * days;
     }
     if (type.category === 'widebody') h.long = true;
+  }
+  if (idle) {
+    // Aircraft without flights yet (in service, or arriving soon): planned at a typical week.
+    for (const aircraft of Object.values(state.aircraft)) {
+      if (aircraft.airlineId !== airlineId || scheduled.has(aircraft.id) || !(aircraft.status === 'active' || soon(aircraft))) continue;
+      const type = getAircraftType(aircraft.typeId);
+      const weekly = WEEKLY_AVAILABLE_HOURS[type.category] * IDLE_PLAN_UTILISATION;
+      const long = type.category === 'widebody';
+      const p = pilotsPerFlight(long ? 9.5 * 60 : 2 * 60);
+      const captains = Math.floor(p / 2);
+      const key = `${stationOf(airline, aircraft)}|${ratingFamily(aircraft.typeId)}`;
+      const h = hours.get(key) ?? hours.set(key, { capt: 0, fo: 0, cabin: 0, long: false }).get(key)!;
+      h.capt += weekly * captains;
+      h.fo += weekly * (p - captains);
+      h.cabin += weekly * cabinCrewPerFlight(type, aircraft.seats, aircraft.cabin);
+      if (long) h.long = true;
+    }
   }
   for (const [key, h] of hours) {
     const [station, family] = key.split('|') as [string, string];
@@ -370,7 +401,8 @@ export function crewShortfall(state: GameState, world: EngineWorld, airlineId: s
 export function planCrew(state: GameState, world: EngineWorld, airlineId: string): void {
   const airline = state.airlines[airlineId];
   if (!airline?.crew) return;
-  for (const [station, need] of crewNeeds(state, airlineId, world, true)) {
+  // First the timetable (with upgrades and retraining of the crews there are).
+  for (const [station, need] of crewNeeds(state, airlineId, world, true, false)) {
     const s = stationCrew(airline.crew, station);
     const coming = (role: CrewRole, family: string | null) => s.pipeline.filter((b) => b.role === role && b.family === family).reduce((n, b) => n + b.count, 0);
     // Cabin crew.
@@ -410,6 +442,28 @@ export function planCrew(state: GameState, world: EngineWorld, airlineId: string
         const n = Math.min(foShort, q);
         if (n > 0) hireCrew(state, world, airlineId, station, 'firstOfficer', family, n);
       }
+    }
+  }
+  // Then aircraft without flights yet and those arriving soon: hired from the market only, so the crews flying today
+  // aren't taken off the line for them.
+  for (const [station, need] of crewNeeds(state, airlineId, world, true, true)) {
+    const s = stationCrew(airline.crew, station);
+    const coming = (role: CrewRole, family: string | null) => s.pipeline.filter((b) => b.role === role && b.family === family).reduce((n, b) => n + b.count, 0);
+    const cabinShort = planned(need.cabin) - s.cabin - coming('cabin', null);
+    if (cabinShort > 0) {
+      const q = hiringQuota(state, world, airline, station).cabin;
+      if (q > 0) hireCrew(state, world, airlineId, station, 'cabin', null, Math.min(cabinShort, q));
+    }
+    for (const [family, p] of need.pilots) {
+      const have = s.pilots[family] ?? { captains: 0, firstOfficers: 0 };
+      const captShort = planned(p.captains) - have.captains - coming('captain', family);
+      const foShort = planned(p.firstOfficers) - have.firstOfficers - coming('firstOfficer', family);
+      const q = hiringQuota(state, world, airline, station);
+      const capt = Math.min(Math.max(0, captShort), q.captains, q.pilots);
+      if (capt > 0) hireCrew(state, world, airlineId, station, 'captain', family, capt);
+      // Captains the market doesn't have come as first officers (upgraded later, once they fly).
+      const fo = Math.min(Math.max(0, foShort) + Math.max(0, captShort - capt), hiringQuota(state, world, airline, station).pilots);
+      if (fo > 0) hireCrew(state, world, airlineId, station, 'firstOfficer', family, fo);
     }
   }
 }

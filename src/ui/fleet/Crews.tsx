@@ -10,9 +10,10 @@ import {
   TYPE_RATING_WEEKS,
   UPGRADE_USD,
   UPGRADE_WEEKS,
+  ratingFamily,
 } from '../../data/crews';
 import { eraLevels, fractionalYearOf } from '../../data/eras';
-import { stationsOf } from '../../engine/bases';
+import { stationOf, stationsOf } from '../../engine/bases';
 import type { CommandError } from '../../engine/commands';
 import { crewNeeds, crewPayPerDayUsd, crewShortages, crewTotals, hiringQuota, type StationNeed } from '../../engine/crews';
 import { priceLevelAt } from '../../engine/era';
@@ -55,7 +56,8 @@ export function CrewTab({ game, airline }: { game: GameState; airline: Airline }
   const world = useEngineWorld();
   const [error, setError] = useState<CommandError | null>(null);
   if (!world) return null;
-  const needs = crewNeeds(game, airline.id, world);
+  // Planned needs: today's timetable plus aircraft arriving soon or without flights yet (crews hired ahead).
+  const needs = crewNeeds(game, airline.id, world, true);
   const shortages = crewShortages(game, world, airline.id);
   const totals = crewTotals(airline);
   const costLevel = eraLevels(fractionalYearOf(toDate(game.time))).costs;
@@ -129,7 +131,11 @@ function StationPanel({
   const { t } = useTranslation();
   const { language } = useSettings();
   const s: StationCrew = airline.crew?.stations[station] ?? { pilots: {}, cabin: 0, pay: 1, pipeline: [] };
-  const families = [...new Set([...(need ? need.pilots.keys() : []), ...Object.keys(s.pilots)])].sort();
+  // Every licence family of the fleet stationed here (aircraft on order too), so crews can be hired before they fly.
+  const fleetFamilies = Object.values(game.aircraft)
+    .filter((a) => a.airlineId === airline.id && stationOf(airline, a) === station)
+    .map((a) => ratingFamily(a.typeId));
+  const families = [...new Set([...(need ? need.pilots.keys() : []), ...Object.keys(s.pilots), ...fleetFamilies])].sort();
   const quota = hiringQuota(game, world, airline, station);
   const code = world.airportById.get(station)?.iata ?? station;
   const coming = (role: CrewRole, family: string | null) => s.pipeline.filter((b) => b.role === role && b.family === family).reduce((n, b) => n + b.count, 0);

@@ -107,7 +107,10 @@ describe('leasing an aircraft', () => {
     expect(state.market.offers.find((o) => o.id === offer.id)).toBeUndefined();
 
     const deposit = Math.round(offer.deposit.amount / state.fx.USD!);
-    expect(state.airlines[airlineId]!.cash.amount).toBe(75_000_000 - deposit);
+    // HR starts training crews for the arriving aircraft at once (Phase 8.1 planning ahead): paid now.
+    const training = state.ledger.filter((l) => l.kind === 'training').reduce((n, l) => n + l.amount.amount, 0);
+    expect(training).toBeLessThan(0);
+    expect(state.airlines[airlineId]!.cash.amount).toBe(75_000_000 - deposit + training);
 
     // The same offer cannot be leased twice.
     expect(applyCommand(state, world, { type: 'LeaseAircraft', airlineId, payload: { offerId: offer.id } })).toEqual({

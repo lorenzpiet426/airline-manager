@@ -537,6 +537,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | 10.5: after control **choose each time**: subsidiary (brand kept, partner, monthly profit transfer) or merge one of its airlines (needs 75 %; aircraft leased, routes from its hub as a base, crews/slots/gates) | Owner choice (recommended) |
 | 2026-10-30 | 10.5: **realistic process**: ≤ 3 %/week on the market, disclosure at 5…75 %, mandatory offer above 30 %, 4-week acceptance, competition review (phase 2 with overlapping routes; remedies or prohibition), foreign ownership caps (EU single market none, US 25 %, Japan ⅓, else 49 %), governments with ≥ 25 % block takeovers | Owner choice (recommended) |
 | 2026-10-30 | 10.5: **AI takeovers rarely** (≈ 0.4/year worldwide, strong group buys weak airline in its market) and **bids for the player's cheap listed airline** (new owner → group targets) | Owner choice (recommended) |
+| 2026-10-30 | **Crews planned ahead**: HR (and the Crews table) counts aircraft arriving within 13 weeks (hiring + type rating) and aircraft without routes (75 % of their category's weekly hours); HR plans right after leasing/buying/ordering too; timetable first (with upgrades/retraining), then hire-only for the rest | Owner report: crews could only be hired after opening a route, so first flights were cancelled |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1501,6 +1502,19 @@ education", forbid making the data available to others (§3 iii) and require a w
   (not their simulated routes); AI-bought airlines keep flying under their own name (rescued); no minority stakes
   between AI airlines change behaviour; Austrian (LH Group) can't buy Lufthansa.
 - **Next:** Phase 11 (business models: low-cost, regional, charter, cargo, subsidiaries; alliances and codeshares).
+
+### 2026-10-30 — Session 40 (fix: hire crews before the aircraft flies) ✅
+- Owner report: crews could only be hired once a route was open, then most first flights were cancelled. Cause: crew
+  needs came only from the timetable, the Crews tab only listed families flying routes, HR planned only on Mondays.
+- `crews.ts`: `crewNeeds(…, ahead, idle)` + `PLAN_AHEAD_DAYS` (13 weeks): aircraft arriving soon and aircraft without
+  flights at 75 % of `WEEKLY_AVAILABLE_HOURS`; `planCrew` in two passes (timetable with upgrades/retraining, then
+  hire-only for the rest, so flying first officers aren't upgraded away). `commands.ts` `planCrewsAhead` after
+  `LeaseAircraft`, `BuyAircraft`, `OrderAircraft`. Crews tab: planned needs, every fleet family selectable (orders too);
+  texts EN/DE.
+- Tests: 251 (new: hire ahead for an arriving aircraft; leasing cash test counts the training; two crew tests without the
+  idle second aircraft).
+- Verified in browser (Austrian save): Crews tab with planned needs.
+- **Next:** Phase 11 (business models, alliances and codeshares).
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

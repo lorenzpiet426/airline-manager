@@ -541,6 +541,14 @@ function withSlots(state: GameState, world: EngineWorld, airlineId: string, chan
   return result;
 }
 
+/** A new aircraft on its way: the HR department starts hiring and training its crews at once (they take up to 13 weeks). */
+function planCrewsAhead(state: GameState, world: EngineWorld, airlineId: string, result: CommandResult): CommandResult {
+  if (!result.ok) return result;
+  ensureCrew(state, world);
+  if (state.airlines[airlineId]?.crew?.auto) planCrew(state, world, airlineId);
+  return result;
+}
+
 export function applyCommand(state: GameState, world: EngineWorld, command: Command): CommandResult {
   // A dismissed CEO decides nothing any more (Phase 10.4).
   if (state.dismissed) return fail('dismissed');
@@ -563,7 +571,7 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       return r.ok ? { ok: true, id: r.result.airlineId } : fail(r.error);
     }
     case 'LeaseAircraft':
-      return leaseAircraft(state, world, command.airlineId, command.payload.offerId);
+      return planCrewsAhead(state, world, command.airlineId, leaseAircraft(state, world, command.airlineId, command.payload.offerId));
     case 'OpenRoute':
       return withSlots(state, world, command.airlineId, () => openRoute(state, world, command.airlineId, command.payload));
     case 'UpdateRoute':
@@ -787,9 +795,12 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       const airline = state.airlines[command.airlineId];
       const country = world.airportById.get(airline?.hubId ?? '')?.country ?? 'XX';
       const reg = (c: string) => newRegistration(state, c);
-      return command.type === 'OrderAircraft'
-        ? orderAircraft(state, command.airlineId, command.payload, reg, country)
-        : buyAircraft(state, command.airlineId, command.payload.offerId, reg, country);
+      return planCrewsAhead(
+        state,
+        world,
+        command.airlineId,
+        command.type === 'OrderAircraft' ? orderAircraft(state, command.airlineId, command.payload, reg, country) : buyAircraft(state, command.airlineId, command.payload.offerId, reg, country),
+      );
     }
     case 'CancelOrder':
       return cancelOrder(state, world, command.airlineId, command.payload.aircraftId);
