@@ -787,6 +787,25 @@ Owner decisions: operations first in Phase 9, delays carried through each aircra
   Austrian: delays add ≈ 1.5–2 % of revenue (Lufthansa Group reported irregularity costs of this order in bad years).
 - Random numbers from stable hashes (other random events unchanged); AI airlines' delays are not modelled.
 
+## Booking classes, booking curves and live bookings (Phase 9.3, 2026-10-30)
+Owner decisions: live bookings day by day, the player's own fare buckets, seats per bucket by hand per route.
+
+- **Model** (`src/data/fares.ts`, `src/engine/bookings.ts`), following the textbook model of airline revenue management
+  (Talluri & van Ryzin, "The Theory and Practice of Revenue Management", 2004): flights open for sale 60 (short-haul), 75
+  (medium) or 120 (long-haul) days ahead; travellers arrive along exponential booking curves (holidaymakers: typical
+  42 days before short-haul, 70 long-haul; business 9 / 16 days — leisure books 6–10 weeks ahead, business within 2–3 weeks
+  as airlines describe it); each buys the cheapest open bucket within their willingness to pay (log-normal relative to
+  the class's fare: leisure median 0.93, business 1.45; 60 % of business travellers need a flexible ticket, a fixed one
+  is worth 1/1.4 to them). A bucket stops at its seat limit or its advance-purchase day. The market model's travellers per
+  flight (competition, timetable, brand) are those who buy at the class's fare; the potential is that ÷ the share willing
+  to pay it. Expected (fractional) bookings, far-off flights processed every third day.
+- **Default buckets**: Saver 60 % (closes 14 days before, 20 % of seats), Basic 80 % (3 days, 30 %), Classic 100 %,
+  Flex 150 % (flexible) — the same steps in every cabin; airlines set their own.
+- **Calibration**: willingness to pay chosen so that Austrian with the default buckets keeps its margins (November −7.2 %
+  vs −8.6 % before, June −2.2 % vs −1.7 %); the load factor rises from 59–65 % to 77–83 % (real Austrian ≈ 80 %), the
+  average fare falls accordingly. AI airlines keep their calibrated average fares (their real results include revenue
+  management). A simulated month for Austrian ≈ 50 % slower (≈ 20,000 flights on sale).
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

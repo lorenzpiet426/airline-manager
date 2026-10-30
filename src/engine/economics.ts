@@ -573,11 +573,27 @@ export interface FlightResult {
   /** Revenue, transfer passengers, classes and costs of this flight (all its days together; Phase 9.2). */
   revenue: number;
   transferPax: number;
-  classes: Partial<Record<CabinClass, { seats: number; pax: number; revenue: number }>>;
+  classes: Partial<Record<CabinClass, FlightClass>>;
   costs: RouteCosts;
+  /** Seats sold per class and fare bucket, and the booking curve (Phase 9.3; the player's flights). */
+  bookings?: { sold: Partial<Record<CabinClass, Record<string, number>>>; curve: Record<string, number> };
   /** Local arrival time, minutes after the departure day's midnight at the arrival airport. */
   arr: number;
   blockMin: number;
+}
+
+/** One class of one flight (all its days together): seats, passengers carried, revenue, and the demand behind it. */
+export interface FlightClass {
+  seats: number;
+  pax: number;
+  revenue: number;
+  /** Travellers who want this flight at its fares: in all, of them local business travellers and transfer passengers. */
+  demand: number;
+  business: number;
+  transfer: number;
+  /** The class's fare on this flight (USD, one way) and what transfer passengers pay of it. */
+  fareUsd: number;
+  transferYield: number;
 }
 
 export interface ClassResult {
@@ -818,6 +834,8 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
   // Demand per flight, weekday and class (F, J, W, Y), and the part of it that are transfer passengers.
   const demand = timetable.map(() => Array.from({ length: 7 }, () => [0, 0, 0, 0]));
   const transferDemand = timetable.map(() => Array.from({ length: 7 }, () => [0, 0, 0, 0]));
+  // Of the local travellers, those on business (they book late and pay more; Phase 9.3 booking classes).
+  const businessDemand = timetable.map(() => Array.from({ length: 7 }, () => [0, 0, 0, 0]));
 
   for (const dir of [0, 1] as const) {
     const A = ends[dir];
@@ -921,6 +939,7 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
           const travellers = (M.m.weeklyPax / 7) * segShare * classShare * weekdayFactor(segment, day) * season * plan.rampUp * stimulation * world5;
           today.forEach((k, n) => {
             demand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;
+            if (segment === 'business') businessDemand[mineIdx[k]!]![day]![CLASS_INDEX[mine[k]!.cls]]! += travellers * shares[n]!;
           });
         }
       }
@@ -1006,10 +1025,13 @@ export function routeWeek(world: EngineWorld, from: Airport, to: Airport, plan: 
         transferPax += p * transferShare;
         result.transferPax += p * transferShare;
         result.revenue += p * paid;
-        const rc = (result.classes[s.cls] ??= { seats: 0, pax: 0, revenue: 0 });
+        const rc = (result.classes[s.cls] ??= { seats: 0, pax: 0, revenue: 0, demand: 0, business: 0, transfer: 0, fareUsd, transferYield: ctx.transfer?.[f.dir]?.yield ?? 1 });
         rc.seats += seatsToday;
         rc.pax += p;
         rc.revenue += p * paid;
+        rc.demand += d;
+        rc.business += businessDemand[i]![day]![CLASS_INDEX[s.cls]]!;
+        rc.transfer += transferDemand[i]![day]![CLASS_INDEX[s.cls]]!;
         result.seats += seatsToday;
         result.pax += p;
         revenue += p * paid;

@@ -2916,3 +2916,31 @@ a.button {
 .flight-table .chip {
   white-space: normal;
 }
+
+/* ---------- Fares and bookings (Phase 9.3) ---------- */
+.fares-table .input {
+  min-width: 4.5rem;
+}
+.fares-table td:first-child .input {
+  min-width: 8rem;
+}
+.fares-limits {
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+}
+.booking-curve svg {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}
+.booking-curve__axis {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.booking-curve__line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.booking-curve__dot {
+  fill: var(--accent);
+}

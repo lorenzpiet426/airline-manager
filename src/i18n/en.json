@@ -422,7 +422,10 @@
     "noManager": "This department has no head.",
     "proposalUnknown": "That proposal is no longer open.",
     "adviceOnly": "This is advice only: the department may not act. Do it yourself, or let the department act after your OK.",
-    "delegationInvalid": "Choose advise, after my OK, or decide alone."
+    "delegationInvalid": "Choose advise, after my OK, or decide alone.",
+    "bucketsInvalid": "Check the buckets: 1–6, each with a name, a price of 20–400 % and 0–90 days.",
+    "bucketsNeedOpen": "At least one bucket must sell until departure (0 days) without a seat limit.",
+    "limitsInvalid": "Seat limits must be between 0 and the seats in the cabin."
   },
   "fleet": {
     "title": "Fleet",
@@ -590,7 +593,8 @@
     "classLf": "Load factor per class",
     "regulatedFares": "Regulated route: until {{date}} governments and the IATA tariff fix the fares here, so you can only charge ±10 % around the official fare. No price wars.",
     "nearbyTitle": "From the same cities' other airports",
-    "nearbyWeight": "counts {{percent}} %"
+    "nearbyWeight": "counts {{percent}} %",
+    "atClassFares": "(at the class fares; real flights sell through your fare buckets, see Fares)"
   },
   "finance": {
     "title": "Finance",
@@ -1281,7 +1285,43 @@
     "aircraftTitle": "Flights of {{registration}}",
     "allTitle": "All flights",
     "listNote": "The last seven days and today, newest first. Open a flight for full detail.",
-    "lastFlights": "Last flights"
+    "lastFlights": "Last flights",
+    "bookings": "Bookings by fare",
+    "bookingsSoFar_one": "Bookings so far ({{count}} day to departure)",
+    "bookingsSoFar_other": "Bookings so far ({{count}} days to departure)",
+    "bucketOpen": "on sale",
+    "bucketClosedDate": "closed (too close to departure)",
+    "bucketFull": "sold out",
+    "curve": "Booking curve",
+    "curvePoint": "{{days}} days before: {{seats}} seats sold",
+    "curveNote": "Seats sold against days before departure (left: early, right: departure)."
+  },
+  "fares": {
+    "tab": "Fares",
+    "title": "Fare buckets",
+    "class": "Cabin",
+    "intro": "Each cabin sells its seats in fare buckets. Travellers decide over the weeks before departure (holidaymakers early, business travellers late) and buy the cheapest open bucket they are willing to pay for; most business travellers want a flexible ticket. A bucket stops selling when it has sold the seats you allow it, or a set number of days before departure, so the price rises as a flight fills. Prices are a percentage of the route's fare for the class (the fare sliders in the route planner).",
+    "name": "Name",
+    "price": "Price (% of fare)",
+    "flexible": "Flexible",
+    "closes": "Closes (days before)",
+    "share": "Seats (% of cabin)",
+    "noLimit": "no limit",
+    "remove": "Remove bucket",
+    "add": "Add bucket",
+    "save": "Save buckets",
+    "saved": "Saved: new sales use these buckets.",
+    "newBucket": "New",
+    "columnsNote": "\"Seats\" is the default share of the cabin a bucket may sell on every route (empty = no limit); you can set other numbers per route below. At least one bucket must sell until departure without a limit. Seats already sold keep their price.",
+    "routeTitle": "Seats per bucket on a route",
+    "route": "Route",
+    "limitsDefault": "This route uses the buckets' default limits. Seats in this cabin on its aircraft: {{seats}}. Set your own numbers (empty = no limit):",
+    "limitsOwn": "This route has its own limits. Seats in this cabin on its aircraft: {{seats}} (empty = no limit):",
+    "saveLimits": "Save limits for this route",
+    "useDefaults": "Use the default limits",
+    "noSales": "No flights of this route on sale in the next two weeks yet.",
+    "salesTitle": "Next two weeks: seats sold so far",
+    "booked": "Booked"
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

@@ -7,6 +7,7 @@ import { crewDailyStep, crewPayPerDayUsd, ensureCrew } from './crews';
 import { ensureLabour, labourDailyStep } from './unions';
 import { ensureMgmt, managersDailyStep } from './managers';
 import { opsDailyStep } from './delays';
+import { applyBookings, bookingsDailyStep } from './bookings';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -74,6 +75,7 @@ function recordFlightEcon(ops: Map<string, OpsFlight[]>, week: ReturnType<typeof
       revenue: r.revenue * k,
       classes: Object.fromEntries(Object.entries(r.classes).map(([c, x]) => [c, { seats: x.seats, pax: x.pax, revenue: x.revenue * k }])),
       costs: Object.fromEntries(Object.entries(r.costs).map(([c, x]) => [c, x * k])),
+      ...(r.bookings ? { buckets: r.bookings.sold, curve: r.bookings.curve } : {}),
     };
   });
 }
@@ -106,6 +108,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   managersDailyStep(state, world);
   // Yesterday's flights settled (delays, diversions, missed connections), today's played through (Phase 9.1).
   opsDailyStep(state, world);
+  // Flights open for sale and today's bookings (Phase 9.3).
+  bookingsDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {
     closeWeek(state);
     recordSlotUse(state, world);
@@ -141,6 +145,8 @@ function bookDay(state: GameState, world: EngineWorld): void {
     const transfer = routeTransfers(world, state, route);
     const ground = groundContext(state, world, airline.id);
     const week = routeWeek(world, from, to, plan, date, { ai: state.ai, days: weekday, brand, checksSeparate: true, conditions: yesterday, transfer, ...(ground ? { ground } : {}) });
+    // The player's flights carried what was really booked (Phase 9.3).
+    if (airline.controller === 'human') applyBookings(state, world, route, week, state.time - 1);
     if (rep) addExperience(rep, week.experience);
     const k = usdTo(state.fx, airline.currency); // in book currency
     // Each flight's own result, for the flight pages (Phase 9.2).

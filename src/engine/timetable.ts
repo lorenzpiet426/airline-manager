@@ -16,8 +16,17 @@ export const BLOCK_OVERHEAD_H = 0.45;
 /** Average wind along mid-latitude routes (westerlies, jet stream): eastbound flights are faster than westbound. */
 const WESTERLY_KMH = 50;
 
-/** Average wind along the route in km/h: positive = tailwind (flying east at mid-latitudes). */
+const windCache = new Map<string, number>();
+
+/** Average wind along the route in km/h: positive = tailwind (flying east at mid-latitudes). Kept per airport pair. */
 export function windKmh(from: Airport, to: Airport): number {
+  const key = `${from.id}|${to.id}`;
+  let w = windCache.get(key);
+  if (w === undefined) windCache.set(key, (w = computeWind(from, to)));
+  return w;
+}
+
+function computeWind(from: Airport, to: Airport): number {
   const mid = intermediatePoint(from, to, 0.5);
   const course = bearing(mid, intermediatePoint(from, to, 0.52));
   const lat = Math.abs(mid.lat);

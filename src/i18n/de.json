@@ -422,7 +422,10 @@
     "noManager": "Diese Abteilung hat keine Leitung.",
     "proposalUnknown": "Dieser Vorschlag ist nicht mehr offen.",
     "adviceOnly": "Das ist nur ein Rat: Die Abteilung darf nicht handeln. Mach es selbst oder lass die Abteilung nach deinem OK handeln.",
-    "delegationInvalid": "Wähle beraten, nach meinem OK oder selbst entscheiden."
+    "delegationInvalid": "Wähle beraten, nach meinem OK oder selbst entscheiden.",
+    "bucketsInvalid": "Prüfe die Klassen: 1–6, jede mit Namen, einem Preis von 20–400 % und 0–90 Tagen.",
+    "bucketsNeedOpen": "Mindestens eine Klasse muss bis zum Abflug (0 Tage) ohne Sitzgrenze verkaufen.",
+    "limitsInvalid": "Sitzgrenzen müssen zwischen 0 und der Zahl der Sitze der Kabine liegen."
   },
   "fleet": {
     "title": "Flotte",
@@ -590,7 +593,8 @@
     "classLf": "Auslastung je Klasse",
     "regulatedFares": "Regulierte Strecke: Bis {{date}} legen Regierungen und der IATA-Tarif die Preise hier fest, du kannst nur ±10 % um den offiziellen Tarif verlangen. Keine Preiskriege.",
     "nearbyTitle": "Von den anderen Flughäfen derselben Städte",
-    "nearbyWeight": "zählt {{percent}} %"
+    "nearbyWeight": "zählt {{percent}} %",
+    "atClassFares": "(zu den Kabinentarifen; echte Flüge verkaufen über deine Buchungsklassen, siehe Tarife)"
   },
   "finance": {
     "title": "Finanzen",
@@ -1281,7 +1285,43 @@
     "aircraftTitle": "Flüge von {{registration}}",
     "allTitle": "Alle Flüge",
     "listNote": "Die letzten sieben Tage und heute, neueste zuerst. Öffne einen Flug für alle Details.",
-    "lastFlights": "Letzte Flüge"
+    "lastFlights": "Letzte Flüge",
+    "bookings": "Buchungen nach Tarif",
+    "bookingsSoFar_one": "Bisherige Buchungen (noch {{count}} Tag bis zum Abflug)",
+    "bookingsSoFar_other": "Bisherige Buchungen (noch {{count}} Tage bis zum Abflug)",
+    "bucketOpen": "im Verkauf",
+    "bucketClosedDate": "geschlossen (zu kurz vor Abflug)",
+    "bucketFull": "ausverkauft",
+    "curve": "Buchungskurve",
+    "curvePoint": "{{days}} Tage vorher: {{seats}} Sitze verkauft",
+    "curveNote": "Verkaufte Sitze nach Tagen vor dem Abflug (links: früh, rechts: Abflug)."
+  },
+  "fares": {
+    "tab": "Tarife",
+    "title": "Buchungsklassen",
+    "class": "Kabine",
+    "intro": "Jede Kabine verkauft ihre Sitze in Buchungsklassen. Reisende entscheiden sich in den Wochen vor dem Abflug (Urlauber früh, Geschäftsreisende spät) und kaufen die günstigste offene Klasse, die sie zu zahlen bereit sind; die meisten Geschäftsreisenden wollen ein flexibles Ticket. Eine Klasse schließt, wenn sie die erlaubten Sitze verkauft hat oder eine bestimmte Zahl von Tagen vor dem Abflug – so steigt der Preis, je voller ein Flug wird. Preise sind Prozent des Tarifs der Strecke für die Kabine (die Tarif-Regler im Streckenplaner).",
+    "name": "Name",
+    "price": "Preis (% des Tarifs)",
+    "flexible": "Flexibel",
+    "closes": "Schließt (Tage vorher)",
+    "share": "Sitze (% der Kabine)",
+    "noLimit": "unbegrenzt",
+    "remove": "Klasse entfernen",
+    "add": "Klasse hinzufügen",
+    "save": "Klassen speichern",
+    "saved": "Gespeichert: neue Verkäufe nutzen diese Klassen.",
+    "newBucket": "Neu",
+    "columnsNote": "„Sitze\" ist der Standardanteil der Kabine, den eine Klasse auf jeder Strecke verkaufen darf (leer = unbegrenzt); unten kannst du pro Strecke andere Zahlen setzen. Mindestens eine Klasse muss bis zum Abflug ohne Grenze verkaufen. Bereits verkaufte Sitze behalten ihren Preis.",
+    "routeTitle": "Sitze pro Buchungsklasse auf einer Strecke",
+    "route": "Strecke",
+    "limitsDefault": "Diese Strecke nutzt die Standardgrenzen der Klassen. Sitze in dieser Kabine auf ihren Flugzeugen: {{seats}}. Setze eigene Zahlen (leer = unbegrenzt):",
+    "limitsOwn": "Diese Strecke hat eigene Grenzen. Sitze in dieser Kabine auf ihren Flugzeugen: {{seats}} (leer = unbegrenzt):",
+    "saveLimits": "Grenzen für diese Strecke speichern",
+    "useDefaults": "Standardgrenzen verwenden",
+    "noSales": "Noch keine Flüge dieser Strecke in den nächsten zwei Wochen im Verkauf.",
+    "salesTitle": "Nächste zwei Wochen: bisher verkaufte Sitze",
+    "booked": "Gebucht"
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

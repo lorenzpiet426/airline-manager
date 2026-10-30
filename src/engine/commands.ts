@@ -1,6 +1,8 @@
 // Commands: the only way to change the game. The player (and later AI airlines and other players)
 // send a command; the engine checks it against the rules and either applies it or explains why not.
 import type { CrewRole, LoungeQuality } from './state';
+import { setBucketLimits, setFareBuckets, type FareError } from './bookings';
+import type { FareBucket } from '../data/fares';
 import { approveProposal, declineProposal, ensureMgmt, fireManager, hireManager, setDelegation, type ManagerError } from './managers';
 import type { Delegation, Department } from '../data/managers';
 import { acceptDemand, answerProposal, callMediation, ensureLabour, offerWage, type UnionError } from './unions';
@@ -29,7 +31,7 @@ import { buyAircraft, cancelOrder, disposeAircraft, extendLease, orderAircraft, 
 import type { CabinStyle } from './cabins';
 import type { HangarSize } from '../data/maintenance';
 import { buildHangar, moveCheck, type MaintError } from './maintenance';
-import type { Livery, CabinLayout, ClassFares, Controller, GameState, Route } from './state';
+import type { Livery, CabinClass, CabinLayout, ClassFares, Controller, GameState, Route } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay, toDate, type SimTime } from './time';
 import type { EngineWorld } from './world';
 
@@ -315,7 +317,19 @@ export interface RunCrewPlan {
   payload: Record<string, never>;
 }
 
-export type Command = HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Fare buckets and seat limits (Phase 9.3). */
+export interface SetFareBuckets {
+  type: 'SetFareBuckets';
+  airlineId: string;
+  payload: { cls: CabinClass; buckets: FareBucket[] };
+}
+export interface SetBucketLimits {
+  type: 'SetBucketLimits';
+  airlineId: string;
+  payload: { routeId: string; cls: CabinClass; limits: Record<string, number | null> };
+}
+
+export type Command = SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -372,7 +386,8 @@ export type CommandError =
   | BaseError
   | CrewError
   | UnionError
-  | ManagerError;
+  | ManagerError
+  | FareError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -479,6 +494,15 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
               ? (setDelegation(state, command.airlineId, command.payload.dept, command.payload.level) ??
                 (command.payload.dept === 'hr' && command.payload.level === 'auto' && airline.crew ? (planCrew(state, world, command.airlineId), null) : null))
               : declineProposal(state, command.airlineId, command.payload.id);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'SetFareBuckets':
+    case 'SetBucketLimits': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const error =
+        command.type === 'SetFareBuckets'
+          ? setFareBuckets(state, command.airlineId, command.payload.cls, command.payload.buckets)
+          : setBucketLimits(state, command.airlineId, command.payload.routeId, command.payload.cls, command.payload.limits);
       return error ? fail(error) : { ok: true };
     }
     case 'SetFares': {

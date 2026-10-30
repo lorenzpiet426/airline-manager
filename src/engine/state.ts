@@ -6,6 +6,7 @@ import type { SimTime } from './time';
 import type { Command } from './commands';
 import type { Delegation, Department } from '../data/managers';
 import type { DelayCause } from '../data/delays';
+import type { FareBucket } from '../data/fares';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
 export const SAVE_VERSION = 11;
@@ -65,6 +66,8 @@ export interface Airline {
   labour?: Record<string, Agreement>;
   /** Heads of department, what they may decide, their proposals and decisions (Phase 8.3). */
   mgmt?: Management;
+  /** Fare buckets per cabin class (Phase 9.3; absent until first used: the default buckets). */
+  fares?: Partial<Record<CabinClass, FareBucket[]>>;
 }
 
 export interface Manager {
@@ -426,6 +429,8 @@ export interface Route {
   /** Outbound flight number (odd, e.g. 101); the return flight is the next number. */
   flightNumber: number;
   openedAt: SimTime;
+  /** Seats each fare bucket may sell, as a share of the cabin (Phase 9.3; per class and bucket id; null = no limit). */
+  bucketLimits?: Partial<Record<CabinClass, Record<string, number | null>>>;
 }
 
 /**
@@ -510,6 +515,9 @@ export interface FlightEcon {
   classes: Partial<Record<CabinClass, ClassStats>>;
   /** Costs caused by the flight (fuel, maintenance, airport, handling, navigation, distribution, service). */
   costs: Record<string, number>;
+  /** Seats sold per class and fare bucket, and the booking curve (days before departure → seats; Phase 9.3). */
+  buckets?: Partial<Record<CabinClass, Record<string, number>>>;
+  curve?: Record<string, number>;
 }
 
 export interface OpsState {
@@ -766,7 +774,30 @@ export interface LedgerEntry {
   ref?: string;
 }
 
+/** One upcoming flight's bookings (Phase 9.3), kept from the day it opens for sale until it has flown. */
+export interface BookingRecord {
+  airlineId: string;
+  routeId: string;
+  /** "pairId:dir" and the scheduled departure (UTC). */
+  key: string;
+  dep: SimTime;
+  /** Seats per class (F, J, W, Y) when sales opened (economy includes the curtain's spare business rows). */
+  cap: number[];
+  /** Seats sold per class and bucket (bucket ids as in the airline's fares). */
+  sold: Partial<Record<CabinClass, Record<string, number>>>;
+  /** Of them transfer passengers, per class. */
+  transfer: Partial<Record<CabinClass, number>>;
+  /** Seats sold × the bucket's price factor at the time of sale, per class (revenue = this × the class's fare). */
+  value: Partial<Record<CabinClass, number>>;
+  /** Total sold at the booking-curve marks (days before departure → seats). */
+  curve: Record<string, number>;
+  /** The last day processed. */
+  last: SimTime;
+}
+
 export interface GameState {
+  /** Upcoming flights' bookings by "pairId:dir:dep" (Phase 9.3; absent in older games until used). */
+  bookings?: Record<string, BookingRecord>;
   /** Today's and yesterday's flights of the player with their delays (Phase 9.1; absent in older games until used). */
   ops?: OpsState;
   version: number;

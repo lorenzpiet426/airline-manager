@@ -309,7 +309,7 @@ Split (2026-10-29): **8.1** ✅ pilots and cabin crew (headcounts, hiring, type 
 Fare classes, booking curves, dynamic pricing; loyalty program; on-time performance, delays, weather,
 incidents (diversions, technical problems); click-any-flight drill-down.
 Split (2026-10-29): **9.1** ✅ delays and on-time performance (knock-on through rotations, causes, diversions, missed
-connections); **9.2** ✅ click any flight for full detail; **9.3** booking classes, booking curves, dynamic pricing;
+connections); **9.2** ✅ click any flight for full detail; **9.3** ✅ booking classes, booking curves, live bookings;
 **9.4** own loyalty programme with tiers.
 
 ### Phase 10 — Finance and corporate
@@ -516,6 +516,8 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-29 | 9.3 (planned): **booking classes per cabin filled along a booking curve**, dynamic pricing by hand or by the revenue manager; class-fare sliders stay as base level | Owner choice |
 | 2026-10-29 | 9.4 (planned): **own frequent-flyer programme with tiers**; points a liability; alliance partners' programmes count | Owner choice |
 | 2026-10-29 | 9.2: single flights kept **7 days**; flight pages reachable **everywhere** (departures board, map aircraft, timetable, route cards, fleet cards) | Owner choice |
+| 2026-10-30 | 9.3: **live bookings day by day** for every upcoming flight (on sale 60–120 days ahead), **own fare buckets** (name, price %, flexible, advance purchase, default seat share), **seats per bucket by hand** per route and class | Owner choice (not the recommended options) |
+| 2026-10-30 | 9.3: willingness to pay calibrated so the default buckets keep Austrian's margins; AI airlines keep average fares | Default settings give no free advantage; good settings earn more |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1304,6 +1306,28 @@ education", forbid making the data available to others (§3 iii) and require a w
   passengers, business 79 %, result €5,813 before crews and leases), phone 375 px without sideways page scrolling.
   Clicking aircraft on the map wasn't tried by hand (the in-app browser pane doesn't draw the map).
 - **Next:** 9.3 booking classes, booking curves and dynamic pricing.
+
+### 2026-10-30 — Session 32 (Phase 9.3: booking classes and live bookings) ✅
+- Owner decisions: live bookings, own buckets, seats per bucket by hand (§7).
+- Data `src/data/fares.ts` (default buckets, willingness to pay, booking curves, sales horizons, curve marks, curtain).
+- Engine `src/engine/bookings.ts`: `state.bookings` (`BookingRecord` per upcoming flight: capacity, sold per class and
+  bucket, transfer passengers, value at sale prices, booking curve; optional, no save version change), `routeForecast`
+  (the market model's travellers per flight and class, split leisure/business/transfer; cached per week and timetable),
+  `bookingsDailyStep` (opens flights, sells each day's arrivals, far ones every third day), `applyBookings` (the flown
+  flight's passengers and revenue replace the model's, passenger costs follow), `setFareBuckets`/`setBucketLimits`
+  (commands `SetFareBuckets`, `SetBucketLimits`), `bookingOf`, `bucketsOf`, `limitOf`, `willingToPay`, `bookedWithin`.
+  `economics.ts` `FlightResult.classes` carry demand by segment, fare and transfer yield; `FlightEcon.buckets/curve`.
+  Speed: booking index once per day, wind cached per airport pair.
+- UI: Network → **Fares** tab (`FaresView.tsx`: bucket editor per cabin, seat limits per route in seats, next two weeks'
+  sales per bucket), flight page "Bookings so far" / "Bookings by fare" (buckets on sale / closed / sold out, booking
+  curve chart; upcoming flights open from the Fares table), planner note that its revenue is at class fares; EN/DE.
+- Tests: 219 (`bookings.test.ts`: willingness and curves, daily sales with closing buckets and flown = booked, route
+  limits and own buckets).
+- Verified in browser (Austrian save): Fares tab, VIE–LAX limits working (Basic stops at 30 %), upcoming flight's
+  bookings and curve, phone 375 px without sideways page scrolling.
+- Known: no overbooking/no-shows; the revenue head's proposals still only change the base fare (not bucket limits);
+  the route planner's forecast is at class fares; AI airlines don't sell by buckets.
+- **Next:** 9.4 own loyalty programme with tiers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

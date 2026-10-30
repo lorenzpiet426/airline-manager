@@ -5,6 +5,7 @@ import { faresFreeFrom } from '../../data/eras';
 import { Segmented } from '../components/Segmented';
 import { DeparturesBoard } from '../network/DeparturesBoard';
 import { nextSpec, TimetableEditor } from '../network/TimetableEditor';
+import { FaresView } from '../network/FaresView';
 import { ConnectionsView } from '../network/ConnectionsView';
 import { SlotsView } from '../network/SlotsView';
 import { HubView } from '../network/HubView';
@@ -79,7 +80,7 @@ export function NetworkScreen() {
   const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const [editing, setEditing] = useState<Editing>(null);
-  const [tab, setTab] = useState<'routes' | 'timetable' | 'connections' | 'slots' | 'hub' | 'bases'>('routes');
+  const [tab, setTab] = useState<'routes' | 'timetable' | 'fares' | 'connections' | 'slots' | 'hub' | 'bases'>('routes');
   // Hub and Connections tabs: the hub or one of the bases (Phase 7.4).
   const [station, setStation] = useState(airline?.hubId ?? '');
 
@@ -144,6 +145,7 @@ export function NetworkScreen() {
                 { value: 'slots', label: t('slots.tab') },
                 { value: 'hub', label: t('hub.tab') },
                 { value: 'bases', label: t('bases.tab') },
+                { value: 'fares', label: t('fares.tab') },
               ]}
               onChange={setTab}
             />
@@ -178,6 +180,8 @@ export function NetworkScreen() {
             </>
           ) : tab === 'slots' && engineWorld ? (
             <SlotsView game={game} world={engineWorld} airline={airline} code={code} />
+          ) : tab === 'fares' && engineWorld ? (
+            <FaresView game={game} world={engineWorld} airline={airline} code={code} />
           ) : tab === 'bases' && engineWorld ? (
             <BasesView game={game} world={engineWorld} airline={airline} code={code} />
           ) : routes.length === 0 ? (
@@ -701,7 +705,9 @@ function RoutePlanner({ game, airline, route, onDone }: { game: GameState; airli
                 );
               })}
             <dt>{t('network.revenue')}</dt>
-            <dd className="mono">{fmt(w.revenue)}</dd>
+            <dd className="mono">
+              {fmt(w.revenue)} <span className="muted small">{t('network.atClassFares')}</span>
+            </dd>
             {(Object.keys(w.costs) as (keyof typeof w.costs)[]).map((k) => (
               <FactRow key={k} label={t(`finance.line.${k}`)} value={`− ${fmt(w.costs[k])}`} />
             ))}

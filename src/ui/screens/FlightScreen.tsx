@@ -3,8 +3,10 @@ import { getAircraftType } from '../../data/aircraft';
 import { ON_TIME_MIN } from '../../data/delays';
 import { CLASSES } from '../../engine/cabins';
 import { findFlight, flightId, flightResult, knownFlights } from '../../engine/delays';
+import { bookingOf, bucketsOf, limitOf } from '../../engine/bookings';
+import { pairBlocks } from '../../engine/schedule';
 import type { Airline, GameState, OpsFlight } from '../../engine/state';
-import { startOfDay, toDate, utcOffsetMin } from '../../engine/time';
+import { MINUTES_PER_DAY, startOfDay, toDate, utcOffsetMin } from '../../engine/time';
 import type { EngineWorld } from '../../engine/world';
 import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
@@ -48,6 +50,36 @@ function useFlightText(world: EngineWorld, airline: Airline) {
   };
 }
 
+/** A flight further ahead than today, from its bookings (Phase 9.3): scheduled, no delay known yet. */
+function upcomingFlight(game: GameState, world: EngineWorld, id: string): OpsFlight | undefined {
+  const [pairId, dirText, depText] = id.split('|');
+  const dir = Number(dirText) as 0 | 1;
+  const dep = Number(depText);
+  const pair = pairId ? game.flights[pairId] : undefined;
+  const route = pair ? game.routes[pair.routeId] : undefined;
+  const aircraft = pair ? game.aircraft[pair.aircraftId] : undefined;
+  if (!pair || !route || !aircraft || !bookingOf(game, pair.id, dir, dep)) return undefined;
+  const blocks = pairBlocks(world, aircraft.typeId, route);
+  return {
+    airlineId: route.airlineId,
+    routeId: route.id,
+    pairId: pair.id,
+    dir,
+    aircraftId: aircraft.id,
+    flightNumber: pair.flightNumber + dir,
+    fromId: dir === 0 ? route.originId : route.destinationId,
+    toId: dir === 0 ? route.destinationId : route.originId,
+    dep,
+    arr: dep + (dir === 0 ? blocks.out : blocks.back),
+    depDelay: 0,
+    arrDelay: 0,
+    cause: null,
+    status: 'ok',
+    pax: 0,
+    transfer: 0,
+  };
+}
+
 /** One flight in full (Phase 9.2): times, delay and its cause, weather, passengers per class, revenue, costs, result. */
 export function FlightScreen() {
   const { t } = useTranslation();
@@ -55,7 +87,7 @@ export function FlightScreen() {
   const world = useEngineWorld();
   const id = useRouteParam('id');
   if (!game || !airline || !world) return null;
-  const f = id ? findFlight(game, id) : undefined;
+  const f = id ? (findFlight(game, id) ?? upcomingFlight(game, world, id)) : undefined;
   if (!f) {
     return (
       <div className="screen">
@@ -189,6 +221,8 @@ function FlightView({ game, world, airline, f }: { game: GameState; world: Engin
           )}
         </Panel>
 
+        <BookingsPanel game={game} airline={airline} f={f} />
+
         <Panel title={t('flight.money')} code="P&L">
           {e ? (
             <>
@@ -227,6 +261,73 @@ function FlightView({ game, world, airline, f }: { game: GameState; world: Engin
         </Panel>
       </div>
     </div>
+  );
+}
+
+/** Seats sold per fare bucket (so far, or in the end) and the booking curve (Phase 9.3). */
+function BookingsPanel({ game, airline, f }: { game: GameState; airline: Airline; f: OpsFlight }) {
+  const { t } = useTranslation();
+  const { language } = useSettings();
+  const rec = bookingOf(game, f.pairId, f.dir, f.dep);
+  const sold = rec?.sold ?? f.econ?.buckets;
+  const curve = rec?.curve ?? f.econ?.curve;
+  if (!sold || f.status === 'cancelled') return null;
+  const daysLeft = Math.max(0, Math.round((f.dep - game.time) / MINUTES_PER_DAY));
+  const route = game.routes[f.routeId];
+  const marks = Object.entries(curve ?? {})
+    .map(([d, n]) => [Number(d), n] as const)
+    .sort((a, b) => b[0] - a[0]);
+  const maxSeats = rec ? rec.cap.reduce((a, b) => a + b, 0) : (f.econ?.seats ?? 0);
+  return (
+    <Panel title={rec && game.time < f.dep ? t('flight.bookingsSoFar', { count: daysLeft }) : t('flight.bookings')} code="RM">
+      {CLASSES.filter((c) => sold[c]).map((c) => {
+        const cap = rec ? (rec.cap[CLASSES.indexOf(c)] ?? 0) : (f.econ?.classes[c]?.seats ?? 0);
+        const total = Object.values(sold[c] ?? {}).reduce((a, b) => a + b, 0);
+        return (
+          <div key={c}>
+            <span className="field__label">
+              {t(`cabin.class.${c}`)} · {formatNumber(language, total)} / {formatNumber(language, cap)}
+            </span>
+            <ul className="plain-list small">
+              {bucketsOf(airline, c).map((b) => {
+                const n = sold[c]?.[b.id] ?? 0;
+                const limit = route ? limitOf(route, c, b) : null;
+                const closedByDate = rec && daysLeft < b.closeDays;
+                const full = limit !== null && n >= limit * cap - 0.5;
+                const open = rec && game.time < f.dep && !closedByDate && !full && total < cap - 0.5;
+                return (
+                  <li key={b.id}>
+                    <span className="mono">{formatNumber(language, n)}</span> × {b.name} ({Math.round(b.factor * 100)} %){' '}
+                    {rec && game.time < f.dep && (
+                      <span className={`chip ${open ? 'chip--normal' : 'chip--caution'}`}>
+                        {open ? t('flight.bucketOpen') : closedByDate ? t('flight.bucketClosedDate') : t('flight.bucketFull')}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+      {marks.length > 1 && maxSeats > 0 && (
+        <figure className="booking-curve">
+          <svg viewBox="0 0 300 90" role="img" aria-label={t('flight.curve')}>
+            <line x1="0" y1="80" x2="300" y2="80" className="booking-curve__axis" />
+            <polyline
+              className="booking-curve__line"
+              points={marks.map(([d, n]) => `${300 - (Math.min(d, 120) / 120) * 300},${80 - (n / maxSeats) * 75}`).join(' ')}
+            />
+            {marks.map(([d, n]) => (
+              <circle key={d} cx={300 - (Math.min(d, 120) / 120) * 300} cy={80 - (n / maxSeats) * 75} r="2.5" className="booking-curve__dot">
+                <title>{t('flight.curvePoint', { days: d, seats: formatNumber(language, n) })}</title>
+              </circle>
+            ))}
+          </svg>
+          <figcaption className="small muted">{t('flight.curveNote')}</figcaption>
+        </figure>
+      )}
+    </Panel>
   );
 }
 
