@@ -934,6 +934,22 @@ Owner decisions: targets by owner, confidence score with warnings, career contin
   takeovers: about 0.4 a year worldwide, a strong group (margin > 4 %, twice the revenue) in the same market buying
   the weakest airline (margin < −2 %) at a 30 % premium.
 
+## Alliances and codeshares (Phase 11.1, 2026-10-30)
+- **Members:** Star Alliance by date (`src/data/alliances.ts`, Wikipedia, CC BY-SA 4.0); oneworld and SkyTeam today's
+  members from Wikidata's alliance property (airlines.json, CC0), counted from the alliances' founding days (1 Feb 1999,
+  22 Jun 2000) in past years — modelled (real join dates not entered yet).
+- **Rules (modelled, `src/data/allianceRules.ts`):** a new member needs ≥ 15 aircraft, ≥ 20 destinations, ≥ 150
+  departures a week, reputation ≥ 58, a frequent-flyer programme, no member based at its hub and a member flying to its
+  hub as sponsor (small real members like Croatia Airlines or Adria had 12–15 aircraft; alliances avoid two members at
+  one hub). Review 8 weeks, invitation valid 3 months, joining 12–18 months (IT, procedures), a new try a year after a
+  rejection. Fees: joining US$ 5 m and US$ 2 m a year at 25 aircraft (× √(aircraft/25), 0.5…3), own alliance US$ 1.5 m +
+  0.6 m a year, codeshare US$ 0.4 m + 0.15 m a year (2025 dollars, scaled to the year's prices).
+- **Effects:** members and codeshare partners are partners (no reactions or entries on the player's routes, connecting
+  passengers fed at the player's hubs, lounges at their hubs); codeshare feed × 1.25; alliance sales and loyalty: travellers'
+  preference × 1.06 (business) / 1.02 (leisure), own alliance half of that, full at 5 members. Low-cost airlines don't
+  codeshare (Ryanair, Wizz, easyJet), rival alliances' airlines don't codeshare with a member, the hub's big airline
+  refuses as a competitor.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

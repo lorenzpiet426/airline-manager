@@ -57,6 +57,10 @@ export interface Airline {
   partners?: string[];
   /** Partners that are airlines of companies the player controls (Phase 10.5). */
   subsidiaryPartners?: string[];
+  /** Alliance membership, an own alliance and codeshare agreements (Phase 11.1). */
+  allianceMembership?: AllianceMembership;
+  ownAlliance?: OwnAlliance;
+  codeshares?: { partnerId: string; since: SimTime }[];
   /** Subsidiaries at the hub whose aircraft and routes became this airline's (Phase 6.4). */
   absorbed?: string[];
   /** Gates rented at the hub (Phase 7.3): contact gates (jet bridge) and remote stands (bus). */
@@ -156,6 +160,26 @@ export interface Shareholder {
   kind: HolderKind;
   name: string;
   shares: number;
+}
+
+/** The player's alliance (Phase 11.1): a global one applied for, invited to, joining or joined, or an own one. */
+export interface AllianceMembership {
+  alliance: 'star' | 'oneworld' | 'skyteam' | 'own';
+  status: 'applied' | 'invited' | 'joining' | 'member' | 'rejected';
+  /** Since when in this status; when the next step comes (review done, invitation ends, joining done). */
+  at: SimTime;
+  readyAt?: SimTime;
+  /** Points the alliance found missing when it rejected the application. */
+  reasons?: string[];
+  /** A taken-over airline's real membership (not stored, worked out from history). */
+  historic?: boolean;
+}
+
+/** An alliance founded by the player (Phase 11.1) with the real airlines that joined. */
+export interface OwnAlliance {
+  name: string;
+  founded: SimTime;
+  members: { id: string; since: SimTime }[];
 }
 
 /** A stake in another listed airline company (Phase 10.5), as a share of all its shares. */
@@ -971,7 +995,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'stakeDisclosed' | 'stakeNews' | 'takeoverOffered' | 'offerFailed' | 'reviewPhase2' | 'takeoverProhibited' | 'takeoverDone' | 'airlineMerged' | 'investmentIncome' | 'aiTakeover' | 'stakeTendered' | 'delisted' | 'bidReceived' | 'bidFailed' | 'airlineSold' | 'boardReview' | 'boardWarning' | 'boardTargets' | 'ceoDismissed' | 'capitalInjection' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'allianceApplied' | 'allianceInvited' | 'allianceRejected' | 'allianceJoining' | 'allianceJoined' | 'allianceLeft' | 'ownAllianceFounded' | 'ownAllianceJoined' | 'codeshareSigned' | 'stakeDisclosed' | 'stakeNews' | 'takeoverOffered' | 'offerFailed' | 'reviewPhase2' | 'takeoverProhibited' | 'takeoverDone' | 'airlineMerged' | 'investmentIncome' | 'aiTakeover' | 'stakeTendered' | 'delisted' | 'bidReceived' | 'bidFailed' | 'airlineSold' | 'boardReview' | 'boardWarning' | 'boardTargets' | 'ceoDismissed' | 'capitalInjection' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -1018,6 +1042,8 @@ export type LedgerKind =
   | 'hedge'
   // Shares of other airlines: buying, selling, dividends, takeovers, integration (Phase 10.5).
   | 'investment'
+  // Alliance fees, own alliance, codeshare set-up and running costs (Phase 11.1).
+  | 'alliance'
   | 'collateral'
   // Shares: money raised, dividends, buybacks (Phase 10.3).
   | 'shares'

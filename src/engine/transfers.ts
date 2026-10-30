@@ -5,6 +5,7 @@
 // to the distance flown on each leg ("prorate"). AI airlines: fewer connect when the airline's flights are rare. The
 // player (Phase 7.1): flight by flight — only where an arrival and a departure at the hub are at least the minimum
 // connecting time apart and not too long, and the passengers sit on exactly those flights.
+import { CODESHARE_FEED } from '../data/allianceRules';
 import type { Airport } from '../data/types';
 import { gravityAnnualPax, marketFareUsd } from './economics';
 import { distanceKm } from './geo';
@@ -282,10 +283,14 @@ export function playerHubLegs(state: GameState, airlineId: string): Map<string, 
 /** The player's group partners' spokes at a hub (weekly flights per airport), whose passengers connect onto the player. */
 export function partnerFeed(world: EngineWorld, state: GameState, airlineId: string, hubId: string): Map<string, number> {
   const feed = new Map<string, number>();
-  for (const id of state.airlines[airlineId]?.partners ?? []) {
+  const airline = state.airlines[airlineId];
+  const codeshare = new Set((airline?.codeshares ?? []).map((c) => c.partnerId));
+  for (const id of airline?.partners ?? []) {
     const partner = world.realAirlines?.byId.get(id);
     if (!partner) continue;
-    for (const [dest, weekly] of realHubLegs(world, partner, hubId, state.ai)) feed.set(dest, (feed.get(dest) ?? 0) + weekly);
+    // A codeshare shows the connection as one airline's in booking systems: more passengers take it (Phase 11.1).
+    const weight = codeshare.has(id) ? CODESHARE_FEED : 1;
+    for (const [dest, weekly] of realHubLegs(world, partner, hubId, state.ai)) feed.set(dest, (feed.get(dest) ?? 0) + weekly * weight);
   }
   return feed;
 }
@@ -293,7 +298,8 @@ export function partnerFeed(world: EngineWorld, state: GameState, airlineId: str
 const feedCache = new WeakMap<GameState, { key: string; feed: Map<string, number> }>();
 /** The partners' feed changes at most once a day (their monthly reviews): worked out once per day and hub. */
 function dailyFeed(world: EngineWorld, state: GameState, airlineId: string, hubId: string): Map<string, number> {
-  const key = `${airlineId}@${hubId}#${Math.floor(state.time / 1440)}`;
+  const a = state.airlines[airlineId];
+  const key = `${airlineId}@${hubId}#${Math.floor(state.time / 1440)}|${a?.partners?.join(',')}|${a?.codeshares?.length ?? 0}`;
   const hit = feedCache.get(state);
   if (hit?.key === key) return hit.feed;
   const feed = partnerFeed(world, state, airlineId, hubId);

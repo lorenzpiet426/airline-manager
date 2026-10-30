@@ -144,6 +144,17 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
         return t('msg.capitalInjection', { amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }), owner: p.owner });
       case 'ceoDismissed':
         return t(p.reason === 'bankrupt' ? 'msg.ceoBankrupt' : 'msg.ceoDismissed');
+      // Alliances and codeshares (Phase 11.1).
+      case 'allianceApplied':
+      case 'allianceInvited':
+      case 'allianceRejected':
+      case 'allianceJoining':
+      case 'allianceJoined':
+      case 'allianceLeft':
+      case 'ownAllianceFounded':
+      case 'ownAllianceJoined':
+      case 'codeshareSigned':
+        return t(`msg.${m.kind}`, { ...p, count: Number(p.weeks ?? p.months ?? p.count ?? p.members ?? 0) });
       // Other airlines' shares and takeovers (Phase 10.5).
       case 'stakeNews':
         return t(Number(p.share) === -1 ? 'msg.stakeNewsOffer' : Number(p.share) === -2 ? 'msg.stakeNewsProhibited' : Number(p.share) === -3 ? 'msg.stakeNewsDone' : 'msg.stakeNews', p);

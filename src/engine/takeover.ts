@@ -26,6 +26,7 @@ import { grantHistoricSlots } from './slots';
 import { grantHistoricGates, hubGates, LOUNGE_SEATS } from './hub';
 import { ensureCrew, grantCrewForNeeds } from './crews';
 import { ensureLabour } from './unions';
+import { composePartners } from './alliances';
 import { appointHeads } from './managers';
 import { joinPartnerProgramme } from './loyalty';
 import { startHedging } from './hedging';
@@ -73,11 +74,8 @@ export function partnersAt(world: EngineWorld, scenario: TakeoverScenario, date:
 
 /** Monthly: the partners of airlines taken over follow history (alliances joined and left, subsidiaries bought). */
 export function refreshPartners(state: GameState, world: EngineWorld): void {
-  for (const airline of Object.values(state.airlines)) {
-    const scenario = airline.realId ? takeoverScenario(airline.realId) : undefined;
-    // Airlines of companies the player controls stay partners (Phase 10.5).
-    if (scenario) airline.partners = [...new Set([...partnersAt(world, scenario, toDate(state.time)), ...(airline.subsidiaryPartners ?? [])])];
-  }
+  // Group and alliance of the time, controlled companies (Phase 10.5), alliances and codeshares (Phase 11.1).
+  for (const airline of Object.values(state.airlines)) if (airline.controller === 'human') composePartners(state, world, airline);
   absorbSubsidiaries(state, world);
 }
 

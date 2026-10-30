@@ -30,6 +30,7 @@ import {
   type ListedAirline,
 } from '../data/listedAirlines';
 import { airlineCabin } from './ai';
+import { composePartners } from './alliances';
 import { openBase } from './bases';
 import { totalSeats } from './cabins';
 import { newRegistration } from './commands';
@@ -378,10 +379,8 @@ function stepTakeover(state: GameState, world: EngineWorld, airline: Airline): v
 
 /** Airlines of companies the player controls are partners: they leave the player's routes alone and feed passengers. */
 export function refreshSubsidiaries(state: GameState, world: EngineWorld, airline: Airline): void {
-  const subs = subsidiaryIds(state, world, airline);
-  const base = (airline.partners ?? []).filter((p) => !airline.subsidiaryPartners?.includes(p));
-  airline.subsidiaryPartners = subs;
-  airline.partners = [...new Set([...base, ...subs])];
+  airline.subsidiaryPartners = subsidiaryIds(state, world, airline);
+  composePartners(state, world, airline);
 }
 
 /** Member airlines (not merged) of companies the player controls. */

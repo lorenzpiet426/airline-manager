@@ -5,6 +5,7 @@ import { setBucketLimits, setFareBuckets, type FareError } from './bookings';
 import { leaveProgramme, setProgramme, startProgramme, type LoyaltyError } from './loyalty';
 import { repayLoan, saleLeaseback, takeLoan, type DebtError } from './debt';
 import { hedgeDeal, setHedgePolicy, type HedgeError } from './hedging';
+import { acceptInvitation, applyToAlliance, endCodeshare, foundAlliance, inviteToAlliance, leaveAlliance, removeFromAlliance, signCodeshare, type AllianceError } from './alliances';
 import { answerBid, mergeAirline, offerTakeover, tradeStake, type InvestError } from './investments';
 import { buyBack, ensureEquity, goPublic, issueShares, payDividend, tradeOwnShares, type ShareError } from './shares';
 import { ensureBoard } from './board';
@@ -427,13 +428,19 @@ export interface MergeAirline {
   airlineId: string;
   payload: { listedId: string; memberId: string };
 }
+/** Alliances and codeshares (Phase 11.1). */
+export interface AllianceCommand {
+  type: 'ApplyAlliance' | 'AcceptAlliance' | 'LeaveAlliance' | 'FoundAlliance' | 'InviteToAlliance' | 'RemoveFromAlliance' | 'SignCodeshare' | 'EndCodeshare';
+  airlineId: string;
+  payload: { alliance?: string; name?: string; partnerId?: string };
+}
 export interface AnswerBid {
   type: 'AnswerBid';
   airlineId: string;
   payload: { tender: boolean };
 }
 
-export type Command = TradeStake | OfferTakeover | MergeAirline | AnswerBid | GoPublic | IssueShares | PayDividend | BuyBack | TradeOwnShares | SetHedgePolicy | HedgeDeal | TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+export type Command = AllianceCommand | TradeStake | OfferTakeover | MergeAirline | AnswerBid | GoPublic | IssueShares | PayDividend | BuyBack | TradeOwnShares | SetHedgePolicy | HedgeDeal | TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -497,7 +504,8 @@ export type CommandError =
   | DebtError
   | HedgeError
   | ShareError
-  | InvestError;
+  | InvestError
+  | AllianceError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -625,6 +633,35 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
               ? (setDelegation(state, command.airlineId, command.payload.dept, command.payload.level) ??
                 (command.payload.dept === 'hr' && command.payload.level === 'auto' && airline.crew ? (planCrew(state, world, command.airlineId), null) : null))
               : declineProposal(state, command.airlineId, command.payload.id);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'ApplyAlliance':
+    case 'AcceptAlliance':
+    case 'LeaveAlliance':
+    case 'FoundAlliance':
+    case 'InviteToAlliance':
+    case 'RemoveFromAlliance':
+    case 'SignCodeshare':
+    case 'EndCodeshare': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      const id = command.airlineId;
+      const p = command.payload;
+      const error =
+        command.type === 'ApplyAlliance'
+          ? applyToAlliance(state, world, id, p.alliance ?? '')
+          : command.type === 'AcceptAlliance'
+            ? acceptInvitation(state, id)
+            : command.type === 'LeaveAlliance'
+              ? leaveAlliance(state, world, id)
+              : command.type === 'FoundAlliance'
+                ? foundAlliance(state, world, id, p.name ?? '')
+                : command.type === 'InviteToAlliance'
+                  ? inviteToAlliance(state, world, id, p.partnerId ?? '')
+                  : command.type === 'RemoveFromAlliance'
+                    ? removeFromAlliance(state, world, id, p.partnerId ?? '')
+                    : command.type === 'SignCodeshare'
+                      ? signCodeshare(state, world, id, p.partnerId ?? '')
+                      : endCodeshare(state, world, id, p.partnerId ?? '');
       return error ? fail(error) : { ok: true };
     }
     case 'TradeStake':

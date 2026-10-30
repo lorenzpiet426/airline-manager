@@ -6,6 +6,7 @@
 // airline sets: lower thresholds mean more status members, more loyalty and more cost (bonus points, lounges). In a
 // group's programme the airline can't change the rules: it pays the group for the points its passengers earn and is
 // paid for the group's award passengers on its flights. Weekly, from the week's accounts.
+import { alliancePull } from './alliances';
 import {
   ADMIN_EUR_MEMBER_YEAR,
   awardPoints,
@@ -70,7 +71,9 @@ export function loyaltyPull(state: GameState, airline: Airline | undefined): { b
   const v = programmeValue(state, airline);
   const target = p.kind === 'partner' ? MEMBER_SHARE.partner : MEMBER_SHARE.base + MEMBER_SHARE.perValue * v;
   const grown = Math.min(1, p.memberShare / Math.max(0.01, target));
-  return { business: 1 + PULL.business * v * grown, leisure: 1 + PULL.leisure * v * grown };
+  // Alliance partners sell the airline's flights and their frequent flyers earn and keep status here (Phase 11.1).
+  const alliance = alliancePull(state, undefined, airline);
+  return { business: (1 + PULL.business * v * grown) * alliance.business, leisure: (1 + PULL.leisure * v * grown) * alliance.leisure };
 }
 
 // ─── Commands ───────────────────────────────────────────────────────────────────

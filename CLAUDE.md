@@ -321,6 +321,8 @@ share price, shareholders; **10.4** ✅ board, targets, getting fired; **10.5** 
 ### Phase 11 — Business models and partnerships
 Low-cost, regional, charter + tour operator contracts, cargo (freighters + belly), subsidiaries; alliances
 and codeshares (real or fictional).
+Split (2026-10-30): **11.1** ✅ alliances and codeshares; **11.2** business model; **11.3** own subsidiaries (LCC/regional
+brands); **11.4** charter + tour operators; **11.5** cargo (belly + freighters).
 
 ### Phase 12 — Regulation and Hardcore depth
 Traffic rights and freedoms of the air, open skies, EU rules, CO2 taxes/ETS, noise rules; full Hardcore sub-models.
@@ -538,6 +540,9 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | 10.5: **realistic process**: ≤ 3 %/week on the market, disclosure at 5…75 %, mandatory offer above 30 %, 4-week acceptance, competition review (phase 2 with overlapping routes; remedies or prohibition), foreign ownership caps (EU single market none, US 25 %, Japan ⅓, else 49 %), governments with ≥ 25 % block takeovers | Owner choice (recommended) |
 | 2026-10-30 | 10.5: **AI takeovers rarely** (≈ 0.4/year worldwide, strong group buys weak airline in its market) and **bids for the player's cheap listed airline** (new owner → group targets) | Owner choice (recommended) |
 | 2026-10-30 | **Crews planned ahead**: HR (and the Crews table) counts aircraft arriving within 13 weeks (hiring + type rating) and aircraft without routes (75 % of their category's weekly hours); HR plans right after leasing/buying/ordering too; timetable first (with upgrades/retraining), then hire-only for the rest | Owner report: crews could only be hired after opening a route, so first flights were cancelled |
+| 2026-10-30 | Phase 11 order: **11.1 alliances/codeshares → 11.2 business model → 11.3 own subsidiaries → 11.4 charter + tour operators → 11.5 cargo** | Owner choice (recommended) |
+| 2026-10-30 | 11.1: **realistic invitation** (size, destinations, departures, reputation, FFP, hub free, sponsor; 8-week review, 12–18 months joining, fees); or **own alliance** with non-aligned airlines | Owner choice (recommended) |
+| 2026-10-30 | 11.1: alliances/codeshares bring **feed + sales + loyalty** (partners: no attacks, feed, lounges; codeshare feed ×1.25; alliance pull on travellers) | Owner choice (recommended) |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1515,6 +1520,31 @@ education", forbid making the data available to others (§3 iii) and require a w
   idle second aircraft).
 - Verified in browser (Austrian save): Crews tab with planned needs.
 - **Next:** Phase 11 (business models, alliances and codeshares).
+
+### 2026-10-30 — Session 41 (Phase 11.1: alliances and codeshares) ✅
+- Owner decisions (recommended): Phase 11 order, realistic invitation, feed + sales + loyalty (§7).
+- Data `src/data/allianceRules.ts` (Star/oneworld/SkyTeam with founding days, requirements, timing, fees, effects).
+- Engine `src/engine/alliances.ts`: `allianceMembers` (dated or Wikidata), `realAllianceOf`, `membershipOf` (taken-over
+  airlines' real membership is `historic`), `allianceChecks` (7 points + sponsor/hub member), `applyToAlliance`, review →
+  invited/rejected (reasons), `acceptInvitation` (fee) → joining → member, `leaveAlliance`; own alliance (`foundAlliance`,
+  `ownAllianceRefusal`, `inviteToAlliance`, `removeFromAlliance`); codeshares (`codeshareRefusal`: low-cost, rival
+  alliance, hub rival, no connection, reputation, overlap; `signCodeshare`, `endCodeshare`); `composePartners` (now the one
+  place that sets `Airline.partners`: scenario group/alliance, controlled companies, alliance members, own alliance,
+  codeshares; used by `refreshPartners` and `refreshSubsidiaries`); `alliancePull` (in `loyaltyPull`);
+  `alliancesDailyStep` (review, joining, monthly fees to overheads, partners). `partnerFeed` weights codeshare partners
+  × 1.25 (daily feed cache keyed by partners). State: `Airline.allianceMembership/ownAlliance/codeshares`, ledger
+  `alliance`, 9 messages. Commands: `ApplyAlliance`, `AcceptAlliance`, `LeaveAlliance`, `FoundAlliance`,
+  `InviteToAlliance`, `RemoveFromAlliance`, `SignCodeshare`, `EndCodeshare`. No save version change.
+- UI: **Alliances** screen (`#/alliances`, rail + More, rings icon): status (accept/leave), each global alliance with
+  members, checklist, fees, apply; own alliance (found, members, invite); codeshares (current, 40 airlines flying to your
+  airports with their answer); EN/DE.
+- Tests: 256 (`alliances.test.ts`: members over time, rejection with reasons + Star blocked at Vienna, invitation →
+  joining → member → partners/pull → rival refusal → leaving, codeshare rules, own alliance).
+- Verified in browser (Austrian save): Star Alliance member (as in reality), rival alliances refuse, group partners
+  "already a partner", codeshare with Luxair signed (31 → 32 partners), phone 375 px.
+- Known: oneworld/SkyTeam past members modelled from today's; codeshares don't share revenue explicitly (their value is
+  the feed); AI airlines don't change alliances.
+- **Next:** 11.2 business model.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

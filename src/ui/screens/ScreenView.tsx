@@ -14,6 +14,7 @@ import { LoyaltyScreen } from './LoyaltyScreen';
 import { SharesScreen } from './SharesScreen';
 import { BoardScreen } from './BoardScreen';
 import { InvestmentsScreen } from './InvestmentsScreen';
+import { AlliancesScreen } from './AlliancesScreen';
 import { SourcesScreen } from './SourcesScreen';
 import { SavesScreen } from './SavesScreen';
 import { LiveryScreen } from './LiveryScreen';
@@ -58,6 +59,8 @@ export function ScreenView({ route, isWide }: { route: Route; isWide: boolean })
       return <BoardScreen />;
     case 'investments':
       return <InvestmentsScreen />;
+    case 'alliances':
+      return <AlliancesScreen />;
     case 'saves':
       return <SavesScreen />;
     case 'livery':
