@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AIRLINE_LESSOR } from '../../engine/market';
 import { useTranslation } from 'react-i18next';
 import { Panel } from '../components/Panel';
@@ -18,7 +18,7 @@ import { MINUTES_PER_DAY, startOfDay, toDate, yearOf } from '../../engine/time';
 import { sendCommand } from '../../game/store';
 import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
-import { hrefFor } from '../navigation';
+import { hrefFor, useRouteParam } from '../navigation';
 import { CabinBar } from '../fleet/CabinBar';
 import { CabinEditor } from '../fleet/CabinEditor';
 import { cabinText } from '../fleet/cabinText';
@@ -41,7 +41,12 @@ export function FleetScreen() {
   const { t } = useTranslation();
   const { game, airline } = usePlayer();
   const fleetSize = game && airline ? Object.values(game.aircraft).filter((a) => a.airlineId === airline.id).length : 0;
-  const [tab, setTab] = useState<Tab>(fleetSize ? 'fleet' : 'market');
+  // A link can open a tab directly (#/fleet?tab=crew, from the Ops screen's action list).
+  const wanted = useRouteParam('tab') as Tab | null;
+  const [tab, setTab] = useState<Tab>(wanted ?? (fleetSize ? 'fleet' : 'market'));
+  useEffect(() => {
+    if (wanted) setTab(wanted);
+  }, [wanted]);
   const world = useGameWorld();
   const hubRunway = airline ? world?.airportById.get(airline.hubId)?.longestRunwayM : undefined;
 

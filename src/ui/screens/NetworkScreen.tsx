@@ -58,7 +58,7 @@ import { fromDate, toDate } from '../../engine/time';
 import { sendCommand } from '../../game/store';
 import { formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
-import { hrefFor } from '../navigation';
+import { hrefFor, useRouteParam } from '../navigation';
 import { routeTransfers } from '../../engine/transfers';
 import { groundContext } from '../../engine/hub';
 import { stationOf, stationsOf } from '../../engine/bases';
@@ -81,7 +81,13 @@ export function NetworkScreen() {
   const world = useGameWorld();
   const engineWorld = useEngineWorld();
   const [editing, setEditing] = useState<Editing>(null);
-  const [tab, setTab] = useState<'routes' | 'timetable' | 'fares' | 'connections' | 'slots' | 'hub' | 'bases'>('routes');
+  type NetTab = 'routes' | 'timetable' | 'fares' | 'connections' | 'slots' | 'hub' | 'bases';
+  // A link can open a tab directly (#/network?tab=timetable, from the Ops screen's action list).
+  const wanted = useRouteParam('tab') as NetTab | null;
+  const [tab, setTab] = useState<NetTab>(wanted ?? 'routes');
+  useEffect(() => {
+    if (wanted) setTab(wanted);
+  }, [wanted]);
   // Hub and Connections tabs: the hub or one of the bases (Phase 7.4).
   const [station, setStation] = useState(airline?.hubId ?? '');
 

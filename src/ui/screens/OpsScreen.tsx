@@ -4,6 +4,8 @@ import { currentLivery } from '../../engine/livery';
 import { useTranslation } from 'react-i18next';
 import { FlapBoard } from '../components/FlapBoard';
 import { Panel } from '../components/Panel';
+import { Segmented } from '../components/Segmented';
+import { ActionPanel, KeyNumbers, OverviewTiles } from '../game/OpsOverview';
 import { SimControls } from '../components/SimControls';
 import { GameClock } from '../components/StatusBar';
 import { Dashboard } from '../game/Dashboard';
@@ -23,6 +25,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { hrefFor } from '../navigation';
 
 type Level = 'normal' | 'caution' | 'info';
+type OpsTab = 'overview' | 'kpi' | 'departures' | 'messages' | 'news' | 'world' | 'airline';
 
 /** Offline readiness = a service worker controls the page (it caches the game files). */
 function useOfflineState(): 'ready' | 'pending' | 'unsupported' {
@@ -49,6 +52,22 @@ export function OpsScreen() {
   const { game, airline } = usePlayer();
   const world = useGameWorld();
   const engineWorld = useEngineWorld();
+  // The long lists below the overview, one at a time (the choice is remembered on this device).
+  const [tab, setTab] = useState<OpsTab>(() => {
+    try {
+      return (localStorage.getItem('am.opsTab') as OpsTab | null) ?? 'kpi';
+    } catch {
+      return 'kpi';
+    }
+  });
+  const chooseTab = (v: OpsTab) => {
+    setTab(v);
+    try {
+      localStorage.setItem('am.opsTab', v);
+    } catch {
+      /* private mode: not remembered */
+    }
+  };
 
   // Status lines use cockpit (ECAM) colours: green = normal, amber = caution, cyan = info.
   const checks: { label: string; value: string; level: Level }[] = [
@@ -115,6 +134,9 @@ export function OpsScreen() {
   const active = fleet.filter((a) => a.status === 'active').length;
   const delivering = fleet.length - active;
   const negative = airline.cash.amount < 0;
+  // On the phone the tiles are a tab of their own (key numbers and the action list come first).
+  const tabs: OpsTab[] = [...(isWide ? [] : (['overview'] as OpsTab[])), 'kpi', 'departures', 'messages', 'news', 'world', 'airline'];
+  const shown = tabs.includes(tab) ? tab : 'kpi';
 
   return (
     <div className="screen">
@@ -136,68 +158,86 @@ export function OpsScreen() {
           </Panel>
         )}
 
-        <Panel title={t('dashboard.title')} code="KPI" className="panel--wide">
-          <Dashboard game={game} airline={airline} />
-        </Panel>
+        {/* What needs you, then the key numbers (phone) or the four tiles (computer); long lists in tabs below. */}
+        <ActionPanel game={game} world={engineWorld} airline={airline} />
+        {isWide ? (
+          <OverviewTiles game={game} world={engineWorld} airline={airline} />
+        ) : (
+          <>
+            <KeyNumbers game={game} airline={airline} />
+            <Panel title={t('ops.clockTitle')} code={t(`ops.mode.${game.options.timeMode}`)} className="panel--wide">
+              <GameClock />
+              <SimControls />
+            </Panel>
+          </>
+        )}
 
-        {engineWorld && (
+        <div className="panel--wide ops-tabs">
+          <Segmented<OpsTab> label={t('overview.more')} value={shown} options={tabs.map((v) => ({ value: v, label: t(`overview.tab.${v}`) }))} onChange={chooseTab} />
+        </div>
+        {shown === 'overview' && <OverviewTiles game={game} world={engineWorld} airline={airline} />}
+        {shown === 'kpi' && (
+          <Panel title={t('dashboard.title')} code="KPI" className="panel--wide">
+            <Dashboard game={game} airline={airline} />
+          </Panel>
+        )}
+        {shown === 'departures' && engineWorld && (
           <Panel title={t('board.title')} code="FIDS" className="panel--wide">
             <DeparturesBoard game={game} world={engineWorld} airline={airline} />
           </Panel>
         )}
-
-        {engineWorld && game.world && (
+        {shown === 'messages' && (
+          <Panel title={t('ops.messagesTitle')} code="ACARS" className="panel--wide">
+            <MessageLog messages={game.messages.filter((m) => m.airlineId === airline.id)} world={world} />
+          </Panel>
+        )}
+        {shown === 'news' && (
+          <Panel title={t('ops.newsTitle')} code="NEWS" className="panel--wide">
+            <MessageLog messages={game.messages.filter((m) => m.airlineId === null)} world={world} limit={12} />
+          </Panel>
+        )}
+        {shown === 'world' && engineWorld && game.world && (
           <Panel title={t('world.title')} code="WX" className="panel--wide">
             <WorldPanel game={game} airline={airline} world={engineWorld} />
           </Panel>
         )}
-
-        {game.reputation[airline.id] && (
+        {shown === 'world' && game.reputation[airline.id] && (
           <Panel title={t('reputation.title')} code="REP" className="panel--wide">
             <ReputationPanel rep={game.reputation[airline.id]!} />
           </Panel>
         )}
-
-        <Panel title={t('ops.airlineTitle')} code={`${airline.iata} / ${airline.icao}`}>
-          <div className="airline-card">
-            <a href={hrefFor('livery')} className="airline-card__tail" aria-label={t('livery.design')}>
-              <AircraftSide livery={currentLivery(airline)} typeId="A20N" crop="tail" className="fleet-tail" />
-            </a>
-            <div className="airline-card__text">
-              <span className="airline-card__name">{airline.name}</span>
-              <span className="muted">
-                {t('ops.hub')}: <span className="mono">{hubCode}</span> {hub ? `· ${hub.city}` : ''}
-              </span>
-            </div>
-          </div>
-          <dl className="facts">
-            <dt>{t('ops.cash')}</dt>
-            <dd className={`mono ${negative ? 'text--warning' : 'text--normal'}`}>{formatMoney(settings.language, airline.cash, false)}</dd>
-            <dt>{t('ops.fleet')}</dt>
-            <dd>
-              {t('ops.fleetCount', { active, delivering })}
-            </dd>
-          </dl>
-          <a href={hrefFor('fleet')} className="button button--primary">
-            {fleet.length ? t('ops.toFleet') : t('ops.leaseFirst')}
-          </a>
-        </Panel>
-
-        <Panel title={t('ops.clockTitle')} code={t(`ops.mode.${game.options.timeMode}`)}>
-          <GameClock />
-          <SimControls />
-          <p className="muted small">{t(`ops.modeHint.${game.options.timeMode}`)}</p>
-        </Panel>
-
-        <Panel title={t('ops.messagesTitle')} code="ACARS" className="panel--wide">
-          <MessageLog messages={game.messages.filter((m) => m.airlineId === airline.id)} world={world} />
-        </Panel>
-
-        <Panel title={t('ops.newsTitle')} code="NEWS" className="panel--wide">
-          <MessageLog messages={game.messages.filter((m) => m.airlineId === null)} world={world} limit={12} />
-        </Panel>
-
-        {statusPanel}
+        {shown === 'airline' && (
+          <>
+            <Panel title={t('ops.airlineTitle')} code={`${airline.iata} / ${airline.icao}`}>
+              <div className="airline-card">
+                <a href={hrefFor('livery')} className="airline-card__tail" aria-label={t('livery.design')}>
+                  <AircraftSide livery={currentLivery(airline)} typeId="A20N" crop="tail" className="fleet-tail" />
+                </a>
+                <div className="airline-card__text">
+                  <span className="airline-card__name">{airline.name}</span>
+                  <span className="muted">
+                    {t('ops.hub')}: <span className="mono">{hubCode}</span> {hub ? `· ${hub.city}` : ''}
+                  </span>
+                </div>
+              </div>
+              <dl className="facts">
+                <dt>{t('ops.cash')}</dt>
+                <dd className={`mono ${negative ? 'text--warning' : 'text--normal'}`}>{formatMoney(settings.language, airline.cash, false)}</dd>
+                <dt>{t('ops.fleet')}</dt>
+                <dd>{t('ops.fleetCount', { active, delivering })}</dd>
+              </dl>
+              <a href={hrefFor('fleet')} className="button button--primary">
+                {fleet.length ? t('ops.toFleet') : t('ops.leaseFirst')}
+              </a>
+            </Panel>
+            <Panel title={t('ops.clockTitle')} code={t(`ops.mode.${game.options.timeMode}`)}>
+              <GameClock />
+              <SimControls />
+              <p className="muted small">{t(`ops.modeHint.${game.options.timeMode}`)}</p>
+            </Panel>
+            {statusPanel}
+          </>
+        )}
       </div>
     </div>
   );

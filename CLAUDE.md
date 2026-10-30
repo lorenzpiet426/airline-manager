@@ -544,6 +544,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | 11.1: **realistic invitation** (size, destinations, departures, reputation, FFP, hub free, sponsor; 8-week review, 12–18 months joining, fees); or **own alliance** with non-aligned airlines | Owner choice (recommended) |
 | 2026-10-30 | 11.1: alliances/codeshares bring **feed + sales + loyalty** (partners: no attacks, feed, lounges; codeshare feed ×1.25; alliance pull on travellers) | Owner choice (recommended) |
 | 2026-10-30 | **Network planning packages** (owner interview: "everything realistic"): any day patterns and other times on some days; several aircraft per route, gauge swaps, bigger aircraft on peak days; moving to another aircraft, tail swaps, chain shifts, wave rebuilds; one package with a preview, approved whole; small fixes at once, wave rebuilds from the next IATA season | Owner request; how network planning departments work |
+| 2026-10-30 | **Ops = cockpit overview** (owner): "Action needed" list first (each with a jump link), then four tiles (money, today's operation, network, fleet and people); long lists in tabs (key figures, departures, messages, news, world + reputation, airline); phone: action list + 4 key numbers + clock, tiles in an "Overview" tab | Owner: too much switching between screens |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1590,6 +1591,20 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Verified in browser (Austrian save, hired head): inbox packages with preview (VIE–LAX 3 days less, VIE–NRT +1); a
   first NRT proposal failed on slots at approval → slots and gates are now checked before proposing (all January/February
   proposals apply).
+- **Next:** 11.2 business model.
+
+### 2026-10-30 — Session 45 (clearer Ops screen) ✅
+- Owner wanted the important things on Ops instead of switching screens; interview: all four kinds, cockpit layout, phone
+  action list + key numbers.
+- `src/ui/game/opsSummary.ts` (pure): `actionItems` (cash below zero / runway < 12 weeks, takeover bid, board warning or
+  doubts, crew shortages, strikes, wage talks, proposals waiting, alliance invitation, own takeover offer, leases ending in
+  90 days, idle aircraft, aircraft arriving within 3 weeks without routes, routes losing money last week; sorted warning →
+  caution → info, each with a route + query), `operationSummary`, `networkSummary`, `fleetSummary`, `moneySummary`.
+  `src/ui/game/OpsOverview.tsx`: `ActionPanel`, `KeyNumbers`, `OverviewTiles`. `OpsScreen` rebuilt (tabs remembered in
+  localStorage `am.opsTab`). Fleet and Network screens accept `?tab=` (e.g. `#/fleet?tab=crew`). Section `overview` EN/DE.
+- Lesson: on macOS `opsOverview.ts` and `OpsOverview.tsx` clash (case-insensitive file system) — use distinct names.
+- Tests: 260. Verified in browser (Austrian save): desktop tiles + tabs, phone 375 px without sideways scrolling, deep link
+  to Crews.
 - **Next:** 11.2 business model.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
