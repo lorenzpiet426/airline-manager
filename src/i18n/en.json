@@ -23,7 +23,8 @@
     "flight": "Flight",
     "flights": "Flights",
     "loyalty": "Loyalty",
-    "shares": "Shares"
+    "shares": "Shares",
+    "board": "Board"
   },
   "status": {
     "sim": "SIM",
@@ -272,7 +273,13 @@
     "sharesBoughtBack": "{{shares}} shares bought back for {{amount}}.",
     "ceoGrant": "Your yearly CEO pay in shares: {{shares}} shares.",
     "ownBuy": "You bought {{shares}} of your airline's shares at {{price}} {{currency}}.",
-    "ownSell": "You sold {{shares}} of your airline's shares at {{price}} {{currency}}."
+    "ownSell": "You sold {{shares}} of your airline's shares at {{price}} {{currency}}.",
+    "boardReview": "Quarterly board review: confidence {{confidence}} ({{delta}}).",
+    "boardWarning": "The board gives you a formal warning: confidence {{confidence}} ({{delta}}). Below 20 at a later review, you will be dismissed.",
+    "boardTargets": "The owners have set your targets for {{year}}.",
+    "ceoDismissed": "The supervisory board has dismissed you as CEO.",
+    "ceoBankrupt": "The airline is bankrupt: your job as CEO ends.",
+    "capitalInjection": "{{owner}} puts {{amount}} of fresh capital into the airline to cover its losses. The board is not pleased."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -349,7 +356,10 @@
     "competitorsModelled": "Real airlines of that year",
     "takeoverNotesPast": "Austrian in {{year}}: the fleet of that year from Wikipedia (types and years; numbers of aircraft partly modelled), registrations made up in Austrian's real OE-L series (old registers aren't open data), all aircraft owned. Routes are modelled like those of the other airlines of the year, the timetable is planned by the game, the cash is modelled from the size of the fleet. Partners follow history: its subsidiaries Tyrolean (from 1997) and Lauda Air (from 2001) – their aircraft and Vienna routes become yours –, Qualiflyer with Swissair (1998–2000), Star Alliance (from 2000) and the Lufthansa Group (from September 2009). Nothing is planned for you: new aircraft you order yourself.",
     "takeoverNoPartners": "none yet",
-    "takeoverFleetPast": "Fleet in {{year}}"
+    "takeoverFleetPast": "Fleet in {{year}}",
+    "careerIntro": "Your next job starts on {{date}}. You bring your career and your personal wealth.",
+    "careerOffers": "A real airline has offered you the job of CEO.",
+    "careerNoOffers": "No real airline offers you a job yet (3 years as CEO with an average margin of −2 % or better needed): found your own airline."
   },
   "errors": {
     "scenarioUnknown": "This airline can’t be taken over yet.",
@@ -465,7 +475,8 @@
     "shareInvalid": "Choose a share within the limits.",
     "blackout": "No trading in own shares in the last 30 days of a quarter.",
     "notEnoughShares": "Not enough shares for that.",
-    "notEnoughMoney": "You don't have enough of your own money for that."
+    "notEnoughMoney": "You don't have enough of your own money for that.",
+    "dismissed": "You are no longer CEO of this airline."
   },
   "fleet": {
     "title": "Fleet",
@@ -1575,6 +1586,94 @@
     "dividendButton": "Pay ({{perShare}} per share)",
     "lastDividends": "Last dividends:",
     "capitalNote": "New shares bring money but dilute the owners (your stake too); a dividend pays cash to all owners and lowers the share price by as much; a buyback raises the others' share of the company."
+  },
+  "directors": {
+    "title": "Board",
+    "dismissedTitle": "You have been dismissed",
+    "bankruptTitle": "The airline is bankrupt",
+    "dismissedText": "The supervisory board of {{name}} dismissed you as CEO on {{date}}. A successor takes over; this game stands still from here.",
+    "bankruptText": "{{name}} went bankrupt on {{date}}. Your time as CEO ends here; this game stands still from here.",
+    "leaveWith": "You leave with your personal wealth of {{wealth}} — your shares and your own money. Your career goes on.",
+    "nextJob": "Find your next job",
+    "oldGameKept": "This game stays in your saves: you can always come back to look at it.",
+    "confidence": "Board's confidence",
+    "status": {
+      "trust": "The board trusts you.",
+      "doubts": "The board has doubts.",
+      "warned": "Formal warning: if the confidence falls below 20 at a review, you will be dismissed.",
+      "controls": "You hold the majority of the shares: no board can dismiss you.",
+      "dismissed": "You are no longer CEO."
+    },
+    "owners": "Owners",
+    "owner": {
+      "investors": "Private investors (venture capital)",
+      "public": "Shareholders on the stock exchange",
+      "state": "The state",
+      "group": "Group parent"
+    },
+    "since": "CEO since",
+    "nextReview": "Next quarterly review",
+    "honeymoon": "Your first year: the board judges misses at half weight and dismisses nobody yet.",
+    "confidenceNote": "Met targets raise the confidence at each quarterly review, misses lower it (less in a crisis, as boards know). Strikes and cash below zero cost confidence too. Below {{warning}} you get a formal warning; below {{dismiss}} at a later review, the board dismisses you.",
+    "targetsTitle": "Targets {{year}}",
+    "ownerWants": {
+      "investors": "Venture investors want the startup to reach a profit by its third year without running out of money.",
+      "public": "Stock-market investors want a rising margin and a share price that beats the market.",
+      "state": "The state wants jobs kept, the capital's connections kept and no big losses.",
+      "group": "The group wants a better margin every year and transfer passengers feeding its network."
+    },
+    "targetCol": "Target · weight",
+    "goal": "Goal",
+    "now": "Now",
+    "goalPending": "after 3 months",
+    "target": {
+      "margin": "Profit margin (last 12 months)",
+      "onTime": "Punctuality (within 15 min)",
+      "transfer": "Transfer passengers",
+      "sharePrice": "Share price vs. the market",
+      "jobs": "Crew jobs vs. start of year",
+      "destinations": "Destinations vs. start of year",
+      "cash": "Cash in months of costs"
+    },
+    "targetsNote": "Targets are set every January from last year's results. A new CEO's goals for margin, punctuality and transfers are fixed once three months of figures exist.",
+    "reviews": "Reviews",
+    "noReviews": "No review yet: the board meets on the first day of each quarter.",
+    "outcome": {
+      "fine": "satisfied",
+      "concern": "concerned",
+      "warning": "formal warning",
+      "dismissed": "dismissed"
+    },
+    "crisis": "crisis",
+    "event": {
+      "strike": "Strike",
+      "cashNegative": "Cash below zero",
+      "capitalInjection": "Capital from the owners"
+    },
+    "members": "Supervisory board",
+    "seat": {
+      "player": "You (founder's shares)",
+      "investors": "Investors",
+      "founders": "Founders",
+      "public": "Independent members (elected by the general meeting)",
+      "employees": "Employee representatives"
+    },
+    "membersNote": "Six seats for the shareholders, shared by their stakes. In Austria the works council sends one member for every two shareholder seats; in Germany a third or half. The shareholder side decides about the CEO.",
+    "career": "Your career",
+    "wealth": "Personal wealth",
+    "years": "Years as CEO",
+    "avgMargin": "Average margin",
+    "firstJob": "This is your first job as CEO.",
+    "marginShort": "margin {{value}}",
+    "reason": {
+      "dismissed": "dismissed",
+      "bankrupt": "bankrupt"
+    },
+    "careerNote": "Your wealth is the score of your career. After a dismissal you can found a startup, or real airlines may offer you a job after at least 3 years as CEO with an average margin of −2 % or better.",
+    "warningTitle": "Warning from the board",
+    "opsDismissed": "The board has dismissed you. See the Board screen for what happens next.",
+    "opsWarned": "The board has given you a formal warning (confidence {{confidence}}). Meet the targets at the next review.",
+    "open": "Open the board"
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

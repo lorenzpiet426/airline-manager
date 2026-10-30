@@ -21,12 +21,14 @@ export type WorldProvider = (state: GameState) => EngineWorld;
 /** Processes every scheduled event up to `until` (in time order), then sets the clock to `until`. */
 export function advance(state: GameState, world: EngineWorld | WorldProvider, until: SimTime): void {
   while (state.queue.length && state.queue[0]!.at <= until) {
+    // The player was dismissed (Phase 10.4): this game stands still.
+    if (state.dismissed) return;
     const event = state.queue.shift()!;
     state.time = Math.max(state.time, event.at);
     // Fictional startups founded in this game fly alongside the real airlines (Phase 6.4).
     handle(state, withStartups(typeof world === 'function' ? world(state) : world, state), event);
   }
-  state.time = Math.max(state.time, until);
+  if (!state.dismissed) state.time = Math.max(state.time, until);
 }
 
 function handle(state: GameState, world: EngineWorld, event: ScheduledEvent): void {

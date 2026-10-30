@@ -6,6 +6,7 @@ import { leaveProgramme, setProgramme, startProgramme, type LoyaltyError } from 
 import { repayLoan, saleLeaseback, takeLoan, type DebtError } from './debt';
 import { hedgeDeal, setHedgePolicy, type HedgeError } from './hedging';
 import { buyBack, ensureEquity, goPublic, issueShares, payDividend, tradeOwnShares, type ShareError } from './shares';
+import { ensureBoard } from './board';
 import type { HedgePolicy } from '../data/hedging';
 import type { Tier } from '../data/loyalty';
 import type { FareBucket } from '../data/fares';
@@ -419,6 +420,7 @@ export function fareRange(state: GameState, from: { country: string }, to: { cou
 export const MAX_FREQUENCY = 84;
 
 export type CommandError =
+  | 'dismissed'
   | 'nameLength'
   | 'iataFormat'
   | 'icaoFormat'
@@ -515,16 +517,24 @@ function withSlots(state: GameState, world: EngineWorld, airlineId: string, chan
 }
 
 export function applyCommand(state: GameState, world: EngineWorld, command: Command): CommandResult {
+  // A dismissed CEO decides nothing any more (Phase 10.4).
+  if (state.dismissed) return fail('dismissed');
   switch (command.type) {
     case 'FoundAirline': {
       const r = foundAirline(state, world, command.payload);
-      // Its owners: the founder and the investors (Phase 10.3).
-      if (r.ok) ensureEquity(state);
+      // Its owners: the founder and the investors (Phase 10.3), and their board (Phase 10.4).
+      if (r.ok) {
+        ensureEquity(state);
+        ensureBoard(state);
+      }
       return r;
     }
     case 'TakeOverAirline': {
       const r = takeOver(state, world, command.payload.realId);
-      if (r.ok) ensureEquity(state);
+      if (r.ok) {
+        ensureEquity(state);
+        ensureBoard(state);
+      }
       return r.ok ? { ok: true, id: r.result.airlineId } : fail(r.error);
     }
     case 'LeaseAircraft':

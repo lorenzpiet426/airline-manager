@@ -127,6 +127,15 @@ export function OpsScreen() {
       <div className="grid">
         <AwayReportPanel />
 
+        {(game.dismissed !== undefined || airline.board?.warnedAt !== undefined) && (
+          <Panel title={t(game.dismissed !== undefined ? 'directors.dismissedTitle' : 'directors.warningTitle')} code="!" className="panel--wide">
+            <p className="text--warning">{t(game.dismissed !== undefined ? 'directors.opsDismissed' : 'directors.opsWarned', { confidence: Math.round(airline.board?.confidence ?? 0) })}</p>
+            <a href={hrefFor('board')} className="button">
+              {t('directors.open')}
+            </a>
+          </Panel>
+        )}
+
         <Panel title={t('dashboard.title')} code="KPI" className="panel--wide">
           <Dashboard game={game} airline={airline} />
         </Panel>

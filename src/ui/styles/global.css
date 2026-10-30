@@ -2969,3 +2969,20 @@ a.button {
 .capital-row {
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
 }
+
+/* ─── Board (Phase 10.4) ───────────────────────────────────────────────── */
+.board-meter {
+  position: relative;
+  height: 10px;
+  overflow: visible;
+}
+.board-meter .meter__fill {
+  border-radius: 5px;
+}
+.board-meter__line {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--text-muted, currentColor);
+}

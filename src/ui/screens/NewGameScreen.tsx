@@ -16,8 +16,9 @@ import type { Scheduling, TimeMode } from '../../engine/state';
 import { startNewGame, useGame } from '../../game/store';
 import { countryName, formatGameDate, formatMoney, formatNumber } from '../../i18n/format';
 import { useSettings } from '../../settings/settings';
-import { hrefFor } from '../navigation';
-import { fromDate } from '../../engine/time';
+import { hrefFor, useRouteParam } from '../navigation';
+import { jobOffers } from '../../engine/board';
+import { fromDate, MINUTES_PER_DAY, startOfDay, toDate, yearOf } from '../../engine/time';
 import { fleetLinesIn, partnersAt, takeoverCashEur, takeoverStart } from '../../engine/takeover';
 import { TAKEOVERS } from '../../data/takeovers';
 import { getAircraftType } from '../../data/aircraft';
@@ -49,12 +50,16 @@ export function NewGameScreen() {
   const { language } = useSettings();
   const base = useWorld();
   const existingGame = useGame();
+  // A dismissed CEO's next job (Phase 10.4): starts the day after, brings the career; real airlines only if they offer.
+  const careerGame = useRouteParam('career') === '1' && existingGame?.dismissed ? existingGame : null;
+  const offers = careerGame ? jobOffers(careerGame) : null;
+  const careerStart = careerGame ? startOfDay(careerGame.time) + MINUTES_PER_DAY : null;
   // 'startup', or the real airline taken over (Phase 6.2).
   const [scenario, setScenario] = useState<'startup' | keyof typeof TAKEOVERS>('startup');
   const takeover = scenario === 'startup' ? null : TAKEOVERS[scenario]!;
-  const [startYear, setStartYear] = useState(REAL_AIRLINES_FROM);
+  const [startYear, setStartYear] = useState(careerGame ? yearOf(careerGame.time) : REAL_AIRLINES_FROM);
   const historical = startYear < REAL_AIRLINES_FROM;
-  const startDate = new Date(Date.UTC(startYear, 0, 1));
+  const startDate = careerStart !== null ? toDate(careerStart) : new Date(Date.UTC(startYear, 0, 1));
   // The world of the start year: its airports (Kai Tak, Riem …) and exchange rates.
   const engine = useEngineWorldAt(historical ? startYear : undefined, startDate);
   const world = base && engine ? screenWorld(base, engine) : null;
@@ -65,7 +70,7 @@ export function NewGameScreen() {
   const [colors, setColors] = useState<[string, string]>(LIVERY_PRESETS[0]!);
   const [hubId, setHubId] = useState('LOWW');
   const [capitalEur, setCapitalEur] = useState<number>(CAPITAL_OPTIONS_EUR[1]);
-  const [timeMode, setTimeMode] = useState<TimeMode>('realtime');
+  const [timeMode, setTimeMode] = useState<TimeMode>(careerGame?.options.timeMode ?? 'realtime');
   const [schedulingChoice, setScheduling] = useState<Scheduling>('simple');
   // A taken-over airline flies several aircraft per route: its timetable is Detailed from the start.
   const scheduling: Scheduling = takeover ? 'detailed' : schedulingChoice;
@@ -110,7 +115,14 @@ export function NewGameScreen() {
       seed: crypto.getRandomValues(new Uint32Array(1))[0]!,
       startYear,
       // A real-clock game starts now; a takeover today; the others on 1 January.
-      ...(mode === 'realclock' ? { startTime: fromDate(new Date()) } : takeover && !historical ? { startTime: takeoverStart(new Date()) } : {}),
+      ...(mode === 'realclock'
+        ? { startTime: fromDate(new Date()) }
+        : careerStart !== null
+          ? { startTime: careerStart }
+          : takeover && !historical
+            ? { startTime: takeoverStart(new Date()) }
+            : {}),
+      ...(careerGame?.career ? { career: careerGame.career } : {}),
       timeMode: mode,
       realism: 'realistic' as const,
       scheduling,
@@ -130,6 +142,11 @@ export function NewGameScreen() {
     <div className="screen screen--narrow newgame">
       <h1 className="screen__title">{t('newGame.title')}</h1>
       <p className="muted">{t('newGame.intro')}</p>
+      {careerGame && (
+        <p className="notice">
+          {t('newGame.careerIntro', { date: formatGameDate(language, toDate(careerStart!), false) })} {offers?.length ? t('newGame.careerOffers') : t('newGame.careerNoOffers')}
+        </p>
+      )}
 
       <Panel title={t('newGame.scenarioTitle')} code="1">
         <div className="choices" role="radiogroup" aria-label={t('newGame.scenarioTitle')}>
@@ -137,7 +154,9 @@ export function NewGameScreen() {
             <span className="choice__title">{t('newGame.scenarioStartupTitle')}</span>
             <span className="muted small">{t('newGame.scenarioStartupHint')}</span>
           </button>
-          {Object.values(TAKEOVERS).map((x) => (
+          {Object.values(TAKEOVERS)
+            .filter((x) => !offers || offers.includes(x.realId))
+            .map((x) => (
             <button key={x.realId} type="button" role="radio" aria-checked={scenario === x.realId} className="choice" onClick={() => setScenario(x.realId)}>
               <span className="choice__title">{t('newGame.takeoverTitle', { name: engine?.realAirlines?.byId.get(x.realId)?.name ?? x.realId })}</span>
               <span className="muted small">{t('newGame.takeoverHint')}</span>
@@ -146,31 +165,33 @@ export function NewGameScreen() {
         </div>
       </Panel>
 
-      <Panel title={t('newGame.era')} code="2">
-        <div className="choices choices--years" role="radiogroup" aria-label={t('newGame.era')}>
-          {[...YEAR_PRESETS, REAL_AIRLINES_FROM].map((y) => (
-            <button key={y} type="button" role="radio" aria-checked={startYear === y} className="choice" onClick={() => setStartYear(y)}>
-              <span className="choice__value mono">{y === REAL_AIRLINES_FROM ? t('newGame.today') : y}</span>
-              <span className="muted small">{t(`newGame.eraHint.${y}`)}</span>
-            </button>
-          ))}
-        </div>
-        <label className="field">
-          <span className="field__label">{t('newGame.startYear')}</span>
-          <input
-            className="input mono"
-            type="number"
-            min={FIRST_START_YEAR}
-            max={REAL_AIRLINES_FROM}
-            value={startYear}
-            onChange={(e) => {
-              const y = Math.round(Number(e.target.value));
-              if (y >= FIRST_START_YEAR && y <= REAL_AIRLINES_FROM) setStartYear(y);
-            }}
-          />
-        </label>
-        <p className="muted small">{historical ? t('newGame.historicalHint') : t('newGame.todayHint')}</p>
-      </Panel>
+      {!careerGame && (
+        <Panel title={t('newGame.era')} code="2">
+          <div className="choices choices--years" role="radiogroup" aria-label={t('newGame.era')}>
+            {[...YEAR_PRESETS, REAL_AIRLINES_FROM].map((y) => (
+              <button key={y} type="button" role="radio" aria-checked={startYear === y} className="choice" onClick={() => setStartYear(y)}>
+                <span className="choice__value mono">{y === REAL_AIRLINES_FROM ? t('newGame.today') : y}</span>
+                <span className="muted small">{t(`newGame.eraHint.${y}`)}</span>
+              </button>
+            ))}
+          </div>
+          <label className="field">
+            <span className="field__label">{t('newGame.startYear')}</span>
+            <input
+              className="input mono"
+              type="number"
+              min={FIRST_START_YEAR}
+              max={REAL_AIRLINES_FROM}
+              value={startYear}
+              onChange={(e) => {
+                const y = Math.round(Number(e.target.value));
+                if (y >= FIRST_START_YEAR && y <= REAL_AIRLINES_FROM) setStartYear(y);
+              }}
+            />
+          </label>
+          <p className="muted small">{historical ? t('newGame.historicalHint') : t('newGame.todayHint')}</p>
+        </Panel>
+      )}
 
       {takeover ? (
         <Panel title={real?.name ?? takeover.realId} code="3">

@@ -6,6 +6,8 @@ import { ensureHubFacilities } from '../engine/hub';
 import { ensureCrew } from '../engine/crews';
 import { ensureLabour } from '../engine/unions';
 import { ensureMgmt } from '../engine/managers';
+import { ensureEquity } from '../engine/shares';
+import { ensureBoard } from '../engine/board';
 import * as Comlink from 'comlink';
 import type { Airport, Country } from '../data/types';
 import { advance, type WorldProvider } from '../engine/advance';
@@ -163,6 +165,9 @@ async function loadState(raw: unknown): Promise<EngineSnapshot | null> {
   ensureCrew(loaded, world(loaded));
   ensureLabour(loaded, world(loaded));
   ensureMgmt(loaded, world(loaded));
+  // Owners and their board (Phases 10.3/10.4).
+  ensureEquity(loaded);
+  ensureBoard(loaded);
   state = loaded;
   return setSpeed(0);
 }

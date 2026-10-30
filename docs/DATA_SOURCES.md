@@ -887,6 +887,28 @@ Owner decisions: price from earnings + market mood, founder stake + CEO shares, 
 - **CEO pay** (modelled, Austrian level × price level): €50,000 a month salary, shares worth €400,000 a year (cash in a
   group-owned airline); no trading in own shares in the last 30 days of a quarter.
 
+## Board, owners' targets and dismissal (Phase 10.4, 2026-10-30)
+Owner decisions: targets by owner, confidence score with warnings, career continues after a dismissal.
+
+- **Law** (read 2026-10-30): Austrian Aktiengesetz §75 (the supervisory board appoints and can dismiss the management
+  board), §86 (size of the supervisory board); Arbeitsverfassungsgesetz §110 (works council sends one member for every
+  two shareholder members); GmbH-Gesetz §29 (supervisory board needed above 300 employees); German Mitbestimmungsgesetz
+  (half the seats above 2,000 employees) and Drittelbeteiligungsgesetz (a third above 500). Game: six shareholder seats
+  shared by D'Hondt, employee seats for Austria and Germany only; the player cannot be dismissed with > 50 % of the shares.
+- **Owner support**: Lufthansa / ÖIAG restructuring aid for Austrian (EU Commission approval of €500 m, Aug 2009) and the
+  2020 Covid package (Austrian state + Lufthansa) — Wikipedia "Austrian Airlines", read 2026-10-30. Game: a group or the
+  state puts in capital (cash for 2 months of costs) whenever the cash falls below zero, costing 8 confidence points.
+- **Targets and points** (modelled): investors — margin −30 % / −8 % / +1 % in the startup's years 1–3, then the stock-market
+  rule; cash ≥ 6 months of costs; punctuality. Stock market — margin last year + 1 point (max 8 %), share price vs. the
+  market's mood. State — margin + 0.5 point (max 3 %), crew jobs (≥ −3 %), destinations (≥ −5 %). Group — margin + 1 point,
+  transfer share. Score per target ±1 at a set distance (margin 5 points, share price 20 %, cash 6 months …); a review
+  moves the confidence by up to ±12; misses count half in a new CEO's first year and 40 % in a crisis (business demand at
+  the hub < 0.93). Strikes −2, cash below zero on the 1st of a month −5. Warning below 40, dismissal below 20 at a later
+  review (not in the first year).
+- **Calibration check** (Austrian taken over on 29 Oct 2026, played without changes): goals fixed in January 2027 at
+  −7.5 % margin, 40 % transfers, 78 % punctuality; confidence 60 → 53 after a year, owner capital in November 2027
+  (margin −13 % by then), warning at the January 2028 review. A passive CEO is warned after about 14 months.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

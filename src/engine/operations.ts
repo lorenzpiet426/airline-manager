@@ -12,6 +12,7 @@ import { loyaltyPull, loyaltyWeeklyStep } from './loyalty';
 import { debtDailyStep } from './debt';
 import { hedgingDailyStep } from './hedging';
 import { sharesDailyStep } from './shares';
+import { boardDailyStep } from './board';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -129,6 +130,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   // A new IATA season: use it or lose it, and the slots asked for.
   if (isSeasonStart(state.time)) seasonChange(state, world);
   if (startOfMonth(state.time) === state.time) closeMonth(state);
+  // The board: targets, confidence, quarterly reviews with last month filed, dismissal (Phase 10.4).
+  boardDailyStep(state, world);
 }
 
 function bookDay(state: GameState, world: EngineWorld): void {

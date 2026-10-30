@@ -115,7 +115,9 @@ export function ensureEquity(state: GameState): void {
     if (airline.controller !== 'human' || airline.equity) continue;
     const o = startingOwners(state, airline);
     const paidIn = airline.realId ? Math.max(1, balanceSheet(state, airline).equity) : Math.max(1, airline.cash.amount);
-    const e: Equity = { shares: o.shares, listed: o.listed, holders: o.holders, price: 0, history: [], paidIn, playerCash: 0, dividends: [] };
+    // A player starting a new job brings the wealth of their career (Phase 10.4).
+    const brought = Math.round((state.career?.wealthEur ?? 0) * eurToBook(state, airline.currency));
+    const e: Equity = { shares: o.shares, listed: o.listed, holders: o.holders, price: 0, history: [], paidIn, playerCash: brought, dividends: [] };
     if (o.listed) e.listedAt = state.time;
     airline.equity = e;
     e.price = Math.max(0.01, fundamentalValue(state, airline) / e.shares);

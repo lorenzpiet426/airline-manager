@@ -23,7 +23,8 @@
     "flight": "Flug",
     "flights": "Flüge",
     "loyalty": "Vielflieger",
-    "shares": "Aktien"
+    "shares": "Aktien",
+    "board": "Aufsichtsrat"
   },
   "status": {
     "sim": "SIM",
@@ -272,7 +273,13 @@
     "sharesBoughtBack": "{{shares}} Aktien für {{amount}} zurückgekauft.",
     "ceoGrant": "Deine jährliche CEO-Vergütung in Aktien: {{shares}} Aktien.",
     "ownBuy": "Du hast {{shares}} Aktien deiner Airline zu {{price}} {{currency}} gekauft.",
-    "ownSell": "Du hast {{shares}} Aktien deiner Airline zu {{price}} {{currency}} verkauft."
+    "ownSell": "Du hast {{shares}} Aktien deiner Airline zu {{price}} {{currency}} verkauft.",
+    "boardReview": "Quartalssitzung des Aufsichtsrats: Vertrauen {{confidence}} ({{delta}}).",
+    "boardWarning": "Der Aufsichtsrat mahnt dich formell ab: Vertrauen {{confidence}} ({{delta}}). Unter 20 bei einer späteren Sitzung wirst du abberufen.",
+    "boardTargets": "Die Eigentümer haben deine Ziele für {{year}} festgelegt.",
+    "ceoDismissed": "Der Aufsichtsrat hat dich als CEO abberufen.",
+    "ceoBankrupt": "Die Airline ist pleite: Dein Job als CEO endet.",
+    "capitalInjection": "{{owner}} schießt {{amount}} frisches Kapital zu, um die Verluste zu decken. Der Aufsichtsrat ist nicht erfreut."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -349,7 +356,10 @@
     "competitorsModelled": "Echte Airlines dieses Jahres",
     "takeoverNotesPast": "Austrian im Jahr {{year}}: die Flotte dieses Jahres aus Wikipedia (Typen und Jahre; Anzahl teils modelliert), Kennzeichen in Austrians echter OE-L-Serie erfunden (alte Register sind keine offenen Daten), alle Flugzeuge im Eigentum. Die Strecken sind modelliert wie die der anderen Airlines des Jahres, den Flugplan plant das Spiel, das Geld ist aus der Größe der Flotte modelliert. Die Partner folgen der Geschichte: die Töchter Tyrolean (ab 1997) und Lauda Air (ab 2001) – ihre Flugzeuge und Wien-Strecken werden deine –, Qualiflyer mit Swissair (1998–2000), Star Alliance (ab 2000) und die Lufthansa Group (ab September 2009). Nichts ist für dich vorgeplant: Neue Flugzeuge bestellst du selbst.",
     "takeoverNoPartners": "noch keine",
-    "takeoverFleetPast": "Flotte im Jahr {{year}}"
+    "takeoverFleetPast": "Flotte im Jahr {{year}}",
+    "careerIntro": "Dein nächster Job beginnt am {{date}}. Du bringst deine Karriere und dein Privatvermögen mit.",
+    "careerOffers": "Eine echte Airline hat dir den Job als CEO angeboten.",
+    "careerNoOffers": "Noch bietet dir keine echte Airline einen Job an (nötig: 3 Jahre als CEO mit durchschnittlich −2 % Marge oder besser) – gründe deine eigene Airline."
   },
   "errors": {
     "scenarioUnknown": "Diese Airline kann noch nicht übernommen werden.",
@@ -465,7 +475,8 @@
     "shareInvalid": "Wähle einen Anteil innerhalb der Grenzen.",
     "blackout": "Kein Handel mit eigenen Aktien in den letzten 30 Tagen eines Quartals.",
     "notEnoughShares": "Dafür gibt es nicht genug Aktien.",
-    "notEnoughMoney": "Dafür hast du nicht genug eigenes Geld."
+    "notEnoughMoney": "Dafür hast du nicht genug eigenes Geld.",
+    "dismissed": "Du bist nicht mehr CEO dieser Airline."
   },
   "fleet": {
     "title": "Flotte",
@@ -1575,6 +1586,94 @@
     "dividendButton": "Auszahlen ({{perShare}} pro Aktie)",
     "lastDividends": "Letzte Dividenden:",
     "capitalNote": "Neue Aktien bringen Geld, verwässern aber die Eigentümer (auch deinen Anteil); eine Dividende zahlt allen Eigentümern Geld aus und senkt den Kurs um so viel; ein Rückkauf erhöht den Anteil der anderen an der Firma."
+  },
+  "directors": {
+    "title": "Aufsichtsrat",
+    "dismissedTitle": "Du wurdest abberufen",
+    "bankruptTitle": "Die Airline ist pleite",
+    "dismissedText": "Der Aufsichtsrat von {{name}} hat dich am {{date}} als CEO abberufen. Ein Nachfolger übernimmt; dieses Spiel steht ab hier still.",
+    "bankruptText": "{{name}} ist am {{date}} in Konkurs gegangen. Deine Zeit als CEO endet hier; dieses Spiel steht ab hier still.",
+    "leaveWith": "Du gehst mit deinem Privatvermögen von {{wealth}} – deinen Aktien und deinem eigenen Geld. Deine Karriere geht weiter.",
+    "nextJob": "Nächsten Job suchen",
+    "oldGameKept": "Dieses Spiel bleibt bei deinen Spielständen: Du kannst es dir jederzeit wieder ansehen.",
+    "confidence": "Vertrauen des Aufsichtsrats",
+    "status": {
+      "trust": "Der Aufsichtsrat vertraut dir.",
+      "doubts": "Der Aufsichtsrat hat Zweifel.",
+      "warned": "Formelle Abmahnung: Fällt das Vertrauen bei einer Sitzung unter 20, wirst du abberufen.",
+      "controls": "Du hältst die Mehrheit der Aktien: Kein Aufsichtsrat kann dich abberufen.",
+      "dismissed": "Du bist nicht mehr CEO."
+    },
+    "owners": "Eigentümer",
+    "owner": {
+      "investors": "Private Investoren (Risikokapital)",
+      "public": "Aktionäre an der Börse",
+      "state": "Der Staat",
+      "group": "Konzernmutter"
+    },
+    "since": "CEO seit",
+    "nextReview": "Nächste Quartalssitzung",
+    "honeymoon": "Dein erstes Jahr: Der Aufsichtsrat bewertet verfehlte Ziele nur halb und beruft noch niemanden ab.",
+    "confidenceNote": "Erreichte Ziele stärken das Vertrauen bei jeder Quartalssitzung, verfehlte schwächen es (in einer Krise weniger – das weiß auch der Aufsichtsrat). Streiks und ein Kontostand unter null kosten ebenfalls Vertrauen. Unter {{warning}} bekommst du eine formelle Abmahnung; unter {{dismiss}} bei einer späteren Sitzung beruft dich der Aufsichtsrat ab.",
+    "targetsTitle": "Ziele {{year}}",
+    "ownerWants": {
+      "investors": "Risikokapitalgeber wollen, dass das Start-up bis zu seinem dritten Jahr Gewinn macht, ohne dass ihm das Geld ausgeht.",
+      "public": "Anleger an der Börse wollen eine steigende Marge und einen Aktienkurs, der besser läuft als der Markt.",
+      "state": "Der Staat will Arbeitsplätze und die Verbindungen der Hauptstadt erhalten und keine großen Verluste.",
+      "group": "Der Konzern will jedes Jahr eine bessere Marge und Umsteiger, die sein Netz füttern."
+    },
+    "targetCol": "Ziel · Gewicht",
+    "goal": "Ziel",
+    "now": "Jetzt",
+    "goalPending": "nach 3 Monaten",
+    "target": {
+      "margin": "Gewinnmarge (letzte 12 Monate)",
+      "onTime": "Pünktlichkeit (bis 15 Min.)",
+      "transfer": "Umsteigepassagiere",
+      "sharePrice": "Aktienkurs gegenüber dem Markt",
+      "jobs": "Crew-Arbeitsplätze seit Jahresbeginn",
+      "destinations": "Ziele seit Jahresbeginn",
+      "cash": "Geld in Monaten Kosten"
+    },
+    "targetsNote": "Die Ziele werden jeden Jänner aus den Ergebnissen des Vorjahres festgelegt. Für einen neuen CEO werden Marge, Pünktlichkeit und Umsteiger festgelegt, sobald es drei Monate Zahlen gibt.",
+    "reviews": "Sitzungen",
+    "noReviews": "Noch keine Sitzung: Der Aufsichtsrat tagt am ersten Tag jedes Quartals.",
+    "outcome": {
+      "fine": "zufrieden",
+      "concern": "besorgt",
+      "warning": "formelle Abmahnung",
+      "dismissed": "abberufen"
+    },
+    "crisis": "Krise",
+    "event": {
+      "strike": "Streik",
+      "cashNegative": "Kontostand unter null",
+      "capitalInjection": "Kapitalspritze der Eigentümer"
+    },
+    "members": "Aufsichtsrat",
+    "seat": {
+      "player": "Du (Gründeranteile)",
+      "investors": "Investoren",
+      "founders": "Gründer",
+      "public": "Unabhängige Mitglieder (von der Hauptversammlung gewählt)",
+      "employees": "Arbeitnehmervertreter"
+    },
+    "membersNote": "Sechs Sitze für die Aktionäre, nach ihren Anteilen verteilt. In Österreich entsendet der Betriebsrat für je zwei Aktionärssitze ein Mitglied, in Deutschland ein Drittel oder die Hälfte. Über den CEO entscheidet die Aktionärsseite.",
+    "career": "Deine Karriere",
+    "wealth": "Privatvermögen",
+    "years": "Jahre als CEO",
+    "avgMargin": "Durchschnittliche Marge",
+    "firstJob": "Das ist dein erster Job als CEO.",
+    "marginShort": "Marge {{value}}",
+    "reason": {
+      "dismissed": "abberufen",
+      "bankrupt": "Konkurs"
+    },
+    "careerNote": "Dein Vermögen ist der Punktestand deiner Karriere. Nach einer Abberufung kannst du ein Start-up gründen, oder echte Airlines bieten dir einen Job an – nach mindestens 3 Jahren als CEO mit einer durchschnittlichen Marge von −2 % oder besser.",
+    "warningTitle": "Abmahnung vom Aufsichtsrat",
+    "opsDismissed": "Der Aufsichtsrat hat dich abberufen. Auf dem Aufsichtsrat-Bildschirm siehst du, wie es weitergeht.",
+    "opsWarned": "Der Aufsichtsrat hat dich formell abgemahnt (Vertrauen {{confidence}}). Erreiche die Ziele bei der nächsten Sitzung.",
+    "open": "Aufsichtsrat öffnen"
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

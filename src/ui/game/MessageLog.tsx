@@ -135,6 +135,15 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
       case 'dividendPaid':
       case 'sharesBoughtBack':
         return t(`msg.${m.kind}`, { amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }), shares: formatNumber(language, Number(p.shares ?? 0)), price: p.price, perShare: p.perShare });
+      case 'boardReview':
+      case 'boardWarning':
+        return t(`msg.${m.kind}`, { confidence: p.confidence, delta: `${Number(p.delta) > 0 ? '+' : ''}${formatNumber(language, Number(p.delta), 1)}` });
+      case 'boardTargets':
+        return t('msg.boardTargets', { year: p.year });
+      case 'capitalInjection':
+        return t('msg.capitalInjection', { amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }), owner: p.owner });
+      case 'ceoDismissed':
+        return t(p.reason === 'bankrupt' ? 'msg.ceoBankrupt' : 'msg.ceoDismissed');
       case 'ceoGrant':
         return t('msg.ceoGrant', { shares: formatNumber(language, Number(p.shares)) });
       case 'ownTrade':

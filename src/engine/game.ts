@@ -10,7 +10,7 @@ import { awarenessTarget, newReputation } from './reputation';
 import { refreshMarket } from './market';
 import { newFinance } from './operations';
 import { sumPeriods } from './finance';
-import { emptyAi, SAVE_VERSION, type GameOptions, type GameState, type PnlWeek } from './state';
+import { emptyAi, SAVE_VERSION, type Career, type GameOptions, type GameState, type PnlWeek } from './state';
 import { MINUTES_PER_DAY, simTime, startOfDay, startOfMonth, startOfNextMonth, toDate, type SimTime } from './time';
 import { REAL_AIRLINES_FROM } from './era';
 import { ratesPerEurAt } from '../data/fxHistory';
@@ -21,6 +21,8 @@ export interface NewGameOptions extends GameOptions {
   startYear: number;
   /** Start at this moment instead of 1 January (real-clock games start now). */
   startTime?: SimTime;
+  /** The player's career so far, when a dismissed CEO starts a new job (Phase 10.4). */
+  career?: Career;
 }
 
 export function createGame(options: NewGameOptions, world?: EngineWorld): GameState {
@@ -56,6 +58,7 @@ export function createGame(options: NewGameOptions, world?: EngineWorld): GameSt
     messages: [],
     ledger: [],
     nextId: 1,
+    ...(options.career ? { career: structuredClone(options.career) } : {}),
   };
   refreshMarket(state);
   schedule(state, { at: startOfNextMonth(startTime), kind: 'monthStart' });

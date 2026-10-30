@@ -86,6 +86,65 @@ export interface Airline {
   hedging?: Hedging;
   /** Shares, shareholders and the share price (Phase 10.3). */
   equity?: Equity;
+  /** The board: owners' targets, its confidence in the CEO, reviews (Phase 10.4). */
+  board?: Board;
+}
+
+export type OwnerKind = 'investors' | 'public' | 'state' | 'group';
+export type TargetKind = 'margin' | 'onTime' | 'transfer' | 'sharePrice' | 'jobs' | 'destinations' | 'cash';
+
+/** One of the owners' targets for the year: `goal` null until the board has a baseline (a new CEO's first months). */
+export interface BoardTarget {
+  kind: TargetKind;
+  weight: number;
+  goal: number | null;
+  /** Starting point for relative targets (share price and market mood, staff, destinations). */
+  base?: number;
+  base2?: number;
+}
+
+export interface BoardReview {
+  at: SimTime;
+  confidence: number;
+  delta: number;
+  /** Per target: the value measured and its score (−1 … +1). */
+  results: { kind: TargetKind; value: number; goal: number; score: number }[];
+  crisis: boolean;
+  outcome: 'fine' | 'concern' | 'warning' | 'dismissed';
+}
+
+export interface Board {
+  owner: OwnerKind;
+  /** The player became CEO. */
+  since: SimTime;
+  /** The year the targets are for. */
+  year: number;
+  targets: BoardTarget[];
+  /** 0–100: the board's confidence in the CEO. */
+  confidence: number;
+  /** A formal warning was given (lifted when confidence recovers). */
+  warnedAt?: SimTime;
+  reviews: BoardReview[];
+  /** Events between reviews that changed the confidence (strikes, cash below zero). */
+  events: { at: SimTime; kind: 'strike' | 'cashNegative' | 'capitalInjection'; delta: number }[];
+  dismissedAt?: SimTime;
+}
+
+/** A finished job as CEO (Phase 10.4). */
+export interface CareerJob {
+  airline: string;
+  realId?: string;
+  from: SimTime;
+  to: SimTime;
+  reason: 'dismissed' | 'bankrupt';
+  /** Profit margin over the whole time in office. */
+  margin: number | null;
+}
+
+/** The player's career carried from game to game: earlier jobs and personal wealth (EUR, money of `to`). */
+export interface Career {
+  jobs: CareerJob[];
+  wealthEur: number;
 }
 
 export interface Shareholder {
@@ -851,7 +910,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'boardReview' | 'boardWarning' | 'boardTargets' | 'ceoDismissed' | 'capitalInjection' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -935,6 +994,10 @@ export interface BookingRecord {
 }
 
 export interface GameState {
+  /** The player's earlier jobs and wealth brought into this game (Phase 10.4). */
+  career?: Career;
+  /** The player was dismissed (or the airline went bankrupt): the game stands still from here. */
+  dismissed?: SimTime;
   /** The stock market's mood (1 = normal) and its weekly history (Phase 10.3). */
   stocks?: { mood: number; history: [SimTime, number][] };
   /** Upcoming flights' bookings by "pairId:dir:dep" (Phase 9.3; absent in older games until used). */

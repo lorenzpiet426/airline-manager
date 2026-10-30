@@ -316,7 +316,7 @@ connections); **9.2** ✅ click any flight for full detail; **9.3** ✅ booking 
 Loans, bonds, fuel hedging, currency effects; stock market, IPO, share price, buying competitor shares,
 takeovers and mergers; board of directors, shareholder expectations, getting fired.
 Split (2026-10-30): **10.1** ✅ balance sheet + loans and bonds; **10.2** ✅ fuel and currency hedging; **10.3** ✅ shares: IPO,
-share price, shareholders; **10.4** board, targets, getting fired; **10.5** buying other airlines' shares, takeovers, mergers.
+share price, shareholders; **10.4** ✅ board, targets, getting fired; **10.5** buying other airlines' shares, takeovers, mergers.
 
 ### Phase 11 — Business models and partnerships
 Low-cost, regional, charter + tour operator contracts, cargo (freighters + belly), subsidiaries; alliances
@@ -527,6 +527,10 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | 10.3/10.4 (planned): **realistic owners per scenario** (startup: you + investors; Austrian: state, then Lufthansa Group) setting targets; replaced as CEO if missed badly | Owner choice |
 | 2026-10-30 | 10.2: **fuel swaps + call options + dollar forwards**, a **rolling hedging ladder** (1–3 / 4–12 / 13–24 months) plus single deals, **collateral / margin calls** by rating | Owner choice |
 | 2026-10-30 | 10.3: **share price = earnings multiple − debt, × market mood**; **founder stake (30 %) + CEO salary and shares**, personal wealth as the career score; **IPO, new shares, dividends, buybacks**; Austrian: state → listed 1988 → Lufthansa 2009 | Owner choice |
+| 2026-10-30 | 10.4: **targets by owner** (investors: profit by year 3 + cash; stock market: margin + share price vs. market; state: jobs + destinations; group: margin + transfers; punctuality for all), set each January from last year | Owner choice (recommended) |
+| 2026-10-30 | 10.4: **confidence 0–100** moved by quarterly reviews (half weight in the first year, 40 % in crises), strikes and cash below zero; warning below 40, dismissal below 20 at a later review; majority shareholder can't be dismissed | Owner choice (recommended) |
+| 2026-10-30 | 10.4: **career continues**: after dismissal or bankruptcy the old game stands still (kept as a save); a new game the next day brings the career and wealth; Austrian offers a job after ≥ 3 years as CEO with ≥ −2 % average margin | Owner choice (recommended) |
+| 2026-10-30 | 10.4: a group or the state **puts in capital** instead of letting its airline go bankrupt (−8 confidence) | Lufthansa/ÖIAG aid 2009, Covid aid 2020; passive Austrian went bankrupt within 14 months otherwise |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1415,6 +1419,32 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: valuation uses only the months played (a short winter start looks bad); no taxes; AI airlines have no share
   prices yet (10.5 brings buying other airlines' shares).
 - **Next:** 10.4 board, targets, getting fired.
+
+### 2026-10-30 — Session 37 (Phase 10.4: board, targets, getting fired) ✅
+- Owner decisions (recommended): owner-specific targets, confidence score + warnings, career continues (§7).
+- Data `src/data/board.ts`; engine `src/engine/board.ts`: `Airline.board` (`Board`: owner, CEO since, year, targets with
+  goals/bases, confidence, warning, reviews, events, dismissal), `GameState.career` (earlier jobs + wealth in EUR) and
+  `GameState.dismissed` (all optional, no save version change). `ensureBoard` (also old games: the board starts now),
+  `measure` (last ≤ 12 months since the CEO started), goals per owner (`goalFor`, new CEOs get theirs after 3 months),
+  quarterly `review` (first day of each quarter, after the month is filed: `boardDailyStep` now runs at the very end of
+  the day), strike/cash events, owner capital injections (ledger `shares`), `dismiss` (also on bankruptcy), `boardSeats`
+  (D'Hondt + employee seats), `careerRecord`, `jobOffers`. A dismissed game stands still: `advance` stops, commands fail
+  with `dismissed`. `createGame` takes `career`; `ensureEquity` gives the new CEO their wealth as own money. Worker sets up
+  owners and board on loading. Messages `boardReview`, `boardWarning`, `boardTargets`, `ceoDismissed`, `capitalInjection`.
+- UI: **Board** screen (`#/board`, rail + More, new icon; i18n section `directors` because `board.title` is the
+  departures board): confidence gauge with the 40/20 lines and status, owners, next review, first-year note, targets with
+  goal/now, reviews + events, supervisory board seats, career (wealth, earlier jobs); dismissed panel with "Find your next
+  job" → wizard `#/new?career=1` (starts the next day, same time mode, no start-year choice, Austrian only if it offers);
+  Ops shows a warning/dismissal panel. EN/DE.
+- Tests: 244 (8 new in `board.test.ts`: startup targets + seats, quarterly review + first-year half weight, warning then
+  dismissal + frozen game, majority holder safe, bankruptcy, owner capital, owner kinds, career offers + wealth carried). In the full run the AI year test took 27 s (limit 25 s) under parallel load; alone it passes.
+- Verified in browser: Austrian save (group owner, 6 Lufthansa + 3 employee seats, goals after 3 months), an imported
+  test save of a dismissed CEO (dismissed panel, career), new startup from it (start next day, €4.2 m wealth carried),
+  phone 375 px without sideways scrolling.
+- Known: the model's Austrian still loses money (−8 … −13 % a year) so a passive CEO is warned after ~14 months; board
+  approval for big decisions (orders, IPO) not modelled; old games' boards start at loading (no baseline from earlier
+  months); only Austrian can offer jobs.
+- **Next:** 10.5 buying other airlines' shares, takeovers, mergers.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,
