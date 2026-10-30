@@ -120,6 +120,18 @@ export interface SlotShortfall {
  * After a timetable change: takes the free slots the new flights need. Returns the first airport where the coordinator
  * has none left (and changes nothing then).
  */
+/** Whether the airline's timetable fits the slots it holds plus the free ones (nothing is granted). */
+export function slotsFit(state: GameState, world: EngineWorld, airlineId: string): boolean {
+  if (!state.slots) return true;
+  for (const [airportId, need] of slotNeeds(state, world, airlineId)) {
+    for (let h = 0; h < need.length; h++) {
+      const short = need[h]! - (state.slots[airportId]?.held[h] ?? 0);
+      if (short > 0 && freeSlots(state, world, airportId, h) < short) return false;
+    }
+  }
+  return true;
+}
+
 export function acquireSlots(state: GameState, world: EngineWorld, airlineId: string): SlotShortfall | null {
   ensureSlots(state, world);
   const needs = slotNeeds(state, world, airlineId);

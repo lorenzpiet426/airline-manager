@@ -4,7 +4,7 @@ import { DEPARTMENTS, type Delegation, type Department } from '../../data/manage
 import type { CommandError } from '../../engine/commands';
 import { leaseRentFactor, recruitingFactor, reliabilityFactor, salaryUsdNow } from '../../engine/managers';
 import { convert, money } from '../../engine/money';
-import type { Airline, GameState, Manager, Proposal } from '../../engine/state';
+import type { Airline, GameState, Manager, Proposal, TimetableChangeView } from '../../engine/state';
 import { toDate } from '../../engine/time';
 import type { EngineWorld } from '../../engine/world';
 import { sendCommand } from '../../game/store';
@@ -42,7 +42,7 @@ function useProposalText() {
       });
     }
     if (p.kind === 'buildHangar') return t('mgmt.proposal.buildHangar', { size: t(`mgmt.size.${q.size}`), cost: fmt(Number(q.usd)) });
-    return t(`mgmt.proposal.${p.kind}`, { ...q, count: Number(q.weeks ?? q.frequency ?? 0) });
+    return t(`mgmt.proposal.${p.kind}`, { ...q, count: Number(q.count ?? q.weeks ?? q.frequency ?? 0) });
   };
 }
 
@@ -98,6 +98,8 @@ function Inbox({ game, airline }: { game: GameState; airline: Airline }) {
               {t(`mgmt.dept.${p.dept}`)} · {airline.mgmt!.heads[p.dept]?.name ?? ''} · {formatGameDate(language, toDate(p.at), false)}
             </p>
             <p>{text(p, fmt)}</p>
+            {p.changes && p.changes.length > 0 && <ChangesTable changes={p.changes} />}
+            {p.effectiveAt !== undefined && <p className="small text--info">{t('mgmt.effectiveAt', { date: formatGameDate(language, toDate(p.effectiveAt), false) })}</p>}
             {p.forecastUsd !== null && <p className="small mono">{t('mgmt.expected', { value: signed(p.forecastUsd) })}</p>}
             {p.advice ? (
               <div className="toolbar-row">
@@ -121,6 +123,35 @@ function Inbox({ game, airline }: { game: GameState; airline: Airline }) {
       </ul>
       {error && <p className="notice notice--error">{t(`errors.${error}`, { defaultValue: t('mgmt.notPossible') })}</p>}
     </Panel>
+  );
+}
+
+/** A timetable package's preview: every flight that changes (time, days 1–7, aircraft) before and after. */
+function ChangesTable({ changes }: { changes: TimetableChangeView[] }) {
+  const { t } = useTranslation();
+  return (
+    <div className="table-scroll">
+      <table className="table">
+        <thead>
+          <tr>
+            <th>{t('mgmt.changeFlight')}</th>
+            <th>{t('mgmt.changeBefore')}</th>
+            <th>{t('mgmt.changeAfter')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {changes.map((c, i) => (
+            <tr key={i}>
+              <td className="small">
+                <span className="mono">{c.flight}</span> <span className="muted">{c.route}</span>
+              </td>
+              <td className="mono small">{c.before || <span className="muted">{t('mgmt.changeNew')}</span>}</td>
+              <td className="mono small">{c.after || <span className="text--caution">{t('mgmt.changeDropped')}</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

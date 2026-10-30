@@ -14,6 +14,7 @@ import { hedgingDailyStep } from './hedging';
 import { fundamentalValue, sharesDailyStep } from './shares';
 import { investmentsDailyStep } from './investments';
 import { alliancesDailyStep } from './alliances';
+import { plannedTimetablesDailyStep } from './networkPlanning';
 import { boardDailyStep } from './board';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
@@ -125,6 +126,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   investmentsDailyStep(state, world, (a) => fundamentalValue(state, a) / Math.max(1, a.equity?.shares ?? 1));
   // Alliance review, joining, fees, partners (Phase 11.1).
   alliancesDailyStep(state, world);
+  // Timetable packages approved for a later day (the next season, network planning).
+  plannedTimetablesDailyStep(state, world);
   // Flights open for sale and today's bookings (Phase 9.3).
   bookingsDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {

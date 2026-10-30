@@ -148,13 +148,15 @@ describe('managers (8.3)', () => {
     route.openedAt -= 60 * DAY;
     hire(state, airlineId, 'network', 5);
     advance(state, world, simTime(2026, 4, 4));
-    const p = a().mgmt!.proposals.find((x) => x.kind === 'retime');
+    const p = a().mgmt!.proposals.find((x) => x.target === `tt|${route.id}`);
     expect(p).toBeDefined();
-    expect(p!.params.from).toBe('21:30');
-    expect(String(p!.params.to) < '21:30').toBe(true);
+    // A package with a preview of every flight that changes, and a positive effect.
+    expect(p!.changes!.length).toBeGreaterThan(0);
+    expect(p!.changes!.some((c) => c.before.startsWith('21:30'))).toBe(true);
     expect(p!.actualUsd!).toBeGreaterThan(0);
     expect(applyCommand(state, world, { type: 'ApproveProposal', airlineId, payload: { id: p!.id } }).ok).toBe(true);
-    expect(state.flights[pair.id]!.dep).not.toBe(21 * 60 + 30);
+    const now = Object.values(state.flights).filter((x) => x.routeId === route.id);
+    expect(now.some((x) => x.dep === 21 * 60 + 30 && x.days === DAYS_ALL)).toBe(false);
   }, slow(180_000));
 
   it('a good head of HR finds more recruits; a taken-over airline brings its heads', () => {

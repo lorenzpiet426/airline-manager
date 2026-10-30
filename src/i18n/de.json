@@ -307,7 +307,9 @@
     "allianceLeft": "Deine Airline hat {{alliance}} verlassen.",
     "ownAllianceFounded": "Allianz gegründet: {{alliance}}.",
     "ownAllianceJoined": "{{airline}} tritt {{alliance}} bei.",
-    "codeshareSigned": "Codeshare mit {{airline}} abgeschlossen."
+    "codeshareSigned": "Codeshare mit {{airline}} abgeschlossen.",
+    "timetableApplied": "Neuer Flugplan in Kraft: {{label}} ({{count}} Strecken geändert).",
+    "timetableFailed": "Der geplante Flugplan für {{label}} konnte nicht in Kraft gesetzt werden (Flugzeuge oder Slots passen nicht mehr)."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -504,7 +506,8 @@
     "blackout": "Kein Handel mit eigenen Aktien in den letzten 30 Tagen eines Quartals.",
     "notEnoughShares": "Dafür gibt es nicht genug Aktien.",
     "notEnoughMoney": "Dafür hast du nicht genug eigenes Geld.",
-    "dismissed": "Du bist nicht mehr CEO dieser Airline."
+    "dismissed": "Du bist nicht mehr CEO dieser Airline.",
+    "notDetailed": "Nur mit detaillierter Flugplanung."
   },
   "fleet": {
     "title": "Flotte",
@@ -1198,7 +1201,7 @@
       "hr": "Personal"
     },
     "does": {
-      "network": "Jeden Monat: überarbeitet den Flugplan einiger Strecken (mehr mit einem besseren Leiter) – verlegt Flüge auf Zeiten, die sich besser verkaufen und mehr Anschlüsse am Drehkreuz erreichen, fügt Flüge hinzu, wo sie voll sind, streicht Wochentage, wo sie leer fliegen (detaillierte Planung); schlägt vor, Strecken zu schließen, die seit zwei Monaten Geld verlieren, und eine neue Strecke für ein Flugzeug mit freien Stunden, zur Zeit, die sich am besten verkauft.",
+      "network": "Jeden Monat: überarbeitet den Flugplan von ein bis drei Strecken (mehr mit einem besseren Leiter) – andere Zeiten (auch nur an manchen Tagen), andere Flugzeuge oder Flugtausch zwischen Flugzeugen, Verschieben der Flugkette eines Flugzeugs, mehr oder weniger Tage oder Flüge, größere Flugzeuge auf vollen Strecken oder an Spitzentagen – jeweils bewertet für die Anschlüsse am ganzen Drehkreuz; vor jeder Saison eine Neuplanung der Wellen am Drehkreuz, gültig ab dem ersten Saisontag (detaillierte Planung). Schlägt außerdem vor, Verluststrecken zu schließen, und eine neue Strecke für ein Flugzeug mit freien Stunden.",
       "revenue": "Prüft jede Woche ein paar Strecken (mehr mit einer besseren Leitung) und schlägt Preise vor, die mehr einbringen sollten.",
       "fleet": "Jeden Monat: Leasingverträge, die innerhalb eines Jahres enden (verlängern, wenn das Flugzeug mehr verdient als die neue Miete), und Flugzeuge, die seit sechs Wochen stehen (zurückgeben oder verkaufen).",
       "maintenance": "Schlägt einen eigenen Hangar vor, wenn er Geld spart. Eine gute Leitung verhindert auch technische Störungen (Zuverlässigkeitstechnik).",
@@ -1272,8 +1275,22 @@
       "addFlights_one": "{{route}} einmal mehr pro Woche fliegen: Die Flüge sind voll.",
       "addFlights_other": "{{route}} {{count}}-mal mehr pro Woche fliegen: Die Flüge sind voll.",
       "cutFlights_one": "{{route}} einmal weniger pro Woche fliegen: Die Flüge sind zu leer.",
-      "cutFlights_other": "{{route}} {{count}}-mal weniger pro Woche fliegen: Die Flüge sind zu leer."
-    }
+      "cutFlights_other": "{{route}} {{count}}-mal weniger pro Woche fliegen: Die Flüge sind zu leer.",
+      "moveAircraft": "{{flight}} ({{route}}) von {{from}} auf {{to}} verlegen und mit {{registration}} fliegen (das eigene Flugzeug ist dann belegt).",
+      "tailSwap": "{{flight}} ({{route}}) von {{from}} auf {{to}} verlegen: Zwei Flugzeuge tauschen Flüge, damit die bessere Zeit passt.",
+      "chainShift": "{{flight}} ({{route}}) von {{from}} auf {{to}} verlegen, zusammen mit den anderen Flügen des Flugzeugs an diesem Tag ({{count}} Flüge).",
+      "splitDays": "{{flight}} ({{route}}) an den Tagen {{days}} um {{to}} statt {{from}} fliegen.",
+      "peakAircraft": "Die größere {{registration}} freitags und sonntags auf {{flight}} ({{route}}) einsetzen.",
+      "gaugeSwap": "Flugzeuge tauschen: Die größere {{registration}} übernimmt {{flight}} ({{route}}), ihr bisheriges Flugzeug einen ruhigeren Flug.",
+      "waveRebuild_one": "Nächste Saison in {{station}}: {{count}} Flug rund um die Wellen am Drehkreuz neu planen, damit mehr Passagiere umsteigen.",
+      "waveRebuild_other": "Nächste Saison in {{station}}: {{count}} Flüge rund um die Wellen am Drehkreuz neu planen, damit mehr Passagiere umsteigen."
+    },
+    "effectiveAt": "Gilt ab {{date}} (Saisonbeginn).",
+    "changeFlight": "Flug",
+    "changeBefore": "Jetzt",
+    "changeAfter": "Neu",
+    "changeNew": "neuer Flug",
+    "changeDropped": "gestrichen"
   },
   "board": {
     "title": "Abflüge heute",

@@ -1,6 +1,7 @@
 // The complete game state: everything a save game contains. Plain data only (no classes, no Maps),
 // so it can be sent to the screen thread, saved as JSON and compared in tests.
 import type { StartupAirline } from './startups';
+import type { FlightSpec } from './schedule';
 import type { Currency, FxRates, Money } from './money';
 import type { SimTime } from './time';
 import type { Command } from './commands';
@@ -61,6 +62,8 @@ export interface Airline {
   allianceMembership?: AllianceMembership;
   ownAlliance?: OwnAlliance;
   codeshares?: { partnerId: string; since: SimTime }[];
+  /** Timetable packages approved for a later day (the next season): applied on that day. */
+  plannedTimetables?: { at: SimTime; routes: { routeId: string; flights: FlightSpec[] }[]; label: string }[];
   /** Subsidiaries at the hub whose aircraft and routes became this airline's (Phase 6.4). */
   absorbed?: string[];
   /** Gates rented at the hub (Phase 7.3): contact gates (jet bridge) and remote stands (bus). */
@@ -357,6 +360,18 @@ export interface Proposal {
   expiresAt: SimTime;
   /** Advice only (the department may not act): the player does it in the screens. */
   advice: boolean;
+  /** A timetable package (Phase 11.1 network planning): every flight that changes, for the preview. */
+  changes?: TimetableChangeView[];
+  /** The package takes effect on this day (the next IATA season); otherwise at once. */
+  effectiveAt?: SimTime;
+}
+
+/** One line of a timetable package's preview: a flight before and after (empty = new or dropped). */
+export interface TimetableChangeView {
+  route: string;
+  flight: string;
+  before: string;
+  after: string;
 }
 
 export interface Decision extends Proposal {
@@ -995,7 +1010,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'allianceApplied' | 'allianceInvited' | 'allianceRejected' | 'allianceJoining' | 'allianceJoined' | 'allianceLeft' | 'ownAllianceFounded' | 'ownAllianceJoined' | 'codeshareSigned' | 'stakeDisclosed' | 'stakeNews' | 'takeoverOffered' | 'offerFailed' | 'reviewPhase2' | 'takeoverProhibited' | 'takeoverDone' | 'airlineMerged' | 'investmentIncome' | 'aiTakeover' | 'stakeTendered' | 'delisted' | 'bidReceived' | 'bidFailed' | 'airlineSold' | 'boardReview' | 'boardWarning' | 'boardTargets' | 'ceoDismissed' | 'capitalInjection' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'timetableApplied' | 'timetableFailed' | 'allianceApplied' | 'allianceInvited' | 'allianceRejected' | 'allianceJoining' | 'allianceJoined' | 'allianceLeft' | 'ownAllianceFounded' | 'ownAllianceJoined' | 'codeshareSigned' | 'stakeDisclosed' | 'stakeNews' | 'takeoverOffered' | 'offerFailed' | 'reviewPhase2' | 'takeoverProhibited' | 'takeoverDone' | 'airlineMerged' | 'investmentIncome' | 'aiTakeover' | 'stakeTendered' | 'delisted' | 'bidReceived' | 'bidFailed' | 'airlineSold' | 'boardReview' | 'boardWarning' | 'boardTargets' | 'ceoDismissed' | 'capitalInjection' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).

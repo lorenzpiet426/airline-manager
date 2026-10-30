@@ -307,7 +307,9 @@
     "allianceLeft": "Your airline has left {{alliance}}.",
     "ownAllianceFounded": "Alliance founded: {{alliance}}.",
     "ownAllianceJoined": "{{airline}} joins {{alliance}}.",
-    "codeshareSigned": "Codeshare signed with {{airline}}."
+    "codeshareSigned": "Codeshare signed with {{airline}}.",
+    "timetableApplied": "New timetable in force: {{label}} ({{count}} routes changed).",
+    "timetableFailed": "The planned timetable for {{label}} could not be put in force (aircraft or slots no longer fit)."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -504,7 +506,8 @@
     "blackout": "No trading in own shares in the last 30 days of a quarter.",
     "notEnoughShares": "Not enough shares for that.",
     "notEnoughMoney": "You don't have enough of your own money for that.",
-    "dismissed": "You are no longer CEO of this airline."
+    "dismissed": "You are no longer CEO of this airline.",
+    "notDetailed": "Only with Detailed scheduling."
   },
   "fleet": {
     "title": "Fleet",
@@ -1198,7 +1201,7 @@
       "hr": "Human resources"
     },
     "does": {
-      "network": "Every month: reworks the timetable of a few routes (more with a better head) — moves flights to times that sell better and catch more connections at the hub, adds flights where they are full, drops weekdays where they fly empty (Detailed scheduling); proposes closing routes that have lost money for two months, and a new route for an aircraft with unused hours, at the time that sells best.",
+      "network": "Every month: reworks the timetable of one to three routes (more with a better head) — other times (also only on some days), other aircraft or trading flights between aircraft, moving an aircraft's run of flights, more or fewer days or flights, bigger aircraft on full routes or peak days — each judged for the whole hub's connections; before each season a re-plan of the hub's waves, in force from the season's first day (Detailed scheduling). Also proposes closing routes that lose money and a new route for an aircraft with unused hours.",
       "revenue": "Reviews a few routes every week (more with a better head) and proposes fares that should earn more.",
       "fleet": "Every month: leases ending within a year (extend them if the aircraft earns more than the new rent) and aircraft standing idle for six weeks (give back or sell).",
       "maintenance": "Proposes an own hangar when it would save money. A good head also prevents technical failures (reliability engineering).",
@@ -1272,8 +1275,22 @@
       "addFlights_one": "Fly {{route}} once more a week: the flights are full.",
       "addFlights_other": "Fly {{route}} {{count}} times more a week: the flights are full.",
       "cutFlights_one": "Fly {{route}} once less a week: the flights are too empty.",
-      "cutFlights_other": "Fly {{route}} {{count}} times less a week: the flights are too empty."
-    }
+      "cutFlights_other": "Fly {{route}} {{count}} times less a week: the flights are too empty.",
+      "moveAircraft": "Move {{flight}} ({{route}}) from {{from}} to {{to}} and fly it with {{registration}} (its own aircraft is busy then).",
+      "tailSwap": "Move {{flight}} ({{route}}) from {{from}} to {{to}}: two aircraft trade flights so the better time works.",
+      "chainShift": "Move {{flight}} ({{route}}) from {{from}} to {{to}} together with the aircraft's other flights that day ({{count}} flights).",
+      "splitDays": "Fly {{flight}} ({{route}}) at {{to}} instead of {{from}} on days {{days}}.",
+      "peakAircraft": "Put the bigger {{registration}} on {{flight}} ({{route}}) on Fridays and Sundays.",
+      "gaugeSwap": "Swap aircraft: the bigger {{registration}} takes {{flight}} ({{route}}), its old aircraft takes a quieter flight.",
+      "waveRebuild_one": "Next season at {{station}}: re-plan {{count}} flight around the hub's waves so more passengers connect.",
+      "waveRebuild_other": "Next season at {{station}}: re-plan {{count}} flights around the hub's waves so more passengers connect."
+    },
+    "effectiveAt": "Takes effect on {{date}} (start of the season).",
+    "changeFlight": "Flight",
+    "changeBefore": "Now",
+    "changeAfter": "New",
+    "changeNew": "new flight",
+    "changeDropped": "dropped"
   },
   "board": {
     "title": "Departures today",

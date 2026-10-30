@@ -6,6 +6,7 @@ import { leaveProgramme, setProgramme, startProgramme, type LoyaltyError } from 
 import { repayLoan, saleLeaseback, takeLoan, type DebtError } from './debt';
 import { hedgeDeal, setHedgePolicy, type HedgeError } from './hedging';
 import { acceptInvitation, applyToAlliance, endCodeshare, foundAlliance, inviteToAlliance, leaveAlliance, removeFromAlliance, signCodeshare, type AllianceError } from './alliances';
+import { applyPackage } from './networkPlanning';
 import { answerBid, mergeAirline, offerTakeover, tradeStake, type InvestError } from './investments';
 import { buyBack, ensureEquity, goPublic, issueShares, payDividend, tradeOwnShares, type ShareError } from './shares';
 import { ensureBoard } from './board';
@@ -434,13 +435,19 @@ export interface AllianceCommand {
   airlineId: string;
   payload: { alliance?: string; name?: string; partnerId?: string };
 }
+/** A timetable package (network planning): several routes' flights at once; with `effectiveAt`, from that day (season). */
+export interface UpdateTimetable {
+  type: 'UpdateTimetable';
+  airlineId: string;
+  payload: { routes: { routeId: string; flights: FlightSpec[] }[]; effectiveAt?: SimTime; label?: string };
+}
 export interface AnswerBid {
   type: 'AnswerBid';
   airlineId: string;
   payload: { tender: boolean };
 }
 
-export type Command = AllianceCommand | TradeStake | OfferTakeover | MergeAirline | AnswerBid | GoPublic | IssueShares | PayDividend | BuyBack | TradeOwnShares | SetHedgePolicy | HedgeDeal | TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+export type Command = UpdateTimetable | AllianceCommand | TradeStake | OfferTakeover | MergeAirline | AnswerBid | GoPublic | IssueShares | PayDividend | BuyBack | TradeOwnShares | SetHedgePolicy | HedgeDeal | TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -452,6 +459,7 @@ export const MAX_FREQUENCY = 84;
 
 export type CommandError =
   | 'dismissed'
+  | 'notDetailed'
   | 'nameLength'
   | 'iataFormat'
   | 'icaoFormat'
@@ -582,6 +590,17 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
       return planCrewsAhead(state, world, command.airlineId, leaseAircraft(state, world, command.airlineId, command.payload.offerId));
     case 'OpenRoute':
       return withSlots(state, world, command.airlineId, () => openRoute(state, world, command.airlineId, command.payload));
+    case 'UpdateTimetable': {
+      const airline = state.airlines[command.airlineId];
+      if (!airline) return fail('airlineUnknown');
+      const { routes, effectiveAt, label } = command.payload;
+      if (effectiveAt !== undefined && effectiveAt > state.time) {
+        if (routes.some((r) => state.routes[r.routeId]?.airlineId !== airline.id)) return fail('routeUnknown');
+        (airline.plannedTimetables ??= []).push({ at: effectiveAt, routes, label: label ?? '' });
+        return { ok: true };
+      }
+      return withSlots(state, world, command.airlineId, () => applyPackage(state, world, command.airlineId, routes));
+    }
     case 'UpdateRoute':
       return withSlots(state, world, command.airlineId, () => updateRoute(state, world, command.airlineId, command.payload));
     case 'BuySlots': {

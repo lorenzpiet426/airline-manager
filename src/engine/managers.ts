@@ -29,18 +29,19 @@ import { applyCommand, draftRoute, fareRange, type Command } from './commands';
 import { book, postMessage } from './core';
 import { crewShortfall } from './crews';
 import { priceLevelAt } from './era';
-import { marketFareUsd, routeWeek, totalCosts, WEEKLY_AVAILABLE_HOURS, roundTripHours, wageFactor } from './economics';
+import { routeWeek, totalCosts, WEEKLY_AVAILABLE_HOURS, roundTripHours, wageFactor } from './economics';
 import { bookPnl, dailyDepreciation, earlyReturnFeeUsd, extensionRentUsd } from './fleet';
 import { distanceKm } from './geo';
 import { groundContext } from './hub';
 import { checkOffer } from './maintenance';
 import { convert, money } from './money';
 import { planFor } from './operations';
-import { aircraftHours, pairsOfAircraft, pairsOfRoute, setRoutePairs, specFlights, validateSpecs, type FlightSpec } from './schedule';
+import { aircraftHours, pairsOfAircraft, pairsOfRoute, specFlights, validateSpecs, type FlightSpec } from './schedule';
 import type { Aircraft, Airline, ClassFares, GameState, Management, Manager, Proposal, Route, WageTalks } from './state';
 import { MINUTES_PER_DAY, toDate, yearOf, type SimTime } from './time';
-import { dayCount, DAYS_ALL } from './timetable';
-import { playerConnections, routeTransfers } from './transfers';
+import { DAYS_ALL } from './timetable';
+import { routeTransfers } from './transfers';
+import { preview, routeOptions, seasonAhead, waveRebuild, type PlanOption } from './networkPlanning';
 import { closureAt, conditionsOf } from './worldEvents';
 import { loyaltyPull } from './loyalty';
 import type { EngineWorld } from './world';
@@ -197,7 +198,7 @@ export function leaseRentFactor(airline: Airline | undefined): number {
 let actedToday = 0;
 let proposedToday = 0;
 
-type Idea = Pick<Proposal, 'kind' | 'params' | 'target' | 'command' | 'forecastUsd' | 'actualUsd'>;
+type Idea = Pick<Proposal, 'kind' | 'params' | 'target' | 'command' | 'forecastUsd' | 'actualUsd' | 'changes' | 'effectiveAt'>;
 
 function record(state: GameState, mg: Management, p: Proposal, by: 'manager' | 'player'): void {
   mg.decisions.push({ ...p, by, decidedAt: state.time, revealAt: state.time + REVEAL_DAYS * DAY });
@@ -353,63 +354,12 @@ function recentLoad(state: GameState, airline: Airline, routeId: string, weeks: 
   return seats > 0 ? rows.reduce((n, r) => n + r!.pax, 0) / seats : null;
 }
 
-/** What the connecting passengers at a station bring a week (USD, at their prorated fares). */
-function connectionsValue(state: GameState, world: EngineWorld, airline: Airline, station: string): number {
-  const date = toDate(state.time);
-  let value = 0;
-  {
-    for (const [routeId, [out, back]] of playerConnections(world, state, airline.id, station).legs) {
-      const route = state.routes[routeId];
-      const a = route && world.airportById.get(route.originId);
-      const b = route && world.airportById.get(route.destinationId);
-      if (!a || !b) continue;
-      value += (out.pax * out.yield + back.pax * back.yield) * marketFareUsd(world, a, b, date);
-    }
-  }
-  return value;
-}
-
 /**
- * How good a route's timetable is for the whole network (USD a week): the route's own result without its connecting
- * passengers, plus what connecting passengers bring at its station (moving one flight changes others' connections).
- */
-function networkScore(state: GameState, world: EngineWorld, airline: Airline, route: Route): number | null {
-  const o = routeOutlook(state, world, route);
-  if (!o) return null;
-  const a = world.airportById.get(route.originId)!;
-  const b = world.airportById.get(route.destinationId)!;
-  const [out, back] = routeTransfers(world, state, route);
-  const own = ((out?.pax ?? 0) * (out?.yield ?? 1) + (back?.pax ?? 0) * (back?.yield ?? 1)) * marketFareUsd(world, a, b, toDate(state.time));
-  // Only the station the route starts from: its flights don't touch the connections at other stations.
-  return o.result - own + connectionsValue(state, world, airline, route.originId);
-}
-
-const specsOf = (state: GameState, route: Route): FlightSpec[] =>
-  pairsOfRoute(state, route.id).map((p) => ({ id: p.id, aircraftId: p.aircraftId, dep: p.dep, days: p.days, groundMin: p.groundMin }));
-
-/** The network score with a changed timetable (tried on the game and put back; null if the timetable isn't possible). */
-function tryTimetable(state: GameState, world: EngineWorld, airline: Airline, route: Route, specs: FlightSpec[]): number | null {
-  if (validateSpecs(state, world, route, specs)) return null;
-  const saved = structuredClone(Object.fromEntries(pairsOfRoute(state, route.id).map((p) => [p.id, p])));
-  const { frequency, aircraftId } = route;
-  setRoutePairs(state, route, specs);
-  const score = networkScore(state, world, airline, route);
-  for (const p of pairsOfRoute(state, route.id)) delete state.flights[p.id];
-  Object.assign(state.flights, saved);
-  route.frequency = frequency;
-  route.aircraftId = aircraftId;
-  return score;
-}
-
-const SHIFTS = [-120, -60, -30, 30, 60, 120];
-/** Days a planner adds first (Friday, Sunday, Monday: the busiest) and cuts first (Tuesday, Wednesday, Saturday). */
-const BUSY_DAYS = [4, 6, 0];
-const QUIET_DAYS = [1, 2, 5];
-const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
-
-/**
- * One to three routes a month (more with a better head): moving a flight to another time (more travellers, more connections at
- * the hub), more flights where they are full, fewer where they fly empty. Each change is tried for the whole network.
+ * The head of network reworks the timetable (Detailed scheduling), as network planners do: one to three routes a month
+ * (more with a better head) get the best of many timetable packages (networkPlanning.ts) — other times, other aircraft,
+ * trading flights between aircraft, moving an aircraft's run of flights, other times on some days, more or fewer days or
+ * flights, bigger aircraft — judged for the whole station with the head's error by skill. Before each season they also
+ * rebuild the flights around the hub's waves; that package takes effect on the season's first day.
  */
 function timetableReview(state: GameState, world: EngineWorld, airline: Airline, m: Manager): void {
   if (state.options.scheduling !== 'detailed') return;
@@ -418,81 +368,42 @@ function timetableReview(state: GameState, world: EngineWorld, airline: Airline,
     .filter((r) => r.airlineId === airline.id && state.time - r.openedAt > 6 * WEEK)
     .sort((x, y) => (mg.reviewed[`t|${x.id}`] ?? 0) - (mg.reviewed[`t|${y.id}`] ?? 0))
     .slice(0, 1 + Math.floor(m.skill / 2));
+  const offer = (o: PlanOption, target: string, revenue: number, effectiveAt?: SimTime) => {
+    const est = o.gain + gauss(`tt|${target}|${o.kind}|${JSON.stringify(o.params)}|${state.time}`) * noiseOf(m, false) * 0.04 * revenue;
+    return { o, est, target, effectiveAt };
+  };
+  const picks: ReturnType<typeof offer>[] = [];
   for (const route of routes) {
     mg.reviewed[`t|${route.id}`] = state.time;
-    const base = networkScore(state, world, airline, route);
-    const o = routeOutlook(state, world, route);
-    if (base === null || !o) continue;
-    const sigma = noiseOf(m, m.specialty === (route.distanceKm > 4000 ? 'longHaul' : 'shortHaul'));
-    const judged = (gain: number, what: string) => gain + gauss(`tt|${route.id}|${what}|${state.time}`) * sigma * 0.04 * o.revenue;
-    type Option = { kind: 'retime' | 'addFlights' | 'cutFlights'; specs: FlightSpec[]; gain: number; params: Record<string, string | number> };
-    const options: Option[] = [];
-    const specs = specsOf(state, route);
-    const pairs = pairsOfRoute(state, route.id);
-    const name = routeName(world, route);
-    // a) Another time for one of the route's flights.
-    for (const p of pairs.slice(0, 2)) {
-      for (const shift of SHIFTS) {
-        const dep = p.dep + shift;
-        if (dep < 4 * 60 + 30 || dep > 23 * 60 + 30) continue;
-        const next = specs.map((x) => (x.id === p.id ? { ...x, dep } : x));
-        const score = tryTimetable(state, world, airline, route, next);
-        if (score !== null) options.push({ kind: 'retime', specs: next, gain: score - base, params: { route: name, flight: `${airline.iata} ${p.flightNumber}`, from: hhmm(p.dep), to: hhmm(dep) } });
-      }
+    const outlook = routeOutlook(state, world, route);
+    if (!outlook) continue;
+    const options = routeOptions(state, world, airline, route, recentLoad(state, airline, route.id, 4));
+    const best = options.map((o) => offer(o, `tt|${route.id}`, outlook.revenue)).sort((x, y) => y.est - x.est)[0];
+    if (best && best.est >= Math.max(0.01 * outlook.revenue, 500)) picks.push(best);
+  }
+  // Before the next season: a rebuild of the hub's flights around its waves (once per season and station).
+  const season = seasonAhead(state.time);
+  if (season) {
+    for (const station of new Set(Object.values(state.routes).filter((r) => r.airlineId === airline.id).map((r) => r.originId))) {
+      const key = `wave|${station}|${season}`;
+      if (mg.reviewed[key]) continue;
+      mg.reviewed[key] = state.time;
+      const o = waveRebuild(state, world, airline, station, 3 + m.skill);
+      if (o && o.gain > 1000) picks.push(offer(o, `wave|${station}`, 50 * o.gain, season));
     }
-    const load = recentLoad(state, airline, route.id, 4);
-    const weekly = pairs.reduce((n, p) => n + dayCount(p.days), 0);
-    // b) Full: more days for a flight, or another flight a day on an aircraft with free hours.
-    if (load !== null && load >= 0.85 && weekly < 21) {
-      for (const p of pairs.slice(0, 2)) {
-        for (const d of BUSY_DAYS) {
-          if (p.days & (1 << d)) continue;
-          const next = specs.map((x) => (x.id === p.id ? { ...x, days: x.days | (1 << d) } : x));
-          const score = tryTimetable(state, world, airline, route, next);
-          if (score !== null) options.push({ kind: 'addFlights', specs: next, gain: score - base, params: { route: name, frequency: 1 } });
-        }
-      }
-      const type = getAircraftType(state.aircraft[pairs[0]?.aircraftId ?? '']?.typeId ?? 'A20N');
-      const spare = Object.values(state.aircraft)
-        .filter((x) => x.airlineId === airline.id && x.status === 'active' && stationOf(airline, x) === route.originId && getAircraftType(x.typeId).category === type.category)
-        .map((x) => ({ x, free: WEEKLY_AVAILABLE_HOURS[getAircraftType(x.typeId).category] - aircraftHours(state, x.id) }))
-        .filter((s) => s.free >= roundTripHours(getAircraftType(s.x.typeId), route.distanceKm) * 7)
-        .sort((s, t) => t.free - s.free)[0];
-      if (spare) {
-        const turn = TURNAROUND_MIN[getAircraftType(spare.x.typeId).category];
-        for (let dep = 5 * 60 + 30; dep <= 22 * 60; dep += 60) {
-          const next = [...specs, { aircraftId: spare.x.id, dep, days: DAYS_ALL, groundMin: turn }];
-          const score = tryTimetable(state, world, airline, route, next);
-          if (score !== null) options.push({ kind: 'addFlights', specs: next, gain: score - base, params: { route: name, frequency: 7 } });
-        }
-      }
-    }
-    // c) Empty: fly a weekday less (or drop a whole flight when there are several).
-    if (load !== null && load <= 0.55 && weekly >= 4) {
-      for (const p of pairs.slice(0, 2)) {
-        for (const d of QUIET_DAYS) {
-          if (!(p.days & (1 << d)) || dayCount(p.days) <= 1) continue;
-          const next = specs.map((x) => (x.id === p.id ? { ...x, days: x.days & ~(1 << d) } : x));
-          const score = tryTimetable(state, world, airline, route, next);
-          if (score !== null) options.push({ kind: 'cutFlights', specs: next, gain: score - base, params: { route: name, frequency: 1 } });
-        }
-        if (pairs.length > 1) {
-          const next = specs.filter((x) => x.id !== p.id);
-          const score = tryTimetable(state, world, airline, route, next);
-          if (score !== null) options.push({ kind: 'cutFlights', specs: next, gain: score - base, params: { route: name, frequency: dayCount(p.days) } });
-        }
-      }
-    }
-    // The head picks what looks best to them (their judgement errs by skill), if it is worth the change.
-    const pick = options.map((x) => ({ ...x, est: judged(x.gain, `${x.kind}|${JSON.stringify(x.params)}`) })).sort((x, y) => y.est - x.est)[0];
-    if (!pick || pick.est < Math.max(0.01 * o.revenue, 500)) continue;
+  }
+  for (const pick of picks) {
+    const { o } = pick;
+    const routesOf = [...o.pkg].map(([routeId, flights]) => ({ routeId, flights }));
     propose(state, world, airline, 'network', {
-      kind: pick.kind,
-      target: `tt|${route.id}`,
-      params: pick.params,
-      command: { type: 'UpdateRoute', airlineId: airline.id, payload: { routeId: route.id, aircraftId: '', frequency: 0, fareFactor: route.fareFactor, classFares: route.classFares, flights: pick.specs } },
+      kind: o.kind,
+      target: pick.target,
+      params: o.params,
+      command: { type: 'UpdateTimetable', airlineId: airline.id, payload: { routes: routesOf, ...(pick.effectiveAt ? { effectiveAt: pick.effectiveAt, label: String(o.params.station ?? o.params.route ?? '') } : {}) } },
       forecastUsd: Math.round(pick.est),
-      actualUsd: Math.round(pick.gain),
+      actualUsd: Math.round(o.gain),
+      changes: preview(state, world, airline, o.pkg),
+      ...(pick.effectiveAt ? { effectiveAt: pick.effectiveAt } : {}),
     });
   }
 }

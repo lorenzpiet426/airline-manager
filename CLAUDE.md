@@ -543,6 +543,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | Phase 11 order: **11.1 alliances/codeshares → 11.2 business model → 11.3 own subsidiaries → 11.4 charter + tour operators → 11.5 cargo** | Owner choice (recommended) |
 | 2026-10-30 | 11.1: **realistic invitation** (size, destinations, departures, reputation, FFP, hub free, sponsor; 8-week review, 12–18 months joining, fees); or **own alliance** with non-aligned airlines | Owner choice (recommended) |
 | 2026-10-30 | 11.1: alliances/codeshares bring **feed + sales + loyalty** (partners: no attacks, feed, lounges; codeshare feed ×1.25; alliance pull on travellers) | Owner choice (recommended) |
+| 2026-10-30 | **Network planning packages** (owner interview: "everything realistic"): any day patterns and other times on some days; several aircraft per route, gauge swaps, bigger aircraft on peak days; moving to another aircraft, tail swaps, chain shifts, wave rebuilds; one package with a preview, approved whole; small fixes at once, wave rebuilds from the next IATA season | Owner request; how network planning departments work |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1567,6 +1568,28 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Tests: 257 (late flight moved earlier with a positive effect, approved).
 - Known: slots at slot-coordinated airports are only checked when the proposal is approved; Simple scheduling gets no
   timetable proposals; competitors' reactions aren't part of the forecast.
+- **Next:** 11.2 business model.
+
+### 2026-10-30 — Session 44 (network planning packages) ✅
+- Owner asked (interview) for day patterns, several aircraft per route, reshuffles when the better time is blocked, and
+  realistic approval. New `src/engine/networkPlanning.ts`: `Package` (route → complete new flights), `tryPackage` (put on
+  the game, check `validateSpecs` + `slotsFit` (new, slots.ts) + gates, score = routes' results without their connecting
+  passengers + connecting value at their stations, put back; base scores cached per route set), `applyPackage` (all or
+  nothing; command `UpdateTimetable`, through `withSlots`; with `effectiveAt` stored in `Airline.plannedTimetables` and put in
+  force by `plannedTimetablesDailyStep`), `preview` (old → new time, days, aircraft per flight), `routeOptions`: retime
+  (±30/60/120), move to another aircraft, tail swap, chain shift (up to 4 flights), weekend at another time, extra days,
+  a new flight (all days / weekdays / Fri–Sun at 07/13/19) on a spare aircraft, bigger aircraft on Fri+Sun, gauge swap,
+  fewer days (weakest days from the last 7 days' flights, weekend, Fri–Sun) or one pair less; `waveRebuild` (the station's
+  flights with the fewest connecting passengers moved ±30/60 greedily) in the 10 weeks before an IATA season, in force on
+  its first day. `managers.ts` `timetableReview` picks the best option per route (1–3 routes/month by skill) + a wave package
+  per station and season; `Proposal.changes/effectiveAt`; inbox shows the preview table and the start date. Proposal
+  texts for 9 kinds, messages `timetableApplied/Failed`, error `notDetailed`; EN/DE.
+- Speed (Austrian, 124 routes, 3-star head): ≈ 2.2 s on a review day, ≈ 2.7 s before a season (was 0.6 s without).
+- Tests: 260 (`networkPlanning.test.ts`: all-or-nothing package, season package, option kinds + preview; manager test
+  checks the package preview).
+- Verified in browser (Austrian save, hired head): inbox packages with preview (VIE–LAX 3 days less, VIE–NRT +1); a
+  first NRT proposal failed on slots at approval → slots and gates are now checked before proposing (all January/February
+  proposals apply).
 - **Next:** 11.2 business model.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
