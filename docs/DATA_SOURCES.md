@@ -868,6 +868,25 @@ Owner decisions: swaps + call options + currency forwards, a rolling policy, col
   year's revenue for AAA … CCC. Austrian takeover: 85 / 70 / 30 % fuel (70 % options), 80 / 60 / 20 % dollars.
 - **Check**: a startup hedged before the March 2026 fuel spike gained ≈ €135–150 k a month on two aircraft in April–May.
 
+## Shares, owners and the share price (Phase 10.3, 2026-10-30)
+Owner decisions: price from earnings + market mood, founder stake + CEO shares, IPO/new shares/dividends/buybacks.
+
+- **Austrian Airlines' owners** (Austrian Airlines investor relations "Austrian Airlines Shares", Wikipedia "Austrian
+  Airlines", Austrian Airlines ad-hoc of 4 Feb 2010 on the squeeze-out, read 2026-10-30): state-owned until 1988, then
+  listed on the Vienna Stock Exchange with the state (ÖIAG) keeping the majority (modelled 51 %); ÖIAG sold to Lufthansa in
+  2008/09; Lufthansa's ÖLH held 95.4 %, the minority was squeezed out (registered 4 Feb 2010). Game: before 1988 the
+  Republic of Austria 100 %, 1988–2008 state 51 % + stock exchange, from 2009 Lufthansa Group 100 %; 87 million shares
+  (modelled).
+- **Valuation** (modelled): EV/EBITDAR 6× (3–10×) × (1 + revenue growth, ±30 %) × (1 + 2 × margin), minus loans and lease
+  obligations plus cash; at least a quarter of the book equity; young startups (< 12 months of accounts) blend towards
+  the money put in. Market mood: mean-reverting towards (business demand at the hub)², weekly noise 2 %; the price moves
+  30 % of the way each week plus 3.5 % noise when listed.
+- **Capital**: IPO after 24 months with ≥ €200 m revenue a year (today's money) and a profit, 10–40 % sold 10 % below the
+  value, 4 % fees; new shares up to 30 % at 5 % discount, 3 % fees; buybacks at 2 % premium; dividends lower the price
+  by their amount. Startups: 10 million shares, founder (player) 30 %, investors 70 %.
+- **CEO pay** (modelled, Austrian level × price level): €50,000 a month salary, shares worth €400,000 a year (cash in a
+  group-owned airline); no trading in own shares in the last 30 days of a quarter.
+
 ## How to refresh the data
 ```bash
 export PATH=~/.local/node/bin:$PATH

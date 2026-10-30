@@ -130,6 +130,15 @@ export function MessageLog({ messages, world, limit = 30 }: { messages: GameMess
           amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }),
           rent: formatMoney(language, { amount: Number(p.rent), currency: 'USD' }),
         });
+      case 'ipoDone':
+      case 'sharesIssued':
+      case 'dividendPaid':
+      case 'sharesBoughtBack':
+        return t(`msg.${m.kind}`, { amount: formatMoney(language, { amount: Number(p.amount), currency: String(p.currency) }), shares: formatNumber(language, Number(p.shares ?? 0)), price: p.price, perShare: p.perShare });
+      case 'ceoGrant':
+        return t('msg.ceoGrant', { shares: formatNumber(language, Number(p.shares)) });
+      case 'ownTrade':
+        return t(Number(p.shares) > 0 ? 'msg.ownBuy' : 'msg.ownSell', { shares: formatNumber(language, Math.abs(Number(p.shares))), price: p.price, currency: p.currency });
       case 'hedgeSettled':
         return t(Number(p.result) >= 0 ? 'msg.hedgeGain' : 'msg.hedgeLoss', { month: p.month, amount: formatMoney(language, { amount: Math.abs(Number(p.result)), currency: String(p.currency) }) });
       case 'marginCall':

@@ -315,7 +315,7 @@ connections); **9.2** ✅ click any flight for full detail; **9.3** ✅ booking 
 ### Phase 10 — Finance and corporate
 Loans, bonds, fuel hedging, currency effects; stock market, IPO, share price, buying competitor shares,
 takeovers and mergers; board of directors, shareholder expectations, getting fired.
-Split (2026-10-30): **10.1** ✅ balance sheet + loans and bonds; **10.2** ✅ fuel and currency hedging; **10.3** shares: IPO,
+Split (2026-10-30): **10.1** ✅ balance sheet + loans and bonds; **10.2** ✅ fuel and currency hedging; **10.3** ✅ shares: IPO,
 share price, shareholders; **10.4** board, targets, getting fired; **10.5** buying other airlines' shares, takeovers, mergers.
 
 ### Phase 11 — Business models and partnerships
@@ -526,6 +526,7 @@ education", forbid making the data available to others (§3 iii) and require a w
 | 2026-10-30 | 10.1: **real central bank rates (BIS) + credit-rating spread**; bank loans, aircraft finance, bonds, sale-and-leaseback; interest on cash; insolvency after 60 days below zero | Owner choice |
 | 2026-10-30 | 10.3/10.4 (planned): **realistic owners per scenario** (startup: you + investors; Austrian: state, then Lufthansa Group) setting targets; replaced as CEO if missed badly | Owner choice |
 | 2026-10-30 | 10.2: **fuel swaps + call options + dollar forwards**, a **rolling hedging ladder** (1–3 / 4–12 / 13–24 months) plus single deals, **collateral / margin calls** by rating | Owner choice |
+| 2026-10-30 | 10.3: **share price = earnings multiple − debt, × market mood**; **founder stake (30 %) + CEO salary and shares**, personal wealth as the career score; **IPO, new shares, dividends, buybacks**; Austrian: state → listed 1988 → Lufthansa 2009 | Owner choice |
 | 2026-10-27 | Demand uses a new "market population" (cities shared between airports) instead of the 100 km catchment | Catchments double-counted London etc.; calibration error fell from ×2.4 to ×1.9 |
 
 ## 8. Progress log
@@ -1395,6 +1396,25 @@ education", forbid making the data available to others (§3 iii) and require a w
 - Known: no collars or put options; the treasury never closes hedges early; AI airlines don't hedge (their calibrated
   costs already include it).
 - **Next:** 10.3 shares: IPO, share price, shareholders.
+
+### 2026-10-30 — Session 36 (Phase 10.3: shares, IPO, share price, shareholders) ✅
+- Owner decisions (recommended): earnings + mood, founder stake + CEO shares, IPO/issues/dividends/buybacks (§7).
+- Data `src/data/shares.ts`; engine `src/engine/shares.ts`: `Airline.equity` (`Equity`: shares, listed, holders,
+  price + weekly history, paid-in capital, the player's own cash, dividends) and `GameState.stocks` (market mood; both
+  optional, no save version change), `ensureEquity` (owners per scenario, also for old games), `fundamentalValue`,
+  weekly mood and price, monthly CEO salary + yearly share grant, `ipoReady`, `goPublic`, `issueShares`, `payDividend`,
+  `buyBack`, `inBlackout`, `tradeOwnShares`, `playerWealth`. Commands `GoPublic`, `IssueShares`, `PayDividend`, `BuyBack`,
+  `TradeOwnShares`; ledger `shares`/`dividend`; messages `ipoDone`, `sharesIssued`, `dividendPaid`, `sharesBoughtBack`,
+  `ceoGrant`, `ownTrade`. Randomness from stable hashes.
+- UI: **Shares** screen (`#/shares`, rail + More, chart icon): price + 52-week chart, market value, fundamental value,
+  mood, shareholders, your shares/cash/wealth with buy/sell (blackout), IPO or new shares/buyback, dividends; EN/DE.
+- Tests: 236 (`shares.test.ts`: startup owners, weekly price + CEO pay, listed capital actions + blackout, Austrian
+  owned by Lufthansa today, valuation). The AI year test took 26 s once while other tests ran in parallel (15 s alone).
+- Verified in browser (Austrian save): 100 % Lufthansa Group, no IPO, value low after two loss-making winter months;
+  phone 375 px.
+- Known: valuation uses only the months played (a short winter start looks bad); no taxes; AI airlines have no share
+  prices yet (10.5 brings buying other airlines' shares).
+- **Next:** 10.4 board, targets, getting fired.
 
 - (Earlier plan for 2.1a:) load real airlines into the engine (replace invisible
   incumbents; demand-model frequencies where `weekly` is null), screens (Airlines list/detail, competitors per route,

@@ -11,6 +11,7 @@ import { applyBookings, bookingsDailyStep } from './bookings';
 import { loyaltyPull, loyaltyWeeklyStep } from './loyalty';
 import { debtDailyStep } from './debt';
 import { hedgingDailyStep } from './hedging';
+import { sharesDailyStep } from './shares';
 import { routeTransfers } from './transfers';
 import { bookClosures } from './closures';
 import { conditionsOf, worldDailyStep } from './worldEvents';
@@ -115,6 +116,8 @@ export function dailyStep(state: GameState, world: EngineWorld): void {
   debtDailyStep(state);
   // Fuel and currency hedges: settlement, ladder, collateral (Phase 10.2).
   hedgingDailyStep(state, world);
+  // Owners, share price, CEO pay (Phase 10.3).
+  sharesDailyStep(state, world);
   // Flights open for sale and today's bookings (Phase 9.3).
   bookingsDailyStep(state, world);
   if (startOfWeek(state.time) === state.time) {

@@ -2954,3 +2954,18 @@ a.button {
 .hedge-row {
   grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
 }
+
+/* ---------- Shares (Phase 10.3) ---------- */
+.share-chart {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}
+.share-chart polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.capital-row {
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}

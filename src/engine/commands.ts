@@ -5,6 +5,7 @@ import { setBucketLimits, setFareBuckets, type FareError } from './bookings';
 import { leaveProgramme, setProgramme, startProgramme, type LoyaltyError } from './loyalty';
 import { repayLoan, saleLeaseback, takeLoan, type DebtError } from './debt';
 import { hedgeDeal, setHedgePolicy, type HedgeError } from './hedging';
+import { buyBack, ensureEquity, goPublic, issueShares, payDividend, tradeOwnShares, type ShareError } from './shares';
 import type { HedgePolicy } from '../data/hedging';
 import type { Tier } from '../data/loyalty';
 import type { FareBucket } from '../data/fares';
@@ -380,7 +381,34 @@ export interface HedgeDeal {
   payload: { kind: 'fuelSwap' | 'fuelCall' | 'fxForward'; monthsAhead: number; amount: number };
 }
 
-export type Command = SetHedgePolicy | HedgeDeal | TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
+/** Shares (Phase 10.3): going public, new shares, dividends, buybacks, the player's own shares. */
+export interface GoPublic {
+  type: 'GoPublic';
+  airlineId: string;
+  payload: { share: number };
+}
+export interface IssueShares {
+  type: 'IssueShares';
+  airlineId: string;
+  payload: { share: number };
+}
+export interface PayDividend {
+  type: 'PayDividend';
+  airlineId: string;
+  payload: { total: number };
+}
+export interface BuyBack {
+  type: 'BuyBack';
+  airlineId: string;
+  payload: { share: number };
+}
+export interface TradeOwnShares {
+  type: 'TradeOwnShares';
+  airlineId: string;
+  payload: { shares: number };
+}
+
+export type Command = GoPublic | IssueShares | PayDividend | BuyBack | TradeOwnShares | SetHedgePolicy | HedgeDeal | TakeLoan | RepayLoan | SaleLeaseback | StartLoyalty | SetLoyalty | LeaveLoyalty | SetFareBuckets | SetBucketLimits | HireManager | FireManager | SetDelegation | ApproveProposal | DeclineProposal | SetFares | RunCrewPlan | OfferWage | AcceptDemand | CallMediation | AnswerProposal | HireCrew | TrainCrew | ReleaseCrew | SetCrewPay | SetCrewAuto | OpenBase | CloseBase | StationAircraft | RentGates | BuildLounge | CloseLounge | BuySlots | RequestSlots | TakeOverAirline | SetLivery | Repaint | MoveCheck | BuildHangar | OrderAircraft | CancelOrder | BuyAircraft | SellAircraft | ReturnLease | ExtendLease | SetTimeMode | FoundAirline | LeaseAircraft | OpenRoute | UpdateRoute | CloseRoute | SetScheduling | RefitCabin;
 
 export const FARE_FACTOR_RANGE = [0.5, 1.5] as const;
 
@@ -441,7 +469,8 @@ export type CommandError =
   | FareError
   | LoyaltyError
   | DebtError
-  | HedgeError;
+  | HedgeError
+  | ShareError;
 
 /** A failed command can say more: the airport and hours without a free slot (Phase 7.2). */
 export type CommandResult = { ok: true; id?: string } | { ok: false; error: CommandError; slots?: SlotShortfall };
@@ -487,10 +516,15 @@ function withSlots(state: GameState, world: EngineWorld, airlineId: string, chan
 
 export function applyCommand(state: GameState, world: EngineWorld, command: Command): CommandResult {
   switch (command.type) {
-    case 'FoundAirline':
-      return foundAirline(state, world, command.payload);
+    case 'FoundAirline': {
+      const r = foundAirline(state, world, command.payload);
+      // Its owners: the founder and the investors (Phase 10.3).
+      if (r.ok) ensureEquity(state);
+      return r;
+    }
     case 'TakeOverAirline': {
       const r = takeOver(state, world, command.payload.realId);
+      if (r.ok) ensureEquity(state);
       return r.ok ? { ok: true, id: r.result.airlineId } : fail(r.error);
     }
     case 'LeaseAircraft':
@@ -548,6 +582,26 @@ export function applyCommand(state: GameState, world: EngineWorld, command: Comm
               ? (setDelegation(state, command.airlineId, command.payload.dept, command.payload.level) ??
                 (command.payload.dept === 'hr' && command.payload.level === 'auto' && airline.crew ? (planCrew(state, world, command.airlineId), null) : null))
               : declineProposal(state, command.airlineId, command.payload.id);
+      return error ? fail(error) : { ok: true };
+    }
+    case 'GoPublic':
+    case 'IssueShares':
+    case 'PayDividend':
+    case 'BuyBack':
+    case 'TradeOwnShares': {
+      if (!state.airlines[command.airlineId]) return fail('airlineUnknown');
+      ensureEquity(state);
+      const p = command.payload as { share?: number; total?: number; shares?: number };
+      const error =
+        command.type === 'GoPublic'
+          ? goPublic(state, command.airlineId, p.share!)
+          : command.type === 'IssueShares'
+            ? issueShares(state, command.airlineId, p.share!)
+            : command.type === 'PayDividend'
+              ? payDividend(state, command.airlineId, p.total!)
+              : command.type === 'BuyBack'
+                ? buyBack(state, command.airlineId, p.share!)
+                : tradeOwnShares(state, command.airlineId, p.shares!);
       return error ? fail(error) : { ok: true };
     }
     case 'SetHedgePolicy':

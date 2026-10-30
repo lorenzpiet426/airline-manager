@@ -22,7 +22,8 @@
     "management": "Management",
     "flight": "Flight",
     "flights": "Flights",
-    "loyalty": "Loyalty"
+    "loyalty": "Loyalty",
+    "shares": "Shares"
   },
   "status": {
     "sim": "SIM",
@@ -264,7 +265,14 @@
     "saleLeaseback": "{{registration}} sold to a lessor for {{amount}} and leased back at {{rent}} a month.",
     "hedgeGain": "Hedges for {{month}} settled: {{amount}} gained.",
     "hedgeLoss": "Hedges for {{month}} settled: {{amount}} lost (incl. option premiums).",
-    "marginCall": "Margin call: the banks want {{amount}} more collateral for your hedges ({{total}} held in all)."
+    "marginCall": "Margin call: the banks want {{amount}} more collateral for your hedges ({{total}} held in all).",
+    "ipoDone": "Your airline is listed: new shares at {{price}} raised {{amount}}.",
+    "sharesIssued": "{{shares}} new shares sold: {{amount}} raised.",
+    "dividendPaid": "Dividend of {{amount}} paid ({{perShare}} per share).",
+    "sharesBoughtBack": "{{shares}} shares bought back for {{amount}}.",
+    "ceoGrant": "Your yearly CEO pay in shares: {{shares}} shares.",
+    "ownBuy": "You bought {{shares}} of your airline's shares at {{price}} {{currency}}.",
+    "ownSell": "You sold {{shares}} of your airline's shares at {{price}} {{currency}}."
   },
   "newGame": {
     "scenarioTitle": "Scenario",
@@ -449,7 +457,15 @@
     "bondNoEarly": "Bonds can't be repaid early.",
     "aircraftPledged": "This aircraft secures a loan: repay the loan first.",
     "hedgePolicyInvalid": "Shares between 0 and 100 %, a strike of 0–50 %.",
-    "hedgeDealInvalid": "Choose a month 1–24 ahead and an amount above zero."
+    "hedgeDealInvalid": "Choose a month 1–24 ahead and an amount above zero.",
+    "notListed": "Your airline isn't listed on the stock exchange.",
+    "alreadyListed": "Your airline is already listed.",
+    "ipoNotReady": "Not ready to go public yet.",
+    "groupOwned": "Your owner decides about shares.",
+    "shareInvalid": "Choose a share within the limits.",
+    "blackout": "No trading in own shares in the last 30 days of a quarter.",
+    "notEnoughShares": "Not enough shares for that.",
+    "notEnoughMoney": "You don't have enough of your own money for that."
   },
   "fleet": {
     "title": "Fleet",
@@ -1504,6 +1520,61 @@
     "quoteSwap": "Fixed price: ${{price}} per gallon.",
     "quoteCall": "Price cap ${{strike}} per gallon, premium {{premium}} paid now.",
     "deal": "Make the deal"
+  },
+  "shares": {
+    "title": "Shares",
+    "priceListed": "Share price (stock exchange)",
+    "priceUnlisted": "Share value (not listed)",
+    "overYear": "over the last year",
+    "chart": "Share price, last 52 weeks",
+    "marketValue": "Market value (all shares)",
+    "fundamental": "What investors think a share is worth",
+    "mood": "Stock market mood",
+    "moodBad": "crash",
+    "moodWeak": "weak",
+    "moodNormal": "normal",
+    "moodGood": "strong",
+    "count": "Shares",
+    "priceNote": "Investors value an airline at a multiple of its earnings before interest, depreciation and rent (EBITDAR, about 4–8×, more with growth and a good margin) minus its debt including leases. A young airline is valued near the money put in until it has a year of accounts. The stock market's mood follows the economy and crises. The price moves towards this every week.",
+    "holders": "Shareholders",
+    "holder": {
+      "player": "You (CEO)",
+      "founders": "Founders",
+      "investors": "Investors (venture capital)",
+      "public": "Stock exchange (free float)"
+    },
+    "holdersNote": "The owners appoint the board, which sets the CEO's targets (Phase 10.4).",
+    "you": "You",
+    "yourShares": "Your shares",
+    "yourSharesValue": "Their value",
+    "yourCash": "Your own money",
+    "wealth": "Your wealth",
+    "payNote": "As CEO you are paid a salary every month and shares once a year (in a group-owned airline their value in money); dividends on your shares are yours too.",
+    "tradeCount": "Shares to buy or sell",
+    "buy": "Buy",
+    "sell": "Sell",
+    "blackout": "No trading in your own shares in the last 30 days of a quarter (before the results).",
+    "capital": "Capital",
+    "ipoReady": "Your airline can go public: sell new shares on the stock exchange to raise money.",
+    "ipoNot": {
+      "ipoNotReady": "Going public needs two years of accounts, at least €200 million revenue a year (today's money) and a profit.",
+      "groupOwned": "Your owner (a group or the state) decides about shares; you can't go public.",
+      "alreadyListed": "Listed."
+    },
+    "ipoShare": "Share of the company to sell (%)",
+    "ipoQuote": "Raises about {{amount}} (priced 10 % below the value, 4 % bank fees).",
+    "ipo": "Go public",
+    "ipoConfirm": "Go public? New shares are sold on the stock exchange; your stake gets smaller.",
+    "issue": "New shares (% more)",
+    "issueQuote": "Raises about {{amount}}.",
+    "issueButton": "Sell new shares",
+    "buyback": "Buy back shares (%)",
+    "buybackQuote": "Costs about {{amount}}.",
+    "buybackButton": "Buy back",
+    "dividend": "Dividend (total)",
+    "dividendButton": "Pay ({{perShare}} per share)",
+    "lastDividends": "Last dividends:",
+    "capitalNote": "New shares bring money but dilute the owners (your stake too); a dividend pays cash to all owners and lowers the share price by as much; a buyback raises the others' share of the company."
   },
   "maint": {
     "intro": "Aircraft need checks to stay airworthy. A-checks (every few hundred flight hours) are done overnight at your hub if the aircraft spends a long enough night there; otherwise it loses a day. C-checks (every 2–3 years) and D-checks (heavy structural checks every 10–12 years, including a C-check) take it out of service for days or weeks: its flights are cancelled. The game plans each heavy check about 4 months ahead, in the low season when it can; you can move it.",

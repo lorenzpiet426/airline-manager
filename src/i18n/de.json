@@ -22,7 +22,8 @@
     "management": "Management",
     "flight": "Flug",
     "flights": "Flüge",
-    "loyalty": "Vielflieger"
+    "loyalty": "Vielflieger",
+    "shares": "Aktien"
   },
   "status": {
     "sim": "SIM",
@@ -264,7 +265,14 @@
     "saleLeaseback": "{{registration}} für {{amount}} an einen Leasinggeber verkauft und für {{rent}} im Monat zurückgeleast.",
     "hedgeGain": "Absicherungen für {{month}} abgerechnet: {{amount}} Gewinn.",
     "hedgeLoss": "Absicherungen für {{month}} abgerechnet: {{amount}} Verlust (inkl. Optionsprämien).",
-    "marginCall": "Nachschussforderung: Die Banken wollen {{amount}} mehr Sicherheit für deine Absicherungen (insgesamt {{total}})."
+    "marginCall": "Nachschussforderung: Die Banken wollen {{amount}} mehr Sicherheit für deine Absicherungen (insgesamt {{total}}).",
+    "ipoDone": "Deine Airline ist an der Börse: Neue Aktien zu {{price}} haben {{amount}} gebracht.",
+    "sharesIssued": "{{shares}} neue Aktien verkauft: {{amount}} eingenommen.",
+    "dividendPaid": "Dividende von {{amount}} ausgezahlt ({{perShare}} pro Aktie).",
+    "sharesBoughtBack": "{{shares}} Aktien für {{amount}} zurückgekauft.",
+    "ceoGrant": "Deine jährliche CEO-Vergütung in Aktien: {{shares}} Aktien.",
+    "ownBuy": "Du hast {{shares}} Aktien deiner Airline zu {{price}} {{currency}} gekauft.",
+    "ownSell": "Du hast {{shares}} Aktien deiner Airline zu {{price}} {{currency}} verkauft."
   },
   "newGame": {
     "scenarioTitle": "Szenario",
@@ -449,7 +457,15 @@
     "bondNoEarly": "Anleihen können nicht vorzeitig zurückgezahlt werden.",
     "aircraftPledged": "Dieses Flugzeug sichert einen Kredit: Zahle zuerst den Kredit zurück.",
     "hedgePolicyInvalid": "Anteile zwischen 0 und 100 %, ein Ausübungspreis von 0–50 %.",
-    "hedgeDealInvalid": "Wähle einen Monat 1–24 voraus und eine Menge über null."
+    "hedgeDealInvalid": "Wähle einen Monat 1–24 voraus und eine Menge über null.",
+    "notListed": "Deine Airline ist nicht börsennotiert.",
+    "alreadyListed": "Deine Airline ist schon börsennotiert.",
+    "ipoNotReady": "Noch nicht bereit für die Börse.",
+    "groupOwned": "Dein Eigentümer entscheidet über Aktien.",
+    "shareInvalid": "Wähle einen Anteil innerhalb der Grenzen.",
+    "blackout": "Kein Handel mit eigenen Aktien in den letzten 30 Tagen eines Quartals.",
+    "notEnoughShares": "Dafür gibt es nicht genug Aktien.",
+    "notEnoughMoney": "Dafür hast du nicht genug eigenes Geld."
   },
   "fleet": {
     "title": "Flotte",
@@ -1504,6 +1520,61 @@
     "quoteSwap": "Fester Preis: {{price}} $ pro Gallone.",
     "quoteCall": "Preisdeckel {{strike}} $ pro Gallone, Prämie {{premium}} sofort bezahlt.",
     "deal": "Geschäft abschließen"
+  },
+  "shares": {
+    "title": "Aktien",
+    "priceListed": "Aktienkurs (Börse)",
+    "priceUnlisted": "Wert einer Aktie (nicht börsennotiert)",
+    "overYear": "im letzten Jahr",
+    "chart": "Aktienkurs, letzte 52 Wochen",
+    "marketValue": "Börsenwert (alle Aktien)",
+    "fundamental": "Was Investoren eine Aktie wert finden",
+    "mood": "Stimmung an der Börse",
+    "moodBad": "Crash",
+    "moodWeak": "schwach",
+    "moodNormal": "normal",
+    "moodGood": "stark",
+    "count": "Aktien",
+    "priceNote": "Investoren bewerten eine Airline mit einem Vielfachen ihres Ergebnisses vor Zinsen, Abschreibungen und Mieten (EBITDAR, etwa 4–8×, mehr bei Wachstum und guter Marge) minus ihren Schulden inklusive Leasing. Eine junge Airline ist bis zu einem Jahr mit Abschlüssen etwa so viel wert wie das eingezahlte Geld. Die Stimmung an der Börse folgt der Wirtschaft und Krisen. Der Kurs bewegt sich jede Woche darauf zu.",
+    "holders": "Aktionäre",
+    "holder": {
+      "player": "Du (CEO)",
+      "founders": "Gründer",
+      "investors": "Investoren (Risikokapital)",
+      "public": "Börse (Streubesitz)"
+    },
+    "holdersNote": "Die Eigentümer bestellen den Aufsichtsrat, der die Ziele des CEO festlegt (Phase 10.4).",
+    "you": "Du",
+    "yourShares": "Deine Aktien",
+    "yourSharesValue": "Ihr Wert",
+    "yourCash": "Dein eigenes Geld",
+    "wealth": "Dein Vermögen",
+    "payNote": "Als CEO bekommst du jeden Monat ein Gehalt und einmal im Jahr Aktien (in einer konzerneigenen Airline ihren Wert in Geld); Dividenden auf deine Aktien gehören auch dir.",
+    "tradeCount": "Aktien zum Kaufen oder Verkaufen",
+    "buy": "Kaufen",
+    "sell": "Verkaufen",
+    "blackout": "Kein Handel mit eigenen Aktien in den letzten 30 Tagen eines Quartals (vor den Ergebnissen).",
+    "capital": "Kapital",
+    "ipoReady": "Deine Airline kann an die Börse gehen: neue Aktien verkaufen, um Geld aufzunehmen.",
+    "ipoNot": {
+      "ipoNotReady": "Ein Börsengang braucht zwei Jahre Abschlüsse, mindestens 200 Mio. € Umsatz im Jahr (heutiges Geld) und Gewinn.",
+      "groupOwned": "Dein Eigentümer (ein Konzern oder der Staat) entscheidet über Aktien; du kannst nicht an die Börse gehen.",
+      "alreadyListed": "Börsennotiert."
+    },
+    "ipoShare": "Anteil der Firma zum Verkauf (%)",
+    "ipoQuote": "Bringt etwa {{amount}} (10 % unter dem Wert, 4 % Bankgebühren).",
+    "ipo": "An die Börse gehen",
+    "ipoConfirm": "An die Börse gehen? Neue Aktien werden an der Börse verkauft; dein Anteil wird kleiner.",
+    "issue": "Neue Aktien (% mehr)",
+    "issueQuote": "Bringt etwa {{amount}}.",
+    "issueButton": "Neue Aktien verkaufen",
+    "buyback": "Aktien zurückkaufen (%)",
+    "buybackQuote": "Kostet etwa {{amount}}.",
+    "buybackButton": "Zurückkaufen",
+    "dividend": "Dividende (gesamt)",
+    "dividendButton": "Auszahlen ({{perShare}} pro Aktie)",
+    "lastDividends": "Letzte Dividenden:",
+    "capitalNote": "Neue Aktien bringen Geld, verwässern aber die Eigentümer (auch deinen Anteil); eine Dividende zahlt allen Eigentümern Geld aus und senkt den Kurs um so viel; ein Rückkauf erhöht den Anteil der anderen an der Firma."
   },
   "maint": {
     "intro": "Flugzeuge brauchen Checks, um lufttüchtig zu bleiben. A-Checks (alle paar hundert Flugstunden) werden nachts an deinem Drehkreuz gemacht, wenn das Flugzeug dort lange genug steht; sonst fällt es einen Tag aus. C-Checks (alle 2–3 Jahre) und D-Checks (große Strukturchecks alle 10–12 Jahre, inklusive C-Check) nehmen es für Tage oder Wochen aus dem Dienst: seine Flüge fallen aus. Das Spiel plant jeden großen Check etwa 4 Monate im Voraus, wenn möglich in der Nebensaison; du kannst ihn verschieben.",

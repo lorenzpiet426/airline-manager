@@ -9,6 +9,7 @@ import type { DelayCause } from '../data/delays';
 import type { FareBucket } from '../data/fares';
 import type { Tier } from '../data/loyalty';
 import type { HedgePolicy } from '../data/hedging';
+import type { HolderKind } from '../data/shares';
 
 /** Bump when the shape of GameState changes, and add a migration for older saves. */
 export const SAVE_VERSION = 11;
@@ -83,6 +84,29 @@ export interface Airline {
   parentRating?: string;
   /** Fuel and currency hedging (Phase 10.2). */
   hedging?: Hedging;
+  /** Shares, shareholders and the share price (Phase 10.3). */
+  equity?: Equity;
+}
+
+export interface Shareholder {
+  kind: HolderKind;
+  name: string;
+  shares: number;
+}
+
+export interface Equity {
+  shares: number;
+  listed: boolean;
+  listedAt?: SimTime;
+  holders: Shareholder[];
+  /** Price per share (book currency) and its weekly history (two years). */
+  price: number;
+  history: [SimTime, number][];
+  /** Money the shareholders have put in (book currency). */
+  paidIn: number;
+  /** The player's own money (book currency): salary, dividends, sales of shares. */
+  playerCash: number;
+  dividends: { at: SimTime; perShare: number; total: number }[];
 }
 
 /** A hedge contract for one future month (Phase 10.2). */
@@ -827,7 +851,7 @@ export interface GameMessage {
   at: SimTime;
   airlineId: string | null;
   kind:
-    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
+    | 'founded' | 'takenOver' | 'takeoverRoutes' | 'subsidiaryJoined' | 'startupFounded' | 'slotsBought' | 'slotSeason' | 'gatesRented' | 'loungeOrdered' | 'loungeReady' | 'baseOpened' | 'crewReady' | 'crewLeft' | 'crewCancellations' | 'flightDiverted' | 'loyaltyMilestone' | 'loanTaken' | 'loanRepaid' | 'insolvencyWarning' | 'bankrupt' | 'saleLeaseback' | 'hedgeSettled' | 'marginCall' | 'ipoDone' | 'sharesIssued' | 'dividendPaid' | 'sharesBoughtBack' | 'ceoGrant' | 'ownTrade' | 'talksOpened' | 'unionAnswer' | 'agreementSigned' | 'hrOffer' | 'strikeAnnounced' | 'strikeCancellations' | 'mediationStarted' | 'mediationProposal' | 'mediationRejected' | 'managerHired' | 'managerLeft' | 'managerActions' | 'proposalsWaiting' | 'leaseSigned' | 'delivered' | 'rentPaid' | 'cashNegative' | 'routeOpened' | 'routeClosed' | 'weekReport'
     // AI airlines (2.1b): reactions on the player's routes and world news (airlineId null).
     | 'aiFare' | 'aiFrequency' | 'aiEnter' | 'aiExit' | 'aiNewRoute' | 'aiBankrupt'
     // Cabins (Phase 2).
@@ -872,7 +896,10 @@ export type LedgerKind =
   | 'saleLeaseback'
   // Hedging: option premiums, settlements, collateral (Phase 10.2).
   | 'hedge'
-  | 'collateral';
+  | 'collateral'
+  // Shares: money raised, dividends, buybacks (Phase 10.3).
+  | 'shares'
+  | 'dividend';
 
 /** One booking in an airline's accounts, in its book currency (and the original if converted). */
 export interface LedgerEntry {
@@ -908,6 +935,8 @@ export interface BookingRecord {
 }
 
 export interface GameState {
+  /** The stock market's mood (1 = normal) and its weekly history (Phase 10.3). */
+  stocks?: { mood: number; history: [SimTime, number][] };
   /** Upcoming flights' bookings by "pairId:dir:dep" (Phase 9.3; absent in older games until used). */
   bookings?: Record<string, BookingRecord>;
   /** Today's and yesterday's flights of the player with their delays (Phase 9.1; absent in older games until used). */
